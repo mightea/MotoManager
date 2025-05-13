@@ -29,6 +29,8 @@ export const motorcycles = sqliteTable("motorcycles", {
   firstRegistration: text().notNull(),
   lastInspection: text(),
 
+  initialOdo: int().notNull().default(0),
+
   ...timestamps,
 });
 

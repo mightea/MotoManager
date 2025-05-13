@@ -45,6 +45,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     vin: formData.get("vin") as string,
     vehicleIdNr: formData.get("motorcycleId") as string,
     licenseType: formData.get("licenseType") as "regular" | "veteran",
+    firstRegistration: formData.get("firstRegistration") as string,
   };
 
   console.log("updates", updates, formData.get("make"));
@@ -67,6 +68,8 @@ export default function EditMotorcycle({ loaderData }: Route.ComponentProps) {
   const { motorcycle } = loaderData;
 
   const navigation = useNavigation();
+
+  console.log("motorcycle", motorcycle);
 
   return (
     <Form

@@ -1,5 +1,5 @@
 import type { Route } from "./+types/settings";
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import db from "~/db";
 import { type Location } from "~/db/schema";
 
@@ -17,7 +17,6 @@ export default function Settings() {
 
   return (
     <main className="flex flex-col pt-10 px-4">
-      <Link to="/">← Back to home</Link>
       <h1 className="text-6xl">Settings</h1>
 
       <section className="py-4">

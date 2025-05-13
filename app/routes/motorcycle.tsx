@@ -1,4 +1,4 @@
-import { Form } from "react-router";
+import { Form, Link } from "react-router";
 import type { Route } from "./+types/motorcycle";
 import db from "~/db";
 import { motorcycles, type Motorcycle } from "~/db/schema";
@@ -24,13 +24,19 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export default function Motorcycle({ loaderData }: Route.ComponentProps) {
   const { motorcycle } = loaderData;
+  const { id, make, model, vin } = motorcycle;
 
   return (
-    <div>
-      <p className="text-6xl">
-        {motorcycle.make} {motorcycle.model}
-      </p>
-      <p>{motorcycle.vin}</p>
+    <div className="flex flex-col pt-2 px-4">
+      <div className="flex flex-col p-2 px-2 gap-2 rounded-lg bg-white dark:bg-gray-800">
+        <h1 className="text-2xl">
+          {make} {model}
+        </h1>
+
+        <p>{vin}</p>
+
+        <Link to={`/motorcycle/${id}/edit`}>Edit</Link>
+      </div>
     </div>
   );
 }

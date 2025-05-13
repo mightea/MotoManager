@@ -2,6 +2,7 @@ import { Form, Link, redirect } from "react-router";
 import type { Route } from "./+types/home";
 import db from "~/db";
 import { motorcycles } from "~/db/schema";
+import { MotorcycleCard } from "~/components/MotorcycleCard";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -34,37 +35,22 @@ export async function action() {
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { motorcycles } = loaderData;
 
-  return (
-    <main className="flex flex-col pt-10 px-4">
-      <h1 className="text-6xl">Home</h1>
-      <Link to="/settings" className="text-blue-500">
-        Settings
-      </Link>
+  const getMotorcycleAge = (dateString: string): string | null => {
+    const date = new Date(dateString);
+    return new Date().getFullYear() - date.getFullYear();
+  };
 
-      <h2>Motorcycles</h2>
-      <ul role="list" className="divide-y divide-gray-100">
-        {motorcycles.map((motorcycle) => (
-          <li key={motorcycle.id} className="flex justify-between gap-x-6 py-5">
-            <div className="flex min-w-0 gap-x-4">
-              <div className="min-w-0 flex-auto">
-                <Link
-                  to={`/motorcycle/${motorcycle.id}/edit`}
-                  className="text-sm/6 font-semibold leading-6"
-                >
-                  {motorcycle.make === "" ? "Unknown" : motorcycle.make}{" "}
-                  {motorcycle.model}
-                </Link>
-                <p className="mt-1 truncate text-xs leading-5 text-gray-500">
-                  {motorcycle.vin}
-                </p>
-              </div>
-            </div>
-          </li>
+  return (
+    <main className="flex flex-col pt-4 px-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        {motorcycles.map((motorcycle, index) => (
+          <MotorcycleCard {...motorcycle} key={`mc-${index}`} />
         ))}
-      </ul>
+      </div>
+      <ul role="list" className=""></ul>
 
       <Form method="post">
-        <button type="submit">New</button>
+        <button type="submit">Neu</button>
       </Form>
     </main>
   );

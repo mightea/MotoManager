@@ -6,6 +6,7 @@
 /build/
 
 .direnv/
+.env
 
 ## App
 db.sqlite
