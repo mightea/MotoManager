@@ -1,5 +1,4 @@
-import * as t from "drizzle-orm/sqlite-core";
-import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { int, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { timestamps } from "./columns.helpers";
 
 export const locations = sqliteTable("locations", {
@@ -12,11 +11,11 @@ export const currentLocation = sqliteTable("current_location", {
   motorcycleId: int("motorcycle_id")
     .notNull()
     .references(() => motorcycles.id),
-  date: text().notNull().default(new Date().toISOString()),
+  date: text("date").notNull(), // SQLite DATE stored as TEXT
   name: text().notNull(),
 });
 
-export const motorcycles = sqliteTable("motorcycles", {
+export const motorcycles = sqliteTable("motorcycle", {
   id: int().primaryKey({ autoIncrement: true }),
   make: text().notNull(),
   model: text().notNull(),
@@ -24,7 +23,7 @@ export const motorcycles = sqliteTable("motorcycles", {
   vin: text().notNull(),
   vehicleIdNr: text().notNull(),
 
-  licenseType: t.text().$type<"regular" | "veteran">().default("regular"),
+  licenseType: text().$type<"regular" | "veteran">().default("regular"),
 
   firstRegistration: text().notNull(),
   lastInspection: text(),
@@ -32,6 +31,74 @@ export const motorcycles = sqliteTable("motorcycles", {
   initialOdo: int().notNull().default(0),
 
   ...timestamps,
+});
+
+export type MaintenanceType =
+  | "tire"
+  | "battery"
+  | "engineoil"
+  | "gearboxoil"
+  | "forkoil"
+  | "breakfluid"
+  | "brakepad"
+  | "chain"
+  | "brakerotor"
+  | "other";
+
+// 2) Shared “maintenance” table
+export const maintenance = sqliteTable("maintenance_record", {
+  id: int().primaryKey({ autoIncrement: true }),
+  date: text("date").notNull(), // SQLite DATE stored as TEXT
+  odo: integer("odo").notNull(),
+  motorcycleId: integer("motorcycle_id")
+    .notNull()
+    .references(() => motorcycles.id),
+  cost: real("cost").notNull(), // decimal‐friendly REAL column
+  currency: text("currency").notNull(), // e.g. "CHF", "EUR", "USD"
+  description: text("description"), // optional notes
+  type: text("type").notNull(), // discriminator
+});
+
+export type TirePosition = "front" | "rear" | "sidecar";
+
+export const maintenanceTires = sqliteTable("maintenance_tire", {
+  maintenanceId: integer("maintenance_id")
+    .primaryKey()
+    .references(() => maintenance.id),
+  brand: text("brand").notNull(),
+  model: text("model").notNull(),
+  size: text("size").notNull(), // e.g. "120/70ZR17"
+  position: text("position").notNull().$type<TirePosition>(), // TS‐only safety
+  dotCode: text("dot_code").notNull(), // DOT date code
+});
+
+export type BatteryType = "lead-acid" | "gel" | "agm" | "lithium-ion" | "other";
+
+export const maintenanceBattery = sqliteTable("maintenance_battery", {
+  maintenanceId: integer("maintenance_id")
+    .primaryKey()
+    .references(() => maintenance.id),
+  type: text("battery_type").notNull().$type<BatteryType>(), // TS‐only safety
+  manufacturer: text("manufacturer").notNull(),
+  model: text("model").notNull(),
+});
+
+export const maintenanceFluids = sqliteTable("maintenance_fluid", {
+  maintenanceId: integer("maintenance_id")
+    .primaryKey()
+    .references(() => maintenance.id),
+  brand: text("brand").notNull(),
+  type: text("fluid_type").notNull().$type<MaintenanceType>(), // TS‐only safety
+  viscosity: text("viscosity"), // e.g. "10W40"
+});
+
+export const maintenanceBreakpads = sqliteTable("maintenance_breakpads", {
+  maintenanceId: integer("maintenance_id")
+    .primaryKey()
+    .references(() => maintenance.id),
+  brand: text("brand").notNull(),
+  model: text("model").notNull(),
+  position: text("position").notNull().$type<TirePosition>(), // TS‐only safety
 });
 
 export type Location = typeof locations.$inferSelect;
