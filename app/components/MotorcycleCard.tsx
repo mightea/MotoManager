@@ -1,6 +1,8 @@
 import { Link } from "react-router";
 import type { Motorcycle } from "../db/schema";
 
+import motorcycleIcon from "../assets/motorcycle.svg?url";
+
 interface Props extends Motorcycle {}
 
 const getMotorcycleAge = (dateString: string): string | null => {
@@ -26,6 +28,11 @@ export const MotorcycleCard = ({
             {getMotorcycleAge(firstRegistration)} Jahre
           </p>
         </div>
+
+        <img
+          src={motorcycleIcon}
+          className="w-7 h-7 fill-lime-50 stroke-amber-100"
+        />
 
         <span className="inline-flex divide-x divide-gray-300 overflow-hidden rounded border border-gray-300 bg-white shadow-sm dark:divide-gray-600 dark:border-gray-600 dark:bg-gray-800">
           <button

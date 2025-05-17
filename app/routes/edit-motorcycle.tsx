@@ -3,6 +3,9 @@ import type { Route } from "./+types/edit-motorcycle";
 import db from "~/db";
 import { motorcycles, type EditorMotorcycle } from "~/db/schema";
 import { eq } from "drizzle-orm";
+import { useState } from "react";
+import { Checkbox, RadioGroup } from "@headlessui/react";
+import { InputField } from "~/components/form/InputField";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -44,8 +47,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     model: formData.get("model") as string,
     vin: formData.get("vin") as string,
     vehicleIdNr: formData.get("motorcycleId") as string,
-    licenseType: formData.get("licenseType") as "regular" | "veteran",
+    licenseType: formData.get("licenseType") === "true" ? "veteran" : "regular",
     firstRegistration: formData.get("firstRegistration") as string,
+    lastInspection: formData.get("lastInspection") as string,
+    initialOdo: parseInt(formData.get("initialOdo") as string),
   };
 
   console.log("updates", updates, formData.get("make"));
@@ -68,124 +73,81 @@ export default function EditMotorcycle({ loaderData }: Route.ComponentProps) {
   const { motorcycle } = loaderData;
 
   const navigation = useNavigation();
-
   console.log("motorcycle", motorcycle);
 
   return (
     <Form
-      className="max-w-sm mx-auto"
+      className="flex flex-col gap-4 m-4"
       method="post"
       id={motorcycle.id.toString()}
     >
-      <div className="mb-5">
-        <label
-          htmlFor="make"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Marke
-        </label>
-        <input
-          type="text"
-          name="make"
-          className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
-                 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
-                 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light"
-          placeholder="BMW"
-          defaultValue={motorcycle.make}
-        />
-      </div>
-      <div className="mb-5">
-        <label
-          htmlFor="model"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Modell
-        </label>
-        <input
-          type="text"
-          name="model"
-          className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
-                 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
-                 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light"
-          placeholder="R 1200 GS"
-          defaultValue={motorcycle.model}
-        />
-      </div>
+      <InputField
+        name="make"
+        label="Marke"
+        type="text"
+        placeholder="BMW"
+        defaultValue={motorcycle.make}
+      />
+
+      <InputField
+        name="model"
+        label="Modell"
+        type="text"
+        placeholder="R 90 S"
+        defaultValue={motorcycle.model}
+      />
+
+      <InputField
+        type="text"
+        name="vin"
+        label="Fahrgestellnummer"
+        placeholder=""
+        defaultValue={motorcycle.vin}
+      />
+
+      <InputField
+        type="text"
+        name="motorcycleId"
+        label="Stammnummer"
+        placeholder=""
+        defaultValue={motorcycle.vehicleIdNr}
+      />
+
+      <InputField
+        type="date"
+        name="firstRegistration"
+        label="1. Inverkehrssetzung"
+        defaultValue={motorcycle.firstRegistration}
+      />
+
+      <InputField
+        type="number"
+        name="initialOdo"
+        label="Initialer Kilometerstand"
+        placeholder="0"
+        defaultValue={motorcycle.initialOdo}
+      />
+
+      <InputField
+        type="date"
+        name="lastInspection"
+        label="Letzte Inspektion"
+        defaultValue={motorcycle.lastInspection ?? ""}
+      />
 
       <div className="mb-5">
-        <label
-          htmlFor="vin"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Fahrgestellnummer
-        </label>
-        <input
-          type="text"
-          name="vin"
-          className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
-                 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
-                 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light"
-          placeholder=""
-          defaultValue={motorcycle.vin}
-        />
-      </div>
+        <label htmlFor="licenseType" className="inline-flex items-center gap-3">
+          <input
+            type="checkbox"
+            className="size-5 rounded border-gray-300 shadow-sm dark:border-gray-600 dark:bg-gray-900 dark:ring-offset-gray-900 dark:checked:bg-blue-600"
+            id="licenseType"
+            defaultChecked={motorcycle.licenseType === "veteran"}
+          />
 
-      <div className="mb-5">
-        <label
-          htmlFor="motorcycleId"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Stammnummer
+          <span className="font-medium text-gray-700 dark:text-gray-200">
+            Veteranenfahrzeug
+          </span>
         </label>
-        <input
-          type="text"
-          name="motorcycleId"
-          className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
-                 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
-                 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light"
-          placeholder=""
-          defaultValue={motorcycle.vehicleIdNr}
-        />
-      </div>
-
-      <div className="mb-5">
-        <label
-          htmlFor="firstRegistration"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          1. Inverkehrssetzung
-        </label>
-        <input
-          type="date"
-          name="firstRegistration"
-          className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
-                 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
-                 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light"
-          defaultValue={motorcycle.firstRegistration}
-        />
-      </div>
-
-      <div className="mb-5">
-        <label
-          htmlFor="lastInspection"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-        >
-          Letzte Inspektion
-        </label>
-        <input
-          type="date"
-          name="lastInspection"
-          className="shadow-xs bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                 focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 
-                 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
-                 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-xs-light"
-          defaultValue={motorcycle.lastInspection ?? ""}
-        />
       </div>
 
       <div className="w-full mt-4 ml-2 flex flex-row gap-2">
