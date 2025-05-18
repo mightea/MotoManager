@@ -1,13 +1,31 @@
 import { Link } from "react-router";
 import type { Motorcycle } from "../db/schema";
-
-import motorcycleIcon from "../assets/motorcycle.svg?url";
+import { isFalsy } from "~/utils/falsyUtils";
 
 interface Props extends Motorcycle {}
 
-const getMotorcycleAge = (dateString: string): string | null => {
-  const date = new Date(dateString);
-  return new Date().getFullYear() - date.getFullYear();
+const getAgeText = (dateString: string | undefined | null): string | null => {
+  if (isFalsy(dateString)) {
+    return null;
+  }
+
+  const start = new Date(dateString).getTime();
+  const end = new Date().getTime();
+
+  let timeDifference = end - start;
+  let daysDifference = timeDifference / (1000 * 3600 * 24);
+
+  if (daysDifference < 30) {
+    return `${Math.floor(daysDifference)} Tage`;
+  }
+
+  if (daysDifference < 365) {
+    const months = Math.floor(daysDifference / 30);
+    return `${months} ${months === 1 ? "Monat" : "Monate"}`;
+  }
+
+  const years = Math.floor(daysDifference / 365);
+  return `${years} ${years === 1 ? "Jahr" : "Jahre"}`;
 };
 
 export const MotorcycleCard = ({
@@ -15,6 +33,7 @@ export const MotorcycleCard = ({
   make,
   model,
   firstRegistration,
+  lastInspection,
 }: Props) => {
   return (
     <Link to={`/motorcycle/${id}/`}>
@@ -25,14 +44,12 @@ export const MotorcycleCard = ({
           </h3>
 
           <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm ">
-            {getMotorcycleAge(firstRegistration)} Jahre
+            Alter: {getAgeText(firstRegistration)}
+          </p>
+          <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm ">
+            Prüfung: {getAgeText(lastInspection)}
           </p>
         </div>
-
-        <img
-          src={motorcycleIcon}
-          className="w-7 h-7 fill-lime-50 stroke-amber-100"
-        />
 
         <span className="inline-flex divide-x divide-gray-300 overflow-hidden rounded border border-gray-300 bg-white shadow-sm dark:divide-gray-600 dark:border-gray-600 dark:bg-gray-800">
           <button
