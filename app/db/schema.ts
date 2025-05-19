@@ -1,4 +1,11 @@
-import { int, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  customType,
+  int,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 import { timestamps } from "./columns.helpers";
 
 export const locations = sqliteTable("locations", {
@@ -23,7 +30,9 @@ export const motorcycles = sqliteTable("motorcycle", {
   vin: text().notNull(),
   vehicleIdNr: text().notNull(),
 
-  licenseType: text().$type<"regular" | "veteran">().default("regular"),
+  isVeteran: integer("is_veteran", { mode: "boolean" })
+    .notNull()
+    .default(false),
 
   firstRegistration: text().notNull(),
   lastInspection: text(),

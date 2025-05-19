@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import type { Motorcycle } from "../db/schema";
-import { getAgeText, nextInpectionDays } from "~/utils/dateUtils";
+import { getAgeInDays, getAgeText, nextInpectionDays } from "~/utils/dateUtils";
 
 interface Props extends Motorcycle {}
 
@@ -10,7 +10,7 @@ export const MotorcycleCard = ({
   model,
   firstRegistration,
   lastInspection,
-  licenseType,
+  isVeteran,
 }: Props) => {
   return (
     <Link to={`/motorcycle/${id}/`}>
@@ -21,18 +21,25 @@ export const MotorcycleCard = ({
           </h3>
 
           <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm ">
-            Alter: {getAgeText(firstRegistration)}
+            Alter: {getAgeText(getAgeInDays(firstRegistration))}
           </p>
           <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm ">
-            Prüfung:{" "}
-            {nextInpectionDays({
-              lastInspection,
-              licenseType,
-              firstRegistration,
-            })}
+            Nächste Insp in:{" "}
+            {getAgeText(
+              nextInpectionDays({
+                lastInspection,
+                isVeteran,
+                firstRegistration,
+              })
+            )}
           </p>
-        </div>
 
+          {isVeteran === true && (
+            <div className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
+              V
+            </div>
+          )}
+        </div>
         <span className="inline-flex divide-x divide-gray-300 overflow-hidden rounded border border-gray-300 bg-white shadow-sm dark:divide-gray-600 dark:border-gray-600 dark:bg-gray-800">
           <button
             type="button"

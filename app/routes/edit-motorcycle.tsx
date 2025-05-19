@@ -3,8 +3,6 @@ import type { Route } from "./+types/edit-motorcycle";
 import db from "~/db";
 import { motorcycles, type EditorMotorcycle } from "~/db/schema";
 import { eq } from "drizzle-orm";
-import { useState } from "react";
-import { Checkbox, RadioGroup } from "@headlessui/react";
 import { InputField } from "~/components/form/InputField";
 
 export async function loader({ params }: Route.LoaderArgs) {
@@ -47,13 +45,13 @@ export async function action({ request, params }: Route.ActionArgs) {
     model: formData.get("model") as string,
     vin: formData.get("vin") as string,
     vehicleIdNr: formData.get("motorcycleId") as string,
-    licenseType: formData.get("licenseType") === "true" ? "veteran" : "regular",
+    isVeteran: formData.get("isVeteran") === "on" ? true : false,
     firstRegistration: formData.get("firstRegistration") as string,
     lastInspection: formData.get("lastInspection") as string,
     initialOdo: parseInt(formData.get("initialOdo") as string),
   };
 
-  console.log("updates", updates, formData.get("make"));
+  console.log("updates", updates, formData.get("isVeteran"));
 
   try {
     await db
@@ -136,12 +134,12 @@ export default function EditMotorcycle({ loaderData }: Route.ComponentProps) {
       />
 
       <div className="mb-5">
-        <label htmlFor="licenseType" className="inline-flex items-center gap-3">
+        <label htmlFor="isVeteran" className="inline-flex items-center gap-3">
           <input
             type="checkbox"
             className="size-5 rounded border-gray-300 shadow-sm dark:border-gray-600 dark:bg-gray-900 dark:ring-offset-gray-900 dark:checked:bg-blue-600"
-            id="licenseType"
-            defaultChecked={motorcycle.licenseType === "veteran"}
+            name="isVeteran"
+            defaultChecked={motorcycle.isVeteran}
           />
 
           <span className="font-medium text-gray-700 dark:text-gray-200">

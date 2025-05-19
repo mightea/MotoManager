@@ -14,34 +14,31 @@ export const getAgeInDays = (
   return timeDifference / (1000 * 3600 * 24);
 };
 
-export const getAgeText = (
-  dateString: string | undefined | null
-): string | null => {
-  const daysDifference = getAgeInDays(dateString);
-  if (daysDifference === null) {
+export const getAgeText = (days: number | null): string | null => {
+  if (days === null) {
     return null;
   }
 
-  if (daysDifference < 30) {
-    return `${Math.floor(daysDifference)} Tage`;
+  if (days < 30) {
+    return `${Math.floor(days)} Tage`;
   }
 
-  if (daysDifference < 365) {
-    const months = Math.floor(daysDifference / 30);
+  if (days < 365) {
+    const months = Math.floor(days / 30);
     return `${months} ${months === 1 ? "Monat" : "Monate"}`;
   }
 
-  const years = Math.floor(daysDifference / 365);
+  const years = Math.floor(days / 365);
   return `${years} ${years === 1 ? "Jahr" : "Jahre"}`;
 };
 
 export const nextInpectionDays = ({
   lastInspection,
-  licenseType,
+  isVeteran,
   firstRegistration,
 }: {
   lastInspection: string;
-  licenseType: "regular" | "veteran";
+  isVeteran: boolean;
   firstRegistration: string;
 }): number | null => {
   const age = getAgeInDays(firstRegistration);
@@ -52,7 +49,7 @@ export const nextInpectionDays = ({
   const lastInspectionAge = getAgeInDays(lastInspection) ?? age;
   const ageInYears = Math.floor(age / 365);
 
-  if (licenseType === "veteran" || ageInYears < 6) {
+  if (isVeteran === true || ageInYears < 6) {
     return Math.floor(6 * 365 - lastInspectionAge);
   }
 

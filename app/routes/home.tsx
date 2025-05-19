@@ -26,6 +26,8 @@ export async function action() {
       licenseType: "regular",
       firstRegistration: "",
       lastInspection: "",
+      isVeteran: false,
+      initialOdo: 0,
     })
     .returning();
 
