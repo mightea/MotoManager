@@ -1,32 +1,8 @@
 import { Link } from "react-router";
 import type { Motorcycle } from "../db/schema";
-import { isFalsy } from "~/utils/falsyUtils";
+import { getAgeText, nextInpectionDays } from "~/utils/dateUtils";
 
 interface Props extends Motorcycle {}
-
-const getAgeText = (dateString: string | undefined | null): string | null => {
-  if (isFalsy(dateString)) {
-    return null;
-  }
-
-  const start = new Date(dateString).getTime();
-  const end = new Date().getTime();
-
-  let timeDifference = end - start;
-  let daysDifference = timeDifference / (1000 * 3600 * 24);
-
-  if (daysDifference < 30) {
-    return `${Math.floor(daysDifference)} Tage`;
-  }
-
-  if (daysDifference < 365) {
-    const months = Math.floor(daysDifference / 30);
-    return `${months} ${months === 1 ? "Monat" : "Monate"}`;
-  }
-
-  const years = Math.floor(daysDifference / 365);
-  return `${years} ${years === 1 ? "Jahr" : "Jahre"}`;
-};
 
 export const MotorcycleCard = ({
   id,
@@ -34,6 +10,7 @@ export const MotorcycleCard = ({
   model,
   firstRegistration,
   lastInspection,
+  licenseType,
 }: Props) => {
   return (
     <Link to={`/motorcycle/${id}/`}>
@@ -47,7 +24,12 @@ export const MotorcycleCard = ({
             Alter: {getAgeText(firstRegistration)}
           </p>
           <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm ">
-            Prüfung: {getAgeText(lastInspection)}
+            Prüfung:{" "}
+            {nextInpectionDays({
+              lastInspection,
+              licenseType,
+              firstRegistration,
+            })}
           </p>
         </div>
 
