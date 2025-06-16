@@ -110,9 +110,23 @@ export const maintenanceBreakpads = sqliteTable("maintenance_breakpads", {
   position: text("position").notNull().$type<TirePosition>(), // TS‐only safety
 });
 
+export const issues = sqliteTable("issues", {
+  id: int().primaryKey({ autoIncrement: true }),
+  motorcycleId: int("motorcycle_id")
+    .notNull()
+    .references(() => motorcycles.id),
+  odo: integer("odo").notNull(),
+  description: text("description").notNull(),
+  ...timestamps,
+});
+
 export type Location = typeof locations.$inferSelect;
 export type CurrentLocation = typeof currentLocation.$inferSelect;
 
 export type Motorcycle = typeof motorcycles.$inferSelect;
 export type NewMotorcycle = typeof motorcycles.$inferInsert;
 export type EditorMotorcycle = Partial<NewMotorcycle>;
+
+export type Issue = typeof issues.$inferSelect;
+export type NewIssue = typeof issues.$inferInsert;
+export type EditorIssue = Partial<NewIssue>;
