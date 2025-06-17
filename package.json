@@ -1,12 +1,13 @@
 {
-  "name": "",
+  "name": "Motobase",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
@@ -34,3 +35,4 @@
     "vite-tsconfig-paths": "^5.1.4"
   }
 }
+
