@@ -8,7 +8,8 @@ import Modal from "~/components/Modal";
 import { InputField } from "~/components/form/InputField";
 import { Select } from "@headlessui/react";
 import { useTheme } from "~/contexts/ThemeProvider";
-import { isTruthy } from "~/utils/falsyUtils";
+import { Disclosure, Transition } from "@headlessui/react";
+import { ChevronUp, Calendar, Gauge, Wrench, Sprout } from "lucide-react";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -36,7 +37,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 }
 
 export default function Motorcycle({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, maintenance } = loaderData;
+  const { motorcycle, maintenance: maintenanceEntries } = loaderData;
   const { id, make, model, vin } = motorcycle;
 
   const entries: [string, string][] = [
@@ -52,23 +53,9 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
   function closeBasicModal() {
     setIsBasicModalOpen(false);
   }
-
-  function openBasicModal() {
-    setIsBasicModalOpen(true);
-  }
-
-  const sampleOptions = [
-    { id: 1, name: "Option 1" },
-    { id: 2, name: "Option 2" },
-    { id: 3, name: "Option 3" },
-  ];
-
-  const [selectedOption, setSelectedOption] = useState(sampleOptions[0]);
-  const { theme } = useTheme(); // Use the theme from your context
-
   return (
     <div className="flex flex-col pt-2 px-4">
-      <div className="flex flex-col p-2 px-2 gap-2 rounded-lg bg-white dark:bg-gray-800">
+      <div className="flex flex-col gap-2 bg-white dark:bg-gray-800">
         <h1 className="text-2xl">
           {make} {model}
         </h1>
@@ -93,60 +80,83 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
           Bearbeiten
         </Link>
 
-        <button
-          type="button"
-          onClick={openBasicModal}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-        >
-          Eintrag hinzufügen
-        </button>
-
-        {/* Mobile List View */}
-        <div className="block md:hidden space-y-4">
-          {" "}
-          {/* space-y-4 adds vertical spacing between cards */}
-          {maintenance.map((row) => (
-            <div
-              key={row.id}
-              className="shadow-md rounded-lg p-4 border border-gray-600"
+        {/* Motorcycle Details Section */}
+        <section className="mb-8 bg-gray-50 dark:bg-gray-700 p-5 shadow-sm border border-gray-200 dark:border-gray-600 transition-colors duration-300">
+          <div className="flex justify-between items-center mb-4 border-b pb-2 dark:border-gray-600">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 transition-colors duration-300">
+              Fahrzeugdetails
+            </h2>
+            {/* Edit Button for Vehicle Details */}
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-4 rounded-full text-sm shadow-md transition-colors duration-300"
+              aria-label="Fahrzeugdetails bearbeiten"
             >
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-bold text-lg text-gray-600">
-                  Typ: {row.type}
-                </span>
-                <span className="text-sm text-gray-600">Date: {row.date}</span>
-              </div>
-              <div className="">
-                <div className="flex flex-row gap-2 items-stretch">
-                  <p className="text-gray-500 dark:text-gray-400 text-sm grow">
-                    Kilometerstand:
-                  </p>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm align-right">
-                    {row.odo}
-                  </p>
-                </div>
-                <div className="flex flex-row gap-2 items-stretch">
-                  <p className="text-gray-500 dark:text-gray-400 text-sm grow">
-                    Kosten:
-                  </p>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm align-right">
-                    {row.cost} {row.currency}
-                  </p>
-                </div>
-                {isTruthy(row.description?.trim()) && (
-                  <div className="flex flex-col gap-2 items-stretch">
-                    <p className="text-gray-500 dark:text-gray-400 text-sm grow">
-                      Beschreibung:
-                    </p>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm align-right">
-                      {row.description}
-                    </p>
-                  </div>
-                )}
-              </div>
+              Bearbeiten
+            </button>
+          </div>
+        </section>
+
+        {/* Maintenance History Section */}
+        <section className="">
+          {/* Maintenance Log */}
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight flex items-center mb-4">
+              <Wrench className="w-6 h-6 mr-3 text-sky-400" />
+              Wartungsprotokoll
+            </h2>
+            {/* New Entry Button for Maintenance History */}
+            <button
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 px-4 rounded-full text-sm shadow-md transition-colors duration-300"
+              aria-label="Neuen Wartungseintrag hinzufügen"
+            >
+              Neuer Eintrag
+            </button>
+
+            <div className="w-full rounded-2xl bg-slate-800/50 p-2 space-y-2">
+              {maintenanceEntries
+                .slice()
+                .reverse()
+                .map((entry) => (
+                  <Disclosure key={entry.id}>
+                    {({ open }) => (
+                      <>
+                        <Disclosure.Button className="flex w-full justify-between items-center rounded-lg bg-sky-900/50 px-4 py-3 text-left text-sm font-medium text-sky-300 hover:bg-sky-800/50 focus:outline-none focus-visible:ring focus-visible:ring-sky-500 focus-visible:ring-opacity-75 transition-all duration-300">
+                          <div className="flex-grow">
+                            <span className="text-base">{entry.title}</span>
+                            <span className="text-xs text-slate-400 block mt-1">
+                              {new Date(entry.date).toLocaleDateString("de-DE")}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <span className="font-mono text-slate-300">
+                              {entry.odo.toLocaleString("de-DE")} km
+                            </span>
+                            <ChevronUp
+                              className={`${
+                                open ? "rotate-180 transform" : ""
+                              } h-5 w-5 text-sky-400 transition-transform duration-300`}
+                            />
+                          </div>
+                        </Disclosure.Button>
+                        <Transition
+                          enter="transition duration-100 ease-out"
+                          enterFrom="transform scale-95 opacity-0"
+                          enterTo="transform scale-100 opacity-100"
+                          leave="transition duration-75 ease-out"
+                          leaveFrom="transform scale-100 opacity-100"
+                          leaveTo="transform scale-95 opacity-0"
+                        >
+                          <Disclosure.Panel className="px-4 pt-2 pb-4 text-sm text-slate-300 bg-slate-900/20 rounded-b-lg">
+                            {entry.description}
+                          </Disclosure.Panel>
+                        </Transition>
+                      </>
+                    )}
+                  </Disclosure>
+                ))}
             </div>
-          ))}
-        </div>
+          </div>
+        </section>
 
         {/* Basic Modal */}
         <Modal
