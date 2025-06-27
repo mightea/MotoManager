@@ -13,8 +13,9 @@
       web = {
         command = [
           "pnpm"
-          "run"
           "dev"
+          "--port" 
+          "$PORT"
         ];
         manager = "web";
       };
