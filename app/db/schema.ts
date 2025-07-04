@@ -127,6 +127,8 @@ export type Motorcycle = typeof motorcycles.$inferSelect;
 export type NewMotorcycle = typeof motorcycles.$inferInsert;
 export type EditorMotorcycle = Partial<NewMotorcycle>;
 
+export type Maintenance = typeof maintenance.$inferSelect;
+
 export type Issue = typeof issues.$inferSelect;
 export type NewIssue = typeof issues.$inferInsert;
 export type EditorIssue = Partial<NewIssue>;

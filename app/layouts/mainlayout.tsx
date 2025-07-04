@@ -1,13 +1,18 @@
+import { Suspense } from "react";
 import { Outlet } from "react-router";
-import Header from "~/components/Header";
+import { Header } from "~/components/header";
+import { Toaster } from "~/components/ui/toaster";
 
 export default function MainLayout() {
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center transition-colors duration-300">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden md:max-w-lg lg:max-w-xl transition-colors duration-300">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Suspense fallback={<div className="h-20 border-b"></div>}>
         <Header />
+      </Suspense>
+      <main className="container mx-auto p-4 py-8 md:p-8 flex-1">
         <Outlet />
-      </div>
+      </main>
+      <Toaster />
     </div>
   );
 }
