@@ -1,11 +1,4 @@
-import {
-  customType,
-  int,
-  integer,
-  real,
-  sqliteTable,
-  text,
-} from "drizzle-orm/sqlite-core";
+import { int, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { timestamps } from "./columns.helpers";
 
 export const locations = sqliteTable("locations", {

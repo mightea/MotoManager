@@ -5,6 +5,7 @@ import { desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import MaintenanceLogTable from "~/components/maintenance-log-table";
+import { OpenIssuesCard } from "~/components/open-issues-card";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -37,8 +38,9 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="grid gap-8 lg:grid-cols-5">
-      <div className="lg:col-span-2 xl:col-span-2">
+      <div className="lg:col-span-2 xl:col-span-2 space-y-8">
         <MotorcycleInfo motorcycle={motorcycle} currentOdometer={0} />
+        <OpenIssuesCard motorcycle={motorcycle} />
       </div>
       <div className="lg:col-span-3 xl:col-span-3">
         <Card>

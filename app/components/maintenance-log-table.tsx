@@ -1,22 +1,20 @@
 import { type Maintenance } from "~/db/schema";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
 import { Badge } from "./ui/badge";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
 
 interface MaintenanceLogTableProps {
   logs: Maintenance[];
 }
 
 const LogTypeBadges: Record<Maintenance["type"], string> = {
-  general: "Allgemein",
+  other: "Allgemein",
   oil_change: "Ölwechsel",
   tire_change: "Reifenwechsel",
   brake_fluid_change: "Bremsflüssigkeit",
@@ -25,57 +23,55 @@ const LogTypeBadges: Record<Maintenance["type"], string> = {
 export default function MaintenanceLogTable({
   logs,
 }: MaintenanceLogTableProps) {
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("de-DE", {
       style: "currency",
-      currency: "EUR",
+      currency,
     }).format(amount);
   };
 
+  if (logs.length === 0) {
+    return (
+      <div className="flex h-24 items-center justify-center rounded-lg border-2 border-dashed text-center text-muted-foreground">
+        Noch keine Wartungseinträge.
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[120px]">Datum</TableHead>
-            <TableHead className="w-[150px]">Typ</TableHead>
-            <TableHead>Beschreibung & Details</TableHead>
-            <TableHead className="w-[120px] text-right">
-              Kilometerstand
-            </TableHead>
-            <TableHead className="w-[100px] text-right">Kosten</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {logs.length > 0 ? (
-            logs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell className="font-medium">
-                  {format(new Date(log.date), "d. MMM yyyy", { locale: de })}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{LogTypeBadges[log.type]}</Badge>
-                </TableCell>
-                <TableCell>
-                  <p>{log.description}</p>
-                </TableCell>
-                <TableCell className="text-right">
-                  {log.odo.toLocaleString("de-DE")} km
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(log.cost)}
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
-                Noch keine Wartungseinträge.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <Accordion type="single" collapsible className="w-full">
+      {logs.map((log) => (
+        <AccordionItem value={log.id.toString()} key={log.id}>
+          <AccordionTrigger className="py-4 text-left hover:no-underline">
+            <div className="flex w-full items-center justify-between gap-4">
+              <div className="flex flex-1 items-center gap-4">
+                <span className="w-36 text-left text-sm font-medium">
+                  {format(new Date(log.date), "d. MMMM yyyy", { locale: de })}
+                </span>
+                <Badge variant="secondary" className="text-sm">
+                  {LogTypeBadges[log.type]}
+                </Badge>
+              </div>
+              <p className="font-semibold text-base whitespace-nowrap">
+                {log.odo.toLocaleString("de-DE")} km
+              </p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3 border-t pt-4 mt-2">
+              <p className="text-sm text-foreground leading-relaxed">
+                {log.description}
+              </p>
+              <div className="flex justify-between text-sm pt-2">
+                <p className="text-muted-foreground">Kosten</p>
+                <p className="font-medium">
+                  {formatCurrency(log.cost, log.currency)}
+                </p>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
   );
 }
