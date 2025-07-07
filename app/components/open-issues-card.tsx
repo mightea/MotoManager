@@ -67,7 +67,7 @@ export function OpenIssuesCard({ motorcycle }: { motorcycle: Motorcycle }) {
         <div className="flex justify-between items-center">
           <CardTitle>Offene Mängel</CardTitle>
           <AddIssueDialog motorcycle={motorcycle}>
-            <Button variant="outline" size="sm">
+            <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Mangel hinzufügen
             </Button>

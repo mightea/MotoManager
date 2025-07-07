@@ -1,6 +1,6 @@
 "use client";
 
-import { Bike, CalendarDays, Gauge, Wrench } from "lucide-react";
+import { Bike, CalendarDays, Gauge, Pencil, Wrench } from "lucide-react";
 import type { Motorcycle } from "~/db/schema";
 import {
   Card,
@@ -9,6 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
+import { AddMotorcycleDialog } from "./add-motorcycle-dialog";
+import { Button } from "./ui/button";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
@@ -54,18 +56,26 @@ export default function MotorcycleInfo({
         </div>
       )}
       <CardHeader>
-        <div className="flex items-center gap-3">
-          {!imageUrl && <Bike className="h-8 w-8 text-primary" />}
-          <div>
-            <CardTitle className="text-2xl font-headline">
-              {motorcycle.make}
-            </CardTitle>
-            <CardDescription className="text-lg">
-              {motorcycle.model}
-            </CardDescription>
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex items-center gap-3">
+            {!imageUrl && <Bike className="h-8 w-8 text-primary" />}
+            <div>
+              <CardTitle className="text-2xl font-headline">
+                {motorcycle.make}
+              </CardTitle>
+              <CardDescription className="text-lg">
+                {motorcycle.model}
+              </CardDescription>
+            </div>
           </div>
+          <AddMotorcycleDialog motorcycleToEdit={motorcycle}>
+            <Button variant="outline" size="icon" className="shrink-0">
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Motorrad bearbeiten</span>
+            </Button>
+          </AddMotorcycleDialog>
         </div>
-      </CardHeader>
+      </CardHeader>{" "}
       <CardContent className="space-y-4 pt-2">
         <InfoItem icon={CalendarDays} label="Letzte Inspektion" value={""} />
         <InfoItem icon={Gauge} label="Initial Odometer" value={""} />
