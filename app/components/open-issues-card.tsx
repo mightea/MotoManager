@@ -61,6 +61,7 @@ export function OpenIssuesCard({
 }: {
   motorcycle: Motorcycle;
   issues: Issue[];
+  currentOdometer: number;
 }) {
   let fetcher = useFetcher();
 

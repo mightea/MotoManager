@@ -44,10 +44,21 @@ export async function loader({ params }: Route.LoaderArgs) {
     ],
   });
 
+  // Get all odometer readings from all items
+  const odos = [
+    result.initialOdo,
+    ...maintenanceItems.map((m) => m.odo),
+    ...issuesItems.map((i) => i.odo),
+  ];
+
+  // Get the current odometer reading, which is the highest value
+  const currentOdo = odos.sort((a, b) => b - a).at(0);
+
   return {
     motorcycle: result,
     maintenance: maintenanceItems,
     issues: issuesItems,
+    currentOdo: currentOdo ?? result.initialOdo,
   };
 }
 
@@ -83,14 +94,23 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function Motorcycle({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, maintenance: maintenanceEntries, issues } = loaderData;
+  const {
+    motorcycle,
+    maintenance: maintenanceEntries,
+    issues,
+    currentOdo,
+  } = loaderData;
   const { id, make, model, vin } = motorcycle;
 
   return (
     <div className="grid gap-8 lg:grid-cols-5">
       <div className="lg:col-span-2 xl:col-span-2 space-y-8">
-        <MotorcycleInfo motorcycle={motorcycle} currentOdometer={0} />
-        <OpenIssuesCard motorcycle={motorcycle} issues={issues} />
+        <MotorcycleInfo motorcycle={motorcycle} currentOdometer={currentOdo} />
+        <OpenIssuesCard
+          motorcycle={motorcycle}
+          issues={issues}
+          currentOdometer={currentOdo}
+        />
       </div>
       <div className="lg:col-span-3 xl:col-span-3">
         <Card>
