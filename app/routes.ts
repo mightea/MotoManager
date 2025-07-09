@@ -10,7 +10,6 @@ export default [
     index("routes/home.tsx"),
     route("/settings", "routes/settings.tsx"),
 
-    route("/motorcycle/:motorcycleId/", "routes/motorcycle.tsx"),
-    route("/motorcycle/:motorcycleId/edit", "routes/edit-motorcycle.tsx"),
+    route("/motorcycle/:slug/:motorcycleId", "routes/motorcycle.tsx"),
   ]),
 ] satisfies RouteConfig;

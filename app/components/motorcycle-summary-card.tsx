@@ -4,6 +4,7 @@ import { getAgeInDays, getAgeText, nextInpectionDays } from "~/utils/dateUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Bike, DollarSign, Gauge, Wrench } from "lucide-react";
 import { InfoItem } from "./motorcycle-info";
+import { slug } from "~/utils/slugify";
 
 interface Props extends Motorcycle {}
 
@@ -27,7 +28,10 @@ export const MotorcycleSummaryCard = ({
   };
 
   return (
-    <Link to={`/motorcycle/${id}/`} className="group block">
+    <Link
+      to={`/motorcycle/${slug(`${make}-${model}`)}/${id}/`}
+      className="group block"
+    >
       <Card className="overflow-hidden h-full transition-all group-hover:shadow-lg group-hover:border-primary/50">
         {imageUrl ? (
           <div className="relative aspect-video bg-secondary">
