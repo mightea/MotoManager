@@ -33,9 +33,10 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import type { Issue, Motorcycle } from "~/db/schema";
 import { DatePicker } from "./ui/date-picker";
+import { Input } from "./ui/input";
 
 const issueSchema = z.object({
-  dateAdded: z.date({ required_error: "Ein Datum ist erforderlich." }),
+  date: z.date({ required_error: "Ein Datum ist erforderlich." }),
   description: z
     .string()
     .min(5, "Die Beschreibung muss mindestens 5 Zeichen haben.")
@@ -43,6 +44,7 @@ const issueSchema = z.object({
   priority: z.enum(["low", "medium", "high"], {
     required_error: "Priorität ist erforderlich.",
   }),
+  odo: z.number().min(0, "Der Kilometerstand muss positiv sein."),
 });
 
 type AddIssueDialogProps = {
@@ -67,42 +69,23 @@ export function AddIssueDialog({
     if (open) {
       if (isEditMode && issueToEdit) {
         form.reset({
-          dateAdded: new Date(issueToEdit.dateAdded),
+          date: new Date(issueToEdit.date),
           description: issueToEdit.description,
           priority: issueToEdit.priority,
+          odo: issueToEdit.odo,
         });
       } else {
         form.reset({
-          dateAdded: new Date(),
+          date: new Date(),
           description: "",
           priority: "medium",
+          odo: motorcycle.initialOdo ?? 0,
         });
       }
     }
   }, [open, isEditMode, issueToEdit, form]);
 
-  const onSubmit = (values: z.infer<typeof issueSchema>) => {
-    let updatedIssues: Issue[];
-
-    if (isEditMode && issueToEdit) {
-      updatedIssues =
-        motorcycle.issues?.map((issue) =>
-          issue.id === issueToEdit.id
-            ? { ...issue, ...values, dateAdded: values.dateAdded.toISOString() }
-            : issue
-        ) || [];
-    } else {
-      const newIssue: Issue = {
-        id: `issue-${Date.now()}-${Math.random()}`,
-        dateAdded: values.dateAdded.toISOString(),
-        description: values.description,
-        priority: values.priority,
-      };
-      updatedIssues = [...(motorcycle.issues || []), newIssue];
-    }
-
-    setOpen(false);
-  };
+  const currentOdometer = motorcycle.initialOdo ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -115,15 +98,14 @@ export function AddIssueDialog({
           <DialogDescription>
             {isEditMode
               ? "Aktualisiere die Details zu diesem Mangel."
-              : "Erfasse einen neuen Mangel für deine " +
-                motorcycle.make +
-                " " +
-                motorcycle.model +
-                "."}
+              : `Erfasse einen neuen Mangel für deine ${
+                  motorcycle?.make ?? ""
+                } ${motorcycle?.model ?? ""}.`}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form method="post" className="space-y-4">
+            <input type="hidden" name="motorcycleId" value={motorcycle.id} />
             <FormField
               control={form.control}
               name="description"
@@ -140,6 +122,7 @@ export function AddIssueDialog({
                 </FormItem>
               )}
             />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -148,6 +131,7 @@ export function AddIssueDialog({
                   <FormItem>
                     <FormLabel>Priorität</FormLabel>
                     <Select
+                      name={field.name}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
@@ -168,11 +152,31 @@ export function AddIssueDialog({
               />
               <FormField
                 control={form.control}
-                name="dateAdded"
+                name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Erfasst am</FormLabel>
                     <DatePicker value={field.value} onSelect={field.onChange} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="odo"
+                defaultValue={currentOdometer ?? "0"}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Aktueller Kilometerstand</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Kilometerstand"
+                        {...field}
+                        className="input"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -186,7 +190,7 @@ export function AddIssueDialog({
               >
                 Abbrechen
               </Button>
-              <Button type="submit">
+              <Button type="submit" name="intent" value="issue-add">
                 {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
               </Button>
             </DialogFooter>

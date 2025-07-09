@@ -23,6 +23,8 @@ export const motorcycles = sqliteTable("motorcycle", {
   vin: text().notNull(),
   vehicleIdNr: text().notNull(),
 
+  image: text(),
+
   isVeteran: integer("is_veteran", { mode: "boolean" })
     .notNull()
     .default(false),
@@ -110,6 +112,10 @@ export const issues = sqliteTable("issues", {
     .references(() => motorcycles.id),
   odo: integer("odo").notNull(),
   description: text("description").notNull(),
+  priority: text("priority", { enum: ["low", "medium", "high"] })
+    .notNull()
+    .default("medium"),
+  date: text("date").notNull(), // SQLite DATE stored as TEXT
   ...timestamps,
 });
 

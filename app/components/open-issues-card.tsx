@@ -31,7 +31,8 @@ import {
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Badge } from "~/components/ui/badge";
-import type { Issue } from "~/db/schema";
+import type { Issue, Motorcycle } from "~/db/schema";
+import { useFetcher } from "react-router";
 
 const priorityConfig = {
   high: {
@@ -54,12 +55,21 @@ const priorityConfig = {
   },
 } as const;
 
-export function OpenIssuesCard({ motorcycle }: { motorcycle: Motorcycle }) {
-  const handleDeleteIssue = (issueId: number) => {
-    //updateMotorcycle({ ...motorcycle, issues: updatedIssues });
-  };
+export function OpenIssuesCard({
+  motorcycle,
+  issues,
+}: {
+  motorcycle: Motorcycle;
+  issues: Issue[];
+}) {
+  let fetcher = useFetcher();
 
-  const issues: Issue[] = [];
+  const handleDeleteIssue = (issueId: number) => {
+    fetcher.submit(
+      { intent: "issue-delete", issueId: issueId.toString() },
+      { method: "post" }
+    );
+  };
 
   return (
     <Card>
@@ -75,8 +85,7 @@ export function OpenIssuesCard({ motorcycle }: { motorcycle: Motorcycle }) {
         </div>
         {issues.length > 0 && (
           <CardDescription>
-            `Verfolge und verwalte offene Probleme mit deiner $
-            {motorcycle.model}.`
+            {`Verfolge und verwalte offene Probleme mit deiner ${motorcycle.model}.`}
           </CardDescription>
         )}
       </CardHeader>
@@ -149,10 +158,10 @@ export function OpenIssuesCard({ motorcycle }: { motorcycle: Motorcycle }) {
                       <Badge variant={config.variant}>{config.label}</Badge>
                       <span>·</span>
                       <span>
-                        Erfasst am{" "}
-                        {format(new Date(issue.created_at), "d. MMM yyyy", {
+                        {`Erfasst am
+                        ${format(new Date(issue.date), "dd.MM.yyyy", {
                           locale: de,
-                        })}
+                        })}`}
                       </span>
                     </div>
                   </div>

@@ -11,6 +11,8 @@ import {
 } from "./ui/card";
 import { AddMotorcycleDialog } from "./add-motorcycle-dialog";
 import { Button } from "./ui/button";
+import { format } from "date-fns/format";
+import { de } from "date-fns/locale/de";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
@@ -75,14 +77,24 @@ export default function MotorcycleInfo({
             </Button>
           </AddMotorcycleDialog>
         </div>
-      </CardHeader>{" "}
+      </CardHeader>
       <CardContent className="space-y-4 pt-2">
-        <InfoItem icon={CalendarDays} label="Letzte Inspektion" value={""} />
-        <InfoItem icon={Gauge} label="Initial Odometer" value={""} />
+        <InfoItem
+          icon={CalendarDays}
+          label="Letzte Inspektion"
+          value={format(new Date(motorcycle.lastInspection), "d. MMMM yyyy", {
+            locale: de,
+          })}
+        />
+        <InfoItem
+          icon={Gauge}
+          label="Km dieses Jahr"
+          value={`${currentOdometer.toLocaleString("de-DE")} km`}
+        />
         <InfoItem
           icon={Wrench}
-          label="Current Odometer"
-          value={`${currentOdometer.toLocaleString()} mi`}
+          label="Akt. Kilometerstand"
+          value={`${currentOdometer.toLocaleString("de-DE")} km`}
         />
       </CardContent>
     </Card>

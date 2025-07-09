@@ -15,8 +15,15 @@ type DatePickerProps = {
 };
 
 export function DatePicker({ value, onSelect, className }: DatePickerProps) {
+  console.log("DatePicker rendered with value:", value);
   return (
     <Popover>
+      <input
+        type="hidden"
+        name="date"
+        value={value ? value.toISOString() : ""}
+      />
+
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
