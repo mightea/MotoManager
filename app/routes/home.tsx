@@ -47,38 +47,43 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div>
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold font-headline text-primary">
-          Alle Motorräder
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Eine Übersicht deiner gesamten Sammlung.
-        </p>
-      </header>
-      {motorcycles.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {motorcycles.map((moto) => (
-            <MotorcycleSummaryCard key={moto.id} {...moto} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 border-2 border-dashed rounded-lg">
-          <Bike className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h2 className="mt-4 text-2xl font-semibold">Noch keine Motorräder</h2>
-          <p className="mt-2 text-muted-foreground">
-            Füge dein erstes Motorrad hinzu, um loszulegen.
+    <>
+      <title>MotoManager</title>
+      <div>
+        <header className="mb-8">
+          <h1 className="text-4xl font-bold font-headline text-primary">
+            Alle Motorräder
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Eine Übersicht deiner gesamten Sammlung.
           </p>
-          <div className="mt-6">
-            <AddMotorcycleDialog onMotorcycleAdded={handleMotorcycleAdded}>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad
-                hinzufügen
-              </Button>
-            </AddMotorcycleDialog>
+        </header>
+        {motorcycles.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {motorcycles.map((moto) => (
+              <MotorcycleSummaryCard key={moto.id} {...moto} />
+            ))}
           </div>
-        </div>
-      )}{" "}
-    </div>
+        ) : (
+          <div className="text-center py-16 border-2 border-dashed rounded-lg">
+            <Bike className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h2 className="mt-4 text-2xl font-semibold">
+              Noch keine Motorräder
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Füge dein erstes Motorrad hinzu, um loszulegen.
+            </p>
+            <div className="mt-6">
+              <AddMotorcycleDialog onMotorcycleAdded={handleMotorcycleAdded}>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad
+                  hinzufügen
+                </Button>
+              </AddMotorcycleDialog>
+            </div>
+          </div>
+        )}{" "}
+      </div>
+    </>
   );
 }

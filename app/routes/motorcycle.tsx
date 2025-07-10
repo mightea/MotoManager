@@ -100,35 +100,41 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     issues,
     currentOdo,
   } = loaderData;
-  const { id, make, model, vin } = motorcycle;
+  const { make, model } = motorcycle;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-5">
-      <div className="lg:col-span-2 xl:col-span-2 space-y-8">
-        <MotorcycleInfo motorcycle={motorcycle} currentOdometer={currentOdo} />
-        <OpenIssuesCard
-          motorcycle={motorcycle}
-          issues={issues}
-          currentOdometer={currentOdo}
-        />
+    <>
+      <title>{`${make} ${model} - MotoManager`}</title>
+      <div className="grid gap-8 lg:grid-cols-5">
+        <div className="lg:col-span-2 xl:col-span-2 space-y-8">
+          <MotorcycleInfo
+            motorcycle={motorcycle}
+            currentOdometer={currentOdo}
+          />
+          <OpenIssuesCard
+            motorcycle={motorcycle}
+            issues={issues}
+            currentOdometer={currentOdo}
+          />
+        </div>
+        <div className="lg:col-span-3 xl:col-span-3">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <CardTitle className="text-2xl">Wartungsprotokoll</CardTitle>
+                {/* <AddMaintenanceLogDialog motorcycle={selectedMotorcycle}> */}
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Eintrag hinzufügen
+                </Button>
+                {/* </AddMaintenanceLogDialog> */}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <MaintenanceLogTable logs={maintenanceEntries} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
-      <div className="lg:col-span-3 xl:col-span-3">
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <CardTitle className="text-2xl">Wartungsprotokoll</CardTitle>
-              {/* <AddMaintenanceLogDialog motorcycle={selectedMotorcycle}> */}
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Eintrag hinzufügen
-              </Button>
-              {/* </AddMaintenanceLogDialog> */}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <MaintenanceLogTable logs={maintenanceEntries} />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </>
   );
 }
