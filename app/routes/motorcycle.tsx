@@ -4,10 +4,12 @@ import {
   issues,
   maintenance,
   motorcycles,
+  type EditorIssue,
+  type Issue,
   type Motorcycle,
   type NewIssue,
 } from "~/db/schema";
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import MaintenanceLogTable from "~/components/maintenance-log-table";
@@ -83,6 +85,24 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const result = await db.insert(issues).values(newIssue);
     console.log(result);
+  }
+
+  if (intent === "issue-edit") {
+    const editIssue: EditorIssue = {
+      id: Number.parseInt(data.issueId as string),
+      description: data.description as string,
+      priority: data.priority as "low" | "medium" | "high",
+      motorcycleId: Number.parseInt(params.motorcycleId),
+      odo: Number.parseInt(data.odo as string),
+      date: data.date as string,
+    };
+
+    console.log("Editing issue:", editIssue);
+
+    await db
+      .update(issues)
+      .set(editIssue)
+      .where(eq(issues.id, Number.parseInt(data.issueId as string)));
   }
 
   if (intent === "issue-delete") {

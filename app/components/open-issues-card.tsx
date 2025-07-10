@@ -42,10 +42,10 @@ const priorityConfig = {
     color: "text-destructive",
   },
   medium: {
-    variant: "secondary",
+    variant: "warning",
     label: "Mittel",
     Icon: AlertTriangle,
-    color: "text-yellow-500",
+    color: "text-warning",
   },
   low: {
     variant: "outline",

@@ -106,6 +106,7 @@ export function AddIssueDialog({
         <Form {...form}>
           <form method="post" className="space-y-4">
             <input type="hidden" name="motorcycleId" value={motorcycle.id} />
+            <input type="hidden" name="issueId" value={issueToEdit?.id ?? ""} />
             <FormField
               control={form.control}
               name="description"
@@ -190,7 +191,11 @@ export function AddIssueDialog({
               >
                 Abbrechen
               </Button>
-              <Button type="submit" name="intent" value="issue-add">
+              <Button
+                type="submit"
+                name="intent"
+                value={isEditMode ? "issue-edit" : "issue-add"}
+              >
                 {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
               </Button>
             </DialogFooter>
