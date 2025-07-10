@@ -15,6 +15,8 @@ import {
   ShieldAlert,
   AlertTriangle,
   Info,
+  CircleCheck,
+  Wrench,
 } from "lucide-react";
 import { AddIssueDialog } from "./add-issue-dialog";
 import {
@@ -58,19 +60,21 @@ const priorityConfig = {
 export function OpenIssuesCard({
   motorcycle,
   issues,
+  currentOdometer,
 }: {
   motorcycle: Motorcycle;
   issues: Issue[];
   currentOdometer: number;
 }) {
-  let fetcher = useFetcher();
-
-  const handleDeleteIssue = (issueId: number) => {
-    fetcher.submit(
-      { intent: "issue-delete", issueId: issueId.toString() },
-      { method: "post" }
-    );
-  };
+  const statusConfig = {
+    open: { label: "Offen", Icon: AlertTriangle, variant: "outline" },
+    in_progress: {
+      label: "In Bearbeitung",
+      Icon: Wrench,
+      variant: "secondary",
+    },
+    done: { label: "Erledigt", Icon: CircleCheck, variant: "default" },
+  } as const;
 
   return (
     <Card>
@@ -94,14 +98,17 @@ export function OpenIssuesCard({
         {issues.length > 0 ? (
           <div className="space-y-4">
             {issues.map((issue) => {
-              const config = priorityConfig[issue.priority];
+              const priorityConf = priorityConfig[issue.priority];
+              const statusConf = statusConfig[issue.status];
+              const odoDiff = issue.odo ? currentOdometer - issue.odo : null;
+
               return (
                 <div
                   key={issue.id}
                   className="flex items-start gap-4 p-3 border rounded-lg bg-muted/50"
                 >
-                  <config.Icon
-                    className={`h-5 w-5 mt-1 shrink-0 ${config.color}`}
+                  <priorityConf.Icon
+                    className={`h-5 w-5 mt-1 shrink-0 ${priorityConf.color}`}
                   />
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
@@ -121,49 +128,24 @@ export function OpenIssuesCard({
                             <Edit className="h-4 w-4" />
                           </Button>
                         </AddIssueDialog>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive/70 hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Mangel wirklich löschen?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Diese Aktion kann nicht rückgängig gemacht
-                                werden. Dadurch wird der Mangel dauerhaft aus
-                                deinen Aufzeichnungen entfernt.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteIssue(issue.id)}
-                                className="bg-destructive hover:bg-destructive/90"
-                              >
-                                Löschen
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Badge variant={config.variant}>{config.label}</Badge>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1 flex-wrap">
+                      <Badge variant={statusConf.variant}>
+                        {statusConf.label}
+                      </Badge>
                       <span>·</span>
                       <span>
-                        {`Erfasst am
-                        ${format(new Date(issue.date), "dd.MM.yyyy", {
+                        {format(new Date(issue.date), "d. MMM yyyy", {
                           locale: de,
-                        })}`}
+                        })}
                       </span>
+                      {odoDiff !== null && odoDiff >= 0 && (
+                        <>
+                          <span>·</span>
+                          <span>Seit {odoDiff.toLocaleString("de-CH")} km</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -115,6 +115,9 @@ export const issues = sqliteTable("issues", {
   priority: text("priority", { enum: ["low", "medium", "high"] })
     .notNull()
     .default("medium"),
+  status: text("status", { enum: ["open", "in_progress", "done"] })
+    .notNull()
+    .default("open"),
   date: text("date").notNull(), // SQLite DATE stored as TEXT
   ...timestamps,
 });

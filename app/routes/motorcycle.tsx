@@ -76,6 +76,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       //: new Date(data.dateAdded as string),
       description: data.description as string,
       priority: data.priority as "low" | "medium" | "high",
+      status: data.status as "open" | "in_progress" | "done",
       motorcycleId: Number.parseInt(params.motorcycleId),
       odo: Number.parseInt(data.odo as string),
       date: data.date as string,
@@ -92,6 +93,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       id: Number.parseInt(data.issueId as string),
       description: data.description as string,
       priority: data.priority as "low" | "medium" | "high",
+      status: data.status as "open" | "in_progress" | "done",
+
       motorcycleId: Number.parseInt(params.motorcycleId),
       odo: Number.parseInt(data.odo as string),
       date: data.date as string,

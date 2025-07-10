@@ -34,6 +34,19 @@ import { Textarea } from "~/components/ui/textarea";
 import type { Issue, Motorcycle } from "~/db/schema";
 import { DatePicker } from "./ui/date-picker";
 import { Input } from "./ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
+import { Trash2 } from "lucide-react";
+import { useFetcher } from "react-router";
 
 const issueSchema = z.object({
   date: z.date({ required_error: "Ein Datum ist erforderlich." }),
@@ -45,6 +58,9 @@ const issueSchema = z.object({
     required_error: "Priorität ist erforderlich.",
   }),
   odo: z.number().min(0, "Der Kilometerstand muss positiv sein."),
+  status: z.enum(["open", "in_progress", "done"], {
+    required_error: "Status ist erforderlich.",
+  }),
 });
 
 type AddIssueDialogProps = {
@@ -65,6 +81,17 @@ export function AddIssueDialog({
     resolver: zodResolver(issueSchema),
   });
 
+  let fetcher = useFetcher();
+
+  const handleDelete = () => {
+    fetcher.submit(
+      { intent: "issue-delete", issueId: issueToEdit?.id ?? "" },
+      { method: "post" }
+    );
+
+    setOpen(false);
+  };
+
   useEffect(() => {
     if (open) {
       if (isEditMode && issueToEdit) {
@@ -72,6 +99,7 @@ export function AddIssueDialog({
           date: new Date(issueToEdit.date),
           description: issueToEdit.description,
           priority: issueToEdit.priority,
+          status: issueToEdit.status,
           odo: issueToEdit.odo,
         });
       } else {
@@ -79,6 +107,7 @@ export function AddIssueDialog({
           date: new Date(),
           description: "",
           priority: "medium",
+          status: "open",
           odo: motorcycle.initialOdo ?? 0,
         });
       }
@@ -153,10 +182,40 @@ export function AddIssueDialog({
               />
               <FormField
                 control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      name={field.name}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Status wählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="open">Offen</SelectItem>
+                        <SelectItem value="in_progress">
+                          In Bearbeitung
+                        </SelectItem>
+                        <SelectItem value="done">Erledigt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="date"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Erfasst am</FormLabel>
+                    <FormLabel>Datum</FormLabel>
                     <DatePicker value={field.value} onSelect={field.onChange} />
                     <FormMessage />
                   </FormItem>
@@ -169,7 +228,7 @@ export function AddIssueDialog({
                 defaultValue={currentOdometer ?? "0"}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Aktueller Kilometerstand</FormLabel>
+                    <FormLabel>Kilometerstand</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -184,6 +243,41 @@ export function AddIssueDialog({
               />
             </div>
             <DialogFooter>
+              {isEditMode && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="sm:mr-auto"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Löschen
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Mangel wirklich löschen?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Diese Aktion kann nicht rückgängig gemacht werden.
+                        Dadurch wird der Mangel dauerhaft aus deinen
+                        Aufzeichnungen entfernt.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Löschen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
               <Button
                 type="button"
                 variant="outline"
