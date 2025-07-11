@@ -13,6 +13,7 @@ import { AddMotorcycleDialog } from "./add-motorcycle-dialog";
 import { Button } from "./ui/button";
 import { format } from "date-fns/format";
 import { de } from "date-fns/locale/de";
+import { cn } from "~/utils/tw";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
@@ -23,19 +24,17 @@ export const InfoItem = ({
   icon: Icon,
   label,
   value,
+  className,
 }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
+  className?: string;
 }) => (
-  <div className="flex items-center gap-4">
-    <div className="bg-secondary p-2 rounded-lg">
-      <Icon className="h-5 w-5 text-secondary-foreground" />
-    </div>
-    <div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="font-semibold text-base">{value}</p>
-    </div>
+  <div className={cn("flex items-center gap-3 text-sm", className)}>
+    <Icon className="h-4 w-4 text-muted-foreground" />
+    <span className="text-muted-foreground">{label}:</span>
+    <span className="font-semibold text-foreground ml-auto">{value}</span>
   </div>
 );
 

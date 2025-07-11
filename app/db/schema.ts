@@ -1,5 +1,13 @@
-import { int, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  int,
+  integer,
+  real,
+  sqliteTable,
+  sqliteView,
+  text,
+} from "drizzle-orm/sqlite-core";
 import { timestamps } from "./columns.helpers";
+import { sql } from "drizzle-orm";
 
 export const locations = sqliteTable("locations", {
   id: int().primaryKey({ autoIncrement: true }),

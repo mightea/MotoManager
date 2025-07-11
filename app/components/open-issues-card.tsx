@@ -76,8 +76,10 @@ export function OpenIssuesCard({
     done: { label: "Erledigt", Icon: CircleCheck, variant: "default" },
   } as const;
 
+  const openIssues = (issues || []).filter((issue) => issue.status !== "done");
+
   return (
-    <Card>
+    <Card className="border-muted-foreground">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Offene Mängel</CardTitle>
@@ -95,9 +97,9 @@ export function OpenIssuesCard({
         )}
       </CardHeader>
       <CardContent>
-        {issues.length > 0 ? (
+        {openIssues.length > 0 ? (
           <div className="space-y-4">
-            {issues.map((issue) => {
+            {openIssues.map((issue) => {
               const priorityConf = priorityConfig[issue.priority];
               const statusConf = statusConfig[issue.status];
               const odoDiff = issue.odo ? currentOdometer - issue.odo : null;
@@ -105,7 +107,7 @@ export function OpenIssuesCard({
               return (
                 <div
                   key={issue.id}
-                  className="flex items-start gap-4 p-3 border rounded-lg bg-muted/50"
+                  className="flex items-start gap-4 p-3 border border-muted-foreground rounded-lg bg-muted/50"
                 >
                   <priorityConf.Icon
                     className={`h-5 w-5 mt-1 shrink-0 ${priorityConf.color}`}

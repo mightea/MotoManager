@@ -8,6 +8,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
+import { Wrench, Droplets, Replace, ShieldCheck } from "lucide-react";
+
+import type { ReactElement } from "react";
 
 interface MaintenanceLogTableProps {
   logs: Maintenance[];
@@ -20,11 +23,24 @@ const LogTypeBadges: Record<Maintenance["type"], string> = {
   brake_fluid_change: "Bremsflüssigkeit",
 };
 
+const getIcon = (item: Maintenance): ReactElement => {
+  switch (item.type) {
+    case "oil_change":
+      return <Droplets className="h-5 w-5 text-secondary-foreground" />;
+    case "tire_change":
+      return <Replace className="h-5 w-5 text-secondary-foreground" />;
+    case "brake_fluid_change":
+      return <ShieldCheck className="h-5 w-5 text-secondary-foreground" />;
+    default:
+      return <Wrench className="h-5 w-5 text-secondary-foreground" />;
+  }
+};
+
 export default function MaintenanceLogTable({
   logs,
 }: MaintenanceLogTableProps) {
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("de-DE", {
+    return new Intl.NumberFormat("de-CH", {
       style: "currency",
       currency,
     }).format(amount);
@@ -40,38 +56,52 @@ export default function MaintenanceLogTable({
 
   return (
     <Accordion type="single" collapsible className="w-full">
-      {logs.map((log) => (
-        <AccordionItem value={log.id.toString()} key={log.id}>
-          <AccordionTrigger className="py-4 text-left hover:no-underline">
-            <div className="flex w-full items-center justify-between gap-4">
-              <div className="flex flex-1 items-center gap-4">
-                <span className="w-36 text-left text-sm font-medium">
-                  {format(new Date(log.date), "d. MMMM yyyy", { locale: de })}
-                </span>
-                <Badge variant="secondary" className="text-sm">
-                  {LogTypeBadges[log.type]}
-                </Badge>
-              </div>
-              <p className="font-semibold text-base whitespace-nowrap">
-                {log.odo.toLocaleString("de-DE")} km
-              </p>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-3 border-t pt-4 mt-2">
-              <p className="text-sm text-foreground leading-relaxed">
-                {log.description}
-              </p>
-              <div className="flex justify-between text-sm pt-2">
-                <p className="text-muted-foreground">Kosten</p>
-                <p className="font-medium">
-                  {formatCurrency(log.cost, log.currency)}
+      {logs.map((log) => {
+        return (
+          <AccordionItem value={log.id.toString()} key={log.id}>
+            <AccordionTrigger className="py-4 text-left hover:no-underline">
+              <div className="flex w-full items-center justify-between gap-4">
+                <div className="flex flex-1 items-center gap-4 overflow-hidden">
+                  <div className="bg-secondary p-2 rounded-md">
+                    {getIcon(log)}
+                  </div>
+                  <div className="flex flex-col items-start overflow-hidden">
+                    <span className="text-left text-sm font-medium">
+                      {format(new Date(log.date), "d. MMMM yyyy", {
+                        locale: de,
+                      })}
+                    </span>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {log.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1 text-right">
+                  <p className="font-semibold text-base whitespace-nowrap">
+                    {log.odo.toLocaleString("de-CH")} km
+                  </p>
+                  <Badge variant="secondary" className="text-xs mt-1">
+                    {LogTypeBadges[log.type]}
+                  </Badge>
+                </div>
+              </div>{" "}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 pt-4 mt-2 ml-14">
+                <p className="text-sm text-foreground leading-relaxed">
+                  {log.description}
                 </p>
+                <div className="flex justify-between text-sm pt-2">
+                  <p className="text-muted-foreground">Kosten</p>
+                  <p className="font-medium">
+                    {formatCurrency(log.cost, log.currency)}
+                  </p>
+                </div>
               </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
     </Accordion>
   );
 }
