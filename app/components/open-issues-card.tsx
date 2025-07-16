@@ -11,7 +11,6 @@ import { Button } from "~/components/ui/button";
 import {
   PlusCircle,
   Edit,
-  Trash2,
   ShieldAlert,
   AlertTriangle,
   Info,
@@ -19,22 +18,10 @@ import {
   Wrench,
 } from "lucide-react";
 import { AddIssueDialog } from "./add-issue-dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Badge } from "~/components/ui/badge";
 import type { Issue, Motorcycle } from "~/db/schema";
-import { useFetcher } from "react-router";
 
 const priorityConfig = {
   high: {
@@ -81,11 +68,14 @@ export function OpenIssuesCard({
   return (
     <Card className="border-muted-foreground">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-2">
           <CardTitle>Offene Mängel</CardTitle>
-          <AddIssueDialog motorcycle={motorcycle}>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
+          <AddIssueDialog
+            motorcycle={motorcycle}
+            currentOdometer={currentOdometer}
+          >
+            <Button className="self-end" variant="outline">
+              <PlusCircle className="h-4 w-4" />
               Mangel hinzufügen
             </Button>
           </AddIssueDialog>

@@ -67,12 +67,14 @@ type AddIssueDialogProps = {
   children: ReactNode;
   motorcycle: Motorcycle;
   issueToEdit?: Issue;
+  currentOdometer: number;
 };
 
 export function AddIssueDialog({
   children,
   motorcycle,
   issueToEdit,
+  currentOdometer,
 }: AddIssueDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!issueToEdit;
@@ -108,13 +110,11 @@ export function AddIssueDialog({
           description: "",
           priority: "medium",
           status: "open",
-          odo: motorcycle.initialOdo ?? 0,
+          odo: currentOdometer,
         });
       }
     }
   }, [open, isEditMode, issueToEdit, form]);
-
-  const currentOdometer = motorcycle.initialOdo ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -225,7 +225,6 @@ export function AddIssueDialog({
               <FormField
                 control={form.control}
                 name="odo"
-                defaultValue={currentOdometer ?? "0"}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Kilometerstand</FormLabel>

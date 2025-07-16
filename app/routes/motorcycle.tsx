@@ -6,8 +6,10 @@ import {
   motorcycles,
   type EditorIssue,
   type EditorMotorcycle,
+  type MaintenanceType,
   type Motorcycle,
   type NewIssue,
+  type NewMaintenance,
 } from "~/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
@@ -16,6 +18,7 @@ import MaintenanceLogTable from "~/components/maintenance-log-table";
 import { OpenIssuesCard } from "~/components/open-issues-card";
 import { Button } from "~/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -116,7 +119,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "motorcycle-edit") {
-    console.log(data);
     const editMotorcycle: EditorMotorcycle = {
       id: Number.parseInt(data.motorcycleId as string),
       model: data.model as string,
@@ -139,6 +141,31 @@ export async function action({ request, params }: Route.ActionArgs) {
       .update(motorcycles)
       .set(editMotorcycle)
       .where(eq(motorcycles.id, Number.parseInt(data.motorcycleId as string)));
+  }
+
+  if (intent === "maintenance-add") {
+    console.log(data);
+
+    const type: MaintenanceType = data.type as MaintenanceType;
+
+    const newMaintenance: NewMaintenance = {
+      type,
+      date: data.date as string,
+      description: data.description as string,
+      odo: Number.parseInt(data.odometer as string),
+      cost: Number.parseFloat(data.cost as string),
+      currency: "CHF",
+      motorcycleId: Number.parseInt(params.motorcycleId),
+    };
+
+    console.log("Adding Maintenance Item:", newMaintenance);
+
+    const item = await db
+      .insert(maintenance)
+      .values(newMaintenance)
+      .returning();
+
+    console.log("Inserted Maintenance Item:", item);
   }
 }
 
@@ -171,11 +198,15 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <CardTitle className="text-2xl">Wartungsprotokoll</CardTitle>
-                {/* <AddMaintenanceLogDialog motorcycle={selectedMotorcycle}> */}
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Eintrag hinzufügen
-                </Button>
-                {/* </AddMaintenanceLogDialog> */}
+                <AddMaintenanceLogDialog
+                  motorcycle={motorcycle}
+                  currentOdometer={currentOdo}
+                >
+                  <Button>
+                    <PlusCircle className="h-4 w-4" />
+                    Eintrag hinzufügen
+                  </Button>
+                </AddMaintenanceLogDialog>
               </div>
             </CardHeader>
             <CardContent>

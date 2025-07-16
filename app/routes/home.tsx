@@ -103,12 +103,22 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <title>MotoManager</title>
       <div>
         <header className="mb-8">
-          <h1 className="text-4xl font-bold font-headline text-primary">
-            Alle Motorräder
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Eine Übersicht deiner gesamten Sammlung.
-          </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-bold font-headline text-primary">
+                Alle Motorräder
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Eine Übersicht deiner gesamten Sammlung.
+              </p>
+            </div>
+            <AddMotorcycleDialog>
+              <Button variant="outline">
+                <PlusCircle className="h-4 w-4" />
+                Motorrad hinzufügen
+              </Button>
+            </AddMotorcycleDialog>
+          </div>
         </header>
         {motorcycles.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

@@ -47,14 +47,13 @@ export const motorcycles = sqliteTable("motorcycle", {
 export type MaintenanceType =
   | "tire"
   | "battery"
-  | "engineoil"
-  | "gearboxoil"
-  | "forkoil"
-  | "breakfluid"
   | "brakepad"
   | "chain"
   | "brakerotor"
+  | "fluid"
   | "other";
+
+export type FluidType = "engineoil" | "gearboxoil" | "forkoil" | "breakfluid";
 
 // 2) Shared “maintenance” table
 export const maintenance = sqliteTable("maintenance_record", {
@@ -67,7 +66,7 @@ export const maintenance = sqliteTable("maintenance_record", {
   cost: real("cost").notNull(), // decimal‐friendly REAL column
   currency: text("currency").notNull(), // e.g. "CHF", "EUR", "USD"
   description: text("description"), // optional notes
-  type: text("type").notNull(), // discriminator
+  type: text("type").notNull().$type<MaintenanceType>(), // discriminator
 });
 
 export type TirePosition = "front" | "rear" | "sidecar";
@@ -99,7 +98,7 @@ export const maintenanceFluids = sqliteTable("maintenance_fluid", {
     .primaryKey()
     .references(() => maintenance.id),
   brand: text("brand").notNull(),
-  type: text("fluid_type").notNull().$type<MaintenanceType>(), // TS‐only safety
+  type: text("fluid_type").notNull().$type<FluidType>(), // TS‐only safety
   viscosity: text("viscosity"), // e.g. "10W40"
 });
 
@@ -137,6 +136,8 @@ export type NewMotorcycle = typeof motorcycles.$inferInsert;
 export type EditorMotorcycle = Partial<NewMotorcycle>;
 
 export type Maintenance = typeof maintenance.$inferSelect;
+export type NewMaintenance = typeof maintenance.$inferInsert;
+export type EditMaintenance = Partial<NewMaintenance>;
 
 export type Issue = typeof issues.$inferSelect;
 export type NewIssue = typeof issues.$inferInsert;

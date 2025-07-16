@@ -7,12 +7,6 @@ import { AddMotorcycleDialog } from "./add-motorcycle-dialog";
 import { Button } from "./ui/button";
 
 export function Header() {
-  const searchParams = useSearchParams();
-
-  const handleMotorcycleAdded = (id: string) => {
-    //router.push(`/?motoId=${id}`, { scroll: false });
-  };
-
   return (
     <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
       <div className="container mx-auto flex items-center p-4 h-20">
@@ -26,11 +20,6 @@ export function Header() {
         <div className="flex w-full items-center gap-2">
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
-            <AddMotorcycleDialog onMotorcycleAdded={handleMotorcycleAdded}>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Hinzufügen
-              </Button>
-            </AddMotorcycleDialog>
           </div>
         </div>
       </div>
