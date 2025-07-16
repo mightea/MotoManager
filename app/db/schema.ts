@@ -1,13 +1,5 @@
-import {
-  int,
-  integer,
-  real,
-  sqliteTable,
-  sqliteView,
-  text,
-} from "drizzle-orm/sqlite-core";
+import { int, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { timestamps } from "./columns.helpers";
-import { sql } from "drizzle-orm";
 
 export const locations = sqliteTable("locations", {
   id: int().primaryKey({ autoIncrement: true }),
@@ -27,13 +19,18 @@ export const motorcycles = sqliteTable("motorcycle", {
   id: int().primaryKey({ autoIncrement: true }),
   make: text().notNull(),
   model: text().notNull(),
+  modelYear: int().notNull().default(new Date().getFullYear()), // e.g. 2023
 
   vin: text().notNull(),
   vehicleIdNr: text().notNull(),
+  numberPlate: text().notNull(),
 
   image: text(),
 
   isVeteran: integer("is_veteran", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  isArchived: integer("is_archived", { mode: "boolean" })
     .notNull()
     .default(false),
 
@@ -41,6 +38,8 @@ export const motorcycles = sqliteTable("motorcycle", {
   lastInspection: text(),
 
   initialOdo: int().notNull().default(0),
+  purchaseDate: text().notNull(), // SQLite DATE stored as TEXT
+  purchasePrice: real().notNull(), // decimal‐friendly REAL column
 
   ...timestamps,
 });

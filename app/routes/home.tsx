@@ -12,6 +12,8 @@ type MotorcycleData = {
   model: string;
   make: string;
 
+  modelYear: number;
+
   numberOfIssues: number;
   odometer: number;
   odometerThisYear: number;
@@ -124,7 +126,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               Füge dein erstes Motorrad hinzu, um loszulegen.
             </p>
             <div className="mt-6">
-              <AddMotorcycleDialog onMotorcycleAdded={handleMotorcycleAdded}>
+              <AddMotorcycleDialog>
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad
                   hinzufügen

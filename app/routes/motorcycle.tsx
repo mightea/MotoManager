@@ -5,11 +5,11 @@ import {
   maintenance,
   motorcycles,
   type EditorIssue,
-  type Issue,
+  type EditorMotorcycle,
   type Motorcycle,
   type NewIssue,
 } from "~/db/schema";
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import MaintenanceLogTable from "~/components/maintenance-log-table";
@@ -113,6 +113,32 @@ export async function action({ request, params }: Route.ActionArgs) {
     await db
       .delete(issues)
       .where(eq(issues.id, Number.parseInt(data.issueId as string)));
+  }
+
+  if (intent === "motorcycle-edit") {
+    console.log(data);
+    const editMotorcycle: EditorMotorcycle = {
+      id: Number.parseInt(data.motorcycleId as string),
+      model: data.model as string,
+      make: data.make as string,
+      modelYear: Number.parseInt(data.modelYear as string),
+      isVeteran: Boolean(data.isVeteran),
+      firstRegistration: data.firstRegistration as string,
+      purchaseDate: data.purchaseDate as string,
+      purchasePrice: Number.parseFloat(data.purchasePrice as string),
+      lastInspection: data.lastInspection as string,
+      vehicleIdNr: data.vehicleIdNr as string,
+      vin: data.vin as string,
+      numberPlate: data.numberPlate as string,
+      initialOdo: Number.parseInt(data.initialOdo as string),
+    };
+
+    console.log("Editing motorcycle:", editMotorcycle);
+
+    await db
+      .update(motorcycles)
+      .set(editMotorcycle)
+      .where(eq(motorcycles.id, Number.parseInt(data.motorcycleId as string)));
   }
 }
 

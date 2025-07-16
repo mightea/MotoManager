@@ -8,14 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import {
-  Award,
-  Bike,
-  DollarSign,
-  Gauge,
-  RulerDimensionLine,
-  Wrench,
-} from "lucide-react";
+import { Award, Bike, Gauge, RulerDimensionLine, Wrench } from "lucide-react";
 import { InfoItem } from "./motorcycle-info";
 import { slug } from "~/utils/slugify";
 import { Badge } from "./ui/badge";
@@ -25,10 +18,9 @@ interface Props {
   id: string;
   make: string;
   model: string;
+  modelYear: number;
   odometer: number;
   odometerThisYear: number;
-  firstRegistration: string;
-  lastInspection: string | null;
   isVeteran: boolean;
   numberOfIssues: number;
 }
@@ -37,10 +29,9 @@ export const MotorcycleSummaryCard = ({
   id,
   make,
   model,
+  modelYear,
   odometer,
   odometerThisYear,
-  firstRegistration,
-  lastInspection,
   isVeteran,
   numberOfIssues,
 }: Props) => {
@@ -70,6 +61,7 @@ export const MotorcycleSummaryCard = ({
             {make} {model}
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
+            <p>{modelYear}</p>
             {isVeteran && (
               <Badge
                 variant="outline"

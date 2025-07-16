@@ -32,7 +32,6 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import type { Issue, Motorcycle } from "~/db/schema";
-import { DatePicker } from "./ui/date-picker";
 import { Input } from "./ui/input";
 import {
   AlertDialog,
@@ -47,9 +46,10 @@ import {
 } from "./ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 import { useFetcher } from "react-router";
+import { dateInputString } from "~/utils/dateUtils";
 
 const issueSchema = z.object({
-  date: z.date({ required_error: "Ein Datum ist erforderlich." }),
+  date: z.string({ required_error: "Ein Datum ist erforderlich." }),
   description: z
     .string()
     .min(5, "Die Beschreibung muss mindestens 5 Zeichen haben.")
@@ -96,7 +96,7 @@ export function AddIssueDialog({
     if (open) {
       if (isEditMode && issueToEdit) {
         form.reset({
-          date: new Date(issueToEdit.date),
+          date: dateInputString(issueToEdit.date),
           description: issueToEdit.description,
           priority: issueToEdit.priority,
           status: issueToEdit.status,
@@ -104,7 +104,7 @@ export function AddIssueDialog({
         });
       } else {
         form.reset({
-          date: new Date(),
+          date: dateInputString(new Date()),
           description: "",
           priority: "medium",
           status: "open",
@@ -216,7 +216,7 @@ export function AddIssueDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Datum</FormLabel>
-                    <DatePicker value={field.value} onSelect={field.onChange} />
+                    <Input type="date" {...field} />
                     <FormMessage />
                   </FormItem>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,141 +23,346 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { DatePicker } from "./ui/date-picker";
+import type { Motorcycle } from "~/db/schema";
+import { ScrollArea } from "./ui/scroll-area";
+import { Checkbox } from "./ui/checkbox";
+import { dateInputString } from "~/utils/dateUtils";
 
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
   model: z.string().min(1, "Modell ist erforderlich."),
-  purchaseDate: z.date({
-    required_error: "Ein Kaufdatum ist erforderlich.",
+  modelYear: z.coerce
+    .number()
+    .min(1900, "Baujahr muss nach 1900 liegen.")
+    .max(
+      new Date().getFullYear() + 1,
+      "Baujahr kann nicht in der Zukunft liegen."
+    ),
+
+  vin: z.string().min(1, "FIN ist erforderlich."),
+  vehicleIdNr: z.string().min(1, "Stammnummer ist erforderlich."),
+  numberPlate: z.string().min(1, "Kontrollschild ist erforderlich."),
+
+  isVeteran: z.boolean(),
+  isArchived: z.boolean(),
+
+  firstRegistration: z.string({
+    required_error: "Datum der 1. Inverkehrssetzung ist erforderlich.",
   }),
-  initialOdometer: z.coerce
+  lastInspection: z.string().optional(),
+
+  initialOdo: z.coerce
     .number()
     .min(0, "Anfänglicher Kilometerstand ist erforderlich."),
-  imageUrl: z
-    .string()
-    .url("Bitte gib eine gültige URL ein.")
-    .optional()
-    .or(z.literal("")),
+  purchaseDate: z.string({ required_error: "Ein Kaufdatum ist erforderlich." }),
+  purchasePrice: z.coerce.number().min(0, "Kaufpreis ist erforderlich."),
 });
-
 type AddMotorcycleDialogProps = {
-  children: ReactNode;
-  onMotorcycleAdded?: (id: string) => void;
+  motorcycleToEdit?: Motorcycle;
+  children?: ReactNode;
 };
 
 export function AddMotorcycleDialog({
+  motorcycleToEdit,
   children,
-  onMotorcycleAdded,
 }: AddMotorcycleDialogProps) {
   const [open, setOpen] = useState(false);
+  const isEditMode = !!motorcycleToEdit;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      make: "",
-      model: "",
-      initialOdometer: 0,
-      imageUrl: "",
+      isVeteran: false,
+      isArchived: false,
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    const newId = addMotorcycle({
-      ...values,
-      purchaseDate: values.purchaseDate.toISOString(),
-      imageUrl: values.imageUrl || undefined,
-    });
-    form.reset();
-    setOpen(false);
-    if (onMotorcycleAdded) {
-      onMotorcycleAdded(newId);
+  useEffect(() => {
+    if (open) {
+      if (isEditMode && motorcycleToEdit) {
+        form.reset({
+          make: motorcycleToEdit.make,
+          model: motorcycleToEdit.model,
+          modelYear: motorcycleToEdit.modelYear,
+          vin: motorcycleToEdit.vin,
+          vehicleIdNr: motorcycleToEdit.vehicleIdNr,
+          numberPlate: motorcycleToEdit.numberPlate,
+          isVeteran: motorcycleToEdit.isVeteran,
+          isArchived: motorcycleToEdit.isArchived,
+          firstRegistration: dateInputString(
+            motorcycleToEdit.firstRegistration
+          ),
+          lastInspection: dateInputString(motorcycleToEdit.lastInspection),
+          initialOdo: motorcycleToEdit.initialOdo,
+          purchaseDate: dateInputString(motorcycleToEdit.purchaseDate),
+          purchasePrice: motorcycleToEdit.purchasePrice,
+        });
+      } else {
+        form.reset({
+          make: "",
+          model: "",
+          modelYear: new Date().getFullYear(),
+          vin: "",
+          vehicleIdNr: "",
+          numberPlate: "",
+          isVeteran: false,
+          isArchived: false,
+          firstRegistration: undefined,
+          lastInspection: undefined,
+          initialOdo: 0,
+          purchaseDate: undefined,
+          purchasePrice: 0,
+        });
+      }
     }
-  };
+  }, [open, isEditMode, motorcycleToEdit, form]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Neues Motorrad hinzufügen</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? "Motorrad bearbeiten" : "Neues Motorrad hinzufügen"}
+          </DialogTitle>
           <DialogDescription>
-            Gib die Details für dein neues Motorrad ein, um es zu verfolgen.
+            {isEditMode
+              ? "Aktualisiere die Details für dein Motorrad."
+              : "Gib die Details für dein neues Motorrad ein, um es zu verfolgen."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="make"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marke</FormLabel>
-                    <FormControl>
-                      <Input placeholder="z.B. Ducati" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="model"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Modell</FormLabel>
-                    <FormControl>
-                      <Input placeholder="z.B. Panigale V4" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="purchaseDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Kaufdatum</FormLabel>
-                    <DatePicker value={field.value} onSelect={field.onChange} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="initialOdometer"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Anf. Kilometerstand (km)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="z.B. 1200" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bild-URL (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://beispiel.de/bild.png"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <form method="POST">
+            <input
+              type="hidden"
+              name="motorcycleId"
+              value={motorcycleToEdit?.id}
             />
-            <DialogFooter>
+            <ScrollArea className="max-h-[70vh] pr-6">
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-muted-foreground pt-4">
+                  Allgemein
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="make"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marke</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. BMW" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="model"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Modell</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. R 90S" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="modelYear"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Baujahr</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="z.B. 2023"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="numberPlate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kontrollschild</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. ZH-12345" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <h4 className="text-sm font-medium text-muted-foreground pt-4">
+                  Identifikation
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="vin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fahrgestellnummer (23)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ABC123..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="vehicleIdNr"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stammnummer (18)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="123.456.789" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <h4 className="text-sm font-medium text-muted-foreground pt-4">
+                  Daten & Termine
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="firstRegistration"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>1. Inverkehrssetzung (36)</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastInspection"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Letzte MFK (Optional, 39)</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <h4 className="text-sm font-medium text-muted-foreground pt-4">
+                  Anschaffung
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="purchaseDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Kaufdatum</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="initialOdo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kilometer bei Kauf</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="z.B. 1200"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="purchasePrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kaufpreis (CHF)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="z.B. 15000"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <h4 className="text-sm font-medium text-muted-foreground pt-4">
+                  Status
+                </h4>
+                <div className="flex gap-8">
+                  <FormField
+                    control={form.control}
+                    name="isVeteran"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            name={field.name}
+                          />
+                        </FormControl>
+                        <FormLabel className="!mt-0">Veteran?</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="isArchived"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            name={field.name}
+                          />
+                        </FormControl>
+                        <FormLabel className="!mt-0">Archiviert?</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </ScrollArea>
+            <DialogFooter className="pt-6">
               <Button
                 type="button"
                 variant="outline"
@@ -165,21 +370,17 @@ export function AddMotorcycleDialog({
               >
                 Abbrechen
               </Button>
-              <Button type="submit">Motorrad hinzufügen</Button>
+              <Button
+                type="submit"
+                name="intent"
+                value={isEditMode ? "motorcycle-edit" : "motorcycle-add"}
+              >
+                {isEditMode ? "Änderungen speichern" : "Motorrad hinzufügen"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   );
-}
-
-function addMotorcycle(arg0: {
-  purchaseDate: string;
-  imageUrl: string | undefined;
-  make: string;
-  model: string;
-  initialOdometer: number;
-}) {
-  throw new Error("Function not implemented.");
 }

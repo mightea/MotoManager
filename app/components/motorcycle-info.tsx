@@ -78,13 +78,15 @@ export default function MotorcycleInfo({
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-2">
-        <InfoItem
-          icon={CalendarDays}
-          label="Letzte Inspektion"
-          value={format(new Date(motorcycle.lastInspection), "d. MMMM yyyy", {
-            locale: de,
-          })}
-        />
+        {motorcycle.lastInspection && (
+          <InfoItem
+            icon={CalendarDays}
+            label="Letzte Inspektion"
+            value={format(new Date(motorcycle.lastInspection), "d. MMMM yyyy", {
+              locale: de,
+            })}
+          />
+        )}
         <InfoItem
           icon={Gauge}
           label="Km dieses Jahr"
