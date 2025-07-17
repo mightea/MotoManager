@@ -66,8 +66,6 @@ export async function loader({}: Route.LoaderArgs) {
     };
   });
 
-  console.log("Loaded motorcycles:", items);
-
   return { motorcycles, items };
 }
 

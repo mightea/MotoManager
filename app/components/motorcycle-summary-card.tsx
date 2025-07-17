@@ -23,6 +23,7 @@ interface Props {
   odometerThisYear: number;
   isVeteran: boolean;
   numberOfIssues: number;
+  image?: string;
 }
 
 export const MotorcycleSummaryCard = ({
@@ -34,19 +35,18 @@ export const MotorcycleSummaryCard = ({
   odometerThisYear,
   isVeteran,
   numberOfIssues,
+  image,
 }: Props) => {
-  const imageUrl = "https://placehold.co/600x400?text=No+picture"; // Placeholder image URL
-
   return (
     <Link
       to={`/motorcycle/${slug(`${make}-${model}`)}/${id}/`}
       className="group block"
     >
       <Card className="overflow-hidden h-full transition-all group-hover:shadow-lg group-hover:border-primary/50">
-        {imageUrl ? (
+        {image ? (
           <div className="relative aspect-video bg-secondary">
             <img
-              src={imageUrl}
+              src={image}
               alt={`${make} ${model}`}
               className="object-cover"
             />

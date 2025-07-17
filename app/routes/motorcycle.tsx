@@ -143,6 +143,17 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(eq(motorcycles.id, Number.parseInt(data.motorcycleId as string)));
   }
 
+  if (intent === "motorcycle-image") {
+    const editMotorcycle: EditorMotorcycle = {
+      image: data.image as string,
+    };
+
+    await db
+      .update(motorcycles)
+      .set(editMotorcycle)
+      .where(eq(motorcycles.id, Number.parseInt(data.motorcycleId as string)));
+  }
+
   if (intent === "maintenance-add") {
     console.log(data);
 

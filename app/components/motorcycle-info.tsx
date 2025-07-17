@@ -31,13 +31,15 @@ import { Badge } from "./ui/badge";
 import { Accordion, AccordionContent, AccordionTrigger } from "./ui/accordion";
 import { AccordionItem } from "@radix-ui/react-accordion";
 import { Separator } from "./ui/separator";
+import { ImageUploadDialog } from "./image-upload-dialog";
+import { useFetcher } from "react-router";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
   currentOdometer: number;
 }
 
-const InfoItem = ({
+export const InfoItem = ({
   icon: Icon,
   label,
   value,
@@ -66,6 +68,19 @@ export default function MotorcycleInfo({
   motorcycle: Motorcycle;
   currentOdometer: number;
 }) {
+  let fetcher = useFetcher();
+
+  const handleImageUpdate = (newImageUrl: string) => {
+    fetcher.submit(
+      {
+        intent: "motorcycle-image",
+        motorcycleId: motorcycle.id,
+        image: newImageUrl,
+      },
+      { method: "post" }
+    );
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="relative group aspect-video bg-secondary">
@@ -81,12 +96,12 @@ export default function MotorcycleInfo({
           </div>
         )}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <AddMotorcycleDialog motorcycleToEdit={motorcycle}>
+          <ImageUploadDialog onCropComplete={handleImageUpdate}>
             <Button variant="secondary" size="sm">
               <Edit className="mr-2 h-4 w-4" />
               Bild bearbeiten
             </Button>
-          </AddMotorcycleDialog>
+          </ImageUploadDialog>
         </div>
       </div>
 
