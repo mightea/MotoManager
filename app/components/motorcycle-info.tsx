@@ -1,6 +1,19 @@
 "use client";
 
-import { Bike, CalendarDays, Gauge, Pencil, Wrench } from "lucide-react";
+import {
+  Award,
+  Bike,
+  Calendar,
+  CalendarDays,
+  CircleDollarSign,
+  Edit,
+  Fingerprint,
+  Hash,
+  Milestone,
+  Pencil,
+  ShieldCheck,
+  Wrench,
+} from "lucide-react";
 import type { Motorcycle } from "~/db/schema";
 import {
   Card,
@@ -14,59 +27,93 @@ import { Button } from "./ui/button";
 import { format } from "date-fns/format";
 import { de } from "date-fns/locale/de";
 import { cn } from "~/utils/tw";
+import { Badge } from "./ui/badge";
+import { Accordion, AccordionContent, AccordionTrigger } from "./ui/accordion";
+import { AccordionItem } from "@radix-ui/react-accordion";
+import { Separator } from "./ui/separator";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
   currentOdometer: number;
 }
 
-export const InfoItem = ({
+const InfoItem = ({
   icon: Icon,
   label,
   value,
-  className,
+  valueClassName,
 }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
-  className?: string;
+  valueClassName?: string;
 }) => (
-  <div className={cn("flex items-center gap-3 text-sm", className)}>
-    <Icon className="h-4 w-4 text-muted-foreground" />
-    <span className="text-muted-foreground">{label}:</span>
-    <span className="font-semibold text-foreground ml-auto">{value}</span>
+  <div className="flex items-start justify-between">
+    <div className="flex items-center gap-3">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      <p className="text-sm text-muted-foreground">{label}</p>
+    </div>
+    <p className={cn("font-semibold text-sm text-right", valueClassName)}>
+      {value}
+    </p>
   </div>
 );
 
 export default function MotorcycleInfo({
   motorcycle,
   currentOdometer,
-}: MotorcycleInfoProps) {
-  let imageUrl = "https://placehold.co/600x400?text=No+picture"; // Placeholder image URL;
-
+}: {
+  motorcycle: Motorcycle;
+  currentOdometer: number;
+}) {
   return (
     <Card className="overflow-hidden">
-      {imageUrl && (
-        <div className="relative aspect-video">
+      <div className="relative group aspect-video bg-secondary">
+        {motorcycle.image ? (
           <img
-            src={imageUrl}
+            src={motorcycle.image}
             alt={`${motorcycle.make} ${motorcycle.model}`}
-            className="object-cover"
-            data-ai-hint={`${motorcycle.make.toLowerCase()} ${motorcycle.model.toLowerCase()}`}
+            className="object-cover object-center"
           />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <Bike className="h-16 w-16 text-muted-foreground/30" />
+          </div>
+        )}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <AddMotorcycleDialog motorcycleToEdit={motorcycle}>
+            <Button variant="secondary" size="sm">
+              <Edit className="mr-2 h-4 w-4" />
+              Bild bearbeiten
+            </Button>
+          </AddMotorcycleDialog>
         </div>
-      )}
+      </div>
+
       <CardHeader>
         <div className="flex justify-between items-start gap-4">
-          <div className="flex items-center gap-3">
-            {!imageUrl && <Bike className="h-8 w-8 text-primary" />}
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-secondary rounded-md">
+              <Bike className="h-8 w-8 text-primary" />
+            </div>
             <div>
               <CardTitle className="text-2xl font-headline">
                 {motorcycle.make}
               </CardTitle>
-              <CardDescription className="text-lg">
-                {motorcycle.model}
-              </CardDescription>
+              <div className="flex items-center gap-2">
+                <CardDescription className="text-lg">
+                  {motorcycle.model}
+                </CardDescription>
+                {motorcycle.isVeteran && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 border-amber-500 text-amber-600"
+                  >
+                    <Award className="h-3 w-3" />
+                    Veteran
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
           <AddMotorcycleDialog motorcycleToEdit={motorcycle}>
@@ -77,26 +124,94 @@ export default function MotorcycleInfo({
           </AddMotorcycleDialog>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 pt-2">
-        {motorcycle.lastInspection && (
+
+      <CardContent className="space-y-4 pt-0">
+        <div className="space-y-2 rounded-lg">
+          <InfoItem
+            icon={Wrench}
+            label="Akt. Kilometerstand"
+            value={`${currentOdometer.toLocaleString("de-DE")} km`}
+            valueClassName="text-base"
+          />
           <InfoItem
             icon={CalendarDays}
-            label="Letzte Inspektion"
-            value={format(new Date(motorcycle.lastInspection), "d. MMMM yyyy", {
-              locale: de,
-            })}
+            label="Baujahr"
+            value={motorcycle.modelYear}
           />
-        )}
-        <InfoItem
-          icon={Gauge}
-          label="Km dieses Jahr"
-          value={`${currentOdometer.toLocaleString("de-DE")} km`}
-        />
-        <InfoItem
-          icon={Wrench}
-          label="Akt. Kilometerstand"
-          value={`${currentOdometer.toLocaleString("de-DE")} km`}
-        />
+        </div>
+
+        <Accordion type="single" collapsible>
+          <AccordionItem value="item-1" className="border-b-0">
+            <AccordionTrigger className="text-sm -mx-3 px-3 py-2 rounded-md hover:bg-muted font-semibold">
+              Fahrzeugdetails
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <div className="space-y-3 border-t pt-4">
+                <InfoItem
+                  icon={Fingerprint}
+                  label="Fahrgestellnummer"
+                  value={motorcycle.vin}
+                />
+                <InfoItem
+                  icon={Hash}
+                  label="Stammnummer"
+                  value={motorcycle.vehicleIdNr}
+                />
+                <InfoItem
+                  icon={Milestone}
+                  label="Kontrollschild"
+                  value={motorcycle.numberPlate}
+                />
+                <Separator className="my-3" />
+                <InfoItem
+                  icon={Calendar}
+                  label="1. Inverkehrssetzung"
+                  value={format(
+                    new Date(motorcycle.firstRegistration),
+                    "d. MMM yyyy",
+                    { locale: de }
+                  )}
+                />
+                <InfoItem
+                  icon={ShieldCheck}
+                  label="Letzte MFK"
+                  value={
+                    motorcycle.lastInspection
+                      ? format(
+                          new Date(motorcycle.lastInspection),
+                          "d. MMM yyyy",
+                          { locale: de }
+                        )
+                      : "-"
+                  }
+                />
+                <Separator className="my-3" />
+                <InfoItem
+                  icon={Calendar}
+                  label="Kaufdatum"
+                  value={format(
+                    new Date(motorcycle.purchaseDate),
+                    "d. MMM yyyy",
+                    { locale: de }
+                  )}
+                />
+                <InfoItem
+                  icon={CircleDollarSign}
+                  label="Kaufpreis"
+                  value={new Intl.NumberFormat("de-DE", {
+                    style: "currency",
+                    currency: "EUR",
+                  }).format(motorcycle.purchasePrice)}
+                />
+                <InfoItem
+                  icon={Milestone}
+                  label="KM bei Kauf"
+                  value={`${motorcycle.initialOdo.toLocaleString("de-CH")} km`}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );

@@ -61,22 +61,28 @@ export default function MaintenanceLogTable({
           <AccordionItem value={log.id.toString()} key={log.id}>
             <AccordionTrigger className="py-4 text-left hover:no-underline">
               <div className="flex w-full items-center justify-between gap-4">
-                <div className="flex flex-1 items-center gap-4 overflow-hidden">
-                  <div className="bg-secondary p-2 rounded-md">
+                <div className="flex items-start gap-4 overflow-hidden flex-1">
+                  <div className="bg-secondary p-2 rounded-md mt-1">
                     {getIcon(log)}
                   </div>
-                  <div className="flex flex-col items-start overflow-hidden">
-                    <span className="text-left text-sm font-medium">
-                      {format(new Date(log.date), "d. MMMM yyyy", {
-                        locale: de,
-                      })}
-                    </span>
-                    <p className="text-sm text-muted-foreground truncate">
+                  <div className="flex flex-col items-start overflow-hidden flex-1 min-w-0">
+                    <div className="flex flex-row gap-2 items-center text-xs md:text-sm">
+                      <span>
+                        {format(new Date(log.date), "d. MMMM yyyy", {
+                          locale: de,
+                        })}
+                      </span>
+                      <span className="md:hidden">
+                        · {log.odo.toLocaleString("de-CH")} km
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground text-left break-words mt-1 w-full">
                       {log.description}
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 text-right">
+                <div className="flex flex-col items-end gap-1 text-right pl-2 hidden md:flex">
+                  {/* Hide odometer on small screens */}
                   <p className="font-semibold text-base whitespace-nowrap">
                     {log.odo.toLocaleString("de-CH")} km
                   </p>
@@ -84,11 +90,11 @@ export default function MaintenanceLogTable({
                     {LogTypeBadges[log.type]}
                   </Badge>
                 </div>
-              </div>{" "}
+              </div>
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-3 pt-4 mt-2 ml-14">
-                <p className="text-sm text-foreground leading-relaxed">
+                <p className="text-sm text-foreground leading-relaxed break-words">
                   {log.description}
                 </p>
                 <div className="flex justify-between text-sm pt-2">
