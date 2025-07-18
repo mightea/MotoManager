@@ -2,14 +2,14 @@ import type { Route } from "./+types/motorcycle";
 import db from "~/db";
 import {
   issues,
-  maintenance,
+  maintenanceRecords,
   motorcycles,
   type EditorIssue,
   type EditorMotorcycle,
   type MaintenanceType,
   type Motorcycle,
   type NewIssue,
-  type NewMaintenance,
+  type NewMaintenanceRecord,
 } from "~/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
@@ -35,10 +35,10 @@ export async function loader({ params }: Route.LoaderArgs) {
     throw new Response("Motorcycle not found", { status: 404 });
   }
 
-  const maintenanceItems = await db.query.maintenance.findMany({
-    where: eq(maintenance.motorcycleId, motorcycleId),
+  const maintenanceItems = await db.query.maintenanceRecords.findMany({
+    where: eq(maintenanceRecords.motorcycleId, motorcycleId),
     orderBy: [
-      desc(maintenance.date), // Order by date descending
+      desc(maintenanceRecords.date), // Order by date descending
     ],
   });
 
@@ -159,7 +159,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const type: MaintenanceType = data.type as MaintenanceType;
 
-    const newMaintenance: NewMaintenance = {
+    const newMaintenance: NewMaintenanceRecord = {
       type,
       date: data.date as string,
       description: data.description as string,
@@ -172,7 +172,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     console.log("Adding Maintenance Item:", newMaintenance);
 
     const item = await db
-      .insert(maintenance)
+      .insert(maintenanceRecords)
       .values(newMaintenance)
       .returning();
 
@@ -221,7 +221,10 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <MaintenanceLogTable logs={maintenanceEntries} />
+              <MaintenanceLogTable
+                logs={maintenanceEntries}
+                motorcycle={motorcycle}
+              />
             </CardContent>
           </Card>
         </div>

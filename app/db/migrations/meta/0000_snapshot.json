@@ -1,11 +1,11 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "aed88f85-84d6-458f-8f36-f7454c57aa87",
+  "id": "42f52ccc-7edd-4d60-9abe-ab286aab3781",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "current_location": {
-      "name": "current_location",
+    "issues": {
+      "name": "issues",
       "columns": {
         "id": {
           "name": "id",
@@ -21,29 +21,119 @@
           "notNull": true,
           "autoincrement": false
         },
+        "odo": {
+          "name": "odo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'medium'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'new'"
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(CURRENT_DATE)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "issues_motorcycle_id_motorcycles_id_fk": {
+          "name": "issues_motorcycle_id_motorcycles_id_fk",
+          "tableFrom": "issues",
+          "tableTo": "motorcycles",
+          "columnsFrom": [
+            "motorcycle_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "location_records": {
+      "name": "location_records",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "motorcycle_id": {
+          "name": "motorcycle_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "date": {
           "name": "date",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "(CURRENT_DATE)"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "current_location_motorcycle_id_motorcycle_id_fk": {
-          "name": "current_location_motorcycle_id_motorcycle_id_fk",
-          "tableFrom": "current_location",
-          "tableTo": "motorcycle",
+        "location_records_motorcycle_id_motorcycles_id_fk": {
+          "name": "location_records_motorcycle_id_motorcycles_id_fk",
+          "tableFrom": "location_records",
+          "tableTo": "motorcycles",
           "columnsFrom": [
             "motorcycle_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "location_records_location_id_locations_id_fk": {
+          "name": "location_records_location_id_locations_id_fk",
+          "tableFrom": "location_records",
+          "tableTo": "locations",
+          "columnsFrom": [
+            "location_id"
           ],
           "columnsTo": [
             "id"
@@ -80,8 +170,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "maintenance_record": {
-      "name": "maintenance_record",
+    "maintenance_records": {
+      "name": "maintenance_records",
       "columns": {
         "id": {
           "name": "id",
@@ -115,14 +205,14 @@
           "name": "cost",
           "type": "real",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "currency": {
           "name": "currency",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "description": {
@@ -138,14 +228,70 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "brand": {
+          "name": "brand",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tire_position": {
+          "name": "tire_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tire_size": {
+          "name": "tire_size",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "dot_code": {
+          "name": "dot_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "battery_type": {
+          "name": "battery_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fluid_type": {
+          "name": "fluid_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "viscosity": {
+          "name": "viscosity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "maintenance_record_motorcycle_id_motorcycle_id_fk": {
-          "name": "maintenance_record_motorcycle_id_motorcycle_id_fk",
-          "tableFrom": "maintenance_record",
-          "tableTo": "motorcycle",
+        "maintenance_records_motorcycle_id_motorcycles_id_fk": {
+          "name": "maintenance_records_motorcycle_id_motorcycles_id_fk",
+          "tableFrom": "maintenance_records",
+          "tableTo": "motorcycles",
           "columnsFrom": [
             "motorcycle_id"
           ],
@@ -160,230 +306,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "maintenance_battery": {
-      "name": "maintenance_battery",
-      "columns": {
-        "maintenance_id": {
-          "name": "maintenance_id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "battery_type": {
-          "name": "battery_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "manufacturer": {
-          "name": "manufacturer",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "model": {
-          "name": "model",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "maintenance_battery_maintenance_id_maintenance_record_id_fk": {
-          "name": "maintenance_battery_maintenance_id_maintenance_record_id_fk",
-          "tableFrom": "maintenance_battery",
-          "tableTo": "maintenance_record",
-          "columnsFrom": [
-            "maintenance_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "maintenance_breakpads": {
-      "name": "maintenance_breakpads",
-      "columns": {
-        "maintenance_id": {
-          "name": "maintenance_id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "brand": {
-          "name": "brand",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "model": {
-          "name": "model",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "position": {
-          "name": "position",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "maintenance_breakpads_maintenance_id_maintenance_record_id_fk": {
-          "name": "maintenance_breakpads_maintenance_id_maintenance_record_id_fk",
-          "tableFrom": "maintenance_breakpads",
-          "tableTo": "maintenance_record",
-          "columnsFrom": [
-            "maintenance_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "maintenance_fluid": {
-      "name": "maintenance_fluid",
-      "columns": {
-        "maintenance_id": {
-          "name": "maintenance_id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "brand": {
-          "name": "brand",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "fluid_type": {
-          "name": "fluid_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "viscosity": {
-          "name": "viscosity",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "maintenance_fluid_maintenance_id_maintenance_record_id_fk": {
-          "name": "maintenance_fluid_maintenance_id_maintenance_record_id_fk",
-          "tableFrom": "maintenance_fluid",
-          "tableTo": "maintenance_record",
-          "columnsFrom": [
-            "maintenance_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "maintenance_tire": {
-      "name": "maintenance_tire",
-      "columns": {
-        "maintenance_id": {
-          "name": "maintenance_id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "brand": {
-          "name": "brand",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "model": {
-          "name": "model",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "size": {
-          "name": "size",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "position": {
-          "name": "position",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "dot_code": {
-          "name": "dot_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "maintenance_tire_maintenance_id_maintenance_record_id_fk": {
-          "name": "maintenance_tire_maintenance_id_maintenance_record_id_fk",
-          "tableFrom": "maintenance_tire",
-          "tableTo": "maintenance_record",
-          "columnsFrom": [
-            "maintenance_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "motorcycle": {
-      "name": "motorcycle",
+    "motorcycles": {
+      "name": "motorcycles",
       "columns": {
         "id": {
           "name": "id",
@@ -406,6 +330,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "model_year": {
+          "name": "model_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "vin": {
           "name": "vin",
           "type": "text",
@@ -413,26 +344,48 @@
           "notNull": true,
           "autoincrement": false
         },
-        "vehicleIdNr": {
-          "name": "vehicleIdNr",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "licenseType": {
-          "name": "licenseType",
+        "vehicle_nr": {
+          "name": "vehicle_nr",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "number_plate": {
+          "name": "number_plate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_veteran": {
+          "name": "is_veteran",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false,
-          "default": "'regular'"
+          "default": false
+        },
+        "is_archived": {
+          "name": "is_archived",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         },
         "firstRegistration": {
           "name": "firstRegistration",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "lastInspection": {
@@ -450,21 +403,19 @@
           "autoincrement": false,
           "default": 0
         },
-        "updated_at": {
-          "name": "updated_at",
+        "purchase_date": {
+          "name": "purchase_date",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "'2025-05-14T18:21:10.796Z'"
+          "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
+        "purchase_price": {
+          "name": "purchase_price",
+          "type": "real",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "'2025-05-14T18:21:10.797Z'"
+          "autoincrement": false
         }
       },
       "indexes": {},

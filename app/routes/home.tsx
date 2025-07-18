@@ -12,7 +12,7 @@ type MotorcycleData = {
   model: string;
   make: string;
 
-  modelYear: number;
+  modelYear: number | null;
 
   numberOfIssues: number;
   odometer: number;
@@ -24,7 +24,7 @@ type MotorcycleData = {
 export async function loader({}: Route.LoaderArgs) {
   const motorcycles = await db.query.motorcycles.findMany();
   const issues = await db.query.issues.findMany();
-  const maintenance = await db.query.maintenance.findMany();
+  const maintenance = await db.query.maintenanceRecords.findMany();
 
   const year = new Date().getFullYear();
 

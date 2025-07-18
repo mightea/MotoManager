@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,7 +26,6 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
-import { useToast } from "~/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -35,7 +34,23 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import type { Motorcycle } from "~/db/schema";
+import type { MaintenanceRecord, Motorcycle } from "~/db/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
+import {
+  AlertDialogCancel,
+  AlertDialogTrigger,
+} from "@radix-ui/react-alert-dialog";
+import { Trash2 } from "lucide-react";
+import { useFetcher } from "react-router";
+import { dateInputString } from "~/utils/dateUtils";
 
 // Base schema for common fields
 const baseSchema = z.object({
@@ -52,11 +67,11 @@ const baseSchema = z.object({
 
 // Schemas for each log type
 const generalLogSchema = baseSchema.extend({
-  type: z.literal("general"),
+  type: z.literal("other"),
 });
 
 const oilChangeLogSchema = baseSchema.extend({
-  type: z.literal("oil_change"),
+  type: z.literal("fluids"),
   oilType: z.enum(["engine", "gear"], {
     required_error: "Öltyp ist erforderlich.",
   }),
@@ -66,7 +81,7 @@ const oilChangeLogSchema = baseSchema.extend({
 });
 
 const tireChangeLogSchema = baseSchema.extend({
-  type: z.literal("tire_change"),
+  type: z.literal("tire"),
   brand: z.string().min(2, "Marke ist erforderlich."),
   position: z.enum(["front", "rear", "sidecar"], {
     required_error: "Reifenposition ist erforderlich.",
@@ -77,18 +92,10 @@ const tireChangeLogSchema = baseSchema.extend({
     .max(4, "Der DOT-Code muss 4 Ziffern haben."),
 });
 
-const brakeFluidLogSchema = baseSchema.extend({
-  type: z.literal("brake_fluid_change"),
-  brand: z.string().min(2, "Marke ist erforderlich."),
-  viscosity: z.string().min(2, "Viskosität/Typ ist erforderlich."),
-  synthetic: z.boolean().default(false),
-});
-
 const formSchema = z.discriminatedUnion("type", [
   generalLogSchema,
   oilChangeLogSchema,
   tireChangeLogSchema,
-  brakeFluidLogSchema,
 ]);
 
 type FormValues = z.infer<typeof formSchema>;
@@ -96,29 +103,73 @@ type FormValues = z.infer<typeof formSchema>;
 type AddMaintenanceLogDialogProps = {
   children: ReactNode;
   motorcycle: Motorcycle;
-  currentOdometer: number;
+  currentOdometer?: number;
+  logToEdit?: MaintenanceRecord;
 };
 
 export function AddMaintenanceLogDialog({
   children,
   motorcycle,
   currentOdometer,
+  logToEdit,
 }: AddMaintenanceLogDialogProps) {
   const [open, setOpen] = useState(false);
-  const { toast } = useToast();
+  const isEditMode = !!logToEdit;
 
-  const defaultFormValues: Partial<FormValues> = {
-    type: "general",
-    date: format(new Date(), "yyyy-MM-dd"),
-    cost: 0,
-    description: "",
-    odometer: currentOdometer,
+  const getInitialFormValues = (): FormValues => {
+    if (isEditMode && logToEdit) {
+      const baseValues = {
+        type: logToEdit.type,
+        date: dateInputString(logToEdit.date),
+        odometer: logToEdit.odo,
+        cost: logToEdit.cost ?? 0,
+        description: logToEdit.description ?? "",
+      };
+
+      switch (logToEdit.type) {
+        case "tire":
+          return {
+            ...baseValues,
+            type: "tire",
+            brand: "",
+            position: "rear",
+            dotCode: "",
+          };
+        case "other":
+        default:
+          return { ...baseValues, type: "other" };
+      }
+    }
+    return {
+      type: "other",
+      date: format(new Date(), "yyyy-MM-dd"),
+      cost: 0,
+      odometer: 0,
+      description: "",
+    } as FormValues;
   };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues as FormValues,
+    defaultValues: getInitialFormValues(),
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset(getInitialFormValues());
+    }
+  }, [open, logToEdit, form]);
+
+  let fetcher = useFetcher();
+
+  const handleDelete = () => {
+    fetcher.submit(
+      { intent: "maintenance-delete", issueId: logToEdit?.id ?? "" },
+      { method: "post" }
+    );
+
+    setOpen(false);
+  };
 
   const logType = form.watch("type");
 
@@ -127,13 +178,22 @@ export function AddMaintenanceLogDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Neuen Wartungseintrag hinzufügen</DialogTitle>
+          <DialogTitle>
+            {isEditMode
+              ? "Wartungseintrag bearbeiten"
+              : "Neuen Wartungseintrag hinzufügen"}
+          </DialogTitle>
           <DialogDescription>
-            {`Erfasse einen neuen Service oder eine Reparatur für deine ${motorcycle.make} ${motorcycle.model}.`}
+            {isEditMode
+              ? "Aktualisiere die Details für diesen Service."
+              : `Erfasse einen neuen Service oder eine Reparatur für deine ${motorcycle.make} ${motorcycle.model}.`}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form method="post" className="space-y-4">
+          <form
+            method="post"
+            className="space-y-4 max-h-[70vh] overflow-y-auto pr-4"
+          >
             <input type="hidden" name="motorcycleId" value={motorcycle.id} />
             <input type="hidden" name="type" value={logType} />
             <FormField
@@ -145,12 +205,13 @@ export function AddMaintenanceLogDialog({
                   <Select
                     onValueChange={(value) => {
                       form.reset({
-                        ...defaultFormValues,
+                        ...getInitialFormValues(),
                         type: value as FormValues["type"],
-                      });
+                      }) as any;
                       field.onChange(value);
                     }}
                     defaultValue={field.value}
+                    disabled={isEditMode}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -158,17 +219,16 @@ export function AddMaintenanceLogDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="general">Allgemein</SelectItem>
+                      <SelectItem value="other">Allgemein</SelectItem>
                       <SelectItem value="repair">Reparatur</SelectItem>
-                      <SelectItem value="oil_change">Ölwechsel</SelectItem>
-                      <SelectItem value="tire_change">Reifenwechsel</SelectItem>
+                      <SelectItem value="fluids">Ölwechsel</SelectItem>
+                      <SelectItem value="tire">Reifenwechsel</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -202,8 +262,7 @@ export function AddMaintenanceLogDialog({
                 )}
               />
             </div>
-
-            {logType === "tire_change" && (
+            {logType === "tire" && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
@@ -289,7 +348,6 @@ export function AddMaintenanceLogDialog({
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="description"
@@ -309,17 +367,53 @@ export function AddMaintenanceLogDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" name="intent" value={"maintenance-add"}>
-                Eintrag speichern
-              </Button>
+            <DialogFooter className="sm:justify-between pt-4 -mx-4 px-4 pb-0 bg-background sticky bottom-0">
+              {isEditMode && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="sm:mr-auto"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Löschen
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Eintrag wirklich löschen?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Diese Aktion kann nicht rückgängig gemacht werden.
+                        Dadurch wird der Wartungseintrag dauerhaft gelöscht.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Löschen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Abbrechen
+                </Button>
+                <Button type="submit">
+                  {isEditMode ? "Änderungen speichern" : "Eintrag speichern"}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

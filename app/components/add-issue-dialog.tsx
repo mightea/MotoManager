@@ -58,7 +58,7 @@ const issueSchema = z.object({
     required_error: "Priorität ist erforderlich.",
   }),
   odo: z.number().min(0, "Der Kilometerstand muss positiv sein."),
-  status: z.enum(["open", "in_progress", "done"], {
+  status: z.enum(["new", "in_progress", "done"], {
     required_error: "Status ist erforderlich.",
   }),
 });
@@ -109,7 +109,7 @@ export function AddIssueDialog({
           date: dateInputString(new Date()),
           description: "",
           priority: "medium",
-          status: "open",
+          status: "new",
           odo: currentOdometer,
         });
       }
@@ -197,7 +197,7 @@ export function AddIssueDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="open">Offen</SelectItem>
+                        <SelectItem value="new">Offen</SelectItem>
                         <SelectItem value="in_progress">
                           In Bearbeitung
                         </SelectItem>

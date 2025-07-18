@@ -3,14 +3,19 @@ import {
   Links,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
+  type ActionFunctionArgs,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 import { ThemeProvider, useTheme } from "./contexts/ThemeProvider";
 import { getTheme } from "./services/theme.server";
+import { urlMotorcycle } from "./utils/urlUtils";
+import { motorcycles, type NewMotorcycle } from "./db/schema";
+import db from "./db";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
@@ -61,6 +66,17 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <MainApp />
     </ThemeProvider>
   );
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+
+  const motorcycle = await db
+    .insert(motorcycles)
+    .values(data as unknown as NewMotorcycle)
+    .returning();
+  return redirect(urlMotorcycle({ ...motorcycle[0] }));
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

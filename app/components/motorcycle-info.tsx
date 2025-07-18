@@ -178,38 +178,46 @@ export default function MotorcycleInfo({
                   value={motorcycle.numberPlate}
                 />
                 <Separator className="my-3" />
-                <InfoItem
-                  icon={Calendar}
-                  label="1. Inverkehrssetzung"
-                  value={format(
-                    new Date(motorcycle.firstRegistration),
-                    "d. MMM yyyy",
-                    { locale: de }
-                  )}
-                />
-                <InfoItem
-                  icon={ShieldCheck}
-                  label="Letzte MFK"
-                  value={
-                    motorcycle.lastInspection
-                      ? format(
-                          new Date(motorcycle.lastInspection),
-                          "d. MMM yyyy",
-                          { locale: de }
-                        )
-                      : "-"
-                  }
-                />
+
+                {motorcycle.firstRegistration && (
+                  <InfoItem
+                    icon={Calendar}
+                    label="1. Inverkehrssetzung"
+                    value={format(
+                      new Date(motorcycle.firstRegistration),
+                      "d. MMM yyyy",
+                      { locale: de }
+                    )}
+                  />
+                )}
+                {motorcycle.lastInspection && (
+                  <InfoItem
+                    icon={ShieldCheck}
+                    label="Letzte MFK"
+                    value={
+                      motorcycle.lastInspection
+                        ? format(
+                            new Date(motorcycle.lastInspection),
+                            "d. MMM yyyy",
+                            { locale: de }
+                          )
+                        : "-"
+                    }
+                  />
+                )}
                 <Separator className="my-3" />
-                <InfoItem
-                  icon={Calendar}
-                  label="Kaufdatum"
-                  value={format(
-                    new Date(motorcycle.purchaseDate),
-                    "d. MMM yyyy",
-                    { locale: de }
-                  )}
-                />
+
+                {motorcycle.purchaseDate && (
+                  <InfoItem
+                    icon={Calendar}
+                    label="Kaufdatum"
+                    value={format(
+                      new Date(motorcycle.purchaseDate),
+                      "d. MMM yyyy",
+                      { locale: de }
+                    )}
+                  />
+                )}
                 <InfoItem
                   icon={CircleDollarSign}
                   label="Kaufpreis"

@@ -132,7 +132,7 @@ export function AddMotorcycleDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form method="POST">
+          <form method="post">
             <input
               type="hidden"
               name="motorcycleId"
@@ -370,11 +370,7 @@ export function AddMotorcycleDialog({
               >
                 Abbrechen
               </Button>
-              <Button
-                type="submit"
-                name="intent"
-                value={isEditMode ? "motorcycle-edit" : "motorcycle-add"}
-              >
+              <Button type="submit" name="intent" value="motorcycle-edit">
                 {isEditMode ? "Änderungen speichern" : "Motorrad hinzufügen"}
               </Button>
             </DialogFooter>

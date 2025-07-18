@@ -1,4 +1,4 @@
-import { type Maintenance } from "~/db/schema";
+import { type Maintenance, type Motorcycle } from "~/db/schema";
 import { Badge } from "./ui/badge";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -8,29 +8,30 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
-import { Wrench, Droplets, Replace, ShieldCheck } from "lucide-react";
+import { Wrench, Droplets, Replace, Edit } from "lucide-react";
 
 import type { ReactElement } from "react";
+import { AddMaintenanceLogDialog } from "./add-maintenance-log-dialog";
+import { Button } from "./ui/button";
 
 interface MaintenanceLogTableProps {
+  motorcycle: Motorcycle;
   logs: Maintenance[];
 }
 
 const LogTypeBadges: Record<Maintenance["type"], string> = {
   other: "Allgemein",
   oil_change: "Ölwechsel",
-  tire_change: "Reifenwechsel",
+  tire: "Reifenwechsel",
   brake_fluid_change: "Bremsflüssigkeit",
 };
 
 const getIcon = (item: Maintenance): ReactElement => {
   switch (item.type) {
-    case "oil_change":
+    case "fluid":
       return <Droplets className="h-5 w-5 text-secondary-foreground" />;
-    case "tire_change":
+    case "tire":
       return <Replace className="h-5 w-5 text-secondary-foreground" />;
-    case "brake_fluid_change":
-      return <ShieldCheck className="h-5 w-5 text-secondary-foreground" />;
     default:
       return <Wrench className="h-5 w-5 text-secondary-foreground" />;
   }
@@ -38,6 +39,7 @@ const getIcon = (item: Maintenance): ReactElement => {
 
 export default function MaintenanceLogTable({
   logs,
+  motorcycle,
 }: MaintenanceLogTableProps) {
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("de-CH", {
@@ -57,6 +59,7 @@ export default function MaintenanceLogTable({
   return (
     <Accordion type="single" collapsible className="w-full">
       {logs.map((log) => {
+        console.log("Rendering log:", log);
         return (
           <AccordionItem value={log.id.toString()} key={log.id}>
             <AccordionTrigger className="py-4 text-left hover:no-underline">
@@ -102,6 +105,17 @@ export default function MaintenanceLogTable({
                   <p className="font-medium">
                     {formatCurrency(log.cost, log.currency)}
                   </p>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <AddMaintenanceLogDialog
+                    logToEdit={log}
+                    motorcycle={motorcycle}
+                  >
+                    <Button variant="outline" size="sm">
+                      <Edit className="h-4 w-4" />
+                      Bearbeiten
+                    </Button>
+                  </AddMaintenanceLogDialog>
                 </div>
               </div>
             </AccordionContent>

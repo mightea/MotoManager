@@ -54,7 +54,7 @@ export function OpenIssuesCard({
   currentOdometer: number;
 }) {
   const statusConfig = {
-    open: { label: "Offen", Icon: AlertTriangle, variant: "outline" },
+    new: { label: "Offen", Icon: AlertTriangle, variant: "outline" },
     in_progress: {
       label: "In Bearbeitung",
       Icon: Wrench,
