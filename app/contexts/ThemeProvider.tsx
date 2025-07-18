@@ -1,47 +1,46 @@
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useMemo,
-  useContext,
-} from "react";
+import React, { useContext } from "react";
+import { useFetcher } from "react-router";
 
-const ThemeContext = createContext({
-  theme: "system", // default theme
-  setTheme: (theme: string) => {}, // function to set theme
-});
+// Define the shape of the data stored in the cookie
+type Theme = "light" | "dark";
 
-const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState("system"); // 'light', 'dark', or 'system'
+type ThemeContextType = {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+};
 
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("theme");
-    if (storedTheme) {
-      setTheme(storedTheme);
-    }
-  }, []);
+const ThemeContext = React.createContext<ThemeContextType | undefined>(
+  undefined
+);
 
-  useEffect(() => {
-    const root = window.document.documentElement;
-    const isDark =
-      theme === "dark" ||
-      (theme === "system" &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
+export function ThemeProvider({
+  children,
+  initialTheme,
+}: {
+  children: React.ReactNode;
+  initialTheme: Theme;
+}) {
+  const [theme, setThemeState] = React.useState<Theme>(initialTheme);
+  const fetcher = useFetcher();
 
-    root.classList.remove(isDark ? "light" : "dark");
-    root.classList.add(isDark ? "dark" : "light");
-
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const contextValue = useMemo(() => ({ theme, setTheme }), [theme]);
+  // Function to optimistically update the theme on the client
+  // and submit the change to the server action to update the cookie.
+  const handleThemeChange = (newTheme: Theme) => {
+    setThemeState(newTheme);
+    // Use the fetcher to submit the new theme to the action
+    // This happens in the background without a page reload.
+    fetcher.submit(
+      { theme: newTheme },
+      { method: "post", action: "/api/set-theme" }
+    );
+  };
 
   return (
-    <ThemeContext.Provider value={contextValue}>
+    <ThemeContext.Provider value={{ theme, setTheme: handleThemeChange }}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
@@ -50,5 +49,3 @@ export const useTheme = () => {
   }
   return context;
 };
-
-export { ThemeContext, ThemeProvider };

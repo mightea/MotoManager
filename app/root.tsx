@@ -9,7 +9,17 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { ThemeProvider } from "./contexts/ThemeProvider";
+import { ThemeProvider, useTheme } from "./contexts/ThemeProvider";
+import { getTheme } from "./services/theme.server";
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const theme = await getTheme(request);
+  const data = {
+    theme,
+  };
+
+  return data;
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -24,9 +34,10 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+function MainApp() {
+  const { theme } = useTheme();
   return (
-    <html lang="de">
+    <html lang="de" className={theme}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -34,7 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="font-body antialiased bg-background text-foreground">
-        {children}
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -42,10 +53,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
+export default function App({ loaderData }: Route.ComponentProps) {
+  const { theme } = loaderData;
+
   return (
-    <ThemeProvider>
-      <Outlet />
+    <ThemeProvider initialTheme={theme}>
+      <MainApp />
     </ThemeProvider>
   );
 }
