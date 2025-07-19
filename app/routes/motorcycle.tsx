@@ -19,6 +19,8 @@ import { OpenIssuesCard } from "~/components/open-issues-card";
 import { Button } from "~/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
+import { parseFloatSafe, parseIntSafe } from "~/utils/numberUtils";
+import { data } from "react-router";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -69,38 +71,40 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
-  const data = Object.fromEntries(formData);
+  const fields = Object.fromEntries(formData);
 
-  const { intent } = data;
+  const { intent } = fields;
   console.log("Action called with intent:", intent);
+  console.log("Fields:", fields);
 
   if (intent === "issue-add") {
     const newIssue: NewIssue = {
       //: new Date(data.dateAdded as string),
-      description: data.description as string,
-      priority: data.priority as "low" | "medium" | "high",
-      status: data.status as "open" | "in_progress" | "done",
+      description: fields.description as string,
+      priority: fields.priority as "low" | "medium" | "high",
+      status: fields.status as "new" | "in_progress" | "done",
       motorcycleId: Number.parseInt(params.motorcycleId),
-      odo: Number.parseInt(data.odo as string),
-      date: data.date as string,
+      odo: Number.parseInt(fields.odo as string),
+      date: fields.date as string,
     };
 
     console.log("Adding new issue:", newIssue);
 
     const result = await db.insert(issues).values(newIssue);
     console.log(result);
+    return data({ success: true }, { status: 200 });
   }
 
   if (intent === "issue-edit") {
     const editIssue: EditorIssue = {
-      id: Number.parseInt(data.issueId as string),
-      description: data.description as string,
-      priority: data.priority as "low" | "medium" | "high",
-      status: data.status as "open" | "in_progress" | "done",
+      id: Number.parseInt(fields.issueId as string),
+      description: fields.description as string,
+      priority: fields.priority as "low" | "medium" | "high",
+      status: fields.status as "new" | "in_progress" | "done",
 
       motorcycleId: Number.parseInt(params.motorcycleId),
-      odo: Number.parseInt(data.odo as string),
-      date: data.date as string,
+      odo: Number.parseInt(fields.odo as string),
+      date: fields.date as string,
     };
 
     console.log("Editing issue:", editIssue);
@@ -108,31 +112,35 @@ export async function action({ request, params }: Route.ActionArgs) {
     await db
       .update(issues)
       .set(editIssue)
-      .where(eq(issues.id, Number.parseInt(data.issueId as string)));
+      .where(eq(issues.id, Number.parseInt(fields.issueId as string)));
+
+    return data({ success: true }, { status: 200 });
   }
 
   if (intent === "issue-delete") {
-    console.log("Deleting issue with ID:", data.issueId);
+    console.log("Deleting issue with ID:", fields.issueId);
     await db
       .delete(issues)
-      .where(eq(issues.id, Number.parseInt(data.issueId as string)));
+      .where(eq(issues.id, Number.parseInt(fields.issueId as string)));
+
+    return data({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-edit") {
     const editMotorcycle: EditorMotorcycle = {
-      id: Number.parseInt(data.motorcycleId as string),
-      model: data.model as string,
-      make: data.make as string,
-      modelYear: Number.parseInt(data.modelYear as string),
-      isVeteran: Boolean(data.isVeteran),
-      firstRegistration: data.firstRegistration as string,
-      purchaseDate: data.purchaseDate as string,
-      purchasePrice: Number.parseFloat(data.purchasePrice as string),
-      lastInspection: data.lastInspection as string,
-      vehicleIdNr: data.vehicleIdNr as string,
-      vin: data.vin as string,
-      numberPlate: data.numberPlate as string,
-      initialOdo: Number.parseInt(data.initialOdo as string),
+      id: Number.parseInt(fields.motorcycleId as string),
+      model: fields.model as string,
+      make: fields.make as string,
+      modelYear: Number.parseInt(fields.modelYear as string),
+      isVeteran: Boolean(fields.isVeteran),
+      firstRegistration: fields.firstRegistration as string,
+      purchaseDate: fields.purchaseDate as string,
+      purchasePrice: Number.parseFloat(fields.purchasePrice as string),
+      lastInspection: fields.lastInspection as string,
+      vehicleIdNr: fields.vehicleIdNr as string,
+      vin: fields.vin as string,
+      numberPlate: fields.numberPlate as string,
+      initialOdo: Number.parseInt(fields.initialOdo as string),
     };
 
     console.log("Editing motorcycle:", editMotorcycle);
@@ -140,36 +148,40 @@ export async function action({ request, params }: Route.ActionArgs) {
     await db
       .update(motorcycles)
       .set(editMotorcycle)
-      .where(eq(motorcycles.id, Number.parseInt(data.motorcycleId as string)));
+      .where(
+        eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
+      );
+
+    return data({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-image") {
     const editMotorcycle: EditorMotorcycle = {
-      image: data.image as string,
+      image: fields.image as string,
     };
 
     await db
       .update(motorcycles)
       .set(editMotorcycle)
-      .where(eq(motorcycles.id, Number.parseInt(data.motorcycleId as string)));
+      .where(
+        eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
+      );
+
+    return data({ success: true }, { status: 200 });
   }
 
   if (intent === "maintenance-add") {
-    console.log(data);
-
-    const type: MaintenanceType = data.type as MaintenanceType;
+    const type: MaintenanceType = fields.type as MaintenanceType;
 
     const newMaintenance: NewMaintenanceRecord = {
       type,
-      date: data.date as string,
-      description: data.description as string,
-      odo: Number.parseInt(data.odometer as string),
-      cost: Number.parseFloat(data.cost as string),
+      date: fields.date as string,
+      description: fields.description as string,
+      odo: parseIntSafe(fields.odometer as string),
+      cost: parseFloatSafe(fields.cost as string),
       currency: "CHF",
       motorcycleId: Number.parseInt(params.motorcycleId),
     };
-
-    console.log("Adding Maintenance Item:", newMaintenance);
 
     const item = await db
       .insert(maintenanceRecords)
@@ -177,7 +189,41 @@ export async function action({ request, params }: Route.ActionArgs) {
       .returning();
 
     console.log("Inserted Maintenance Item:", item);
+    return data({ success: true }, { status: 200 });
   }
+
+  if (intent === "maintenance-edit") {
+    const item = await db
+      .update(maintenanceRecords)
+      .set(fields)
+      .where(
+        eq(
+          maintenanceRecords.id,
+          Number.parseInt(fields.maintenanceId as string)
+        )
+      )
+      .returning();
+
+    console.log("Edited Maintenance Item:", item);
+
+    return data({ success: true }, { status: 200 });
+  }
+
+  if (intent === "maintenance-delete") {
+    console.log("Deleting maintenance item with ID:", fields.logId);
+    await db
+      .delete(maintenanceRecords)
+      .where(
+        eq(maintenanceRecords.id, Number.parseInt(fields.logId as string))
+      );
+
+    return data({ success: true }, { status: 200 });
+  }
+
+  return data(
+    { success: false, message: `Unhandled intent ${intent}` },
+    { status: 500 }
+  );
 }
 
 export default function Motorcycle({ loaderData }: Route.ComponentProps) {

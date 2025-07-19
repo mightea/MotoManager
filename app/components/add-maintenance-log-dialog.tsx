@@ -55,23 +55,20 @@ import { dateInputString } from "~/utils/dateUtils";
 // Base schema for common fields
 const baseSchema = z.object({
   date: z.string().min(1, "Ein Datum ist erforderlich."),
-  odometer: z.coerce
-    .number()
-    .min(1, "Der Kilometerstand muss größer als 0 sein."),
-  cost: z.coerce.number().min(0, "Kosten sind erforderlich."),
+  odo: z.coerce.number().min(1, "Der Kilometerstand muss größer als 0 sein."),
   description: z
     .string()
-    .min(10, "Die Beschreibung muss mindestens 10 Zeichen lang sein.")
-    .max(500),
+    .min(0)
+    .max(1000, "Die Beschreibung darf nicht länger als 1000 Zeichen sein."),
 });
 
 // Schemas for each log type
 const generalLogSchema = baseSchema.extend({
-  type: z.literal("other"),
+  type: z.literal("general"),
 });
 
 const oilChangeLogSchema = baseSchema.extend({
-  type: z.literal("fluids"),
+  type: z.literal("fluid"),
   oilType: z.enum(["engine", "gear"], {
     required_error: "Öltyp ist erforderlich.",
   }),
@@ -121,8 +118,8 @@ export function AddMaintenanceLogDialog({
       const baseValues = {
         type: logToEdit.type,
         date: dateInputString(logToEdit.date),
-        odometer: logToEdit.odo,
-        cost: logToEdit.cost ?? 0,
+        odo: logToEdit.odo,
+        cost: logToEdit.cost ?? 0.0,
         description: logToEdit.description ?? "",
       };
 
@@ -131,20 +128,20 @@ export function AddMaintenanceLogDialog({
           return {
             ...baseValues,
             type: "tire",
-            brand: "",
-            position: "rear",
-            dotCode: "",
+            brand: logToEdit.brand ?? "",
+            position: logToEdit.tirePosition ?? "front",
+            dotCode: logToEdit.dotCode ?? "",
           };
-        case "other":
+        case "general":
         default:
-          return { ...baseValues, type: "other" };
+          return { ...baseValues, type: "general" };
       }
     }
     return {
-      type: "other",
+      type: "general",
       date: format(new Date(), "yyyy-MM-dd"),
-      cost: 0,
-      odometer: 0,
+      cost: 0.0,
+      odometer: currentOdometer ?? 0,
       description: "",
     } as FormValues;
   };
@@ -164,12 +161,30 @@ export function AddMaintenanceLogDialog({
 
   const handleDelete = () => {
     fetcher.submit(
-      { intent: "maintenance-delete", issueId: logToEdit?.id ?? "" },
+      { intent: "maintenance-delete", logId: logToEdit?.id ?? "" },
       { method: "post" }
     );
 
     setOpen(false);
   };
+
+  const onSubmit = (values: FormValues) => {
+    fetcher.submit(
+      {
+        intent: isEditMode ? "maintenance-edit" : "maintenance-add",
+        maintenanceId: logToEdit?.id ?? "",
+        ...values,
+      },
+      { method: "post" }
+    );
+  };
+
+  useEffect(() => {
+    // Check if the submission is complete and was successful.
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      setOpen(false); // Close the dialog
+    }
+  }, [fetcher]);
 
   const logType = form.watch("type");
 
@@ -191,7 +206,7 @@ export function AddMaintenanceLogDialog({
         </DialogHeader>
         <Form {...form}>
           <form
-            method="post"
+            onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 max-h-[70vh] overflow-y-auto pr-4"
           >
             <input type="hidden" name="motorcycleId" value={motorcycle.id} />
@@ -219,7 +234,7 @@ export function AddMaintenanceLogDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="other">Allgemein</SelectItem>
+                      <SelectItem value="general">Allgemein</SelectItem>
                       <SelectItem value="repair">Reparatur</SelectItem>
                       <SelectItem value="fluids">Ölwechsel</SelectItem>
                       <SelectItem value="tire">Reifenwechsel</SelectItem>
@@ -245,7 +260,7 @@ export function AddMaintenanceLogDialog({
               />
               <FormField
                 control={form.control}
-                name="odometer"
+                name="odo"
                 defaultValue={currentOdometer}
                 render={({ field }) => (
                   <FormItem>
@@ -262,6 +277,8 @@ export function AddMaintenanceLogDialog({
                 )}
               />
             </div>
+
+            {/* Tire specific fields */}
             {logType === "tire" && (
               <>
                 <div className="grid grid-cols-2 gap-4">
@@ -330,12 +347,13 @@ export function AddMaintenanceLogDialog({
                 />
               </>
             )}
+
             <FormField
               control={form.control}
               name="cost"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Kosten (CHF)</FormLabel>
+                  <FormLabel>Kosten</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
