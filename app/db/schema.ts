@@ -35,7 +35,9 @@ export type MaintenanceType =
   | "chain"
   | "brakerotor"
   | "fluid"
-  | "general";
+  | "general"
+  | "repair"
+  | "service";
 
 export type FluidType =
   | "engineoil"

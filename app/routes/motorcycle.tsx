@@ -4,12 +4,15 @@ import {
   issues,
   maintenanceRecords,
   motorcycles,
+  type BatteryType,
   type EditorIssue,
   type EditorMotorcycle,
+  type FluidType,
   type MaintenanceType,
   type Motorcycle,
   type NewIssue,
   type NewMaintenanceRecord,
+  type TirePosition,
 } from "~/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
@@ -181,6 +184,14 @@ export async function action({ request, params }: Route.ActionArgs) {
       cost: parseFloatSafe(fields.cost as string),
       currency: "CHF",
       motorcycleId: Number.parseInt(params.motorcycleId),
+      model: fields.model as string,
+      brand: fields.brand as string,
+      tirePosition: fields.tirePosition as TirePosition | null,
+      dotCode: fields.dotCode as string | null,
+      tireSize: fields.tireSize as string | null,
+      batteryType: fields.batteryType as BatteryType | null,
+      fluidType: fields.fluidType as FluidType | null,
+      viscosity: fields.viscosity as string | null,
     };
 
     const item = await db

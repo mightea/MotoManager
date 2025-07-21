@@ -21,3 +21,12 @@ export const parseFloatSafe = (
   const parsed = parseFloat(value.toString());
   return isNaN(parsed) ? 0 : parsed;
 };
+
+export const formatCurrency = (
+  amount: number | undefined | null,
+  currency?: string
+) =>
+  new Intl.NumberFormat("de-CH", {
+    style: "currency",
+    currency: currency ?? "CHF",
+  }).format(isFalsy(amount) ? 0 : amount);

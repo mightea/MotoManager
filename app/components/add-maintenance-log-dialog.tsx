@@ -34,7 +34,14 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import type { MaintenanceRecord, Motorcycle } from "~/db/schema";
+import type {
+  BatteryType,
+  FluidType,
+  MaintenanceRecord,
+  MaintenanceType,
+  Motorcycle,
+  TirePosition,
+} from "~/db/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,10 +59,46 @@ import { Trash2 } from "lucide-react";
 import { useFetcher } from "react-router";
 import { dateInputString } from "~/utils/dateUtils";
 
+const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
+  { value: "service", label: "Service / Inspektion" },
+  { value: "repair", label: "Reparatur" },
+  { value: "general", label: "Allgemein" },
+  { value: "fluid", label: "Flüssigkeitswechsel" },
+  { value: "tire", label: "Reifenwechsel" },
+  { value: "chain", label: "Kette / Antrieb" },
+  { value: "brakepad", label: "Bremsbeläge" },
+  { value: "brakerotor", label: "Bremsscheiben" },
+  { value: "battery", label: "Batterie" },
+];
+
+const fluidTypes: { value: FluidType; label: string }[] = [
+  { value: "engineoil", label: "Motoröl" },
+  { value: "breakfluid", label: "Bremsflüssigkeit" },
+  { value: "gearboxoil", label: "Getriebeöl" },
+  { value: "forkoil", label: "Gabelöl" },
+  { value: "coolant", label: "Kühlmittel" },
+];
+
+const tirePositions: { value: TirePosition; label: string }[] = [
+  { value: "front", label: "Vorne" },
+  { value: "rear", label: "Hinten" },
+  { value: "sidecar", label: "Seitenwagen" },
+];
+
+const batteryTypes: { value: BatteryType; label: string }[] = [
+  { value: "lead-acid", label: "Blei-Säure" },
+  { value: "gel", label: "Gel" },
+  { value: "agm", label: "AGM" },
+  { value: "lithium-ion", label: "Lithium-Ionen" },
+  { value: "other", label: "Andere" },
+];
+
 // Base schema for common fields
 const baseSchema = z.object({
   date: z.string().min(1, "Ein Datum ist erforderlich."),
   odo: z.coerce.number().min(1, "Der Kilometerstand muss größer als 0 sein."),
+  cost: z.coerce.number(),
+
   description: z
     .string()
     .min(0)
@@ -67,32 +110,77 @@ const generalLogSchema = baseSchema.extend({
   type: z.literal("general"),
 });
 
-const oilChangeLogSchema = baseSchema.extend({
+const repairLogSchema = baseSchema.extend({
+  type: z.literal("repair"),
+});
+
+const fluidChangeLogSchema = baseSchema.extend({
   type: z.literal("fluid"),
-  oilType: z.enum(["engine", "gear"], {
-    required_error: "Öltyp ist erforderlich.",
-  }),
+  fluidType: z.enum(
+    ["engineoil", "gearboxoil", "forkoil", "breakfluid", "coolant"],
+    {
+      required_error: "Flüssigkeitstyp ist erforderlich.",
+    }
+  ),
   brand: z.string().min(2, "Marke ist erforderlich."),
   viscosity: z.string().min(2, "Viskosität ist erforderlich."),
-  synthetic: z.boolean().default(false),
 });
 
 const tireChangeLogSchema = baseSchema.extend({
   type: z.literal("tire"),
   brand: z.string().min(2, "Marke ist erforderlich."),
-  position: z.enum(["front", "rear", "sidecar"], {
+  model: z.string().min(2, "Modell ist erforderlich."),
+  tirePosition: z.enum(["front", "rear", "sidecar"], {
     required_error: "Reifenposition ist erforderlich.",
   }),
+  tireSize: z.string().optional(),
   dotCode: z
     .string()
     .min(4, "DOT-Code ist erforderlich.")
     .max(4, "Der DOT-Code muss 4 Ziffern haben."),
 });
 
+const batteryChangeLogSchema = baseSchema.extend({
+  type: z.literal("battery"),
+  brand: z.string().min(2, "Marke ist erforderlich."),
+  batteryType: z.enum(["lead-acid", "gel", "agm", "lithium-ion", "other"], {
+    required_error: "Batterietyp ist erforderlich.",
+  }),
+});
+
+const brakePadChangeLogSchema = baseSchema.extend({
+  type: z.literal("brakepad"),
+  brand: z.string().min(2, "Marke ist erforderlich."),
+  position: z.enum(["front", "rear"], {
+    required_error: "Bremsbelagposition ist erforderlich.",
+  }),
+});
+
+const brakeRotorChangeLogSchema = baseSchema.extend({
+  type: z.literal("brakerotor"),
+  brand: z.string().min(2, "Marke ist erforderlich."),
+  position: z.enum(["front", "rear"], {
+    required_error: "Bremsscheibenposition ist erforderlich.",
+  }),
+});
+
+const chainChangeLogSchema = baseSchema.extend({
+  type: z.literal("chain"),
+  brand: z.string().min(2, "Marke ist erforderlich."),
+  //  chainType: z.enum(["standard", "o-ring", "x-ring"], {
+  //     required_error: "Kettentyp ist erforderlich.",
+  //  }),
+});
+
 const formSchema = z.discriminatedUnion("type", [
   generalLogSchema,
-  oilChangeLogSchema,
+  repairLogSchema,
+  fluidChangeLogSchema,
   tireChangeLogSchema,
+  batteryChangeLogSchema,
+  brakePadChangeLogSchema,
+  brakeRotorChangeLogSchema,
+  chainChangeLogSchema,
 ]);
 
 type FormValues = z.infer<typeof formSchema>;
@@ -129,7 +217,8 @@ export function AddMaintenanceLogDialog({
             ...baseValues,
             type: "tire",
             brand: logToEdit.brand ?? "",
-            position: logToEdit.tirePosition ?? "front",
+            model: logToEdit.model ?? "",
+            tirePosition: logToEdit.tirePosition ?? "front",
             dotCode: logToEdit.dotCode ?? "",
           };
         case "general":
@@ -143,7 +232,7 @@ export function AddMaintenanceLogDialog({
       cost: 0.0,
       odometer: currentOdometer ?? 0,
       description: "",
-    } as FormValues;
+    } as unknown as FormValues;
   };
 
   const form = useForm<FormValues>({
@@ -235,9 +324,15 @@ export function AddMaintenanceLogDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="general">Allgemein</SelectItem>
-                      <SelectItem value="repair">Reparatur</SelectItem>
-                      <SelectItem value="fluids">Ölwechsel</SelectItem>
-                      <SelectItem value="tire">Reifenwechsel</SelectItem>
+                      <SelectItem value="repair">
+                        Reparatur / Service
+                      </SelectItem>
+                      <SelectItem value="fluid">Flüssigkeiten</SelectItem>
+                      <SelectItem value="tire">Reifen</SelectItem>
+                      <SelectItem value="battery">Batterie</SelectItem>
+                      <SelectItem value="brakepad">Bremsbeläge</SelectItem>
+                      <SelectItem value="brakerotor">Bremsscheiben</SelectItem>
+                      <SelectItem value="chain">Kette</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -289,12 +384,26 @@ export function AddMaintenanceLogDialog({
                       <FormItem>
                         <FormLabel>Marke</FormLabel>
                         <FormControl>
-                          <Input placeholder="z.B. Michelin" {...field} />
+                          <Input placeholder="z.B. Continental" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name={"model"}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Modell</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. Trail Attack 3" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name={"dotCode"}
@@ -311,7 +420,7 @@ export function AddMaintenanceLogDialog({
                 </div>
                 <FormField
                   control={form.control}
-                  name={"position"}
+                  name={"tirePosition"}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Position</FormLabel>
@@ -345,6 +454,127 @@ export function AddMaintenanceLogDialog({
                     </FormItem>
                   )}
                 />
+              </>
+            )}
+
+            {/* Tire specific fields */}
+            {logType === "battery" && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="batteryType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Batterietyp</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Typ wählen" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {batteryTypes.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={"brand"}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marke</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. Banner" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={"model"}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Modell</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. Power Bull" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
+            )}
+
+            {logType === "fluid" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="fluidType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Flüssigkeit</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Flüssigkeit wählen" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {fluidTypes.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marke</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. Motul" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="viscosity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Viskosität / Typ</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. 10W-40" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </>
             )}
 

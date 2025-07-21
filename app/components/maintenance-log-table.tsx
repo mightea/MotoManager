@@ -1,6 +1,6 @@
-import { type Maintenance, type Motorcycle } from "~/db/schema";
+import { type MaintenanceRecord, type Motorcycle } from "~/db/schema";
 import { Badge } from "./ui/badge";
-import { format } from "date-fns";
+import { format, formatDistanceToNowStrict } from "date-fns";
 import { de } from "date-fns/locale";
 import {
   Accordion,
@@ -8,25 +8,36 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./ui/accordion";
-import { Wrench, Droplets, Replace, Edit } from "lucide-react";
+import {
+  Wrench,
+  Droplets,
+  Replace,
+  Edit,
+  Fingerprint,
+  Calendar,
+  type LucideIcon,
+  MapPin,
+  CalendarClock,
+  Tag,
+  Gauge,
+  Hash,
+  Layers,
+} from "lucide-react";
 
 import type { ReactElement } from "react";
 import { AddMaintenanceLogDialog } from "./add-maintenance-log-dialog";
 import { Button } from "./ui/button";
+import { InfoItem } from "./motorcycle-info";
+import { getTireInfo } from "~/utils/motorcycleUtils";
+import { Separator } from "./ui/separator";
+import { formatCurrency } from "~/utils/numberUtils";
 
 interface MaintenanceLogTableProps {
   motorcycle: Motorcycle;
-  logs: Maintenance[];
+  logs: MaintenanceRecord[];
 }
 
-const LogTypeBadges: Record<Maintenance["type"], string> = {
-  other: "Allgemein",
-  oil_change: "Ölwechsel",
-  tire: "Reifenwechsel",
-  brake_fluid_change: "Bremsflüssigkeit",
-};
-
-const getIcon = (item: Maintenance): ReactElement => {
+const getIcon = (item: MaintenanceRecord): ReactElement => {
   switch (item.type) {
     case "fluid":
       return <Droplets className="h-5 w-5 text-secondary-foreground" />;
@@ -37,15 +48,124 @@ const getIcon = (item: Maintenance): ReactElement => {
   }
 };
 
+const getLogBadgeText = (item: MaintenanceRecord): string => {
+  switch (item.type) {
+    case "tire":
+      return "Reifenwechsel";
+    case "battery":
+      return "Batterie";
+    case "brakepad":
+      return "Bremsbeläge";
+    case "brakerotor":
+      return "Bremsscheibe";
+    case "fluid":
+      return "Flüssigkeit";
+    case "chain":
+      return "Kette";
+    case "repair":
+      return "Reparatur";
+    case "service":
+      return "Service";
+    default:
+      return "Allgemein";
+  }
+};
+
+const DetailRow = ({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: React.ReactNode;
+}) => (
+  <div className="flex justify-between items-center text-sm">
+    <div className="flex items-center gap-3 text-muted-foreground">
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+    </div>
+    <span className="font-medium text-foreground text-right">{value}</span>
+  </div>
+);
+
 export default function MaintenanceLogTable({
   logs,
   motorcycle,
 }: MaintenanceLogTableProps) {
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("de-CH", {
-      style: "currency",
-      currency,
-    }).format(amount);
+  const renderLogDetails = (log: MaintenanceRecord) => {
+    switch (log.type) {
+      case "oil_change":
+        const qualityMap = {
+          mineral: "Mineralisch",
+          "semi-synthetic": "Teilsynthetisch",
+          synthetic: "Synthetisch",
+        };
+        return (
+          <>
+            <Separator className="my-3" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+              <DetailRow icon={Tag} label="Marke" value={log.brand} />
+              <DetailRow
+                icon={Gauge}
+                label="Viskosität"
+                value={log.viscosity}
+              />
+              <DetailRow
+                icon={Droplets}
+                label="Typ"
+                value={log.oilType === "engine" ? "Motor" : "Getriebe"}
+              />
+              <DetailRow
+                icon={Layers}
+                label="Qualität"
+                value={qualityMap[log.oilQuality]}
+              />
+            </div>
+          </>
+        );
+      case "tire":
+        const positionMap = {
+          front: "Vorne",
+          rear: "Hinten",
+          sidecar: "Seitenwagen",
+        };
+        const tireInfo = getTireInfo(log.dotCode);
+        return (
+          <>
+            <Separator className="my-3" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+              <DetailRow icon={Tag} label="Marke" value={log.brand} />
+              <DetailRow
+                icon={MapPin}
+                label="Position"
+                value={positionMap[log.position]}
+              />
+              {tireInfo.date && (
+                <>
+                  <DetailRow
+                    icon={Calendar}
+                    label="Herstellungsdatum"
+                    value={tireInfo.manufacturingDate}
+                  />
+                </>
+              )}
+            </div>
+          </>
+        );
+      case "fluid":
+        return (
+          <>
+            <Separator className="my-3" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+              <DetailRow icon={Tag} label="Marke" value={log.brand} />
+              <DetailRow icon={Gauge} label="Typ" value={log.viscosity} />
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
   };
 
   if (logs.length === 0) {
@@ -90,34 +210,35 @@ export default function MaintenanceLogTable({
                     {log.odo.toLocaleString("de-CH")} km
                   </p>
                   <Badge variant="secondary" className="text-xs mt-1">
-                    {LogTypeBadges[log.type]}
+                    {getLogBadgeText(log)}
                   </Badge>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="space-y-3 pt-4 mt-2 ml-14">
+              <div className="space-y-3 border-t pt-4 mt-2 ml-14">
                 <p className="text-sm text-foreground leading-relaxed break-words">
                   {log.description}
                 </p>
-                <div className="flex justify-between text-sm pt-2">
-                  <p className="text-muted-foreground">Kosten</p>
-                  <p className="font-medium">
-                    {formatCurrency(log.cost, log.currency)}
-                  </p>
-                </div>
+                {log.cost && (
+                  <div className="flex justify-between text-sm pt-2">
+                    <p className="text-muted-foreground">Kosten</p>
+                    <p className="font-medium">{formatCurrency(log.cost)}</p>
+                  </div>
+                )}
+                {renderLogDetails(log)}
                 <div className="flex justify-end pt-2">
                   <AddMaintenanceLogDialog
-                    logToEdit={log}
                     motorcycle={motorcycle}
+                    logToEdit={log}
                   >
                     <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
+                      <Edit className="mr-2 h-4 w-4" />
                       Bearbeiten
                     </Button>
                   </AddMaintenanceLogDialog>
                 </div>
-              </div>
+              </div>{" "}
             </AccordionContent>
           </AccordionItem>
         );
