@@ -174,29 +174,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "maintenance-add") {
-    const type: MaintenanceType = fields.type as MaintenanceType;
-
-    const newMaintenance: NewMaintenanceRecord = {
-      type,
-      date: fields.date as string,
-      description: fields.description as string,
-      odo: parseIntSafe(fields.odometer as string),
-      cost: parseFloatSafe(fields.cost as string),
-      currency: "CHF",
-      motorcycleId: Number.parseInt(params.motorcycleId),
-      model: fields.model as string,
-      brand: fields.brand as string,
-      tirePosition: fields.tirePosition as TirePosition | null,
-      dotCode: fields.dotCode as string | null,
-      tireSize: fields.tireSize as string | null,
-      batteryType: fields.batteryType as BatteryType | null,
-      fluidType: fields.fluidType as FluidType | null,
-      viscosity: fields.viscosity as string | null,
-    };
-
+    console.log(formData);
     const item = await db
       .insert(maintenanceRecords)
-      .values(newMaintenance)
+      .values(fields as unknown as NewMaintenanceRecord)
       .returning();
 
     console.log("Inserted Maintenance Item:", item);

@@ -8,6 +8,13 @@
       "when": 1752873511366,
       "tag": "0000_initial-schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1753114675304,
+      "tag": "0001_adds-manual-odo-and-oil-type",
+      "breakpoints": true
     }
   ]
 }

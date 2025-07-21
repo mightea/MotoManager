@@ -24,6 +24,8 @@ export const motorcycles = sqliteTable("motorcycles", {
   lastInspection: text(),
 
   initialOdo: int().notNull().default(0),
+  manualOdo: int("manual_odo").default(0), // for manual adjustments
+
   purchaseDate: text("purchase_date"), // SQLite DATE stored as TEXT
   purchasePrice: real("purchase_price"), // decimal‐friendly REAL column
 });
@@ -48,6 +50,7 @@ export type FluidType =
 
 export type TirePosition = "front" | "rear" | "sidecar";
 export type BatteryType = "lead-acid" | "gel" | "agm" | "lithium-ion" | "other";
+export type OilType = "synthetic" | "semi-synthetic" | "mineral";
 
 export const maintenanceRecords = sqliteTable("maintenance_records", {
   id: int().primaryKey({ autoIncrement: true }),
@@ -76,6 +79,7 @@ export const maintenanceRecords = sqliteTable("maintenance_records", {
   // Fluid-specific fields
   fluidType: text("fluid_type").$type<FluidType>(), // optional, e.g. "engineoil"
   viscosity: text("viscosity"), // optional, e.g. "10W40"
+  oilType: text("oil_type").$type<OilType>(), // optional, e.g. "synthetic", "semi-synthetic"
 });
 
 export const issues = sqliteTable("issues", {

@@ -1,7 +1,15 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { de } from "date-fns/locale";
+import { Battery, Droplets, Replace, Wrench } from "lucide-react";
+import type { ReactElement } from "react";
+import type { MaintenanceType } from "~/db/schema";
+import { isFalsy } from "./falsyUtils";
 
-export const getTireInfo = (dotCode: string) => {
+export const getTireInfo = (dotCode?: string) => {
+  if (isFalsy(dotCode)) {
+    return null;
+  }
+
   if (dotCode.length !== 4 || !/^\d+$/.test(dotCode)) {
     return { manufacturingDate: "Ungültig", age: null, date: null };
   }
@@ -29,9 +37,33 @@ export const getTireInfo = (dotCode: string) => {
   // Get the Monday of the week
   isoWeekStart.setDate(simple.getDate() - dayOfWeek + 1);
 
+  const options: Intl.DateTimeFormatOptions = {
+    month: "long", // e.g., "March"
+    year: "numeric", // e.g., "2022"
+  };
+
   return {
-    manufacturingDate: `Woche ${week}, ${year}`,
+    manufacturingDate: Intl.DateTimeFormat("de-CH", options).format(simple),
     age: formatDistanceToNowStrict(isoWeekStart, { locale: de, unit: "month" }),
     date: isoWeekStart,
   };
+};
+
+export const getMaintenanceIcon = ({
+  type,
+  className = "h-5 w-5 text-secondary-foreground",
+}: {
+  type: MaintenanceType;
+  className?: string;
+}): ReactElement => {
+  switch (type) {
+    case "fluid":
+      return <Droplets className={className} />;
+    case "tire":
+      return <Replace className={className} />;
+    case "battery":
+      return <Battery className={className} />;
+    default:
+      return <Wrench className={className} />;
+  }
 };

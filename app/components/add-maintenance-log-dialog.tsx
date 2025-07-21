@@ -40,6 +40,7 @@ import type {
   MaintenanceRecord,
   MaintenanceType,
   Motorcycle,
+  OilType,
   TirePosition,
 } from "~/db/schema";
 import {
@@ -58,6 +59,7 @@ import {
 import { Trash2 } from "lucide-react";
 import { useFetcher } from "react-router";
 import { dateInputString } from "~/utils/dateUtils";
+import { getMaintenanceIcon } from "~/utils/motorcycleUtils";
 
 const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
   { value: "service", label: "Service / Inspektion" },
@@ -65,7 +67,7 @@ const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
   { value: "general", label: "Allgemein" },
   { value: "fluid", label: "Flüssigkeitswechsel" },
   { value: "tire", label: "Reifenwechsel" },
-  { value: "chain", label: "Kette / Antrieb" },
+  { value: "chain", label: "Kette" },
   { value: "brakepad", label: "Bremsbeläge" },
   { value: "brakerotor", label: "Bremsscheiben" },
   { value: "battery", label: "Batterie" },
@@ -79,10 +81,10 @@ const fluidTypes: { value: FluidType; label: string }[] = [
   { value: "coolant", label: "Kühlmittel" },
 ];
 
-const tirePositions: { value: TirePosition; label: string }[] = [
-  { value: "front", label: "Vorne" },
-  { value: "rear", label: "Hinten" },
-  { value: "sidecar", label: "Seitenwagen" },
+const oilTypes: { value: OilType; label: string }[] = [
+  { value: "mineral", label: "Mineralisch" },
+  { value: "semi-synthetic", label: "Teilsynthetisch" },
+  { value: "synthetic", label: "Vollsynthetisch" },
 ];
 
 const batteryTypes: { value: BatteryType; label: string }[] = [
@@ -124,6 +126,11 @@ const fluidChangeLogSchema = baseSchema.extend({
   ),
   brand: z.string().min(2, "Marke ist erforderlich."),
   viscosity: z.string().min(2, "Viskosität ist erforderlich."),
+  oilType: z
+    .enum(["mineral", "semi-synthetic", "synthetic"], {
+      required_error: "Öltyp ist erforderlich.",
+    })
+    .nullable(),
 });
 
 const tireChangeLogSchema = baseSchema.extend({
@@ -143,6 +150,7 @@ const tireChangeLogSchema = baseSchema.extend({
 const batteryChangeLogSchema = baseSchema.extend({
   type: z.literal("battery"),
   brand: z.string().min(2, "Marke ist erforderlich."),
+  model: z.string().min(2, "Modell ist erforderlich."),
   batteryType: z.enum(["lead-acid", "gel", "agm", "lithium-ion", "other"], {
     required_error: "Batterietyp ist erforderlich.",
   }),
@@ -219,7 +227,25 @@ export function AddMaintenanceLogDialog({
             brand: logToEdit.brand ?? "",
             model: logToEdit.model ?? "",
             tirePosition: logToEdit.tirePosition ?? "front",
+            tireSize: logToEdit.tireSize ?? "",
             dotCode: logToEdit.dotCode ?? "",
+          };
+        case "battery":
+          return {
+            ...baseValues,
+            type: "battery",
+            brand: logToEdit.brand ?? "",
+            model: logToEdit.model ?? "",
+            batteryType: logToEdit.batteryType ?? "agm",
+          };
+        case "fluid":
+          return {
+            ...baseValues,
+            type: "fluid",
+            fluidType: logToEdit.fluidType ?? "engineoil",
+            brand: logToEdit.brand ?? "",
+            viscosity: logToEdit.viscosity ?? "",
+            oilType: logToEdit.oilType,
           };
         case "general":
         default:
@@ -230,9 +256,9 @@ export function AddMaintenanceLogDialog({
       type: "general",
       date: format(new Date(), "yyyy-MM-dd"),
       cost: 0.0,
-      odometer: currentOdometer ?? 0,
+      odo: currentOdometer ?? 0,
       description: "",
-    } as unknown as FormValues;
+    } as FormValues;
   };
 
   const form = useForm<FormValues>({
@@ -262,6 +288,7 @@ export function AddMaintenanceLogDialog({
       {
         intent: isEditMode ? "maintenance-edit" : "maintenance-add",
         maintenanceId: logToEdit?.id ?? "",
+        motorcycleId: motorcycle.id.toString(),
         ...values,
       },
       { method: "post" }
@@ -276,6 +303,7 @@ export function AddMaintenanceLogDialog({
   }, [fetcher]);
 
   const logType = form.watch("type");
+  const fluidType = form.watch("fluidType");
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -298,8 +326,6 @@ export function AddMaintenanceLogDialog({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4 max-h-[70vh] overflow-y-auto pr-4"
           >
-            <input type="hidden" name="motorcycleId" value={motorcycle.id} />
-            <input type="hidden" name="type" value={logType} />
             <FormField
               control={form.control}
               name="type"
@@ -307,13 +333,7 @@ export function AddMaintenanceLogDialog({
                 <FormItem>
                   <FormLabel>Eintragstyp</FormLabel>
                   <Select
-                    onValueChange={(value) => {
-                      form.reset({
-                        ...getInitialFormValues(),
-                        type: value as FormValues["type"],
-                      }) as any;
-                      field.onChange(value);
-                    }}
+                    onValueChange={field.onChange}
                     defaultValue={field.value}
                     disabled={isEditMode}
                   >
@@ -323,16 +343,19 @@ export function AddMaintenanceLogDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="general">Allgemein</SelectItem>
-                      <SelectItem value="repair">
-                        Reparatur / Service
-                      </SelectItem>
-                      <SelectItem value="fluid">Flüssigkeiten</SelectItem>
-                      <SelectItem value="tire">Reifen</SelectItem>
-                      <SelectItem value="battery">Batterie</SelectItem>
-                      <SelectItem value="brakepad">Bremsbeläge</SelectItem>
-                      <SelectItem value="brakerotor">Bremsscheiben</SelectItem>
-                      <SelectItem value="chain">Kette</SelectItem>
+                      {maintenanceTypes.map((item) => {
+                        return (
+                          <SelectItem key={item.value} value={item.value}>
+                            <div className="flex items-center gap-3">
+                              {getMaintenanceIcon({
+                                type: item.value,
+                                className: "h-4 w-4 text-muted-foreground",
+                              })}
+                              <span>{item.label}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -412,6 +435,20 @@ export function AddMaintenanceLogDialog({
                         <FormLabel>DOT-Code (4 Ziffern)</FormLabel>
                         <FormControl>
                           <Input placeholder="z.B. 0520" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tireSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reifengrösse</FormLabel>
+                        <FormControl>
+                          <Input placeholder="z.B. 120/70ZR17" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -547,6 +584,36 @@ export function AddMaintenanceLogDialog({
                     </FormItem>
                   )}
                 />
+                {fluidType === "engineoil" ||
+                  (fluidType === "gearboxoil" && (
+                    <FormField
+                      control={form.control}
+                      name="oilType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Öltyp</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value ?? ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Öltyp wählen" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {oilTypes.map((item) => (
+                                <SelectItem key={item.value} value={item.value}>
+                                  {item.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -566,7 +633,7 @@ export function AddMaintenanceLogDialog({
                     name="viscosity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Viskosität / Typ</FormLabel>
+                        <FormLabel>Viskosität</FormLabel>
                         <FormControl>
                           <Input placeholder="z.B. 10W-40" {...field} />
                         </FormControl>
