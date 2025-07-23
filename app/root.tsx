@@ -16,11 +16,15 @@ import { getTheme } from "./services/theme.server";
 import { urlMotorcycle } from "./utils/urlUtils";
 import { motorcycles, type NewMotorcycle } from "./db/schema";
 import db from "./db";
+import { SettingsProvider } from "./contexts/SettingsProvider";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
+  const locations = await db.query.locations.findMany();
+
   const data = {
     theme,
+    locations,
   };
 
   return data;
@@ -59,11 +63,13 @@ function MainApp() {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { theme } = loaderData;
+  const { theme, locations } = loaderData;
 
   return (
     <ThemeProvider initialTheme={theme}>
-      <MainApp />
+      <SettingsProvider initialLocations={locations}>
+        <MainApp />
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

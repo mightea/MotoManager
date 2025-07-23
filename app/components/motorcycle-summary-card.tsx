@@ -9,10 +9,10 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Award, Bike, Gauge, RulerDimensionLine, Wrench } from "lucide-react";
-import { InfoItem } from "./motorcycle-info";
 import { slug } from "~/utils/slugify";
 import { Badge } from "./ui/badge";
 import { cn } from "~/utils/tw";
+import { InfoItem } from "./info-item";
 
 interface Props {
   id: string;
@@ -72,7 +72,7 @@ export const MotorcycleSummaryCard = ({
               </Badge>
             )}
           </CardDescription>
-        </CardHeader>{" "}
+        </CardHeader>
         <CardContent className="space-y-3 pt-0">
           <InfoItem
             icon={Gauge}

@@ -4,15 +4,11 @@ import {
   issues,
   maintenanceRecords,
   motorcycles,
-  type BatteryType,
   type EditorIssue,
   type EditorMotorcycle,
-  type FluidType,
-  type MaintenanceType,
   type Motorcycle,
   type NewIssue,
   type NewMaintenanceRecord,
-  type TirePosition,
 } from "~/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
@@ -22,7 +18,6 @@ import { OpenIssuesCard } from "~/components/open-issues-card";
 import { Button } from "~/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
-import { parseFloatSafe, parseIntSafe } from "~/utils/numberUtils";
 import { data } from "react-router";
 
 export async function loader({ params }: Route.LoaderArgs) {

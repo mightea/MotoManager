@@ -4,14 +4,15 @@ import {
   Award,
   Bike,
   Calendar,
-  CalendarDays,
   CircleDollarSign,
   Edit,
   Fingerprint,
   Hash,
   Milestone,
   Pencil,
+  Save,
   ShieldCheck,
+  Warehouse,
   Wrench,
 } from "lucide-react";
 import type { Motorcycle } from "~/db/schema";
@@ -26,40 +27,76 @@ import { AddMotorcycleDialog } from "./add-motorcycle-dialog";
 import { Button } from "./ui/button";
 import { format } from "date-fns/format";
 import { de } from "date-fns/locale/de";
-import { cn } from "~/utils/tw";
 import { Badge } from "./ui/badge";
 import { Accordion, AccordionContent, AccordionTrigger } from "./ui/accordion";
 import { AccordionItem } from "@radix-ui/react-accordion";
 import { Separator } from "./ui/separator";
 import { ImageUploadDialog } from "./image-upload-dialog";
 import { useFetcher } from "react-router";
+import { LocationUpdateDialog } from "./location-update-dialog";
+import { useState } from "react";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { InfoItem } from "./info-item";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
   currentOdometer: number;
 }
 
-export const InfoItem = ({
-  icon: Icon,
-  label,
-  value,
-  valueClassName,
+function ManualOdometerInput({
+  motorcycle,
+  currentOdometer,
+  fetcher,
 }: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  valueClassName?: string;
-}) => (
-  <div className="flex items-start justify-between">
-    <div className="flex items-center gap-3">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">{label}</p>
+  motorcycle: Motorcycle;
+  currentOdometer: number;
+  fetcher: ReturnType<typeof useFetcher>;
+}) {
+  const [odoValue, setOdoValue] = useState(currentOdometer.toString());
+
+  const handleSave = () => {
+    fetcher.submit(
+      {
+        intent: "motorcycle-odo",
+        motorcycleId: motorcycle.id,
+        manualOdo: odoValue,
+      },
+      { method: "post" }
+    );
+  };
+
+  return (
+    <div className="flex-1">
+      <Label
+        htmlFor="manual-odo"
+        className="flex items-center gap-3 text-sm text-muted-foreground mb-2"
+      >
+        <Wrench className="h-4 w-4" />
+        Akt. Kilometerstand
+      </Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id="manual-odo"
+          type="number"
+          value={odoValue}
+          onChange={(e) => setOdoValue(e.target.value)}
+          placeholder="Kilometerstand eingeben"
+          className="h-9"
+        />
+        <Button
+          onClick={handleSave}
+          size="sm"
+          variant="outline"
+          className="h-9"
+        >
+          <Save className="mr-2 h-4 w-4" />
+          Speichern
+        </Button>
+      </div>
     </div>
-    <p className={cn("font-semibold text-sm text-right", valueClassName)}>
-      {value}
-    </p>
-  </div>
-);
+  );
+}
 
 export default function MotorcycleInfo({
   motorcycle,
@@ -79,6 +116,11 @@ export default function MotorcycleInfo({
       },
       { method: "post" }
     );
+  };
+
+  const location = {
+    id: 1,
+    name: "Garage",
   };
 
   return (
@@ -141,18 +183,25 @@ export default function MotorcycleInfo({
       </CardHeader>
 
       <CardContent className="space-y-4 pt-0">
-        <div className="space-y-2 rounded-lg">
-          <InfoItem
-            icon={Wrench}
-            label="Akt. Kilometerstand"
-            value={`${currentOdometer.toLocaleString("de-DE")} km`}
-            valueClassName="text-base"
-          />
-          <InfoItem
-            icon={CalendarDays}
-            label="Baujahr"
-            value={motorcycle.modelYear}
-          />
+        <div className="space-y-2">
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <ManualOdometerInput
+                motorcycle={motorcycle}
+                currentOdometer={currentOdometer}
+                fetcher={fetcher}
+              />
+            </div>
+          </div>
+          <div className="p-3 space-y-2">
+            <InfoItem icon={Warehouse} label="Standort" value={location?.name}>
+              <LocationUpdateDialog motorcycle={motorcycle}>
+                <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2">
+                  <Edit className="h-3 w-3" />
+                </Button>
+              </LocationUpdateDialog>
+            </InfoItem>
+          </div>
         </div>
 
         <Accordion type="single" collapsible>

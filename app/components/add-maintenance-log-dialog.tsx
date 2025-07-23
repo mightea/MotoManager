@@ -41,7 +41,6 @@ import type {
   MaintenanceType,
   Motorcycle,
   OilType,
-  TirePosition,
 } from "~/db/schema";
 import {
   AlertDialog,

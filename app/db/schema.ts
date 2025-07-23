@@ -117,7 +117,9 @@ export const locationRecords = sqliteTable("location_records", {
 });
 
 export type Location = typeof locations.$inferSelect;
+export type NewLocation = typeof locations.$inferInsert;
 export type CurrentLocation = typeof locationRecords.$inferSelect;
+export type NewCurrentLocationRecord = typeof locationRecords.$inferInsert;
 
 export type Motorcycle = typeof motorcycles.$inferSelect;
 export type NewMotorcycle = typeof motorcycles.$inferInsert;

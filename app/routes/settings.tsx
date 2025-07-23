@@ -1,42 +1,120 @@
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import type { Route } from "./+types/settings";
 import { useLoaderData } from "react-router";
+import { Separator } from "~/components/ui/separator";
 import db from "~/db";
-import { type Location } from "~/db/schema";
+import { StorageLocationsForm } from "~/components/storage-locations-from";
+import { locations, type NewLocation } from "~/db/schema";
+import { data } from "react-router";
+import { eq } from "drizzle-orm";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Settings" }];
 }
 
-export const loader = async ({ request }): Promise<Location[]> => {
+export async function loader({ params }: Route.LoaderArgs) {
   const result = await db.query.locations.findMany();
   return result;
-};
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const fields = Object.fromEntries(formData);
+
+  const { intent } = fields;
+  console.log("Action called with intent:", intent);
+  console.log("Fields:", fields);
+
+  if (intent === "location-add") {
+    const item = await db
+      .insert(locations)
+      .values({
+        name: fields.name as string,
+      })
+      .returning();
+
+    return data({
+      success: true,
+      name: item[0].name,
+      intent: "location-add",
+    });
+  }
+
+  if (intent === "location-edit") {
+    const item = await db
+      .update(locations)
+      .set({
+        name: fields.name as string,
+      })
+      .where(eq(locations.id, Number.parseInt(fields.id as string)))
+      .returning();
+
+    return data({
+      success: true,
+      name: item[0].name,
+      intent: "location-edit",
+    });
+  }
+
+  if (intent === "location-delete") {
+    console.log("Deleting location with ID:", fields.id);
+    await db
+      .delete(locations)
+      .where(eq(locations.id, Number.parseInt(fields.id as string)));
+
+    return data({
+      success: true,
+      intent: "location-delete",
+      name: fields.name,
+    });
+  }
+}
 
 export default function Settings() {
   const locations = useLoaderData<typeof loader>();
 
   return (
-    <main className="flex flex-col pt-10 px-4">
-      <h1 className="text-6xl">Settings</h1>
+    <main className="flex flex-col pt-10 px-4 space-y-6">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight">Einstellungen</h1>
+        <p className="text-muted-foreground">
+          Verwalte deine Kontoeinstellungen und Präferenzen.
+        </p>
+      </header>
+      <Separator />
 
-      <section className="py-4">
-        <h2 className="text-4xl">Locations</h2>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Garagen / Standorte</CardTitle>
+            <CardDescription>
+              Verwalte die Orte, an denen du deine Motorräder abstellst oder
+              wartest.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <StorageLocationsForm />
+          </CardContent>
+        </Card>
+      </div>
 
-        <ul role="list" className="divide-y divide-gray-100">
-          {locations.map((location) => (
-            <li key={location.id} className="flex justify-between gap-x-6 py-5">
-              <div className="flex min-w-0 gap-x-4">
-                <div className="min-w-0 flex-auto">
-                  <p className="text-sm/6 font-semibold">{location.name}</p>
-                </div>
-              </div>
-              <div className="sm:flex sm:flex-col sm:items-end">
-                <button>Edit</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Währung</CardTitle>
+            <CardDescription>
+              Verwalte die Währungseinstellungen für die App.
+            </CardDescription>
+          </CardHeader>
+          <CardContent></CardContent>
+        </Card>
+      </div>
     </main>
   );
 }
