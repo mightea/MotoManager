@@ -1,46 +1,17 @@
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "./ui/skeleton";
-import { Edit, PlusCircle, Trash2 } from "lucide-react";
-import { useToast } from "~/hooks/use-toast";
+import { Edit, PlusCircle } from "lucide-react";
 import { useSettings } from "~/contexts/SettingsProvider";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "./ui/alert-dialog";
 import { AddStorageLocationDialog } from "./add-storage-location-dialog";
-import type { Location } from "~/db/schema";
-import { useFetcher } from "react-router";
 
 export function StorageLocationsForm() {
   const [isMounted, setIsMounted] = useState(false);
-  const { toast } = useToast();
   const { locations: storageLocations } = useSettings();
-  const fetcher = useFetcher();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const handleDelete = (location: Location) => {
-    fetcher.submit(
-      { intent: "location-delete", id: location.id ?? "" },
-      { method: "post" }
-    );
-
-    toast({
-      title: "Standort gelöscht",
-      description: "Der Standort wurde erfolgreich entfernt.",
-      variant: "destructive",
-    });
-  };
 
   if (!isMounted) {
     return (
@@ -67,38 +38,6 @@ export function StorageLocationsForm() {
                   <Edit className="h-4 w-4" />
                 </Button>
               </AddStorageLocationDialog>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Standort wirklich löschen?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Diese Aktion kann nicht rückgängig gemacht werden. Dadurch
-                      wird der Standort dauerhaft gelöscht. Motorräder an diesem
-                      Standort verlieren ihre Zuweisung.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDelete(location)}
-                      className="bg-destructive hover:bg-destructive/90"
-                    >
-                      Löschen
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
         ))}

@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, type ReactNode, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,6 +13,17 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -27,6 +36,7 @@ import { useToast } from "~/hooks/use-toast";
 import type { Location } from "~/db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFetcher } from "react-router";
+import { Trash2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Der Name muss mindestens 2 Zeichen haben."),
@@ -79,6 +89,13 @@ export function AddStorageLocationDialog({
     );
   };
 
+  const handleDelete = () => {
+    fetcher.submit(
+      { intent: "location-delete", id: locationToEdit?.id ?? "" },
+      { method: "post" }
+    );
+  };
+
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
       const { intent, name } = fetcher.data as {
@@ -87,16 +104,19 @@ export function AddStorageLocationDialog({
       };
 
       switch (intent) {
-        case "location-add":
-          toast({
-            title: "Standort hinzugefügt",
-            description: `Der neue Standort "${name}" wurde erstellt.`,
-          });
         case "location-edit":
           toast({
             title: "Standort aktualisiert",
             description: `Der Standort "${name}" wurde gespeichert.`,
           });
+          break;
+        case "location-delete":
+          toast({
+            title: "Standort gelöscht",
+            description: `Der Standort "${name}" wurde erfolgreich entfernt.`,
+            variant: "destructive",
+          });
+          break;
       }
 
       setOpen(false);
@@ -133,6 +153,41 @@ export function AddStorageLocationDialog({
               )}
             />
             <DialogFooter>
+              {isEditMode && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="mr-auto"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Löschen
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Standort wirklich löschen?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Diese Aktion kann nicht rückgängig gemacht werden.
+                        Dadurch wird der Standort dauerhaft gelöscht. Motorräder
+                        an diesem Standort verlieren ihre Zuweisung.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Löschen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -141,7 +196,7 @@ export function AddStorageLocationDialog({
                 Abbrechen
               </Button>
               <Button type="submit">
-                {isEditMode ? "Änderungen speichern" : "Standort hinzufügen"}
+                {isEditMode ? "Speichern" : "Hinzufügen"}
               </Button>
             </DialogFooter>
           </form>

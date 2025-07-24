@@ -42,17 +42,14 @@ import { InfoItem } from "./info-item";
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
   currentOdometer: number;
+  fetcher: ReturnType<typeof useFetcher>;
 }
 
 function ManualOdometerInput({
   motorcycle,
   currentOdometer,
   fetcher,
-}: {
-  motorcycle: Motorcycle;
-  currentOdometer: number;
-  fetcher: ReturnType<typeof useFetcher>;
-}) {
+}: MotorcycleInfoProps) {
   const [odoValue, setOdoValue] = useState(currentOdometer.toString());
 
   const handleSave = () => {

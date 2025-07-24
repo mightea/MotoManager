@@ -19,6 +19,7 @@ import { Button } from "~/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
 import { data } from "react-router";
+import { parseIntSafe } from "~/utils/numberUtils";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -166,6 +167,18 @@ export async function action({ request, params }: Route.ActionArgs) {
       );
 
     return data({ success: true }, { status: 200 });
+  }
+
+  if (intent === "motorcycle-odo") {
+    await db
+      .update(motorcycles)
+      .set({
+        manualOdo: parseIntSafe(fields.manualOdo as string),
+      } satisfies EditorMotorcycle)
+      .where(
+        eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
+      );
+    return data({ success: true, intent: "motorcycle-odo" }, { status: 200 });
   }
 
   if (intent === "maintenance-add") {

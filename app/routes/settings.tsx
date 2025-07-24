@@ -13,6 +13,7 @@ import { StorageLocationsForm } from "~/components/storage-locations-from";
 import { locations, type NewLocation } from "~/db/schema";
 import { data } from "react-router";
 import { eq } from "drizzle-orm";
+import { useSettings } from "~/contexts/SettingsProvider";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Settings" }];
@@ -78,6 +79,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function Settings() {
   const locations = useLoaderData<typeof loader>();
+  const { setLocations } = useSettings();
+  setLocations(locations);
 
   return (
     <main className="flex flex-col pt-10 px-4 space-y-6">
