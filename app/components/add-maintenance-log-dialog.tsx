@@ -72,10 +72,12 @@ const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
   { value: "battery", label: "Batterie" },
 ];
 
-const fluidTypes: { value: FluidType; label: string }[] = [
+export const fluidTypes: { value: FluidType; label: string }[] = [
   { value: "engineoil", label: "Motoröl" },
   { value: "breakfluid", label: "Bremsflüssigkeit" },
   { value: "gearboxoil", label: "Getriebeöl" },
+  { value: "finaldriveoil", label: "Kardanantrieb" },
+  { value: "driveshaftoil", label: "Kardanwelle" },
   { value: "forkoil", label: "Gabelöl" },
   { value: "coolant", label: "Kühlmittel" },
 ];
@@ -118,7 +120,15 @@ const repairLogSchema = baseSchema.extend({
 const fluidChangeLogSchema = baseSchema.extend({
   type: z.literal("fluid"),
   fluidType: z.enum(
-    ["engineoil", "gearboxoil", "forkoil", "breakfluid", "coolant"],
+    [
+      "engineoil",
+      "gearboxoil",
+      "finaldriveoil",
+      "driveshaftoil",
+      "forkoil",
+      "breakfluid",
+      "coolant",
+    ],
     {
       required_error: "Flüssigkeitstyp ist erforderlich.",
     }
@@ -294,6 +304,23 @@ export function AddMaintenanceLogDialog({
     );
   };
 
+  const onError = (errors: any) => {
+    console.error("Form validation errors:", errors);
+  };
+
+  const showOilTypeField = (ft: FluidType): boolean => {
+    switch (ft) {
+      case "engineoil":
+      case "gearboxoil":
+      case "finaldriveoil":
+      case "driveshaftoil":
+      case "forkoil":
+        return true;
+      default:
+        return false;
+    }
+  };
+
   useEffect(() => {
     // Check if the submission is complete and was successful.
     if (fetcher.state === "idle" && fetcher.data?.success) {
@@ -322,7 +349,7 @@ export function AddMaintenanceLogDialog({
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, onError)}
             className="space-y-4 max-h-[70vh] overflow-y-auto pr-4"
           >
             <FormField
@@ -583,36 +610,35 @@ export function AddMaintenanceLogDialog({
                     </FormItem>
                   )}
                 />
-                {fluidType === "engineoil" ||
-                  (fluidType === "gearboxoil" && (
-                    <FormField
-                      control={form.control}
-                      name="oilType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Öltyp</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value ?? ""}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Öltyp wählen" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {oilTypes.map((item) => (
-                                <SelectItem key={item.value} value={item.value}>
-                                  {item.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
+                {showOilTypeField(fluidType) && (
+                  <FormField
+                    control={form.control}
+                    name="oilType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Öltyp</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value ?? ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Öltyp wählen" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {oilTypes.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}

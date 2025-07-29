@@ -44,6 +44,8 @@ export type MaintenanceType =
 export type FluidType =
   | "engineoil"
   | "gearboxoil"
+  | "finaldriveoil"
+  | "driveshaftoil"
   | "forkoil"
   | "breakfluid"
   | "coolant";

@@ -1,4 +1,9 @@
-import { type MaintenanceRecord, type Motorcycle } from "~/db/schema";
+import {
+  type FluidType,
+  type MaintenanceRecord,
+  type Motorcycle,
+  type OilType,
+} from "~/db/schema";
 import { Badge } from "./ui/badge";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -33,10 +38,12 @@ interface MaintenanceLogTableProps {
   logs: MaintenanceRecord[];
 }
 
-const FluidTypeLabels: Record<string, string> = {
+const FluidTypeLabels: Record<FluidType, string> = {
   engineoil: "Motoröl",
   gearboxoil: "Getriebeöl",
   forkoil: "Gabelöl",
+  driveshaftoil: "Kardanwellenöl",
+  finaldriveoil: "Kardanantriebsöl",
   breakfluid: "Bremsflüssigkeit",
   coolant: "Kühlmittel",
 };
@@ -53,6 +60,12 @@ const TirePositionNames: Record<string, string> = {
   sidecar: "Seitenwagenreifen",
 };
 
+const OilTypeLabels: Record<OilType, string> = {
+  synthetic: "Synthetisch",
+  "semi-synthetic": "Halbsynthetisch",
+  mineral: "Mineralisch",
+};
+
 const getLogBadgeText = (item: MaintenanceRecord): string => {
   switch (item.type) {
     case "tire":
@@ -65,16 +78,12 @@ const getLogBadgeText = (item: MaintenanceRecord): string => {
       return "Bremsscheibe";
     case "fluid":
       switch (item.fluidType) {
-        case "engineoil":
-          return "Motoröl";
-        case "gearboxoil":
-          return "Getriebeöl";
-        case "forkoil":
-          return "Gabelöl";
-        case "breakfluid":
-          return "Bremsflüssigkeit";
         case "coolant":
-          return "Kühlmittel";
+          return "Kühlmittelwechsel";
+        case "breakfluid":
+          return "Bremsflüssigkeitswechsel";
+        default:
+          return `Ölwechsel`;
       }
     case "chain":
       return "Kette";
@@ -187,6 +196,17 @@ export default function MaintenanceLogTable({
             value={log.viscosity}
           />
         );
+
+      if (log.oilType) {
+        details.push(
+          <DetailRow
+            key="oilType"
+            icon={Droplets}
+            label="Öltyp"
+            value={OilTypeLabels[log.oilType]}
+          />
+        );
+      }
     }
 
     if (log.type === "tire") {
@@ -294,7 +314,7 @@ export default function MaintenanceLogTable({
               <p className="text-sm text-foreground leading-relaxed break-words">
                 {getDescription(log)}
               </p>
-              {log.cost && (
+              {(log.cost ?? 0) > 0 && (
                 <div className="flex justify-between text-sm pt-2">
                   <p className="text-muted-foreground">Kosten</p>
                   <p className="font-medium">{formatCurrency(log.cost)}</p>
