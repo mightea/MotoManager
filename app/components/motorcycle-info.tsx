@@ -38,6 +38,7 @@ import { useState } from "react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { InfoItem } from "./info-item";
+import { useMotorcycle } from "~/contexts/MotorcycleProvider";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
@@ -64,7 +65,7 @@ function ManualOdometerInput({
   };
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 w-full">
       <Label
         htmlFor="manual-odo"
         className="flex items-center gap-3 text-sm text-muted-foreground mb-2"
@@ -95,14 +96,36 @@ function ManualOdometerInput({
   );
 }
 
-export default function MotorcycleInfo({
+function CurrentLocationInfo({
   motorcycle,
   currentOdometer,
-}: {
-  motorcycle: Motorcycle;
-  currentOdometer: number;
-}) {
+  fetcher,
+}: MotorcycleInfoProps) {
+  return (
+    <div className="flex-1 w-full">
+      <Label className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
+        <Warehouse className="h-4 w-4" />
+        Standort
+      </Label>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 text-sm">Garage</div>
+        <div className="text-sm text-muted-foreground">
+          <i>Zuletzt aktualisiert: 12. Mai 2024</i>
+        </div>
+        <LocationUpdateDialog motorcycle={motorcycle}>
+          <Button size="sm" variant="outline" className="h-9">
+            <Edit className="mr-2 h-4 w-4" />
+            Bearbeiten
+          </Button>
+        </LocationUpdateDialog>
+      </div>
+    </div>
+  );
+}
+
+export default function MotorcycleInfo({}: {}) {
   let fetcher = useFetcher();
+  const { motorcycle, currentOdo: currentOdometer } = useMotorcycle();
 
   const handleImageUpdate = (newImageUrl: string) => {
     fetcher.submit(
@@ -180,25 +203,17 @@ export default function MotorcycleInfo({
       </CardHeader>
 
       <CardContent className="space-y-4 pt-0">
-        <div className="space-y-2">
-          <div className="space-y-2">
-            <div className="flex items-start gap-2">
-              <ManualOdometerInput
-                motorcycle={motorcycle}
-                currentOdometer={currentOdometer}
-                fetcher={fetcher}
-              />
-            </div>
-          </div>
-          <div className="p-3 space-y-2">
-            <InfoItem icon={Warehouse} label="Standort" value={location?.name}>
-              <LocationUpdateDialog motorcycle={motorcycle}>
-                <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2">
-                  <Edit className="h-3 w-3" />
-                </Button>
-              </LocationUpdateDialog>
-            </InfoItem>
-          </div>
+        <div className="space-y-2 flex-col gap-2">
+          <ManualOdometerInput
+            motorcycle={motorcycle}
+            currentOdometer={currentOdometer}
+            fetcher={fetcher}
+          />
+          <CurrentLocationInfo
+            motorcycle={motorcycle}
+            currentOdometer={currentOdometer}
+            fetcher={fetcher}
+          />
         </div>
 
         <Accordion type="single" collapsible>
@@ -264,18 +279,30 @@ export default function MotorcycleInfo({
                     )}
                   />
                 )}
-                <InfoItem
-                  icon={CircleDollarSign}
-                  label="Kaufpreis"
-                  value={new Intl.NumberFormat("de-DE", {
-                    style: "currency",
-                    currency: "EUR",
-                  }).format(motorcycle.purchasePrice)}
-                />
+                {motorcycle.purchasePrice !== null && (
+                  <InfoItem
+                    icon={CircleDollarSign}
+                    label="Kaufpreis"
+                    value={new Intl.NumberFormat("de-CH", {
+                      style: "currency",
+                      currency: "CHF",
+                    }).format(motorcycle.purchasePrice)}
+                  />
+                )}
                 <InfoItem
                   icon={Milestone}
                   label="KM bei Kauf"
                   value={`${motorcycle.initialOdo.toLocaleString("de-CH")} km`}
+                />
+
+                <Separator className="my-3" />
+
+                <InfoItem
+                  icon={Bike}
+                  label="KM seit Kauf"
+                  value={`${(
+                    currentOdometer - motorcycle.initialOdo
+                  ).toLocaleString("de-CH")} km`}
                 />
               </div>
             </AccordionContent>

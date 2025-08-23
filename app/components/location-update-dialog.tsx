@@ -33,6 +33,7 @@ import { Input } from "./ui/input";
 import type { Motorcycle } from "~/db/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSettings } from "~/contexts/SettingsProvider";
 
 const formSchema = z.object({
   storageLocationId: z.string().optional(),
@@ -53,6 +54,7 @@ export function LocationUpdateDialog({
 }: LocationUpdateDialogProps) {
   const [open, setOpen] = useState(false);
   const currentOdometer = motorcycle.manualOdo || motorcycle.initialOdo;
+  const { locations: storageLocations } = useSettings();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,28 +90,13 @@ export function LocationUpdateDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Schnell-Update</DialogTitle>
+          <DialogTitle>Standort aktualisieren</DialogTitle>
           <DialogDescription>
-            Aktualisiere den aktuellen Standort und Kilometerstand für deine{" "}
-            {motorcycle.make}.
+            Aktualisiere den aktuellen Standort für deine {motorcycle.make}.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="odometer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Aktueller Kilometerstand</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="storageLocationId"
@@ -127,7 +114,7 @@ export function LocationUpdateDialog({
                     </FormControl>
                     <SelectContent>
                       {storageLocations.map((location) => (
-                        <SelectItem key={location.id} value={location.id}>
+                        <SelectItem key={location.id} value={`${location.id}`}>
                           {location.name}
                         </SelectItem>
                       ))}
@@ -140,13 +127,25 @@ export function LocationUpdateDialog({
 
             <FormField
               control={form.control}
-              name="date"
+              name="odometer"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Datum der Aktualisierung</FormLabel>
+                  <FormLabel>Aktueller Kilometerstand</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input type="number" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Datum</FormLabel>
+                  <Input type="date" {...field} />
                   <FormMessage />
                 </FormItem>
               )}

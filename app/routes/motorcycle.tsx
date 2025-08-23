@@ -20,6 +20,7 @@ import { PlusCircle } from "lucide-react";
 import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
 import { data } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
+import { MotorcycleProvider } from "~/contexts/MotorcycleProvider";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -236,7 +237,11 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
   const { make, model } = motorcycle;
 
   return (
-    <>
+    <MotorcycleProvider
+      initialMotorcycle={motorcycle}
+      initialCurrentLocation={null}
+      initialCurrentOdo={currentOdo}
+    >
       <title>{`${make} ${model} - MotoManager`}</title>
       <div className="grid gap-8 lg:grid-cols-5">
         <div className="lg:col-span-2 xl:col-span-2 space-y-8">
@@ -275,6 +280,6 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
           </Card>
         </div>
       </div>
-    </>
+    </MotorcycleProvider>
   );
 }

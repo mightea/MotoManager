@@ -9,7 +9,7 @@ import type { Route } from "./+types/settings";
 import { useLoaderData } from "react-router";
 import { Separator } from "~/components/ui/separator";
 import db from "~/db";
-import { StorageLocationsForm } from "~/components/storage-locations-from";
+import { StorageLocationsForm } from "~/components/storage-locations-form";
 import { locations, type NewLocation } from "~/db/schema";
 import { data } from "react-router";
 import { eq } from "drizzle-orm";
@@ -110,7 +110,7 @@ export default function Settings() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Währung</CardTitle>
+            <CardTitle>Währungen</CardTitle>
             <CardDescription>
               Verwalte die Währungseinstellungen für die App.
             </CardDescription>
