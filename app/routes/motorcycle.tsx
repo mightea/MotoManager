@@ -221,6 +221,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     return data({ success: true }, { status: 200 });
   }
 
+  if (intent === "location-update") {
+    console.log("Updating storage location to ID:", fields);
+  }
+
   return data(
     { success: false, message: `Unhandled intent ${intent}` },
     { status: 500 }

@@ -34,6 +34,8 @@ import type { Motorcycle } from "~/db/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSettings } from "~/contexts/SettingsProvider";
+import { useFetcher } from "react-router";
+import { toast } from "~/hooks/use-toast";
 
 const formSchema = z.object({
   storageLocationId: z.string().optional(),
@@ -59,31 +61,43 @@ export function LocationUpdateDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      storageLocationId: motorcycle.storageLocationId || "",
+      storageLocationId: "",
       odometer: currentOdometer,
       date: format(new Date(), "yyyy-MM-dd"),
     },
   });
 
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        storageLocationId: motorcycle.storageLocationId || "",
-        odometer: motorcycle.manualOdometer || motorcycle.initialOdo,
-        date: format(new Date(), "yyyy-MM-dd"),
-      });
-    }
-  }, [open, motorcycle, form]);
+  const fetcher = useFetcher();
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    updateMotorcycle({
-      ...motorcycle,
-      storageLocationId: values.storageLocationId,
-      manualOdometer: values.odometer,
-      lastOdoUpdate: new Date(values.date).toISOString(),
-    });
-    setOpen(false);
+    fetcher.submit(
+      {
+        intent: "location-update",
+        ...values,
+      },
+      { method: "post" }
+    );
   };
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      const { intent, name } = fetcher.data as {
+        intent: string;
+        name: string;
+      };
+
+      switch (intent) {
+        case "location-update":
+          toast({
+            title: "Standort aktualisiert",
+            description: `Der Standort "${name}" wurde gespeichert.`,
+          });
+          break;
+      }
+
+      setOpen(false);
+    }
+  }, [fetcher]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
