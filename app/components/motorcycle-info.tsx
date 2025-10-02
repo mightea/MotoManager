@@ -26,6 +26,9 @@ import {
 import { AddMotorcycleDialog } from "./add-motorcycle-dialog";
 import { Button } from "./ui/button";
 import { format } from "date-fns/format";
+import { differenceInDays } from "date-fns/differenceInDays";
+import { differenceInMonths } from "date-fns/differenceInMonths";
+import { parseISO } from "date-fns/parseISO";
 import { de } from "date-fns/locale/de";
 import { Badge } from "./ui/badge";
 import { Accordion, AccordionContent, AccordionTrigger } from "./ui/accordion";
@@ -96,12 +99,41 @@ function ManualOdometerInput({
   );
 }
 
-function CurrentLocationInfo({ motorcycle }: Pick<MotorcycleInfoProps, "motorcycle">) {
+function CurrentLocationInfo({
+  motorcycle,
+}: Pick<MotorcycleInfoProps, "motorcycle">) {
   const { currentLocation } = useMotorcycle();
-  const locationName = currentLocation?.locationName ?? "Kein Standort hinterlegt";
-  const lastUpdatedLabel = currentLocation?.date
-    ? format(new Date(currentLocation.date), "d. MMM yyyy", { locale: de })
+  const locationName =
+    currentLocation?.locationName ?? "Kein Standort hinterlegt";
+  const parsedDate = currentLocation?.date
+    ? parseISO(currentLocation.date)
     : null;
+  const lastUpdatedDate =
+    parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : null;
+
+  let lastUpdatedLabel: string | null = null;
+
+  if (lastUpdatedDate) {
+    const now = new Date();
+    const monthsSinceUpdate = differenceInMonths(now, lastUpdatedDate);
+
+    if (monthsSinceUpdate >= 1) {
+      lastUpdatedLabel =
+        monthsSinceUpdate === 1 ? "1 Monat" : `${monthsSinceUpdate} Monaten`;
+    } else {
+      const daysSinceUpdate = Math.max(
+        0,
+        differenceInDays(now, lastUpdatedDate)
+      );
+      if (daysSinceUpdate === 0) {
+        lastUpdatedLabel = "heute";
+      } else if (daysSinceUpdate === 1) {
+        lastUpdatedLabel = "1 Tag";
+      } else {
+        lastUpdatedLabel = `${daysSinceUpdate} Tagen`;
+      }
+    }
+  }
 
   return (
     <div className="flex-1 w-full">
@@ -110,12 +142,14 @@ function CurrentLocationInfo({ motorcycle }: Pick<MotorcycleInfoProps, "motorcyc
         Standort
       </Label>
       <div className="flex items-center gap-2">
-        <div className="flex-1 text-sm">{locationName}</div>
-        {lastUpdatedLabel && (
-          <div className="text-sm text-muted-foreground">
-            <i>Zuletzt aktualisiert: {lastUpdatedLabel}</i>
-          </div>
-        )}
+        <div className="flex-1 text-sm">
+          <div>{locationName}</div>
+          {lastUpdatedLabel && (
+            <div className="text-xs text-muted-foreground mt-1 font-normal">
+              <i>Seit {lastUpdatedLabel}</i>
+            </div>
+          )}
+        </div>
         <LocationUpdateDialog motorcycle={motorcycle}>
           <Button size="sm" variant="outline" className="h-9">
             <Edit className="mr-2 h-4 w-4" />
@@ -213,9 +247,7 @@ export default function MotorcycleInfo({}: {}) {
             currentOdometer={currentOdometer}
             fetcher={fetcher}
           />
-          <CurrentLocationInfo
-            motorcycle={motorcycle}
-          />
+          <CurrentLocationInfo motorcycle={motorcycle} />
         </div>
 
         <Accordion type="single" collapsible>
