@@ -34,6 +34,10 @@ import type { Motorcycle } from "~/db/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSettings } from "~/contexts/SettingsProvider";
+import {
+  useMotorcycle,
+  type CurrentLocationWithName,
+} from "~/contexts/MotorcycleProvider";
 import { useFetcher } from "react-router";
 import { toast } from "~/hooks/use-toast";
 
@@ -57,6 +61,7 @@ export function LocationUpdateDialog({
   const [open, setOpen] = useState(false);
   const currentOdometer = motorcycle.manualOdo || motorcycle.initialOdo;
   const { locations: storageLocations } = useSettings();
+  const { setCurrentLocation } = useMotorcycle();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,24 +87,30 @@ export function LocationUpdateDialog({
   };
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data) {
-      const { intent, name } = fetcher.data as {
-        intent: string;
-        name: string;
-      };
+    if (fetcher.state !== "idle" || !fetcher.data) {
+      return;
+    }
 
-      switch (intent) {
-        case "location-update":
-          toast({
-            title: "Standort aktualisiert",
-            description: `Der Standort "${name}" wurde gespeichert.`,
-          });
-          break;
+    const { intent, location } = fetcher.data as {
+      intent?: string;
+      location?: CurrentLocationWithName;
+    };
+
+    if (intent === "location-update") {
+      if (location) {
+        setCurrentLocation(location);
       }
+
+      toast({
+        title: "Standort aktualisiert",
+        description: location?.locationName
+          ? `Der Standort "${location.locationName}" wurde gespeichert.`
+          : "Der Standort wurde gespeichert.",
+      });
 
       setOpen(false);
     }
-  }, [fetcher]);
+  }, [fetcher.data, fetcher.state, setCurrentLocation]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

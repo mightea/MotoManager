@@ -3,6 +3,7 @@ import db from "~/db";
 import {
   issues,
   locationRecords,
+  locations,
   maintenanceRecords,
   motorcycles,
   type EditorIssue,
@@ -53,6 +54,20 @@ export async function loader({ params }: Route.LoaderArgs) {
     ],
   });
 
+  const [currentLocation] = await db
+    .select({
+      id: locationRecords.id,
+      motorcycleId: locationRecords.motorcycleId,
+      locationId: locationRecords.locationId,
+      date: locationRecords.date,
+      locationName: locations.name,
+    })
+    .from(locationRecords)
+    .leftJoin(locations, eq(locationRecords.locationId, locations.id))
+    .where(eq(locationRecords.motorcycleId, motorcycleId))
+    .orderBy(desc(locationRecords.date), desc(locationRecords.id))
+    .limit(1);
+
   // Get all odometer readings from all items
   const odos = [
     result.initialOdo,
@@ -68,6 +83,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     maintenance: maintenanceItems,
     issues: issuesItems,
     currentOdo: currentOdo ?? result.initialOdo,
+    currentLocation: currentLocation ?? null,
   };
 }
 
@@ -225,12 +241,59 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "location-update") {
     console.log("Updating storage location to ID:", fields);
-    await db
+
+    const motorcycleId = Number.parseInt(params.motorcycleId);
+    if (Number.isNaN(motorcycleId)) {
+      return data(
+        { success: false, message: "Motorrad konnte nicht ermittelt werden." },
+        { status: 400 }
+      );
+    }
+
+    const locationIdRaw =
+      (fields.storageLocationId as string) ?? (fields.locationId as string);
+    const locationId = Number.parseInt(locationIdRaw ?? "");
+
+    if (Number.isNaN(locationId)) {
+      return data(
+        { success: false, message: "Standort ist erforderlich." },
+        { status: 400 }
+      );
+    }
+
+    const date = (fields.date as string) || undefined;
+
+    const newLocationRecord: NewCurrentLocationRecord = {
+      motorcycleId,
+      locationId,
+      ...(date ? { date } : {}),
+    };
+
+    const [insertedRecord] = await db
       .insert(locationRecords)
-      .values(fields as unknown as NewCurrentLocationRecord)
+      .values(newLocationRecord)
       .returning();
 
-    return data({ success: true }, { status: 200 });
+    const [location] = await db
+      .select({
+        id: locations.id,
+        name: locations.name,
+      })
+      .from(locations)
+      .where(eq(locations.id, insertedRecord.locationId))
+      .limit(1);
+
+    return data(
+      {
+        success: true,
+        intent: "location-update",
+        location: {
+          ...insertedRecord,
+          locationName: location?.name ?? null,
+        },
+      },
+      { status: 200 }
+    );
   }
 
   return data(
@@ -245,13 +308,14 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     maintenance: maintenanceEntries,
     issues,
     currentOdo,
+    currentLocation,
   } = loaderData;
   const { make, model } = motorcycle;
 
   return (
     <MotorcycleProvider
       initialMotorcycle={motorcycle}
-      initialCurrentLocation={null}
+      initialCurrentLocation={currentLocation}
       initialCurrentOdo={currentOdo}
     >
       <title>{`${make} ${model} - MotoManager`}</title>

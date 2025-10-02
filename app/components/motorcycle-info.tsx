@@ -96,11 +96,13 @@ function ManualOdometerInput({
   );
 }
 
-function CurrentLocationInfo({
-  motorcycle,
-  currentOdometer,
-  fetcher,
-}: MotorcycleInfoProps) {
+function CurrentLocationInfo({ motorcycle }: Pick<MotorcycleInfoProps, "motorcycle">) {
+  const { currentLocation } = useMotorcycle();
+  const locationName = currentLocation?.locationName ?? "Kein Standort hinterlegt";
+  const lastUpdatedLabel = currentLocation?.date
+    ? format(new Date(currentLocation.date), "d. MMM yyyy", { locale: de })
+    : null;
+
   return (
     <div className="flex-1 w-full">
       <Label className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
@@ -108,10 +110,12 @@ function CurrentLocationInfo({
         Standort
       </Label>
       <div className="flex items-center gap-2">
-        <div className="flex-1 text-sm">Garage</div>
-        <div className="text-sm text-muted-foreground">
-          <i>Zuletzt aktualisiert: 12. Mai 2024</i>
-        </div>
+        <div className="flex-1 text-sm">{locationName}</div>
+        {lastUpdatedLabel && (
+          <div className="text-sm text-muted-foreground">
+            <i>Zuletzt aktualisiert: {lastUpdatedLabel}</i>
+          </div>
+        )}
         <LocationUpdateDialog motorcycle={motorcycle}>
           <Button size="sm" variant="outline" className="h-9">
             <Edit className="mr-2 h-4 w-4" />
@@ -211,8 +215,6 @@ export default function MotorcycleInfo({}: {}) {
           />
           <CurrentLocationInfo
             motorcycle={motorcycle}
-            currentOdometer={currentOdometer}
-            fetcher={fetcher}
           />
         </div>
 

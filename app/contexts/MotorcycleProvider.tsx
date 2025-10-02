@@ -1,14 +1,18 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { CurrentLocation, Motorcycle } from "~/db/schema";
 
+export type CurrentLocationWithName = CurrentLocation & {
+  locationName: string | null;
+};
+
 interface MotorcycleContextType {
   motorcycle: Motorcycle;
   currentOdo: number;
-  currentLocation: CurrentLocation | null;
+  currentLocation: CurrentLocationWithName | null;
   setMotorcycle: React.Dispatch<React.SetStateAction<Motorcycle>>;
   setCurrentOdo: React.Dispatch<React.SetStateAction<number>>;
   setCurrentLocation: React.Dispatch<
-    React.SetStateAction<CurrentLocation | null>
+    React.SetStateAction<CurrentLocationWithName | null>
   >;
 }
 
@@ -17,7 +21,7 @@ const MotorcycleContext = createContext<MotorcycleContextType | null>(null);
 interface MotorcycleProviderProps {
   initialMotorcycle: Motorcycle;
   initialCurrentOdo: number;
-  initialCurrentLocation: CurrentLocation | null;
+  initialCurrentLocation: CurrentLocationWithName | null;
   children: ReactNode;
 }
 
@@ -30,8 +34,9 @@ export const MotorcycleProvider = ({
   // State hooks are typed for better safety.
   const [motorcycle, setMotorcycle] = useState<Motorcycle>(initialMotorcycle);
   const [currentOdo, setCurrentOdo] = useState<number>(initialCurrentOdo); // Odometer in kilometers
-  const [currentLocation, setCurrentLocation] =
-    useState<CurrentLocation | null>(initialCurrentLocation);
+  const [currentLocation, setCurrentLocation] = useState<
+    CurrentLocationWithName | null
+  >(initialCurrentLocation);
 
   // The value object matches the MotorcycleContextType interface.
   const value: MotorcycleContextType = {
