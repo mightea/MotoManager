@@ -2,11 +2,13 @@ import type { Route } from "./+types/motorcycle";
 import db from "~/db";
 import {
   issues,
+  locationRecords,
   maintenanceRecords,
   motorcycles,
   type EditorIssue,
   type EditorMotorcycle,
   type Motorcycle,
+  type NewCurrentLocationRecord,
   type NewIssue,
   type NewMaintenanceRecord,
 } from "~/db/schema";
@@ -223,6 +225,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "location-update") {
     console.log("Updating storage location to ID:", fields);
+    await db
+      .insert(locationRecords)
+      .values(fields as unknown as NewCurrentLocationRecord)
+      .returning();
+
+    return data({ success: true }, { status: 200 });
   }
 
   return data(

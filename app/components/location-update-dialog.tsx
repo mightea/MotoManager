@@ -73,6 +73,8 @@ export function LocationUpdateDialog({
     fetcher.submit(
       {
         intent: "location-update",
+        motorcycleId: motorcycle.id.toString(),
+        locationId: values.storageLocationId || "",
         ...values,
       },
       { method: "post" }
