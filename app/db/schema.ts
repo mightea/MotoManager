@@ -113,6 +113,7 @@ export const locationRecords = sqliteTable("location_records", {
   locationId: int("location_id")
     .notNull()
     .references(() => locations.id),
+  odometer: integer("odometer"),
   date: text("date")
     .notNull()
     .default(sql`(CURRENT_DATE)`), // SQLite DATE stored as TEXT

@@ -17,6 +17,7 @@ export async function loader({}: Route.LoaderArgs) {
   const motorcycles = await db.query.motorcycles.findMany();
   const issues = await db.query.issues.findMany();
   const maintenance = await db.query.maintenanceRecords.findMany();
+  const locationHistory = await db.query.locationRecords.findMany();
 
   const year = new Date().getFullYear();
 
@@ -24,6 +25,9 @@ export async function loader({}: Route.LoaderArgs) {
     const mIssues = issues.filter((i) => i.motorcycleId === moto.id);
     const maintenanceItems = maintenance.filter(
       (m) => m.motorcycleId === moto.id
+    );
+    const locationItems = locationHistory.filter(
+      (record) => record.motorcycleId === moto.id && record.odometer !== null
     );
 
     const issuesCount = mIssues.filter((i) => i.status !== "done").length;
@@ -33,8 +37,10 @@ export async function loader({}: Route.LoaderArgs) {
       moto.manualOdo ?? undefined,
       ...maintenanceItems.map((m) => m.odo),
       ...mIssues.map((i) => i.odo),
-    ].filter((value): value is number =>
-      typeof value === "number" && Number.isFinite(value)
+      ...locationItems.map((record) => record.odometer ?? undefined),
+    ].filter(
+      (value): value is number =>
+        typeof value === "number" && Number.isFinite(value)
     );
 
     const maxOdo = odometerValues.reduce(
@@ -60,15 +66,19 @@ export async function loader({}: Route.LoaderArgs) {
         registerOdoForYear(issue.date, issue.odo);
       }
     });
-    maintenanceItems.forEach((item) =>
-      registerOdoForYear(item.date, item.odo)
-    );
+    maintenanceItems.forEach((item) => registerOdoForYear(item.date, item.odo));
+    locationItems.forEach((item) => {
+      if (item.date && item.odometer !== null) {
+        registerOdoForYear(item.date, item.odometer);
+      }
+    });
 
     const previousYearEntries = Array.from(odometerByYear.entries())
       .filter(([entryYear]) => entryYear < year)
       .sort((a, b) => b[0] - a[0]);
 
     const baselineOdo = previousYearEntries.at(0)?.[1] ?? moto.initialOdo;
+    console.log({ baselineOdo, previousYearEntries });
 
     const odometerThisYear = Math.max(0, maxOdo - baselineOdo);
 

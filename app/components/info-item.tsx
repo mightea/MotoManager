@@ -1,5 +1,19 @@
-import { isFalsy } from "~/utils/falsyUtils";
+import type { ElementType, ReactNode } from "react";
 import { cn } from "~/utils/tw";
+
+type InfoItemValue = string | number | undefined | null;
+
+const isEmptyValue = (value: InfoItemValue) => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+
+  if (typeof value === "string") {
+    return value.trim().length === 0;
+  }
+
+  return false;
+};
 
 export const InfoItem = ({
   icon: Icon,
@@ -8,14 +22,14 @@ export const InfoItem = ({
   valueClassName,
   children,
 }: {
-  icon: React.ElementType;
+  icon: ElementType;
   label: string;
-  value: string | number | undefined | null;
+  value: InfoItemValue;
   valueClassName?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) => {
-  if (isFalsy(value)) {
-    return null; // Do not render if value is falsy
+  if (isEmptyValue(value)) {
+    return null;
   }
   return (
     <div className="flex items-start justify-between">
@@ -24,11 +38,9 @@ export const InfoItem = ({
         <p className="text-sm text-muted-foreground">{label}</p>
       </div>
       <div className="flex items-center gap-2">
-        {value && (
-          <p className={cn("font-semibold text-sm text-right", valueClassName)}>
-            {value}
-          </p>
-        )}
+        <p className={cn("font-semibold text-sm text-right", valueClassName)}>
+          {value}
+        </p>
         {children}
       </div>
     </div>

@@ -60,6 +60,7 @@ export async function loader({ params }: Route.LoaderArgs) {
       motorcycleId: locationRecords.motorcycleId,
       locationId: locationRecords.locationId,
       date: locationRecords.date,
+      odometer: locationRecords.odometer,
       locationName: locations.name,
     })
     .from(locationRecords)
@@ -264,11 +265,15 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
 
     const date = (fields.date as string) || undefined;
+    const odometerRaw = fields.odometer as string | number | undefined;
+    const parsedOdometer = Number.parseInt(odometerRaw?.toString() ?? "", 10);
+    const odometer = Number.isNaN(parsedOdometer) ? null : parsedOdometer;
 
     const newLocationRecord: NewCurrentLocationRecord = {
       motorcycleId,
       locationId,
       ...(date ? { date } : {}),
+      ...(odometer !== null ? { odometer } : {}),
     };
 
     const [insertedRecord] = await db
@@ -291,6 +296,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         intent: "location-update",
         location: {
           ...insertedRecord,
+          odometer,
           locationName: location?.name ?? null,
         },
       },

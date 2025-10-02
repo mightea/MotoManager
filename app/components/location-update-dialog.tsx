@@ -88,6 +88,7 @@ export function LocationUpdateDialog({
   const { locations: storageLocations } = useSettings();
   const {
     setCurrentLocation,
+    setCurrentOdo,
     locationHistory,
     setLocationHistory,
   } = useMotorcycle();
@@ -128,6 +129,9 @@ export function LocationUpdateDialog({
     if (intent === "location-update") {
       if (location) {
         setCurrentLocation(location);
+        if (typeof location.odometer === "number") {
+          setCurrentOdo(location.odometer);
+        }
         setLocationHistory((prev) => {
           const withoutInserted = prev.filter((entry) => entry.id !== location.id);
           return [location, ...withoutInserted];
@@ -154,6 +158,7 @@ export function LocationUpdateDialog({
           name: entry.locationName ?? UNKNOWN_LOCATION_LABEL,
           dateLabel: "-",
           durationLabel: "-",
+          odometer: entry.odometer,
         };
       }
 
@@ -170,6 +175,7 @@ export function LocationUpdateDialog({
         name: entry.locationName ?? UNKNOWN_LOCATION_LABEL,
         dateLabel,
         durationLabel,
+        odometer: entry.odometer,
       };
     });
   }, [locationHistory]);
@@ -271,6 +277,11 @@ export function LocationUpdateDialog({
                         {item.dateLabel}
                       </span>
                     </div>
+                    {typeof item.odometer === "number" && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Kilometerstand: {item.odometer.toLocaleString("de-CH")} km
+                      </div>
+                    )}
                     <div className="mt-1 text-xs text-muted-foreground">
                       Dauer: {item.durationLabel}
                     </div>
