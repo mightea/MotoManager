@@ -1,87 +1,124 @@
-# Welcome to React Router!
+# Motobase
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Motobase keeps track of your motorcycle fleet: maintenance logs, storage locations, running issues, odometer history, and key registration details. The app is built with React Router, TypeScript, and Tailwind, and persists data in SQLite via Drizzle ORM.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Highlights
 
-## Features
+- 🏍️ Motorcycle profile pages with maintenance history, open issues, and storage tracking
+- 🛠️ Drizzle-backed CRUD actions for issues, maintenance, and location records
+- 📊 Dynamic dashboards showing annual mileage and condition summaries
+- 🎨 Tailwind-powered UI components with reusable dialog, card, and table patterns
+- 🔁 Server-side data loaders and actions wired to React Router v7
+- ✅ TypeScript-first codebase with Vitest + Testing Library support
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## Tech Stack
+
+| Layer        | Choice                               |
+| ------------ | ------------------------------------- |
+| UI / Routing | React 19, React Router 7              |
+| Styling      | Tailwind CSS 4 with custom UI kit     |
+| Data         | SQLite + Drizzle ORM                  |
+| Tooling      | Vite 6, pnpm, TypeScript 5.8          |
+| Testing      | Vitest, @testing-library/react        |
+
+## Requirements
+
+- Node.js 20+
+- pnpm 9+
+
+```bash
+corepack enable pnpm
+```
 
 ## Getting Started
 
-### Installation
-
-Install the dependencies:
+Install dependencies after cloning:
 
 ```bash
-npm install
+pnpm install
 ```
 
-### Development
-
-Start the development server with HMR:
+Start the dev server (HMR on port 5173):
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+Visit `http://localhost:5173` to view the app.
 
-## Building for Production
+## Database
 
-Create a production build:
+Motobase ships with a versioned SQLite database (`db.sqlite`). All schema changes must go through Drizzle migrations.
+
+- Apply migrations locally:
+
+  ```bash
+  pnpm drizzle-kit push
+  ```
+
+- Explore the database via Drizzle Studio:
+
+  ```bash
+  pnpm studio
+  ```
+
+> **Note:** Migration `0001_add_odometer_to_location_records.sql` introduces an `odometer` column that is required for accurate mileage calculations. Apply it before relying on storage-location data.
+
+## Common Commands
+
+| Task                   | Command            |
+| ---------------------- | ------------------ |
+| Start dev server       | `pnpm dev`         |
+| Run unit tests         | `pnpm test`        |
+| Watch tests            | `pnpm test:watch`  |
+| Type checks + route gen| `pnpm typecheck`   |
+| Build for production   | `pnpm build`       |
+| Preview SSR build      | `pnpm start`       |
+
+## Project Structure
+
+```
+app/
+  components/       # Reusable UI building blocks
+  contexts/         # React context providers (Motorcycle, Settings, ...)
+  db/               # Drizzle schema, migrations, and db client
+  hooks/            # Custom hooks
+  routes/           # Route modules with loaders/actions/screens
+  utils/            # Shared helpers (dates, formatting, numbers, ...)
+public/             # Static assets served as-is
+tests/              # Vitest setup and cross-cutting helpers
+```
+
+## Conventions
+
+- **Routing:** Each file in `app/routes` owns its loader, action, and screen.
+- **State:** Use providers under `app/contexts` for cross-route state (e.g. `MotorcycleProvider`).
+- **Styling:** Prefer Tailwind classes; compose higher-order patterns through the UI component library.
+- **Forms:** Use `react-hook-form` + Zod schemas to validate user input.
+- **Database:** Keep all queries inside loaders/actions via the shared Drizzle client (`~/db`).
+
+## Testing
+
+- Co-locate tests with implementation using the `*.test.ts(x)` suffix.
+- Mock Drizzle when testing business logic that talks to the database.
+- Use Testing Library for component behavior and interactions.
 
 ```bash
-npm run build
+pnpm test        # run once
+pnpm test:watch  # during development
 ```
 
 ## Deployment
 
-### Docker Deployment
+1. Apply migrations and run the test/typecheck suites.
+2. Build the production bundle:
 
-To build and run using Docker:
+   ```bash
+   pnpm build
+   ```
 
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+3. Deploy the generated `build/` folder plus `package.json`, the lockfile, and `db.sqlite` (or configure an external database). The bundled app runs on any platform that supports Node.js, including Render, Fly.io, Railway, traditional VPS, or container hosts.
 
 ---
 
-Built with ❤️ using React Router.
+Happy wrenching! 🧰🏍️
