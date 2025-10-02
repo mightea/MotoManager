@@ -7,7 +7,9 @@
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
@@ -68,6 +70,10 @@
     "drizzle-kit": "^0.31.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.0.5",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "jsdom": "^24.0.0"
   }
 }
