@@ -119,7 +119,9 @@ function CurrentLocationInfo({
 
     if (monthsSinceUpdate >= 1) {
       lastUpdatedLabel =
-        monthsSinceUpdate === 1 ? "1 Monat" : `${monthsSinceUpdate} Monaten`;
+        monthsSinceUpdate === 1
+          ? "vor 1 Monat"
+          : `vor ${monthsSinceUpdate} Monaten`;
     } else {
       const daysSinceUpdate = Math.max(
         0,
@@ -128,9 +130,9 @@ function CurrentLocationInfo({
       if (daysSinceUpdate === 0) {
         lastUpdatedLabel = "heute";
       } else if (daysSinceUpdate === 1) {
-        lastUpdatedLabel = "1 Tag";
+        lastUpdatedLabel = "vor 1 Tag";
       } else {
-        lastUpdatedLabel = `${daysSinceUpdate} Tagen`;
+        lastUpdatedLabel = `vor ${daysSinceUpdate} Tagen`;
       }
     }
   }
@@ -146,7 +148,7 @@ function CurrentLocationInfo({
           <div>{locationName}</div>
           {lastUpdatedLabel && (
             <div className="text-xs text-muted-foreground mt-1 font-normal">
-              <i>Seit {lastUpdatedLabel}</i>
+              <i>Zuletzt aktualisiert: {lastUpdatedLabel}</i>
             </div>
           )}
         </div>
@@ -174,11 +176,6 @@ export default function MotorcycleInfo({}: {}) {
       },
       { method: "post" }
     );
-  };
-
-  const location = {
-    id: 1,
-    name: "Garage",
   };
 
   return (

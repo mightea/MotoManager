@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, type ReactNode, useEffect } from "react";
+import { useState, type ReactNode, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { format } from "date-fns";
+import { parseISO } from "date-fns/parseISO";
+import { differenceInDays } from "date-fns/differenceInDays";
+import { differenceInMonths } from "date-fns/differenceInMonths";
+import { de } from "date-fns/locale/de";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -40,6 +44,27 @@ import {
 } from "~/contexts/MotorcycleProvider";
 import { useFetcher } from "react-router";
 import { toast } from "~/hooks/use-toast";
+import { Separator } from "./ui/separator";
+
+const UNKNOWN_LOCATION_LABEL = "Unbekannter Standort";
+
+function safeParseDate(value?: string | null) {
+  if (!value) return null;
+  const parsed = parseISO(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatDurationInGerman(start: Date, end: Date) {
+  const months = differenceInMonths(end, start);
+  if (months >= 1) {
+    return months === 1 ? "1 Monat" : `${months} Monate`;
+  }
+
+  const days = Math.max(0, differenceInDays(end, start));
+  if (days === 0) return "weniger als 1 Tag";
+  if (days === 1) return "1 Tag";
+  return `${days} Tage`;
+}
 
 const formSchema = z.object({
   storageLocationId: z.string().optional(),
@@ -61,7 +86,11 @@ export function LocationUpdateDialog({
   const [open, setOpen] = useState(false);
   const currentOdometer = motorcycle.manualOdo || motorcycle.initialOdo;
   const { locations: storageLocations } = useSettings();
-  const { setCurrentLocation } = useMotorcycle();
+  const {
+    setCurrentLocation,
+    locationHistory,
+    setLocationHistory,
+  } = useMotorcycle();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -99,6 +128,10 @@ export function LocationUpdateDialog({
     if (intent === "location-update") {
       if (location) {
         setCurrentLocation(location);
+        setLocationHistory((prev) => {
+          const withoutInserted = prev.filter((entry) => entry.id !== location.id);
+          return [location, ...withoutInserted];
+        });
       }
 
       toast({
@@ -110,7 +143,36 @@ export function LocationUpdateDialog({
 
       setOpen(false);
     }
-  }, [fetcher.data, fetcher.state, setCurrentLocation]);
+  }, [fetcher.data, fetcher.state, setCurrentLocation, setLocationHistory]);
+
+  const historyItems = useMemo(() => {
+    return locationHistory.map((entry, index) => {
+      const startDate = safeParseDate(entry.date);
+      if (!startDate) {
+        return {
+          id: entry.id,
+          name: entry.locationName ?? UNKNOWN_LOCATION_LABEL,
+          dateLabel: "-",
+          durationLabel: "-",
+        };
+      }
+
+      const previousEntry = index === 0 ? null : locationHistory[index - 1];
+      const endDate = previousEntry
+        ? safeParseDate(previousEntry.date) ?? startDate
+        : new Date();
+
+      const dateLabel = format(startDate, "d. MMM yyyy", { locale: de });
+      const durationLabel = formatDurationInGerman(startDate, endDate);
+
+      return {
+        id: entry.id,
+        name: entry.locationName ?? UNKNOWN_LOCATION_LABEL,
+        dateLabel,
+        durationLabel,
+      };
+    });
+  }, [locationHistory]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -190,6 +252,34 @@ export function LocationUpdateDialog({
             </DialogFooter>
           </form>
         </Form>
+        {historyItems.length > 0 && (
+          <div className="mt-6 space-y-4">
+            <Separator />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Bisherige Standorte
+              </h3>
+              <ul className="mt-3 space-y-2">
+                {historyItems.map((item) => (
+                  <li
+                    key={item.id}
+                    className="rounded-md border border-border bg-muted/40 p-3 text-sm"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-medium">{item.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {item.dateLabel}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Dauer: {item.durationLabel}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -54,7 +54,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     ],
   });
 
-  const [currentLocation] = await db
+  const locationHistory = await db
     .select({
       id: locationRecords.id,
       motorcycleId: locationRecords.motorcycleId,
@@ -65,8 +65,9 @@ export async function loader({ params }: Route.LoaderArgs) {
     .from(locationRecords)
     .leftJoin(locations, eq(locationRecords.locationId, locations.id))
     .where(eq(locationRecords.motorcycleId, motorcycleId))
-    .orderBy(desc(locationRecords.date), desc(locationRecords.id))
-    .limit(1);
+    .orderBy(desc(locationRecords.date), desc(locationRecords.id));
+
+  const currentLocation = locationHistory.at(0) ?? null;
 
   // Get all odometer readings from all items
   const odos = [
@@ -84,6 +85,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     issues: issuesItems,
     currentOdo: currentOdo ?? result.initialOdo,
     currentLocation: currentLocation ?? null,
+    locationHistory,
   };
 }
 
@@ -309,6 +311,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     issues,
     currentOdo,
     currentLocation,
+    locationHistory,
   } = loaderData;
   const { make, model } = motorcycle;
 
@@ -317,6 +320,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
       initialMotorcycle={motorcycle}
       initialCurrentLocation={currentLocation}
       initialCurrentOdo={currentOdo}
+      initialLocationHistory={locationHistory}
     >
       <title>{`${make} ${model} - MotoManager`}</title>
       <div className="grid gap-8 lg:grid-cols-5">
