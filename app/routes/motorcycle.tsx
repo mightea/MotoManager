@@ -325,10 +325,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
       <title>{`${make} ${model} - MotoManager`}</title>
       <div className="grid gap-8 lg:grid-cols-5">
         <div className="lg:col-span-2 xl:col-span-2 space-y-8">
-          <MotorcycleInfo
-            motorcycle={motorcycle}
-            currentOdometer={currentOdo}
-          />
+          <MotorcycleInfo />
           <OpenIssuesCard
             motorcycle={motorcycle}
             issues={issues}

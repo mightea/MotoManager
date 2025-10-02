@@ -15,15 +15,15 @@ import { cn } from "~/utils/tw";
 import { InfoItem } from "./info-item";
 
 interface Props {
-  id: string;
+  id: number;
   make: string;
   model: string;
-  modelYear: number;
+  modelYear: number | null;
   odometer: number;
   odometerThisYear: number;
   isVeteran: boolean;
   numberOfIssues: number;
-  image?: string;
+  image?: string | null;
 }
 
 export const MotorcycleSummaryCard = ({
@@ -39,7 +39,7 @@ export const MotorcycleSummaryCard = ({
 }: Props) => {
   return (
     <Link
-      to={`/motorcycle/${slug(`${make}-${model}`)}/${id}/`}
+      to={`/motorcycle/${slug(`${make}-${model}`)}/${id.toString()}/`}
       className="group block"
     >
       <Card className="overflow-hidden h-full transition-all group-hover:shadow-lg group-hover:border-primary/50">
@@ -61,7 +61,7 @@ export const MotorcycleSummaryCard = ({
             {make} {model}
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
-            <p>{modelYear}</p>
+            <p>{modelYear ?? "-"}</p>
             {isVeteran && (
               <Badge
                 variant="outline"
@@ -83,7 +83,7 @@ export const MotorcycleSummaryCard = ({
             icon={RulerDimensionLine}
             label="Kilometer dieses Jahr"
             value={`${odometerThisYear.toLocaleString()} km`}
-            className={cn(
+            valueClassName={cn(
               odometerThisYear < 300 && "text-warning-foreground",
               odometerThisYear < 300 && "[&>.font-semibold]:text-warning"
             )}

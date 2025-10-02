@@ -163,7 +163,7 @@ function CurrentLocationInfo({
   );
 }
 
-export default function MotorcycleInfo({}: {}) {
+export default function MotorcycleInfo() {
   let fetcher = useFetcher();
   const { motorcycle, currentOdo: currentOdometer } = useMotorcycle();
 

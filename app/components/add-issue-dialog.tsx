@@ -99,7 +99,7 @@ export function AddIssueDialog({
       if (isEditMode && issueToEdit) {
         form.reset({
           date: dateInputString(issueToEdit.date),
-          description: issueToEdit.description,
+          description: issueToEdit.description ?? "",
           priority: issueToEdit.priority,
           status: issueToEdit.status,
           odo: issueToEdit.odo,

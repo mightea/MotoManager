@@ -1,8 +1,16 @@
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
+
+const currentDir = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    alias: {
+      "~": resolve(currentDir, "app"),
+      "@": resolve(currentDir, "app"),
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./tests/setup-test-env.ts",

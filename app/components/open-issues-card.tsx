@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { AddIssueDialog } from "./add-issue-dialog";
 import { format } from "date-fns";
+import { parseISO } from "date-fns/parseISO";
 import { de } from "date-fns/locale";
 import { Badge } from "~/components/ui/badge";
 import type { Issue, Motorcycle } from "~/db/schema";
@@ -111,6 +112,7 @@ export function OpenIssuesCard({
                         <AddIssueDialog
                           motorcycle={motorcycle}
                           issueToEdit={issue}
+                          currentOdometer={currentOdometer}
                         >
                           <Button
                             variant="ghost"
@@ -127,11 +129,13 @@ export function OpenIssuesCard({
                         {statusConf.label}
                       </Badge>
                       <span>·</span>
-                      <span>
-                        {format(new Date(issue.date), "d. MMM yyyy", {
-                          locale: de,
-                        })}
-                      </span>
+                      {issue.date && (
+                        <span>
+                          {format(parseISO(issue.date), "d. MMM yyyy", {
+                            locale: de,
+                          })}
+                        </span>
+                      )}
                       {odoDiff !== null && odoDiff >= 0 && (
                         <>
                           <span>·</span>

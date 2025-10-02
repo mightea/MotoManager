@@ -210,7 +210,7 @@ export default function MaintenanceLogTable({
     }
 
     if (log.type === "tire") {
-      const tireInfo = getTireInfo(log.dotCode);
+      const tireInfo = getTireInfo(log.dotCode ?? undefined);
       if (log.tirePosition)
         details.push(
           <DetailRow

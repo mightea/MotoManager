@@ -1,24 +1,16 @@
 import { Form, Link, redirect } from "react-router";
 import type { Route } from "./+types/home";
 import db from "~/db";
-import { motorcycles } from "~/db/schema";
+import { motorcycles, type Motorcycle } from "~/db/schema";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
 import { Bike, PlusCircle } from "lucide-react";
 import { AddMotorcycleDialog } from "~/components/add-motorcycle-dialog";
 
-type MotorcycleData = {
-  id: number;
-  model: string;
-  make: string;
-
-  modelYear: number | null;
-
+type MotorcycleData = Motorcycle & {
   numberOfIssues: number;
   odometer: number;
   odometerThisYear: number;
-  lastInspection: string | null;
-  isVeteran: boolean;
 };
 
 export async function loader({}: Route.LoaderArgs) {
@@ -36,33 +28,55 @@ export async function loader({}: Route.LoaderArgs) {
 
     const issuesCount = mIssues.filter((i) => i.status !== "done").length;
 
-    const odos = [
+    const odometerValues = [
+      moto.initialOdo,
+      moto.manualOdo ?? undefined,
       ...maintenanceItems.map((m) => m.odo),
       ...mIssues.map((i) => i.odo),
-    ];
+    ].filter((value): value is number =>
+      typeof value === "number" && Number.isFinite(value)
+    );
 
-    const maxOdo = odos.sort((a, b) => b - a).at(0) ?? moto.initialOdo;
+    const maxOdo = odometerValues.reduce(
+      (max, value) => (value > max ? value : max),
+      moto.initialOdo
+    );
 
-    const odosLastYear = [
-      moto.initialOdo,
-      ...mIssues
-        .filter((m) => new Date(m.date).getFullYear() < year)
-        .map((i) => i.odo),
-      ...maintenanceItems
-        .filter((m) => new Date(m.date).getFullYear() < year)
-        .map((m) => m.odo),
-    ];
+    const odometerByYear = new Map<number, number>();
 
-    const maxOdoLastYear =
-      odosLastYear.sort((a, b) => b - a).at(0) ?? moto.initialOdo;
+    const registerOdoForYear = (date: string, odo: number) => {
+      const entryYear = new Date(date).getFullYear();
+      if (!Number.isFinite(entryYear)) {
+        return;
+      }
+      const currentValue = odometerByYear.get(entryYear);
+      if (currentValue === undefined || odo > currentValue) {
+        odometerByYear.set(entryYear, odo);
+      }
+    };
 
-    console.log(maxOdo, maxOdoLastYear);
+    mIssues.forEach((issue) => {
+      if (issue.date) {
+        registerOdoForYear(issue.date, issue.odo);
+      }
+    });
+    maintenanceItems.forEach((item) =>
+      registerOdoForYear(item.date, item.odo)
+    );
+
+    const previousYearEntries = Array.from(odometerByYear.entries())
+      .filter(([entryYear]) => entryYear < year)
+      .sort((a, b) => b[0] - a[0]);
+
+    const baselineOdo = previousYearEntries.at(0)?.[1] ?? moto.initialOdo;
+
+    const odometerThisYear = Math.max(0, maxOdo - baselineOdo);
 
     return {
       ...moto,
       numberOfIssues: issuesCount,
       odometer: maxOdo,
-      odometerThisYear: maxOdo - maxOdoLastYear,
+      odometerThisYear,
     };
   });
 
@@ -77,7 +91,6 @@ export async function action() {
       make: "",
       vin: "",
       vehicleIdNr: "",
-      licenseType: "regular",
       firstRegistration: "",
       lastInspection: "",
       isVeteran: false,
@@ -90,11 +103,6 @@ export async function action() {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { items: motorcycles } = loaderData;
-
-  const getMotorcycleAge = (dateString: string): string | null => {
-    const date = new Date(dateString);
-    return new Date().getFullYear() - date.getFullYear();
-  };
 
   return (
     <>

@@ -80,22 +80,26 @@ export function AddMotorcycleDialog({
   useEffect(() => {
     if (open) {
       if (isEditMode && motorcycleToEdit) {
+        const firstRegistration = dateInputString(
+          motorcycleToEdit.firstRegistration
+        );
+        const lastInspection = dateInputString(motorcycleToEdit.lastInspection);
+        const purchaseDate = dateInputString(motorcycleToEdit.purchaseDate);
+
         form.reset({
           make: motorcycleToEdit.make,
           model: motorcycleToEdit.model,
-          modelYear: motorcycleToEdit.modelYear,
+          modelYear: motorcycleToEdit.modelYear ?? new Date().getFullYear(),
           vin: motorcycleToEdit.vin,
-          vehicleIdNr: motorcycleToEdit.vehicleIdNr,
-          numberPlate: motorcycleToEdit.numberPlate,
+          vehicleIdNr: motorcycleToEdit.vehicleIdNr ?? "",
+          numberPlate: motorcycleToEdit.numberPlate ?? "",
           isVeteran: motorcycleToEdit.isVeteran,
           isArchived: motorcycleToEdit.isArchived,
-          firstRegistration: dateInputString(
-            motorcycleToEdit.firstRegistration
-          ),
-          lastInspection: dateInputString(motorcycleToEdit.lastInspection),
+          firstRegistration: firstRegistration || "",
+          lastInspection: lastInspection || undefined,
           initialOdo: motorcycleToEdit.initialOdo,
-          purchaseDate: dateInputString(motorcycleToEdit.purchaseDate),
-          purchasePrice: motorcycleToEdit.purchasePrice,
+          purchaseDate: purchaseDate || undefined,
+          purchasePrice: motorcycleToEdit.purchasePrice ?? 0,
         });
       } else {
         form.reset({
