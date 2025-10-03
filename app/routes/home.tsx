@@ -77,9 +77,7 @@ export async function loader({}: Route.LoaderArgs) {
       .filter(([entryYear]) => entryYear < year)
       .sort((a, b) => b[0] - a[0]);
 
-    const baselineOdo = previousYearEntries.at(0)?.[1] ?? moto.initialOdo;
-    console.log({ baselineOdo, previousYearEntries });
-
+    const baselineOdo = previousYearEntries.at(0)?.[1] ?? moto.initialOdo ?? 0;
     const odometerThisYear = Math.max(0, maxOdo - baselineOdo);
 
     return {

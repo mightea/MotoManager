@@ -6,10 +6,14 @@ describe("Home route", () => {
   it("shows the empty state when no motorcycles are available", () => {
     render(
       <Home
-        loaderData={{
-          motorcycles: [],
-          items: [],
-        } as any}
+        {...({
+          loaderData: {
+            motorcycles: [],
+            items: [],
+          },
+          matches: [],
+          params: {},
+        } as any)}
       />
     );
 

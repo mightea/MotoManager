@@ -277,11 +277,14 @@ export function LocationUpdateDialog({
                         {item.dateLabel}
                       </span>
                     </div>
-                    {typeof item.odometer === "number" && (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        Kilometerstand: {item.odometer.toLocaleString("de-CH")} km
-                      </div>
-                    )}
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Kilometerstand:
+                      <span className="font-medium">
+                        {typeof item.odometer === "number"
+                          ? ` ${item.odometer.toLocaleString("de-CH")} km`
+                          : " –"}
+                      </span>
+                    </div>
                     <div className="mt-1 text-xs text-muted-foreground">
                       Dauer: {item.durationLabel}
                     </div>

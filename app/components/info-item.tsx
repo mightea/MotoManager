@@ -19,16 +19,20 @@ export const InfoItem = ({
   icon: Icon,
   label,
   value,
+  valuePrefix,
   valueClassName,
   children,
 }: {
   icon: ElementType;
   label: string;
   value: InfoItemValue;
+  valuePrefix?: string;
   valueClassName?: string;
   children?: ReactNode;
 }) => {
+  console.log({ value });
   if (isEmptyValue(value)) {
+    console.log("empty value", value);
     return null;
   }
   return (
@@ -39,7 +43,7 @@ export const InfoItem = ({
       </div>
       <div className="flex items-center gap-2">
         <p className={cn("font-semibold text-sm text-right", valueClassName)}>
-          {value}
+          {value} {valuePrefix}
         </p>
         {children}
       </div>
