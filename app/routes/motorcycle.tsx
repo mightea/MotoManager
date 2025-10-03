@@ -6,12 +6,14 @@ import {
   locations,
   maintenanceRecords,
   motorcycles,
+  torqueSpecs,
   type EditorIssue,
   type EditorMotorcycle,
   type Motorcycle,
   type NewCurrentLocationRecord,
   type NewIssue,
   type NewMaintenanceRecord,
+  type NewTorqueSpecification,
 } from "~/db/schema";
 import { asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
@@ -24,6 +26,10 @@ import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog
 import { data } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
 import { MotorcycleProvider } from "~/contexts/MotorcycleProvider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import TorqueSpecificationsPanel from "~/components/torque-specifications-panel";
+import { useLocation, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const motorcycleId = Number.parseInt(params.motorcycleId);
@@ -70,6 +76,11 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const currentLocation = locationHistory.at(0) ?? null;
 
+  const torqueSpecifications = await db.query.torqueSpecs.findMany({
+    where: eq(torqueSpecs.motorcycleId, motorcycleId),
+    orderBy: [asc(torqueSpecs.category), asc(torqueSpecs.name)],
+  });
+
   // Get all odometer readings from all items
   const odos = [
     result.initialOdo,
@@ -87,6 +98,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     currentOdo: currentOdo ?? result.initialOdo,
     currentLocation: currentLocation ?? null,
     locationHistory,
+    torqueSpecifications,
   };
 }
 
@@ -304,6 +316,124 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
   }
 
+  if (intent === "torque-add") {
+    const motorcycleId = Number.parseInt(params.motorcycleId);
+    if (Number.isNaN(motorcycleId)) {
+      return data(
+        { success: false, message: "Motorrad konnte nicht ermittelt werden." },
+        { status: 400 }
+      );
+    }
+
+    const torque = Number.parseFloat((fields.torque as string) ?? "");
+    if (Number.isNaN(torque)) {
+      return data(
+        { success: false, message: "Drehmoment ist ungültig." },
+        { status: 400 }
+      );
+    }
+
+    const category = (fields.category as string | undefined)?.trim();
+    const name = (fields.name as string | undefined)?.trim();
+    if (!category || !name) {
+      return data(
+        { success: false, message: "Kategorie und Bezeichnung sind erforderlich." },
+        { status: 400 }
+      );
+    }
+
+    const variationInput = fields.variation as string | undefined;
+    const variationParsed = variationInput
+      ? Number.parseFloat(variationInput)
+      : undefined;
+    const variation =
+      variationParsed === undefined || Number.isNaN(variationParsed)
+        ? null
+        : variationParsed;
+
+    const description =
+      (fields.description as string | undefined)?.trim() || null;
+
+    const newSpec: NewTorqueSpecification = {
+      motorcycleId,
+      category,
+      name,
+      torque,
+      description,
+      ...(variation !== null ? { variation } : {}),
+    };
+
+    await db.insert(torqueSpecs).values(newSpec);
+
+    return data({ success: true, intent: "torque-add" }, { status: 200 });
+  }
+
+  if (intent === "torque-edit") {
+    const specId = Number.parseInt((fields.torqueId as string) ?? "");
+    if (Number.isNaN(specId)) {
+      return data(
+        { success: false, message: "Drehmomentwert konnte nicht ermittelt werden." },
+        { status: 400 }
+      );
+    }
+
+    const category = (fields.category as string | undefined)?.trim();
+    const name = (fields.name as string | undefined)?.trim();
+    if (!category || !name) {
+      return data(
+        { success: false, message: "Kategorie und Bezeichnung sind erforderlich." },
+        { status: 400 }
+      );
+    }
+
+    const torque = Number.parseFloat((fields.torque as string) ?? "");
+    if (Number.isNaN(torque)) {
+      return data(
+        { success: false, message: "Drehmoment ist ungültig." },
+        { status: 400 }
+      );
+    }
+
+    const variationInput = fields.variation as string | undefined;
+    const variationParsed = variationInput
+      ? Number.parseFloat(variationInput)
+      : undefined;
+    const variation =
+      variationParsed === undefined || Number.isNaN(variationParsed)
+        ? null
+        : variationParsed;
+
+    const description =
+      (fields.description as string | undefined)?.trim() || null;
+
+    await db
+      .update(torqueSpecs)
+      .set({
+        category,
+        name,
+        torque,
+        variation,
+        description,
+      })
+      .where(eq(torqueSpecs.id, specId));
+
+    return data({ success: true, intent: "torque-edit" }, { status: 200 });
+  }
+
+  if (intent === "torque-delete") {
+    const specId = Number.parseInt((fields.torqueId as string) ?? "");
+    if (Number.isNaN(specId)) {
+      return data(
+        { success: false, message: "Drehmomentwert konnte nicht ermittelt werden." },
+        { status: 400 }
+      );
+    }
+
+    await db.delete(torqueSpecs).where(eq(torqueSpecs.id, specId));
+
+    return data({ success: true, intent: "torque-delete" }, { status: 200 });
+  }
+
   return data(
     { success: false, message: `Unhandled intent ${intent}` },
     { status: 500 }
@@ -318,8 +448,43 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     currentOdo,
     currentLocation,
     locationHistory,
+    torqueSpecifications,
   } = loaderData;
   const { make, model } = motorcycle;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const validTabs = ["maintenance", "torque"] as const;
+
+  const getTabFromHash = (hash: string) => {
+    const normalized = hash.startsWith("#") ? hash.slice(1) : hash;
+    return (validTabs as readonly string[]).includes(normalized)
+      ? normalized
+      : "maintenance";
+  };
+
+  const [activeTab, setActiveTab] = useState<string>(() =>
+    getTabFromHash(location.hash)
+  );
+
+  useEffect(() => {
+    const hashTab = getTabFromHash(location.hash);
+    if (hashTab !== activeTab) {
+      setActiveTab(hashTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.hash]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: `#${value}`,
+      },
+      { replace: true }
+    );
+  };
 
   return (
     <MotorcycleProvider
@@ -339,28 +504,46 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
           />
         </div>
         <div className="lg:col-span-3 xl:col-span-3">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <CardTitle className="text-2xl">Wartungsprotokoll</CardTitle>
-                <AddMaintenanceLogDialog
-                  motorcycle={motorcycle}
-                  currentOdometer={currentOdo}
-                >
-                  <Button>
-                    <PlusCircle className="h-4 w-4" />
-                    Eintrag hinzufügen
-                  </Button>
-                </AddMaintenanceLogDialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <MaintenanceLogTable
-                logs={maintenanceEntries}
-                motorcycle={motorcycle}
+          <Tabs
+            value={activeTab}
+            onValueChange={handleTabChange}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="maintenance">Wartungsprotokoll</TabsTrigger>
+              <TabsTrigger value="torque">Drehmomentwerte</TabsTrigger>
+            </TabsList>
+            <TabsContent value="maintenance">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <CardTitle className="text-2xl">Wartungsprotokoll</CardTitle>
+                    <AddMaintenanceLogDialog
+                      motorcycle={motorcycle}
+                      currentOdometer={currentOdo}
+                    >
+                      <Button>
+                        <PlusCircle className="h-4 w-4" />
+                        Eintrag hinzufügen
+                      </Button>
+                    </AddMaintenanceLogDialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <MaintenanceLogTable
+                    logs={maintenanceEntries}
+                    motorcycle={motorcycle}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="torque">
+              <TorqueSpecificationsPanel
+                motorcycleId={motorcycle.id}
+                specs={torqueSpecifications}
               />
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </MotorcycleProvider>

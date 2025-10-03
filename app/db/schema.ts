@@ -119,10 +119,28 @@ export const locationRecords = sqliteTable("location_records", {
     .default(sql`(CURRENT_DATE)`), // SQLite DATE stored as TEXT
 });
 
+export const torqueSpecs = sqliteTable("torque_specs", {
+  id: int().primaryKey({ autoIncrement: true }),
+  motorcycleId: int("motorcycle_id")
+    .notNull()
+    .references(() => motorcycles.id, { onDelete: "cascade" }),
+  category: text().notNull(),
+  name: text().notNull(),
+  torque: real().notNull(),
+  variation: real(),
+  description: text(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+});
+
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;
 export type CurrentLocation = typeof locationRecords.$inferSelect;
 export type NewCurrentLocationRecord = typeof locationRecords.$inferInsert;
+
+export type TorqueSpecification = typeof torqueSpecs.$inferSelect;
+export type NewTorqueSpecification = typeof torqueSpecs.$inferInsert;
 
 export type Motorcycle = typeof motorcycles.$inferSelect;
 export type NewMotorcycle = typeof motorcycles.$inferInsert;
