@@ -111,62 +111,91 @@ export async function action() {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { items: motorcycles } = loaderData;
+  const hasMotorcycles = motorcycles.length > 0;
 
   return (
     <>
       <title>MotoManager</title>
-      <div>
-        <header className="mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-4xl font-bold font-headline text-primary">
-                Alle Motorräder
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Eine Übersicht deiner gesamten Sammlung.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <AddMotorcycleDialog>
-                <Button variant="outline">
-                  <PlusCircle className="h-4 w-4" />
-                  Motorrad hinzufügen
+      <div className="space-y-8">
+        {hasMotorcycles ? (
+          <>
+            <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-3xl font-headline font-semibold text-foreground">
+                  Deine Motorräder
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Überblick über Wartung, Kilometerstände und aktuelle Dokumente.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <AddMotorcycleDialog>
+                  <Button variant="outline" className="gap-2">
+                    <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
+                  </Button>
+                </AddMotorcycleDialog>
+                <Button asChild variant="secondary" className="gap-2">
+                  <Link to="/documents">
+                    <FileText className="h-4 w-4" /> Dokumente
+                  </Link>
                 </Button>
-              </AddMotorcycleDialog>
-              <Button asChild variant="secondary">
-                <Link to="/documents" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Dokumente
-                </Link>
-              </Button>
+              </div>
+            </header>
+
+            <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {motorcycles.map((moto) => (
+                <MotorcycleSummaryCard key={moto.id} {...moto} />
+              ))}
             </div>
-          </div>
-        </header>
-        {motorcycles.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {motorcycles.map((moto) => (
-              <MotorcycleSummaryCard key={moto.id} {...moto} />
-            ))}
-          </div>
+          </>
         ) : (
-          <div className="text-center py-16 border-2 border-dashed rounded-lg">
-            <Bike className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h2 className="mt-4 text-2xl font-semibold">
-              Noch keine Motorräder
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Füge dein erstes Motorrad hinzu, um loszulegen.
-            </p>
-            <div className="mt-6">
-              <AddMotorcycleDialog>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad
-                  hinzufügen
-                </Button>
-              </AddMotorcycleDialog>
+          <>
+            <div className="overflow-hidden rounded-2xl border border-border/60 bg-white/80 p-5 shadow-lg backdrop-blur-xl dark:border-border/30 dark:bg-slate-900/80 md:p-6">
+              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-[0.32em] text-muted-foreground">
+                    Erste Schritte
+                  </p>
+                  <h1 className="mt-2 text-3xl font-headline font-semibold leading-tight text-foreground md:text-[2.35rem]">
+                    Willkommen im Cockpit deiner Bikes
+                  </h1>
+                  <p className="mt-3 text-sm text-muted-foreground max-w-2xl">
+                    Lege dein erstes Motorrad an, um Wartungen, Dokumente und Standorte im Blick zu behalten.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                  <AddMotorcycleDialog>
+                    <Button className="h-10 gap-2 px-5">
+                      <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
+                    </Button>
+                  </AddMotorcycleDialog>
+                  <Button asChild variant="secondary" className="h-10 gap-2 px-5">
+                    <Link to="/documents">
+                      <FileText className="h-4 w-4" /> Dokumente öffnen
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}{" "}
+
+            <div className="text-center py-16 border-2 border-dashed rounded-lg">
+              <Bike className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h2 className="mt-4 text-2xl font-semibold">
+                Noch keine Motorräder erfasst
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                Lege jetzt los und füge dein erstes Motorrad hinzu.
+              </p>
+              <div className="mt-6">
+                <AddMotorcycleDialog>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad hinzufügen
+                  </Button>
+                </AddMotorcycleDialog>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </>
   );

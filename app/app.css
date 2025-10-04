@@ -14,28 +14,28 @@
    * Colors
    * Maps your CSS variables to Tailwind's color palette.
    * ================================================================= */
-  --color-background: oklch(100% 0 0);
-  --color-foreground: oklch(12% 0.162 282);
+  --color-background: oklch(97% 0.02 240);
+  --color-foreground: oklch(18% 0.08 258);
   --color-card: oklch(100% 0 0);
-  --color-card-foreground: oklch(12% 0.162 282);
+  --color-card-foreground: oklch(24% 0.08 258);
   --color-popover: oklch(100% 0 0);
-  --color-popover-foreground: oklch(12% 0.162 282);
-  --color-primary: oklch(62% 0.234 282);
+  --color-popover-foreground: oklch(18% 0.08 258);
+  --color-primary: oklch(66% 0.24 270);
   --color-primary-foreground: oklch(98% 0.02 210);
-  --color-secondary: oklch(94% 0.01 210);
-  --color-secondary-foreground: oklch(24% 0.07 282);
-  --color-muted: oklch(94% 0.01 210);
+  --color-secondary: oklch(91% 0.04 240);
+  --color-secondary-foreground: oklch(28% 0.06 250);
+  --color-muted: oklch(92% 0.02 240);
   --color-muted-foreground: oklch(54% 0.05 245);
-  --color-accent: oklch(94% 0.01 210);
-  --color-accent-foreground: oklch(24% 0.07 282);
+  --color-accent: oklch(91% 0.04 220);
+  --color-accent-foreground: oklch(26% 0.06 230);
   --color-destructive: oklch(60% 0.24 20);
   --color-destructive-foreground: oklch(98% 0.02 210);
   --color-warning: oklch(64% 0.23 90);
   --color-warning-foreground: oklch(98% 0.02 90);
-  --color-border: oklch(92% 0.01 210);
-  --color-input: oklch(92% 0.01 210);
-  --color-ring: oklch(62% 0.234 282);
-  --color-chart-1: oklch(62% 0.234 282);
+  --color-border: oklch(90% 0.015 230);
+  --color-input: oklch(92% 0.02 240);
+  --color-ring: oklch(66% 0.24 270);
+  --color-chart-1: oklch(66% 0.24 270);
   --color-chart-2: oklch(49% 0.2 142);
   --color-chart-3: oklch(65% 0.28 48);
   --color-chart-4: oklch(65% 0.28 25);
@@ -61,8 +61,8 @@
   /* =================================================================
    * Font Family
    * ================================================================= */
-  --font-family-body: Inter, sans-serif;
-  --font-family-headline: Inter, sans-serif;
+  --font-family-body: "Inter", sans-serif;
+  --font-family-headline: "Space Grotesk", sans-serif;
   --font-family-code: monospace;
 }
 
@@ -70,40 +70,58 @@
   :root,
   :host {
     @variant dark {
-      --color-background: oklch(6% 0.12 282);
+      --color-background: oklch(16% 0.03 260);
       --color-foreground: oklch(98% 0.02 210);
-      --color-card: oklch(6% 0.14 282);
-      --color-card-foreground: oklch(98% 0.02 210);
-      --color-popover: oklch(12% 0.16 282);
-      --color-popover-foreground: oklch(98% 0.02 210);
-      --color-primary: oklch(65% 0.25 278);
-      --color-primary-foreground: oklch(22% 0.07 282);
-      --color-secondary: oklch(25% 0.05 278);
-      --color-secondary-foreground: oklch(98% 0.02 210);
-      --color-muted: oklch(25% 0.05 278);
-      --color-muted-foreground: oklch(75% 0.06 230);
-      --color-accent: oklch(25% 0.05 278);
-      --color-accent-foreground: oklch(98% 0.02 210);
-      --color-destructive: oklch(40% 0.17 27);
-      --color-destructive-foreground: oklch(98% 0.02 210);
-      --color-warning: oklch(63% 0.23 90);
+      --color-card: oklch(21% 0.03 260);
+      --color-card-foreground: oklch(96% 0.02 210);
+      --color-popover: oklch(21% 0.03 260);
+      --color-popover-foreground: oklch(96% 0.02 210);
+      --color-primary: oklch(70% 0.23 272);
+      --color-primary-foreground: oklch(20% 0.05 260);
+      --color-secondary: oklch(28% 0.03 250);
+      --color-secondary-foreground: oklch(94% 0.02 230);
+      --color-muted: oklch(28% 0.03 250);
+      --color-muted-foreground: oklch(72% 0.05 230);
+      --color-accent: oklch(32% 0.05 220);
+      --color-accent-foreground: oklch(94% 0.02 230);
+      --color-destructive: oklch(45% 0.15 25);
+      --color-destructive-foreground: oklch(94% 0.02 230);
+      --color-warning: oklch(64% 0.23 90);
       --color-warning-foreground: oklch(14% 0.03 90);
-      --color-border: oklch(25% 0.05 278);
-      --color-input: oklch(25% 0.05 278);
-      --color-ring: oklch(65% 0.25 278);
-      --color-chart-1: oklch(65% 0.25 278);
-      --color-chart-2: oklch(60% 0.19 142);
-      --color-chart-3: oklch(66% 0.26 48);
-      --color-chart-4: oklch(66% 0.26 25);
+      --color-border: oklch(30% 0.03 250);
+      --color-input: oklch(30% 0.03 250);
+      --color-ring: oklch(70% 0.23 272);
+      --color-chart-1: oklch(70% 0.23 272);
+      --color-chart-2: oklch(62% 0.2 160);
+      --color-chart-3: oklch(68% 0.26 48);
+      --color-chart-4: oklch(68% 0.26 25);
       --color-chart-5: oklch(60% 0.22 27);
-      --color-sidebar-background: oklch(12% 0.16 282);
-      --color-sidebar-foreground: oklch(98% 0.02 210);
-      --color-sidebar-primary: oklch(65% 0.25 278);
-      --color-sidebar-primary-foreground: oklch(22% 0.07 282);
-      --color-sidebar-accent: oklch(25% 0.05 278);
-      --color-sidebar-accent-foreground: oklch(98% 0.02 210);
-      --color-sidebar-border: oklch(25% 0.05 278);
-      --color-sidebar-ring: oklch(65% 0.25 278);
+      --color-sidebar-background: oklch(18% 0.03 260);
+      --color-sidebar-foreground: oklch(96% 0.02 210);
+      --color-sidebar-primary: oklch(70% 0.23 272);
+      --color-sidebar-primary-foreground: oklch(21% 0.05 260);
+      --color-sidebar-accent: oklch(28% 0.03 250);
+      --color-sidebar-accent-foreground: oklch(94% 0.02 230);
+      --color-sidebar-border: oklch(30% 0.03 250);
+      --color-sidebar-ring: oklch(70% 0.23 272);
     }
+  }
+}
+
+@layer base {
+  body {
+    min-height: 100vh;
+    background-image:
+      radial-gradient(120% 120% at 10% 20%, rgba(79, 70, 229, 0.14), transparent),
+      radial-gradient(100% 120% at 80% 0%, rgba(14, 165, 233, 0.12), transparent);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(120% 120% at 10% 20%, rgba(79, 70, 229, 0.3), transparent),
+      radial-gradient(100% 120% at 80% 0%, rgba(14, 165, 233, 0.2), transparent);
+    background-color: var(--color-background);
   }
 }

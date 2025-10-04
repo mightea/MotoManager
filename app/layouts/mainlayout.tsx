@@ -5,12 +5,15 @@ import { Toaster } from "~/components/ui/toaster";
 
 export default function MainLayout() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Suspense fallback={<div className="h-20 border-b"></div>}>
+    <div className="min-h-screen flex flex-col">
+      <Suspense fallback={<div className="h-20" />}
+      >
         <Header />
       </Suspense>
-      <main className="container mx-auto p-4 py-8 md:p-8 flex-1">
-        <Outlet />
+      <main className="flex-1 w-full">
+        <div className="mx-auto w-full max-w-6xl px-6 py-10 md:py-14">
+          <Outlet />
+        </div>
       </main>
       <Toaster />
     </div>

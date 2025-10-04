@@ -24,7 +24,7 @@ describe("Home route", () => {
       screen.getByRole("heading", { name: /noch keine motorräder/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/füge dein erstes motorrad hinzu, um loszulegen/i)
+      screen.getByText(/lege ein erstes motorrad an/i)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /dein erstes motorrad hinzufügen/i })
