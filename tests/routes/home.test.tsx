@@ -12,6 +12,15 @@ describe("Home route", () => {
             loaderData: {
               motorcycles: [],
               items: [],
+              stats: {
+                year: new Date().getFullYear(),
+                totalKmThisYear: 0,
+                totalKmOverall: 0,
+                totalActiveIssues: 0,
+                totalMaintenanceCostThisYear: 0,
+                veteranCount: 0,
+                topRider: null,
+              },
             },
             matches: [],
             params: {},
@@ -24,7 +33,12 @@ describe("Home route", () => {
       screen.getByRole("heading", { name: /noch keine motorräder/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/lege ein erstes motorrad an/i)
+      screen.getByText(
+        /lege dein erstes motorrad an, um wartungen, dokumente und standorte im blick zu behalten\./i
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/lege jetzt los und füge dein erstes motorrad hinzu/i)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /dein erstes motorrad hinzufügen/i })
