@@ -112,6 +112,17 @@ export const locations = sqliteTable("locations", {
   name: text().notNull(),
 });
 
+export const currencySettings = sqliteTable("currencies", {
+  id: int().primaryKey({ autoIncrement: true }),
+  code: text().notNull().unique(),
+  symbol: text().notNull(),
+  label: text(),
+  conversionFactor: real("conversion_factor").notNull().default(1),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+});
+
 export const locationRecords = sqliteTable("location_records", {
   id: int().primaryKey({ autoIncrement: true }),
   motorcycleId: int("motorcycle_id")
@@ -173,6 +184,9 @@ export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;
 export type CurrentLocation = typeof locationRecords.$inferSelect;
 export type NewCurrentLocationRecord = typeof locationRecords.$inferInsert;
+
+export type CurrencySetting = typeof currencySettings.$inferSelect;
+export type NewCurrencySetting = typeof currencySettings.$inferInsert;
 
 export type TorqueSpecification = typeof torqueSpecs.$inferSelect;
 export type NewTorqueSpecification = typeof torqueSpecs.$inferInsert;

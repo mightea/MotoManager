@@ -6,11 +6,9 @@ import {
   type SetStateAction,
 } from "react";
 
-type Currency = {
-  code: string;
-  symbol: string;
-};
-import type { Location } from "~/db/schema";
+import type { CurrencySetting, Location } from "~/db/schema";
+
+export type Currency = CurrencySetting;
 
 interface SettingsContextProps {
   locations: Location[];
@@ -26,27 +24,16 @@ const SettingsContext = createContext<SettingsContextProps | undefined>(
 interface SettingsProviderProps {
   children: ReactNode;
   initialLocations: Location[];
+  initialCurrencies: Currency[];
 }
 
 export const SettingsProvider = ({
   children,
   initialLocations,
+  initialCurrencies,
 }: SettingsProviderProps) => {
   const [locations, setLocations] = useState<Location[]>(initialLocations);
-  const [currencies, setCurrencies] = useState<Currency[]>([
-    {
-      code: "CHF",
-      symbol: "CHF",
-    },
-    {
-      code: "EUR",
-      symbol: "€",
-    },
-    {
-      code: "AUD",
-      symbol: "A$",
-    },
-  ]);
+  const [currencies, setCurrencies] = useState<Currency[]>(initialCurrencies);
 
   // Memoize the context value to prevent unnecessary re-renders of consumers
   const value = React.useMemo(

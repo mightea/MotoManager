@@ -14,20 +14,26 @@ import "./app.css";
 import { ThemeProvider, useTheme } from "./contexts/ThemeProvider";
 import { getTheme } from "./services/theme.server";
 import { urlMotorcycle } from "./utils/urlUtils";
-import { motorcycles, type NewMotorcycle } from "./db/schema";
+import {
+  motorcycles,
+  type NewMotorcycle,
+  currencySettings,
+} from "./db/schema";
 import db from "./db";
 import { SettingsProvider } from "./contexts/SettingsProvider";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
-  const locations = await db.query.locations.findMany();
+  const [locations, currencies] = await Promise.all([
+    db.query.locations.findMany(),
+    db.query.currencySettings.findMany(),
+  ]);
 
-  const data = {
+  return {
     theme,
     locations,
+    currencies,
   };
-
-  return data;
 }
 
 export const links: Route.LinksFunction = () => [
@@ -67,11 +73,14 @@ function MainApp() {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { theme, locations } = loaderData;
+  const { theme, locations, currencies } = loaderData;
 
   return (
     <ThemeProvider initialTheme={theme}>
-      <SettingsProvider initialLocations={locations}>
+      <SettingsProvider
+        initialLocations={locations}
+        initialCurrencies={currencies}
+      >
         <MainApp />
       </SettingsProvider>
     </ThemeProvider>
