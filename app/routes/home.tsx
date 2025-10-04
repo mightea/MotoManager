@@ -4,7 +4,7 @@ import db from "~/db";
 import { motorcycles, type Motorcycle } from "~/db/schema";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
-import { Bike, PlusCircle } from "lucide-react";
+import { Bike, PlusCircle, FileText } from "lucide-react";
 import { AddMotorcycleDialog } from "~/components/add-motorcycle-dialog";
 
 type MotorcycleData = Motorcycle & {
@@ -126,12 +126,20 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 Eine Übersicht deiner gesamten Sammlung.
               </p>
             </div>
-            <AddMotorcycleDialog>
-              <Button variant="outline">
-                <PlusCircle className="h-4 w-4" />
-                Motorrad hinzufügen
+            <div className="flex items-center gap-2">
+              <AddMotorcycleDialog>
+                <Button variant="outline">
+                  <PlusCircle className="h-4 w-4" />
+                  Motorrad hinzufügen
+                </Button>
+              </AddMotorcycleDialog>
+              <Button asChild variant="secondary">
+                <Link to="/documents" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Dokumente
+                </Link>
               </Button>
-            </AddMotorcycleDialog>
+            </div>
           </div>
         </header>
         {motorcycles.length > 0 ? (

@@ -1,0 +1,17 @@
+<svg width="240" height="320" viewBox="0 0 240 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pdfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f4ff" />
+      <stop offset="100%" stop-color="#d9e4ff" />
+    </linearGradient>
+  </defs>
+  <rect x="12" y="20" width="216" height="280" rx="16" fill="url(#pdfGradient)" stroke="#b6c2ff" stroke-width="4" />
+  <path d="M48 64h96v24H48z" fill="#3b5bdb" rx="6" />
+  <text x="60" y="82" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#ffffff">PDF</text>
+  <rect x="48" y="120" width="144" height="12" rx="6" fill="#94a3b8" opacity="0.5" />
+  <rect x="48" y="148" width="120" height="12" rx="6" fill="#94a3b8" opacity="0.35" />
+  <rect x="48" y="176" width="136" height="12" rx="6" fill="#94a3b8" opacity="0.35" />
+  <rect x="48" y="204" width="124" height="12" rx="6" fill="#94a3b8" opacity="0.2" />
+  <rect x="48" y="232" width="110" height="12" rx="6" fill="#94a3b8" opacity="0.2" />
+  <path d="M156 248l36 0c8.8 0 16 7.2 16 16v16H140v-16c0-8.8 7.2-16 16-16z" fill="#3b5bdb" opacity="0.15" />
+</svg>

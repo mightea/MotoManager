@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { int, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  int,
+  integer,
+  primaryKey,
+  real,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 export const motorcycles = sqliteTable("motorcycles", {
   id: int().primaryKey({ autoIncrement: true }),
@@ -134,6 +141,34 @@ export const torqueSpecs = sqliteTable("torque_specs", {
     .default(sql`(CURRENT_TIMESTAMP)`),
 });
 
+export const documents = sqliteTable("documents", {
+  id: int().primaryKey({ autoIncrement: true }),
+  title: text().notNull(),
+  filePath: text("file_path").notNull(),
+  previewPath: text("preview_path"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+export const documentMotorcycles = sqliteTable(
+  "document_motorcycles",
+  {
+    documentId: int("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "cascade" }),
+    motorcycleId: int("motorcycle_id")
+      .notNull()
+      .references(() => motorcycles.id, { onDelete: "cascade" }),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.documentId, table.motorcycleId] }),
+  })
+);
+
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;
 export type CurrentLocation = typeof locationRecords.$inferSelect;
@@ -141,6 +176,11 @@ export type NewCurrentLocationRecord = typeof locationRecords.$inferInsert;
 
 export type TorqueSpecification = typeof torqueSpecs.$inferSelect;
 export type NewTorqueSpecification = typeof torqueSpecs.$inferInsert;
+
+export type Document = typeof documents.$inferSelect;
+export type NewDocument = typeof documents.$inferInsert;
+export type DocumentMotorcycle = typeof documentMotorcycles.$inferSelect;
+export type NewDocumentMotorcycle = typeof documentMotorcycles.$inferInsert;
 
 export type Motorcycle = typeof motorcycles.$inferSelect;
 export type NewMotorcycle = typeof motorcycles.$inferInsert;

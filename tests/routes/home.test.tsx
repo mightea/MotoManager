@@ -1,20 +1,23 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import Home from "~/routes/home";
 
 describe("Home route", () => {
   it("shows the empty state when no motorcycles are available", () => {
     render(
-      <Home
-        {...({
-          loaderData: {
-            motorcycles: [],
-            items: [],
-          },
-          matches: [],
-          params: {},
-        } as any)}
-      />
+      <MemoryRouter>
+        <Home
+          {...({
+            loaderData: {
+              motorcycles: [],
+              items: [],
+            },
+            matches: [],
+            params: {},
+          } as any)}
+        />
+      </MemoryRouter>
     );
 
     expect(

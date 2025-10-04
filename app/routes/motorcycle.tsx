@@ -2,6 +2,8 @@ import type { Route } from "./+types/motorcycle";
 import db from "~/db";
 import {
   issues,
+  documents,
+  documentMotorcycles,
   locationRecords,
   locations,
   maintenanceRecords,
@@ -28,6 +30,9 @@ import { parseIntSafe } from "~/utils/numberUtils";
 import { MotorcycleProvider } from "~/contexts/MotorcycleProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import TorqueSpecificationsPanel from "~/components/torque-specifications-panel";
+import DocumentList, {
+  type DocumentListItem,
+} from "~/components/document-list";
 import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 
@@ -81,6 +86,63 @@ export async function loader({ params }: Route.LoaderArgs) {
     orderBy: [asc(torqueSpecs.category), asc(torqueSpecs.name)],
   });
 
+  const documentRows = await db
+    .select({
+      id: documents.id,
+      title: documents.title,
+      filePath: documents.filePath,
+      previewPath: documents.previewPath,
+      createdAt: documents.createdAt,
+      motorcycleId: documentMotorcycles.motorcycleId,
+    })
+    .from(documents)
+    .leftJoin(
+      documentMotorcycles,
+      eq(documentMotorcycles.documentId, documents.id)
+    );
+
+  const documentsMap = new Map<
+    number,
+    {
+      id: number;
+      title: string;
+      filePath: string;
+      previewPath: string | null;
+      createdAt: string;
+      motorcycleIds: number[];
+    }
+  >();
+
+  documentRows.forEach((row) => {
+    let entry = documentsMap.get(row.id);
+    if (!entry) {
+      entry = {
+        id: row.id,
+        title: row.title,
+        filePath: row.filePath,
+        previewPath: row.previewPath ?? null,
+        createdAt: row.createdAt,
+        motorcycleIds: [],
+      };
+      documentsMap.set(row.id, entry);
+    }
+    if (row.motorcycleId !== undefined && row.motorcycleId !== null) {
+      entry.motorcycleIds.push(row.motorcycleId);
+    }
+  });
+
+  const documentSummaries: DocumentListItem[] = Array.from(documentsMap.values())
+    .filter(
+      (doc) => doc.motorcycleIds.length === 0 || doc.motorcycleIds.includes(motorcycleId)
+    )
+    .map((doc) => ({
+      id: doc.id,
+      title: doc.title,
+      filePath: doc.filePath,
+      previewPath: doc.previewPath,
+      createdAt: doc.createdAt,
+    }));
+
   // Get all odometer readings from all items
   const odos = [
     result.initialOdo,
@@ -99,6 +161,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     currentLocation: currentLocation ?? null,
     locationHistory,
     torqueSpecifications,
+    documents: documentSummaries,
   };
 }
 
@@ -449,11 +512,12 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     currentLocation,
     locationHistory,
     torqueSpecifications,
+    documents,
   } = loaderData;
   const { make, model } = motorcycle;
   const location = useLocation();
   const navigate = useNavigate();
-  const validTabs = ["maintenance", "torque"] as const;
+  const validTabs = ["maintenance", "torque", "documents"] as const;
 
   const getTabFromHash = (hash: string) => {
     const normalized = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -509,9 +573,10 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
             onValueChange={handleTabChange}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="maintenance">Wartungsprotokoll</TabsTrigger>
               <TabsTrigger value="torque">Drehmomentwerte</TabsTrigger>
+              <TabsTrigger value="documents">Dokumente</TabsTrigger>
             </TabsList>
             <TabsContent value="maintenance">
               <Card>
@@ -542,6 +607,9 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
                 motorcycleId={motorcycle.id}
                 specs={torqueSpecifications}
               />
+            </TabsContent>
+            <TabsContent value="documents">
+              <DocumentList documents={documents} />
             </TabsContent>
           </Tabs>
         </div>

@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { Edit, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import TorqueSpecDialog from "~/components/torque-spec-dialog";
 import type { TorqueSpecification } from "~/db/schema";
 
@@ -99,7 +99,6 @@ export default function TorqueSpecificationsPanel({
                     </div>
                     <TorqueSpecDialog motorcycleId={motorcycleId} spec={spec}>
                       <Button size="sm" variant="outline" className="h-9">
-                        <Edit className="mr-2 h-4 w-4" />
                         Bearbeiten
                       </Button>
                     </TorqueSpecDialog>
