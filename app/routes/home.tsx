@@ -1,13 +1,21 @@
 import { useMemo } from "react";
-import { Form, Link, redirect } from "react-router";
+import { Link, data, redirect } from "react-router";
 import type { Route } from "./+types/home";
 import { getDb } from "~/db";
-import { motorcycles, type Motorcycle } from "~/db/schema";
+import {
+  motorcycles,
+  issues as issuesTable,
+  maintenanceRecords,
+  locationRecords,
+  type Motorcycle,
+} from "~/db/schema";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
 import { Bike, PlusCircle, FileText } from "lucide-react";
 import { AddMotorcycleDialog } from "~/components/add-motorcycle-dialog";
 import { formatCurrency } from "~/utils/numberUtils";
+import { inArray, eq } from "drizzle-orm";
+import { mergeHeaders, requireUser } from "~/services/auth.server";
 
 type MotorcycleData = Motorcycle & {
   numberOfIssues: number;
@@ -31,17 +39,40 @@ type DashboardStats = {
   };
 };
 
-export async function loader({}: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
+  const { user, headers } = await requireUser(request);
   const db = await getDb();
 
-  const motorcycles = await db.query.motorcycles.findMany();
-  const issues = await db.query.issues.findMany();
-  const maintenance = await db.query.maintenanceRecords.findMany();
-  const locationHistory = await db.query.locationRecords.findMany();
+  const motorcyclesList = await db.query.motorcycles.findMany({
+    where: eq(motorcycles.userId, user.id),
+  });
+
+  const motorcycleIds = motorcyclesList.map((moto) => moto.id);
+
+  const issues =
+    motorcycleIds.length > 0
+      ? await db.query.issues.findMany({
+          where: inArray(issuesTable.motorcycleId, motorcycleIds),
+        })
+      : [];
+
+  const maintenance =
+    motorcycleIds.length > 0
+      ? await db.query.maintenanceRecords.findMany({
+          where: inArray(maintenanceRecords.motorcycleId, motorcycleIds),
+        })
+      : [];
+
+  const locationHistory =
+    motorcycleIds.length > 0
+      ? await db.query.locationRecords.findMany({
+          where: inArray(locationRecords.motorcycleId, motorcycleIds),
+        })
+      : [];
 
   const year = new Date().getFullYear();
 
-  const items: MotorcycleData[] = motorcycles.map((moto) => {
+  const items: MotorcycleData[] = motorcyclesList.map((moto) => {
     const mIssues = issues.filter((i) => i.motorcycleId === moto.id);
     const maintenanceItems = maintenance.filter(
       (m) => m.motorcycleId === moto.id
@@ -130,7 +161,7 @@ export async function loader({}: Route.LoaderArgs) {
     }
     return sum + (entry.cost ?? 0);
   }, 0);
-  const veteranCount = motorcycles.filter((moto) => moto.isVeteran).length;
+  const veteranCount = motorcyclesList.filter((moto) => moto.isVeteran).length;
   const topRiderCandidate = items.reduce<MotorcycleData | null>((acc, moto) => {
     if (moto.odometerThisYear <= 0) {
       return acc;
@@ -143,7 +174,7 @@ export async function loader({}: Route.LoaderArgs) {
 
   const stats: DashboardStats = {
     year,
-    totalMotorcycles: motorcycles.length,
+    totalMotorcycles: motorcyclesList.length,
     totalKmThisYear,
     totalKmOverall,
     totalActiveIssues,
@@ -159,10 +190,14 @@ export async function loader({}: Route.LoaderArgs) {
       : null,
   };
 
-  return { motorcycles, items, stats };
+  return data(
+    { motorcycles: motorcyclesList, items, stats },
+    { headers: mergeHeaders(headers ?? {}) }
+  );
 }
 
-export async function action() {
+export async function action({ request }: Route.ActionArgs) {
+  const { user, headers } = await requireUser(request);
   const db = await getDb();
 
   const motorcycle = await db
@@ -176,10 +211,15 @@ export async function action() {
       lastInspection: "",
       isVeteran: false,
       initialOdo: 0,
+      userId: user.id,
     })
     .returning();
 
-  return redirect(`/motorcycle/${motorcycle[0].id}/edit`);
+  const response = redirect(`/motorcycle/${motorcycle[0].id}/edit`);
+  mergeHeaders(headers ?? {}).forEach((value, key) => {
+    response.headers.set(key, value);
+  });
+  return response;
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {

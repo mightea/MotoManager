@@ -19,6 +19,7 @@ import {
   motorcycles,
   type NewMotorcycle,
   currencySettings,
+  locations as locationsTable,
   type User,
 } from "./db/schema";
 import db from "./db";
@@ -30,6 +31,7 @@ import {
   mergeHeaders,
   requireUser,
 } from "./services/auth.server";
+import { eq } from "drizzle-orm";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
@@ -52,7 +54,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const [locationResult, currencyResult] = user
     ? await Promise.all([
-        db.query.locations.findMany(),
+        db.query.locations.findMany({
+          where: eq(locationsTable.userId, user.id),
+        }),
         db.query.currencySettings.findMany(),
       ])
     : [[], []];
@@ -130,7 +134,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { headers } = await requireUser(request);
+  const { user, headers } = await requireUser(request);
   const formData = await request.formData();
 
   const parseString = (value: FormDataEntryValue | null | undefined) =>
@@ -166,6 +170,7 @@ export async function action({ request }: ActionFunctionArgs) {
     make: parseString(formData.get("make")),
     model: parseString(formData.get("model")),
     ...(modelYear !== undefined ? { modelYear } : {}),
+    userId: user.id,
     vin: parseString(formData.get("vin")),
     vehicleIdNr: parseString(formData.get("vehicleIdNr")) || undefined,
     numberPlate: parseString(formData.get("numberPlate")) || undefined,

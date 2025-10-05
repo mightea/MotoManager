@@ -5,6 +5,8 @@ import { getDb } from "~/db";
 import {
   sessions,
   users,
+  motorcycles,
+  locations,
   type Session,
   type User,
   type NewUser,
@@ -372,3 +374,25 @@ export function isPublicPath(pathname: string) {
 }
 
 export { USER_ROLES, type UserRole, type PublicUser } from "~/types/auth";
+
+export async function adoptOrphanedRecords(ownerUserId: number) {
+  const db = await getDb();
+
+  const placeholder = await db.query.users.findFirst({
+    where: eq(users.username, "system"),
+  });
+
+  if (!placeholder) {
+    return;
+  }
+
+  await db
+    .update(motorcycles)
+    .set({ userId: ownerUserId })
+    .where(eq(motorcycles.userId, placeholder.id));
+
+  await db
+    .update(locations)
+    .set({ userId: ownerUserId })
+    .where(eq(locations.userId, placeholder.id));
+}

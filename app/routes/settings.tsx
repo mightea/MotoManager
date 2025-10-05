@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { data, useLoaderData } from "react-router";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import {
   Card,
@@ -86,10 +86,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();
 
+  const isAdmin = user.role === "admin";
   const [locationResult, currencyResult, usersList] = await Promise.all([
-    db.query.locations.findMany(),
+    db.query.locations.findMany({
+      where: eq(locations.userId, user.id),
+    }),
     db.query.currencySettings.findMany(),
-    user.role === "admin" ? listUsers() : Promise.resolve<PublicUser[]>([]),
+    isAdmin ? listUsers() : Promise.resolve<PublicUser[]>([]),
   ]);
 
   return data(
@@ -97,7 +100,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       locations: locationResult,
       currencies: currencyResult,
       users: usersList,
-      canManageUsers: user.role === "admin",
+      canManageUsers: isAdmin,
+      canEditCurrencies: isAdmin,
       currentUserId: user.id,
     },
     { headers: mergeHeaders(headers ?? {}) }
@@ -141,6 +145,7 @@ export async function action({ request }: Route.ActionArgs) {
       .insert(locations)
       .values({
         name: fields.name as string,
+        userId: user.id,
       })
       .returning();
 
@@ -157,7 +162,12 @@ export async function action({ request }: Route.ActionArgs) {
       .set({
         name: fields.name as string,
       })
-      .where(eq(locations.id, Number.parseInt(fields.id as string)))
+      .where(
+        and(
+          eq(locations.id, Number.parseInt(fields.id as string)),
+          eq(locations.userId, user.id)
+        )
+      )
       .returning();
 
     return respond({
@@ -170,7 +180,12 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "location-delete") {
     const removed = await db
       .delete(locations)
-      .where(eq(locations.id, Number.parseInt(fields.id as string)))
+      .where(
+        and(
+          eq(locations.id, Number.parseInt(fields.id as string)),
+          eq(locations.userId, user.id)
+        )
+      )
       .returning();
 
     return respond({
@@ -181,6 +196,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "currency-add") {
+    requireAdmin(user);
     const code = String(fields.code ?? "").toUpperCase();
     const symbol = String(fields.symbol ?? "").trim();
     const label = String(fields.label ?? "").trim();
@@ -249,6 +265,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "currency-edit") {
+    requireAdmin(user);
     const id = Number.parseInt(String(fields.id ?? ""), 10);
     const code = String(fields.code ?? "").toUpperCase();
     const symbol = String(fields.symbol ?? "").trim();
@@ -359,6 +376,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "currency-delete") {
+    requireAdmin(user);
     const code = String(fields.code ?? "").toUpperCase();
 
     if (code === DEFAULT_CURRENCY_CODE) {
@@ -391,6 +409,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "currency-refresh") {
+    requireAdmin(user);
     const currentCurrencies = await db.select().from(currencySettings);
     const refreshable = currentCurrencies.filter(
       (currency) => currency.code !== DEFAULT_CURRENCY_CODE
@@ -692,6 +711,7 @@ export default function Settings() {
     currencies: loaderCurrencies,
     users: loaderUsers,
     canManageUsers,
+    canEditCurrencies,
     currentUserId,
   } = useLoaderData<typeof loader>();
   const { setLocations, setCurrencies } = useSettings();
@@ -743,7 +763,7 @@ export default function Settings() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CurrencySettingsForm />
+            <CurrencySettingsForm canEdit={canEditCurrencies} />
           </CardContent>
         </Card>
       </section>

@@ -14,6 +14,7 @@ import {
   getCurrentSession,
   getUserCount,
   mergeHeaders,
+  adoptOrphanedRecords,
 } from "~/services/auth.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -116,6 +117,7 @@ export async function action({ request }: Route.ActionArgs) {
       { status: 400 }
     );
   }
+  await adoptOrphanedRecords(user.id);
   const session = await createSession(user.id);
 
   const response = redirect("/");

@@ -17,7 +17,7 @@ import {
   type NewMaintenanceRecord,
   type NewTorqueSpecification,
 } from "~/db/schema";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import MaintenanceLogTable from "~/components/maintenance-log-table";
@@ -37,17 +37,18 @@ import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { user, headers } = await requireUser(request);
   const db = await getDb();
 
-  const motorcycleId = Number.parseInt(params.motorcycleId);
+  const motorcycleId = Number.parseInt(params.motorcycleId ?? "", 10);
 
   if (isNaN(motorcycleId)) {
     throw new Response("Motorcycle not found", { status: 404 });
   }
 
   const result = await db.query.motorcycles.findFirst({
-    where: eq(motorcycles.id, motorcycleId),
+    where: and(eq(motorcycles.id, motorcycleId), eq(motorcycles.userId, user.id)),
   });
 
   if (result === undefined) {
@@ -156,28 +157,27 @@ export async function loader({ params }: Route.LoaderArgs) {
   // Get the current odometer reading, which is the highest value
   const currentOdo = odos.sort((a, b) => b - a).at(0);
 
-  return {
-    motorcycle: result,
-    maintenance: maintenanceItems,
-    issues: issuesItems,
-    currentOdo: currentOdo ?? result.initialOdo,
-    currentLocation: currentLocation ?? null,
-    locationHistory,
-    torqueSpecifications,
-    documents: documentSummaries,
-  };
+  return data(
+    {
+      motorcycle: result,
+      maintenance: maintenanceItems,
+      issues: issuesItems,
+      currentOdo: currentOdo ?? result.initialOdo,
+      currentLocation: currentLocation ?? null,
+      locationHistory,
+      torqueSpecifications,
+      documents: documentSummaries,
+    },
+    { headers: mergeHeaders(headers ?? {}) }
+  );
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-  const { headers: sessionHeaders } = await requireUser(request);
+  const { user, headers: sessionHeaders } = await requireUser(request);
   const db = await getDb();
 
   const formData = await request.formData();
   const fields = Object.fromEntries(formData);
-
-  const { intent } = fields;
-  console.log("Action called with intent:", intent);
-  console.log("Fields:", fields);
 
   const respond = (
     body: unknown,
@@ -188,13 +188,36 @@ export async function action({ request, params }: Route.ActionArgs) {
       headers: mergeHeaders(sessionHeaders ?? {}),
     });
 
+  const { intent } = fields;
+  console.log("Action called with intent:", intent);
+  console.log("Fields:", fields);
+
+  const motorcycleId = Number.parseInt(params.motorcycleId ?? "", 10);
+  if (Number.isNaN(motorcycleId)) {
+    return respond(
+      { success: false, message: "Motorrad konnte nicht ermittelt werden." },
+      { status: 400 }
+    );
+  }
+
+  const targetMotorcycle = await db.query.motorcycles.findFirst({
+    where: and(eq(motorcycles.id, motorcycleId), eq(motorcycles.userId, user.id)),
+  });
+
+  if (!targetMotorcycle) {
+    return respond(
+      { success: false, message: "Motorrad wurde nicht gefunden." },
+      { status: 404 }
+    );
+  }
+
   if (intent === "issue-add") {
     const newIssue: NewIssue = {
       //: new Date(data.dateAdded as string),
       description: fields.description as string,
       priority: fields.priority as "low" | "medium" | "high",
       status: fields.status as "new" | "in_progress" | "done",
-      motorcycleId: Number.parseInt(params.motorcycleId),
+      motorcycleId,
       odo: Number.parseInt(fields.odo as string),
       date: fields.date as string,
     };
@@ -213,7 +236,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       priority: fields.priority as "low" | "medium" | "high",
       status: fields.status as "new" | "in_progress" | "done",
 
-      motorcycleId: Number.parseInt(params.motorcycleId),
+      motorcycleId,
       odo: Number.parseInt(fields.odo as string),
       date: fields.date as string,
     };
@@ -223,7 +246,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     await db
       .update(issues)
       .set(editIssue)
-      .where(eq(issues.id, Number.parseInt(fields.issueId as string)));
+      .where(
+        and(
+          eq(issues.id, Number.parseInt(fields.issueId as string)),
+          eq(issues.motorcycleId, targetMotorcycle.id)
+        )
+      );
 
     return respond({ success: true }, { status: 200 });
   }
@@ -232,14 +260,19 @@ export async function action({ request, params }: Route.ActionArgs) {
     console.log("Deleting issue with ID:", fields.issueId);
     await db
       .delete(issues)
-      .where(eq(issues.id, Number.parseInt(fields.issueId as string)));
+      .where(
+        and(
+          eq(issues.id, Number.parseInt(fields.issueId as string)),
+          eq(issues.motorcycleId, targetMotorcycle.id)
+        )
+      );
 
     return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-edit") {
     const editMotorcycle: EditorMotorcycle = {
-      id: Number.parseInt(fields.motorcycleId as string),
+      id: targetMotorcycle.id,
       model: fields.model as string,
       make: fields.make as string,
       modelYear: Number.parseInt(fields.modelYear as string),
@@ -261,36 +294,34 @@ export async function action({ request, params }: Route.ActionArgs) {
       .update(motorcycles)
       .set(editMotorcycle)
       .where(
-        eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
+        and(
+          eq(motorcycles.id, targetMotorcycle.id),
+          eq(motorcycles.userId, user.id)
+        )
       );
 
     return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-delete") {
-    const rawMotorcycleId =
-      (fields.motorcycleId as string | number | undefined) ?? params.motorcycleId;
-    const motorcycleId = Number.parseInt(rawMotorcycleId?.toString() ?? "", 10);
-
-    if (Number.isNaN(motorcycleId)) {
-      return respond(
-        { success: false, message: "Motorrad konnte nicht ermittelt werden." },
-        { status: 400 }
-      );
-    }
-
-    await db.delete(maintenanceRecords).where(
-      eq(maintenanceRecords.motorcycleId, motorcycleId)
-    );
-    await db.delete(issues).where(eq(issues.motorcycleId, motorcycleId));
-    await db.delete(locationRecords).where(
-      eq(locationRecords.motorcycleId, motorcycleId)
-    );
+    await db
+      .delete(maintenanceRecords)
+      .where(eq(maintenanceRecords.motorcycleId, targetMotorcycle.id));
+    await db
+      .delete(issues)
+      .where(eq(issues.motorcycleId, targetMotorcycle.id));
+    await db
+      .delete(locationRecords)
+      .where(eq(locationRecords.motorcycleId, targetMotorcycle.id));
     await db
       .delete(documentMotorcycles)
-      .where(eq(documentMotorcycles.motorcycleId, motorcycleId));
-    await db.delete(torqueSpecs).where(eq(torqueSpecs.motorcycleId, motorcycleId));
-    await db.delete(motorcycles).where(eq(motorcycles.id, motorcycleId));
+      .where(eq(documentMotorcycles.motorcycleId, targetMotorcycle.id));
+    await db
+      .delete(torqueSpecs)
+      .where(eq(torqueSpecs.motorcycleId, targetMotorcycle.id));
+    await db
+      .delete(motorcycles)
+      .where(eq(motorcycles.id, targetMotorcycle.id));
 
     return redirect("/");
   }
@@ -317,16 +348,21 @@ export async function action({ request, params }: Route.ActionArgs) {
         manualOdo: parseIntSafe(fields.manualOdo as string),
       } satisfies EditorMotorcycle)
       .where(
-        eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
+        and(eq(motorcycles.id, targetMotorcycle.id), eq(motorcycles.userId, user.id))
       );
     return respond({ success: true, intent: "motorcycle-odo" }, { status: 200 });
   }
 
   if (intent === "maintenance-add") {
     console.log(formData);
+    const { intent: _intent, maintenanceId: _maintenanceId, motorcycleId: _mid, ...rest } =
+      fields as Record<string, unknown>;
     const item = await db
       .insert(maintenanceRecords)
-      .values(fields as unknown as NewMaintenanceRecord)
+      .values({
+        ...(rest as unknown as NewMaintenanceRecord),
+        motorcycleId,
+      })
       .returning();
 
     console.log("Inserted Maintenance Item:", item);
@@ -334,13 +370,25 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "maintenance-edit") {
+    const {
+      intent: _intent,
+      maintenanceId,
+      motorcycleId: _mid,
+      ...rest
+    } = fields as Record<string, unknown>;
     const item = await db
       .update(maintenanceRecords)
-      .set(fields)
+      .set({
+        ...(rest as unknown as NewMaintenanceRecord),
+        motorcycleId,
+      })
       .where(
-        eq(
-          maintenanceRecords.id,
-          Number.parseInt(fields.maintenanceId as string)
+        and(
+          eq(
+            maintenanceRecords.id,
+            Number.parseInt((maintenanceId as string) ?? "")
+          ),
+          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id)
         )
       )
       .returning();
@@ -355,7 +403,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     await db
       .delete(maintenanceRecords)
       .where(
-        eq(maintenanceRecords.id, Number.parseInt(fields.logId as string))
+        and(
+          eq(maintenanceRecords.id, Number.parseInt(fields.logId as string)),
+          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id)
+        )
       );
 
     return respond({ success: true }, { status: 200 });
@@ -364,22 +415,25 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "location-update") {
     console.log("Updating storage location to ID:", fields);
 
-    const motorcycleId = Number.parseInt(params.motorcycleId);
-    if (Number.isNaN(motorcycleId)) {
-      return respond(
-        { success: false, message: "Motorrad konnte nicht ermittelt werden." },
-        { status: 400 }
-      );
-    }
-
     const locationIdRaw =
       (fields.storageLocationId as string) ?? (fields.locationId as string);
     const locationId = Number.parseInt(locationIdRaw ?? "");
 
     if (Number.isNaN(locationId)) {
       return respond(
-        { success: false, message: "Standort ist erforderlich." },
-        { status: 400 }
+      { success: false, message: "Standort ist erforderlich." },
+      { status: 400 }
+    );
+  }
+
+    const selectedLocation = await db.query.locations.findFirst({
+      where: and(eq(locations.id, locationId), eq(locations.userId, user.id)),
+    });
+
+    if (!selectedLocation) {
+      return respond(
+        { success: false, message: "Standort wurde nicht gefunden." },
+        { status: 404 }
       );
     }
 
@@ -390,7 +444,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const newLocationRecord: NewCurrentLocationRecord = {
       motorcycleId,
-      locationId,
+      locationId: selectedLocation.id,
       ...(date ? { date } : {}),
       ...(odometer !== null ? { odometer } : {}),
     };
@@ -400,15 +454,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       .values(newLocationRecord)
       .returning();
 
-    const [location] = await db
-      .select({
-        id: locations.id,
-        name: locations.name,
-      })
-      .from(locations)
-      .where(eq(locations.id, insertedRecord.locationId))
-      .limit(1);
-
     return respond(
       {
         success: true,
@@ -416,7 +461,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         location: {
           ...insertedRecord,
           odometer,
-          locationName: location?.name ?? null,
+          locationName: selectedLocation.name,
         },
       },
       { status: 200 }
@@ -424,14 +469,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "torque-add") {
-    const motorcycleId = Number.parseInt(params.motorcycleId);
-    if (Number.isNaN(motorcycleId)) {
-      return respond(
-        { success: false, message: "Motorrad konnte nicht ermittelt werden." },
-        { status: 400 }
-      );
-    }
-
     const torque = Number.parseFloat((fields.torque as string) ?? "");
     if (Number.isNaN(torque)) {
       return respond(
@@ -522,7 +559,12 @@ export async function action({ request, params }: Route.ActionArgs) {
         variation,
         description,
       })
-      .where(eq(torqueSpecs.id, specId));
+      .where(
+        and(
+          eq(torqueSpecs.id, specId),
+          eq(torqueSpecs.motorcycleId, targetMotorcycle.id)
+        )
+      );
 
     return respond({ success: true, intent: "torque-edit" }, { status: 200 });
   }
@@ -536,7 +578,14 @@ export async function action({ request, params }: Route.ActionArgs) {
       );
     }
 
-    await db.delete(torqueSpecs).where(eq(torqueSpecs.id, specId));
+    await db
+      .delete(torqueSpecs)
+      .where(
+        and(
+          eq(torqueSpecs.id, specId),
+          eq(torqueSpecs.motorcycleId, targetMotorcycle.id)
+        )
+      );
 
     return respond({ success: true, intent: "torque-delete" }, { status: 200 });
   }

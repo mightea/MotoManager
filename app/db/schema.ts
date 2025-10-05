@@ -9,11 +9,36 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+export const users = sqliteTable(
+  "users",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    email: text().notNull(),
+    username: text().notNull(),
+    name: text().notNull(),
+    passwordHash: text("password_hash").notNull(),
+    role: text().notNull().default("user"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+  },
+  (table) => ({
+    emailIdx: uniqueIndex("users_email_unique").on(table.email),
+    usernameIdx: uniqueIndex("users_username_unique").on(table.username),
+  })
+);
+
 export const motorcycles = sqliteTable("motorcycles", {
   id: int().primaryKey({ autoIncrement: true }),
   make: text().notNull(),
   model: text().notNull(),
   modelYear: int("model_year"),
+  userId: int("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 
   vin: text().notNull(),
   vehicleIdNr: text("vehicle_nr"),
@@ -111,6 +136,9 @@ export const issues = sqliteTable("issues", {
 export const locations = sqliteTable("locations", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
+  userId: int("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
 });
 
 export const currencySettings = sqliteTable("currencies", {
@@ -152,28 +180,6 @@ export const torqueSpecs = sqliteTable("torque_specs", {
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),
 });
-
-export const users = sqliteTable(
-  "users",
-  {
-    id: int().primaryKey({ autoIncrement: true }),
-    email: text().notNull(),
-    username: text().notNull(),
-    name: text().notNull(),
-    passwordHash: text("password_hash").notNull(),
-    role: text().notNull().default("user"),
-    createdAt: text("created_at")
-      .notNull()
-      .default(sql`(CURRENT_TIMESTAMP)`),
-    updatedAt: text("updated_at")
-      .notNull()
-      .default(sql`(CURRENT_TIMESTAMP)`),
-  },
-  (table) => ({
-    emailIdx: uniqueIndex("users_email_unique").on(table.email),
-    usernameIdx: uniqueIndex("users_username_unique").on(table.username),
-  })
-);
 
 export const sessions = sqliteTable(
   "sessions",

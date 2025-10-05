@@ -12,7 +12,11 @@ import {
   EditCurrencyDialog,
 } from "~/components/currency-dialog";
 
-export function CurrencySettingsForm() {
+interface CurrencySettingsFormProps {
+  canEdit: boolean;
+}
+
+export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
   const [isMounted, setIsMounted] = useState(false);
   const { currencies } = useSettings();
   const { toast } = useToast();
@@ -35,6 +39,9 @@ export function CurrencySettingsForm() {
   const formatConversion = (value: number) => conversionFormatter.format(value);
 
   const handleRemoveCurrency = (code: string) => {
+    if (!canEdit) {
+      return;
+    }
     fetcher.submit(
       {
         intent: "currency-delete",
@@ -151,6 +158,9 @@ export function CurrencySettingsForm() {
   }, [refreshFetcher.state, refreshFetcher.data, toast]);
 
   const handleRefreshRates = () => {
+    if (!canEdit) {
+      return;
+    }
     refreshFetcher.submit({ intent: "currency-refresh" }, { method: "post" });
   };
 
@@ -222,29 +232,31 @@ export function CurrencySettingsForm() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <EditCurrencyDialog
-                    fetcher={fetcher}
-                    existingCodes={existingCodes}
-                    currency={currency}
-                    disableCode={isDefaultCurrency}
-                    disableConversionFactor={isDefaultCurrency}
-                    trigger={
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isEditingCurrency(currency.id)}
-                        aria-label={`${currency.code} bearbeiten`}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
+                  {canEdit ? (
+                    <EditCurrencyDialog
+                      fetcher={fetcher}
+                      existingCodes={existingCodes}
+                      currency={currency}
+                      disableCode={isDefaultCurrency}
+                      disableConversionFactor={isDefaultCurrency}
+                      trigger={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={isEditingCurrency(currency.id)}
+                          aria-label={`${currency.code} bearbeiten`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                  ) : null}
                   {isDefaultCurrency ? (
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Basiswährung
                     </span>
-                  ) : (
+                  ) : canEdit ? (
                     <Button
                       type="button"
                       variant="ghost"
@@ -258,7 +270,7 @@ export function CurrencySettingsForm() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
@@ -266,28 +278,30 @@ export function CurrencySettingsForm() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <AddCurrencyDialog
-          fetcher={fetcher}
-          existingCodes={currencies.map((currency) => currency.code)}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          className="gap-2"
-          onClick={handleRefreshRates}
-          disabled={
-            isRefreshing ||
-            !hasRefreshableCurrencies ||
-            fetcher.state !== "idle"
-          }
-        >
-          <RotateCcw
-            className={isRefreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"}
+      {canEdit && (
+        <div className="flex flex-wrap items-center gap-2">
+          <AddCurrencyDialog
+            fetcher={fetcher}
+            existingCodes={currencies.map((currency) => currency.code)}
           />
-          Wechselkurse aktualisieren
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={handleRefreshRates}
+            disabled={
+              isRefreshing ||
+              !hasRefreshableCurrencies ||
+              fetcher.state !== "idle"
+            }
+          >
+            <RotateCcw
+              className={isRefreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"}
+            />
+            Wechselkurse aktualisieren
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
