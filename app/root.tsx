@@ -89,11 +89,55 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const data = Object.fromEntries(formData);
+
+  const parseString = (value: FormDataEntryValue | null | undefined) =>
+    typeof value === "string" ? value : "";
+
+  const parseOptionalString = (value: FormDataEntryValue | null | undefined) => {
+    const str = parseString(value).trim();
+    return str.length > 0 ? str : undefined;
+  };
+
+  const parseNumber = (
+    value: FormDataEntryValue | null | undefined,
+    fallback?: number
+  ) => {
+    const parsed = Number.parseFloat(parseString(value));
+    return Number.isNaN(parsed) ? fallback : parsed;
+  };
+
+  const parseInteger = (
+    value: FormDataEntryValue | null | undefined,
+    fallback?: number
+  ) => {
+    const parsed = Number.parseInt(parseString(value), 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+  };
+
+  const parseBoolean = (value: FormDataEntryValue | null | undefined) =>
+    parseString(value) === "true";
+
+  const modelYear = parseInteger(formData.get("modelYear"));
+
+  const newMotorcycle: NewMotorcycle = {
+    make: parseString(formData.get("make")),
+    model: parseString(formData.get("model")),
+    ...(modelYear !== undefined ? { modelYear } : {}),
+    vin: parseString(formData.get("vin")),
+    vehicleIdNr: parseString(formData.get("vehicleIdNr")) || undefined,
+    numberPlate: parseString(formData.get("numberPlate")) || undefined,
+    isVeteran: parseBoolean(formData.get("isVeteran")),
+    isArchived: parseBoolean(formData.get("isArchived")),
+    firstRegistration: parseString(formData.get("firstRegistration")),
+    lastInspection: parseOptionalString(formData.get("lastInspection")),
+    initialOdo: parseInteger(formData.get("initialOdo")) ?? 0,
+    purchaseDate: parseString(formData.get("purchaseDate")),
+    purchasePrice: parseNumber(formData.get("purchasePrice")) ?? 0,
+  };
 
   const motorcycle = await db
     .insert(motorcycles)
-    .values(data as unknown as NewMotorcycle)
+    .values(newMotorcycle)
     .returning();
   return redirect(urlMotorcycle({ ...motorcycle[0] }));
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -27,6 +27,18 @@ import type { Motorcycle } from "~/db/schema";
 import { ScrollArea } from "./ui/scroll-area";
 import { Checkbox } from "./ui/checkbox";
 import { dateInputString } from "~/utils/dateUtils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
@@ -70,6 +82,7 @@ export function AddMotorcycleDialog({
 }: AddMotorcycleDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!motorcycleToEdit;
+  const deleteSubmitRef = useRef<HTMLButtonElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -144,6 +157,17 @@ export function AddMotorcycleDialog({
               name="motorcycleId"
               value={motorcycleToEdit?.id}
             />
+            {isEditMode && (
+              <button
+                ref={deleteSubmitRef}
+                type="submit"
+                name="intent"
+                value="motorcycle-delete"
+                className="hidden"
+                aria-hidden="true"
+                tabIndex={-1}
+              />
+            )}
             <ScrollArea className="max-h-[70vh] pr-6">
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-muted-foreground pt-4">
@@ -393,6 +417,43 @@ export function AddMotorcycleDialog({
               </div>
             </ScrollArea>
             <DialogFooter className="pt-6">
+              {isEditMode && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="sm:mr-auto"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Motorrad löschen
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Motorrad wirklich löschen?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Diese Aktion kann nicht rückgängig gemacht werden.
+                        Dadurch werden alle zugehörigen Daten dauerhaft entfernt.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setOpen(false);
+                          deleteSubmitRef.current?.click();
+                        }}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Löschen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
               <Button
                 type="button"
                 variant="outline"

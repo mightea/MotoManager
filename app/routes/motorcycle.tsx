@@ -25,7 +25,7 @@ import { OpenIssuesCard } from "~/components/open-issues-card";
 import { Button } from "~/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
-import { data } from "react-router";
+import { data, redirect } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
 import { MotorcycleProvider } from "~/contexts/MotorcycleProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -232,7 +232,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       model: fields.model as string,
       make: fields.make as string,
       modelYear: Number.parseInt(fields.modelYear as string),
-      isVeteran: Boolean(fields.isVeteran),
+      isVeteran: fields.isVeteran === "true",
+      isArchived: fields.isArchived === "true",
       firstRegistration: fields.firstRegistration as string,
       purchaseDate: fields.purchaseDate as string,
       purchasePrice: Number.parseFloat(fields.purchasePrice as string),
@@ -253,6 +254,34 @@ export async function action({ request, params }: Route.ActionArgs) {
       );
 
     return data({ success: true }, { status: 200 });
+  }
+
+  if (intent === "motorcycle-delete") {
+    const rawMotorcycleId =
+      (fields.motorcycleId as string | number | undefined) ?? params.motorcycleId;
+    const motorcycleId = Number.parseInt(rawMotorcycleId?.toString() ?? "", 10);
+
+    if (Number.isNaN(motorcycleId)) {
+      return data(
+        { success: false, message: "Motorrad konnte nicht ermittelt werden." },
+        { status: 400 }
+      );
+    }
+
+    await db.delete(maintenanceRecords).where(
+      eq(maintenanceRecords.motorcycleId, motorcycleId)
+    );
+    await db.delete(issues).where(eq(issues.motorcycleId, motorcycleId));
+    await db.delete(locationRecords).where(
+      eq(locationRecords.motorcycleId, motorcycleId)
+    );
+    await db
+      .delete(documentMotorcycles)
+      .where(eq(documentMotorcycles.motorcycleId, motorcycleId));
+    await db.delete(torqueSpecs).where(eq(torqueSpecs.motorcycleId, motorcycleId));
+    await db.delete(motorcycles).where(eq(motorcycles.id, motorcycleId));
+
+    return redirect("/");
   }
 
   if (intent === "motorcycle-image") {
