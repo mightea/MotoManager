@@ -16,6 +16,7 @@ import {
   mergeHeaders,
   adoptOrphanedRecords,
 } from "~/services/auth.server";
+import { isRegistrationEnabled } from "~/config.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -27,8 +28,9 @@ const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
 export async function loader({ request }: Route.LoaderArgs) {
   const { user, headers } = await getCurrentSession(request);
   const userCount = await getUserCount();
+  const registrationEnabled = isRegistrationEnabled();
 
-  if (userCount > 0) {
+  if (userCount > 0 && !registrationEnabled) {
     const destination = user ? "/" : "/auth/login";
     const response = redirect(destination);
     mergeHeaders(headers ?? {}).forEach((value, key) => {
@@ -50,7 +52,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       ? mergeHeaders(headers)
       : undefined;
 
-  return data({}, headerInit ? { headers: headerInit } : undefined);
+  return data({ registrationEnabled: registrationEnabled || userCount === 0 }, headerInit ? { headers: headerInit } : undefined);
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -90,9 +92,14 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const userCount = await getUserCount();
-  if (userCount > 0) {
+  const registrationEnabled = isRegistrationEnabled();
+  if (userCount > 0 && !registrationEnabled) {
     return data(
-      { success: false, message: "Registrierung ist bereits abgeschlossen." },
+      {
+        success: false,
+        message:
+          "Die Registrierung wurde durch einen Administrator deaktiviert.",
+      },
       { status: 400 }
     );
   }

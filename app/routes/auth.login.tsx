@@ -16,6 +16,7 @@ import {
   mergeHeaders,
   verifyLogin,
 } from "~/services/auth.server";
+import { isRegistrationEnabled } from "~/config.server";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -39,11 +40,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const userCount = await getUserCount();
+  const registrationEnabled = isRegistrationEnabled();
+  const showRegister = userCount === 0 || registrationEnabled;
 
   return data(
     {
       redirectTo,
-      showRegister: userCount === 0,
+      showRegister,
     },
     { headers: mergeHeaders(headers ?? {}) }
   );
