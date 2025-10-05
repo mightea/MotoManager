@@ -48,7 +48,10 @@ const formSchema = z.object({
     .string()
     .min(2, "Die Bezeichnung sollte mindestens 2 Zeichen lang sein."),
   conversionFactor: z.coerce
-    .number({ invalid_type_error: "Bitte gib eine gültige Zahl ein." })
+    .number()
+    .refine((value) => Number.isFinite(value), {
+      message: "Bitte gib eine gültige Zahl ein.",
+    })
     .positive("Der Umrechnungsfaktor muss größer als 0 sein."),
 });
 
@@ -72,7 +75,8 @@ type EditDialogProps = SharedProps & {
 
 type CurrencyDialogProps = AddDialogProps | EditDialogProps;
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.input<typeof formSchema>;
+type FormOutput = z.output<typeof formSchema>;
 
 const defaultValues: FormValues = {
   code: "",
@@ -280,9 +284,10 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   };
 
   const handleSubmit = (values: FormValues) => {
+    const parsed = formSchema.parse(values) as FormOutput;
     const normalizedCode = disableCode
-      ? currency?.code ?? values.code.toUpperCase()
-      : values.code.toUpperCase();
+      ? currency?.code ?? parsed.code.trim().toUpperCase()
+      : parsed.code.trim().toUpperCase();
 
     if (!disableCode && normalizedExistingCodes.includes(normalizedCode)) {
       form.setError("code", {
@@ -295,11 +300,11 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
     const payload: Record<string, string> = {
       intent: isEdit ? "currency-edit" : "currency-add",
       code: normalizedCode,
-      symbol: values.symbol.trim(),
-      label: values.label.trim(),
+      symbol: parsed.symbol.trim(),
+      label: parsed.label.trim(),
       conversionFactor: disableConversionFactor
         ? "1"
-        : String(values.conversionFactor),
+        : String(parsed.conversionFactor),
     };
 
     if (isEdit && currency) {
@@ -429,8 +434,14 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
             <FormField
               control={form.control}
               name="conversionFactor"
-              render={({ field }) => (
-                <FormItem>
+              render={({ field }) => {
+                const value =
+                  field.value === undefined || field.value === null
+                    ? ""
+                    : (field.value as number | string);
+
+                return (
+                  <FormItem>
                   <FormLabel>
                     Umrechnungsfaktor zu {DEFAULT_CURRENCY_CODE}
                   </FormLabel>
@@ -452,6 +463,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
                       step="0.0001"
                       inputMode="decimal"
                       {...field}
+                      value={value}
                       onChange={(event) => field.onChange(event.target.value)}
                       disabled={
                         disableConversionFactor || isSubmitting || isAdd
@@ -461,7 +473,8 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
+                );
+              }}
             />
 
             <DialogFooter>

@@ -46,17 +46,19 @@ const formSchema = z.object({
   isVeteran: z.boolean(),
   isArchived: z.boolean(),
 
-  firstRegistration: z.string({
-    required_error: "Datum der 1. Inverkehrssetzung ist erforderlich.",
-  }),
+  firstRegistration: z
+    .string()
+    .min(1, "Datum der 1. Inverkehrssetzung ist erforderlich."),
   lastInspection: z.string().optional(),
 
   initialOdo: z.coerce
     .number()
     .min(0, "Anfänglicher Kilometerstand ist erforderlich."),
-  purchaseDate: z.string({ required_error: "Ein Kaufdatum ist erforderlich." }),
+  purchaseDate: z.string().min(1, "Ein Kaufdatum ist erforderlich."),
   purchasePrice: z.coerce.number().min(0, "Kaufpreis ist erforderlich."),
 });
+
+type FormValues = z.input<typeof formSchema>;
 type AddMotorcycleDialogProps = {
   motorcycleToEdit?: Motorcycle;
   children?: ReactNode;
@@ -69,7 +71,7 @@ export function AddMotorcycleDialog({
   const [open, setOpen] = useState(false);
   const isEditMode = !!motorcycleToEdit;
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       isVeteran: false,
@@ -98,7 +100,7 @@ export function AddMotorcycleDialog({
           firstRegistration: firstRegistration || "",
           lastInspection: lastInspection || undefined,
           initialOdo: motorcycleToEdit.initialOdo,
-          purchaseDate: purchaseDate || undefined,
+          purchaseDate: purchaseDate || "",
           purchasePrice: motorcycleToEdit.purchasePrice ?? 0,
         });
       } else {
@@ -111,10 +113,10 @@ export function AddMotorcycleDialog({
           numberPlate: "",
           isVeteran: false,
           isArchived: false,
-          firstRegistration: undefined,
+          firstRegistration: "",
           lastInspection: undefined,
           initialOdo: 0,
-          purchaseDate: undefined,
+          purchaseDate: "",
           purchasePrice: 0,
         });
       }
@@ -180,19 +182,27 @@ export function AddMotorcycleDialog({
                   <FormField
                     control={form.control}
                     name="modelYear"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Baujahr</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="z.B. 2023"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const value =
+                        field.value === undefined || field.value === null
+                          ? ""
+                          : (field.value as number | string);
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Baujahr</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="z.B. 2023"
+                              {...field}
+                              value={value}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                   <FormField
                     control={form.control}
@@ -293,37 +303,53 @@ export function AddMotorcycleDialog({
                   <FormField
                     control={form.control}
                     name="initialOdo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Kilometer bei Kauf</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="z.B. 1200"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const value =
+                        field.value === undefined || field.value === null
+                          ? ""
+                          : (field.value as number | string);
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Kilometer bei Kauf</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="z.B. 1200"
+                              {...field}
+                              value={value}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                   <FormField
                     control={form.control}
                     name="purchasePrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Kaufpreis (CHF)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="z.B. 15000"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const value =
+                        field.value === undefined || field.value === null
+                          ? ""
+                          : (field.value as number | string);
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Kaufpreis (CHF)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="z.B. 15000"
+                              {...field}
+                              value={value}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
 

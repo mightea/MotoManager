@@ -1,3 +1,30 @@
+CREATE TABLE `currencies` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`code` text NOT NULL,
+	`symbol` text NOT NULL,
+	`label` text,
+	`conversion_factor` real DEFAULT 1 NOT NULL,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `currencies_code_unique` ON `currencies` (`code`);--> statement-breakpoint
+CREATE TABLE `document_motorcycles` (
+	`document_id` integer NOT NULL,
+	`motorcycle_id` integer NOT NULL,
+	PRIMARY KEY(`document_id`, `motorcycle_id`),
+	FOREIGN KEY (`document_id`) REFERENCES `documents`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`motorcycle_id`) REFERENCES `motorcycles`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE TABLE `documents` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`title` text NOT NULL,
+	`file_path` text NOT NULL,
+	`preview_path` text,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+	`updated_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `issues` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`motorcycle_id` integer NOT NULL,
@@ -13,6 +40,7 @@ CREATE TABLE `location_records` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`motorcycle_id` integer NOT NULL,
 	`location_id` integer NOT NULL,
+	`odometer` integer,
 	`date` text DEFAULT (CURRENT_DATE) NOT NULL,
 	FOREIGN KEY (`motorcycle_id`) REFERENCES `motorcycles`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`location_id`) REFERENCES `locations`(`id`) ON UPDATE no action ON DELETE no action
@@ -40,6 +68,7 @@ CREATE TABLE `maintenance_records` (
 	`battery_type` text,
 	`fluid_type` text,
 	`viscosity` text,
+	`oil_type` text,
 	FOREIGN KEY (`motorcycle_id`) REFERENCES `motorcycles`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -57,6 +86,19 @@ CREATE TABLE `motorcycles` (
 	`firstRegistration` text,
 	`lastInspection` text,
 	`initialOdo` integer DEFAULT 0 NOT NULL,
+	`manual_odo` integer DEFAULT 0,
 	`purchase_date` text,
 	`purchase_price` real
+);
+--> statement-breakpoint
+CREATE TABLE `torque_specs` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`motorcycle_id` integer NOT NULL,
+	`category` text NOT NULL,
+	`name` text NOT NULL,
+	`torque` real NOT NULL,
+	`variation` real,
+	`description` text,
+	`created_at` text DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+	FOREIGN KEY (`motorcycle_id`) REFERENCES `motorcycles`(`id`) ON UPDATE no action ON DELETE cascade
 );

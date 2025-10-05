@@ -101,11 +101,7 @@ const baseSchema = z.object({
   date: z.string().min(1, "Ein Datum ist erforderlich."),
   odo: z.coerce.number().min(1, "Der Kilometerstand muss größer als 0 sein."),
   cost: z.coerce.number(),
-
-  description: z
-    .string()
-    .min(0)
-    .max(1000, "Die Beschreibung darf nicht länger als 1000 Zeichen sein."),
+  description: z.string().max(1000, "Die Beschreibung darf nicht länger als 1000 Zeichen sein."),
 });
 
 // Schemas for each log type
@@ -128,17 +124,12 @@ const fluidChangeLogSchema = baseSchema.extend({
       "forkoil",
       "breakfluid",
       "coolant",
-    ],
-    {
-      required_error: "Flüssigkeitstyp ist erforderlich.",
-    }
+    ] as const
   ),
   brand: z.string().min(2, "Marke ist erforderlich."),
   viscosity: z.string().min(2, "Viskosität ist erforderlich."),
   oilType: z
-    .enum(["mineral", "semi-synthetic", "synthetic"], {
-      required_error: "Öltyp ist erforderlich.",
-    })
+    .enum(["mineral", "semi-synthetic", "synthetic"] as const)
     .nullable(),
 });
 
@@ -146,9 +137,7 @@ const tireChangeLogSchema = baseSchema.extend({
   type: z.literal("tire"),
   brand: z.string().min(2, "Marke ist erforderlich."),
   model: z.string().min(2, "Modell ist erforderlich."),
-  tirePosition: z.enum(["front", "rear", "sidecar"], {
-    required_error: "Reifenposition ist erforderlich.",
-  }),
+  tirePosition: z.enum(["front", "rear", "sidecar"] as const),
   tireSize: z.string().optional(),
   dotCode: z
     .string()
@@ -160,25 +149,21 @@ const batteryChangeLogSchema = baseSchema.extend({
   type: z.literal("battery"),
   brand: z.string().min(2, "Marke ist erforderlich."),
   model: z.string().min(2, "Modell ist erforderlich."),
-  batteryType: z.enum(["lead-acid", "gel", "agm", "lithium-ion", "other"], {
-    required_error: "Batterietyp ist erforderlich.",
-  }),
+  batteryType: z.enum(
+    ["lead-acid", "gel", "agm", "lithium-ion", "other"] as const
+  ),
 });
 
 const brakePadChangeLogSchema = baseSchema.extend({
   type: z.literal("brakepad"),
   brand: z.string().min(2, "Marke ist erforderlich."),
-  position: z.enum(["front", "rear"], {
-    required_error: "Bremsbelagposition ist erforderlich.",
-  }),
+  position: z.enum(["front", "rear"] as const),
 });
 
 const brakeRotorChangeLogSchema = baseSchema.extend({
   type: z.literal("brakerotor"),
   brand: z.string().min(2, "Marke ist erforderlich."),
-  position: z.enum(["front", "rear"], {
-    required_error: "Bremsscheibenposition ist erforderlich.",
-  }),
+  position: z.enum(["front", "rear"] as const),
 });
 
 const chainChangeLogSchema = baseSchema.extend({
@@ -200,7 +185,9 @@ const formSchema = z.discriminatedUnion("type", [
   chainChangeLogSchema,
 ]);
 
-type FormValues = z.infer<typeof formSchema>;
+type FormSchema = typeof formSchema;
+type FormValues = z.input<FormSchema>;
+type FormOutput = z.output<FormSchema>;
 
 type AddMaintenanceLogDialogProps = {
   children: ReactNode;
@@ -218,10 +205,10 @@ export function AddMaintenanceLogDialog({
   const [open, setOpen] = useState(false);
   const isEditMode = !!logToEdit;
 
-  const getInitialFormValues = (): FormValues => {
-    if (isEditMode && logToEdit) {
-      const baseValues = {
-        type: logToEdit.type,
+const getInitialFormValues = (): FormValues => {
+  if (isEditMode && logToEdit) {
+    const baseValues = {
+      type: logToEdit.type,
         date: dateInputString(logToEdit.date),
         odo: logToEdit.odo,
         cost: logToEdit.cost ?? 0.0,
@@ -293,22 +280,32 @@ export function AddMaintenanceLogDialog({
   };
 
   const onSubmit = (values: FormValues) => {
-    fetcher.submit(
-      {
-        intent: isEditMode ? "maintenance-edit" : "maintenance-add",
-        maintenanceId: logToEdit?.id ?? "",
-        motorcycleId: motorcycle.id.toString(),
-        ...values,
-      },
-      { method: "post" }
+    const parsed = formSchema.parse(values) as FormOutput;
+    const formData = new FormData();
+
+    formData.append(
+      "intent",
+      isEditMode ? "maintenance-edit" : "maintenance-add"
     );
+    formData.append("maintenanceId", (logToEdit?.id ?? "").toString());
+    formData.append("motorcycleId", motorcycle.id.toString());
+
+    Object.entries(parsed).forEach(([key, value]) => {
+      if (value === undefined || value === null) {
+        return;
+      }
+
+      formData.append(key, String(value));
+    });
+
+    fetcher.submit(formData, { method: "post" });
   };
 
   const onError = (errors: any) => {
     console.error("Form validation errors:", errors);
   };
 
-  const showOilTypeField = (ft: FluidType): boolean => {
+  const showOilTypeField = (ft: FluidType | undefined): boolean => {
     switch (ft) {
       case "engineoil":
       case "gearboxoil":
@@ -406,19 +403,27 @@ export function AddMaintenanceLogDialog({
                 control={form.control}
                 name="odo"
                 defaultValue={currentOdometer}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kilometerstand (km)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="z.B. 15000"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const value =
+                    field.value === undefined || field.value === null
+                      ? ""
+                      : (field.value as number | string);
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Kilometerstand (km)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="z.B. 15000"
+                          {...field}
+                          value={value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
 
@@ -673,20 +678,28 @@ export function AddMaintenanceLogDialog({
             <FormField
               control={form.control}
               name="cost"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kosten</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      placeholder="z.B. 150.00"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const value =
+                  field.value === undefined || field.value === null
+                    ? ""
+                    : (field.value as number | string);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Kosten</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="z.B. 150.00"
+                        {...field}
+                        value={value}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
             <FormField
               control={form.control}

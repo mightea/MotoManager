@@ -11,7 +11,7 @@ import {
 } from "~/components/ui/card";
 import { StorageLocationsForm } from "~/components/storage-locations-form";
 import { CurrencySettingsForm } from "~/components/currency-settings-form";
-import db from "~/db";
+import { getDb } from "~/db";
 import { currencySettings, locations } from "~/db/schema";
 import { useSettings } from "~/contexts/SettingsProvider";
 import {
@@ -69,6 +69,8 @@ async function fetchConversionRate(code: string) {
 }
 
 export async function loader({}: Route.LoaderArgs) {
+  const db = await getDb();
+
   const [locationResult, currencyResult] = await Promise.all([
     db.query.locations.findMany(),
     db.query.currencySettings.findMany(),
@@ -81,6 +83,8 @@ export async function loader({}: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
+  const db = await getDb();
+
   const formData = await request.formData();
   const fields = Object.fromEntries(formData);
 

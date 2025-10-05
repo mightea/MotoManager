@@ -49,19 +49,17 @@ import { useFetcher } from "react-router";
 import { dateInputString } from "~/utils/dateUtils";
 
 const issueSchema = z.object({
-  date: z.string({ required_error: "Ein Datum ist erforderlich." }),
+  date: z.string().min(1, "Ein Datum ist erforderlich."),
   description: z
     .string()
     .min(5, "Die Beschreibung muss mindestens 5 Zeichen haben.")
     .max(200, "Die Beschreibung darf nicht länger als 200 Zeichen sein."),
-  priority: z.enum(["low", "medium", "high"], {
-    required_error: "Priorität ist erforderlich.",
-  }),
-  odo: z.number().min(0, "Der Kilometerstand muss positiv sein."),
-  status: z.enum(["new", "in_progress", "done"], {
-    required_error: "Status ist erforderlich.",
-  }),
+  priority: z.enum(["low", "medium", "high"] as const),
+  odo: z.coerce.number().min(0, "Der Kilometerstand muss positiv sein."),
+  status: z.enum(["new", "in_progress", "done"] as const),
 });
+
+type IssueFormValues = z.input<typeof issueSchema>;
 
 type AddIssueDialogProps = {
   children: ReactNode;
@@ -79,7 +77,7 @@ export function AddIssueDialog({
   const [open, setOpen] = useState(false);
   const isEditMode = !!issueToEdit;
 
-  const form = useForm<z.infer<typeof issueSchema>>({
+  const form = useForm<IssueFormValues>({
     resolver: zodResolver(issueSchema),
   });
 
@@ -225,20 +223,27 @@ export function AddIssueDialog({
               <FormField
                 control={form.control}
                 name="odo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kilometerstand</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Kilometerstand"
-                        {...field}
-                        className="input"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const value =
+                    field.value === undefined || field.value === null
+                      ? ""
+                      : (field.value as number | string);
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Kilometerstand</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Kilometerstand"
+                          {...field}
+                          value={value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
             <DialogFooter>

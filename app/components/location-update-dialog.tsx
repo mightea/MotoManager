@@ -74,6 +74,9 @@ const formSchema = z.object({
   date: z.string().min(1, "Datum ist erforderlich."),
 });
 
+type FormValues = z.input<typeof formSchema>;
+type FormOutput = z.output<typeof formSchema>;
+
 type LocationUpdateDialogProps = {
   children: ReactNode;
   motorcycle: Motorcycle;
@@ -93,7 +96,7 @@ export function LocationUpdateDialog({
     setLocationHistory,
   } = useMotorcycle();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       storageLocationId: "",
@@ -104,16 +107,24 @@ export function LocationUpdateDialog({
 
   const fetcher = useFetcher();
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    fetcher.submit(
-      {
-        intent: "location-update",
-        motorcycleId: motorcycle.id.toString(),
-        locationId: values.storageLocationId || "",
-        ...values,
-      },
-      { method: "post" }
-    );
+  const onSubmit = (values: FormValues) => {
+    const parsed = formSchema.parse(values) as FormOutput;
+    const formData = new FormData();
+    formData.append("intent", "location-update");
+    formData.append("motorcycleId", motorcycle.id.toString());
+
+    if (parsed.storageLocationId) {
+      formData.append("storageLocationId", parsed.storageLocationId);
+      formData.append("locationId", parsed.storageLocationId);
+    } else {
+      formData.append("storageLocationId", "");
+      formData.append("locationId", "");
+    }
+
+    formData.append("odometer", String(parsed.odometer));
+    formData.append("date", parsed.date);
+
+    fetcher.submit(formData, { method: "post" });
   };
 
   useEffect(() => {
@@ -223,15 +234,22 @@ export function LocationUpdateDialog({
             <FormField
               control={form.control}
               name="odometer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Aktueller Kilometerstand</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const value =
+                  field.value === undefined || field.value === null
+                    ? ""
+                    : (field.value as number | string);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Aktueller Kilometerstand</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} value={value} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField

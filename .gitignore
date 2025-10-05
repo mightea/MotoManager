@@ -8,5 +8,7 @@
 .direnv/
 .env
 
+tsconfig.tsbuildinfo
+
 ## App
-db.sqlite
+db.sqlite*

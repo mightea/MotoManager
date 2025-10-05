@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
-import db from "~/db";
+import { getDb } from "~/db";
 import {
   documents,
   documentMotorcycles,
@@ -83,6 +83,8 @@ async function generatePdfPreview(
 }
 
 export async function loader({}: LoaderFunctionArgs): Promise<LoaderData> {
+  const db = await getDb();
+
   const docsRaw = await db
     .select({
       id: documents.id,
@@ -139,6 +141,8 @@ export async function loader({}: LoaderFunctionArgs): Promise<LoaderData> {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const db = await getDb();
+
   const formData = await request.formData();
   const intent = formData.get("intent");
 

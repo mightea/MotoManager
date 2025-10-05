@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Form, Link, redirect } from "react-router";
 import type { Route } from "./+types/home";
-import db from "~/db";
+import { getDb } from "~/db";
 import { motorcycles, type Motorcycle } from "~/db/schema";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
@@ -32,6 +32,8 @@ type DashboardStats = {
 };
 
 export async function loader({}: Route.LoaderArgs) {
+  const db = await getDb();
+
   const motorcycles = await db.query.motorcycles.findMany();
   const issues = await db.query.issues.findMany();
   const maintenance = await db.query.maintenanceRecords.findMany();
@@ -161,6 +163,8 @@ export async function loader({}: Route.LoaderArgs) {
 }
 
 export async function action() {
+  const db = await getDb();
+
   const motorcycle = await db
     .insert(motorcycles)
     .values({

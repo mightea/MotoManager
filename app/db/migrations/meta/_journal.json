@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1752873511366,
+      "when": 1759657025789,
       "tag": "0000_initial-schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1753114675304,
-      "tag": "0001_adds-manual-odo-and-oil-type",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1754044800000,
-      "tag": "0004_create_currencies",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1754048400000,
-      "tag": "0005_add_conversion_factor_to_currencies",
       "breakpoints": true
     }
   ]

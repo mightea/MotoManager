@@ -1,5 +1,5 @@
 import type { Route } from "./+types/motorcycle";
-import db from "~/db";
+import { getDb } from "~/db";
 import {
   issues,
   documents,
@@ -37,6 +37,8 @@ import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 
 export async function loader({ params }: Route.LoaderArgs) {
+  const db = await getDb();
+
   const motorcycleId = Number.parseInt(params.motorcycleId);
 
   if (isNaN(motorcycleId)) {
@@ -166,6 +168,8 @@ export async function loader({ params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
+  const db = await getDb();
+
   const formData = await request.formData();
   const fields = Object.fromEntries(formData);
 
