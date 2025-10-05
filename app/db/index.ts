@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as schema from "./schema";
 
-const databaseUrl = process.env.DATABASE_URL ?? "file:db.sqlite";
+const databaseUrl = process.env.DB_FILE_NAME ?? "file:db.sqlite";
 
 const db = drizzle(databaseUrl, {
   schema,
