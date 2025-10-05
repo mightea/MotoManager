@@ -8,4 +8,4 @@ export const urlMotorcycle = ({
   id: number;
   make: string;
   model: string;
-}) => `/motorcycles/${slug(`${make} ${model}`)}/${id}`;
+}) => `/motorcycle/${slug(`${make} ${model}`)}/${id}`;
