@@ -8,7 +8,7 @@ import {
   type NewDocument,
   type NewDocumentMotorcycle,
 } from "~/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, isNull, or } from "drizzle-orm";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -22,8 +22,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/componen
 import DocumentDialog, { type DocumentDialogData } from "~/components/document-dialog";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
-const DOCUMENTS_DIR = path.join(process.cwd(), "public", "documents");
-const DOCUMENTS_PUBLIC_BASE = "/documents";
+const DOCUMENTS_BASE_DIR = path.join(process.cwd(), "public", "documents");
+const DOCUMENT_FILES_DIR = path.join(DOCUMENTS_BASE_DIR, "files");
+const DOCUMENT_PREVIEWS_DIR = path.join(DOCUMENTS_BASE_DIR, "previews");
+
+const DOCUMENT_FILES_PUBLIC_BASE = "/documents/files";
+const DOCUMENT_PREVIEWS_PUBLIC_BASE = "/documents/previews";
 
 function resolvePublicFilePath(relativePath: string) {
   return path.join(process.cwd(), "public", relativePath.replace(/^\/+/, ""));
@@ -49,9 +53,10 @@ type LoaderData = {
   motorcycles: Motorcycle[];
 };
 
-async function ensureDocumentsDir() {
+async function ensureDocumentDirs() {
   try {
-    await fs.mkdir(DOCUMENTS_DIR, { recursive: true });
+    await fs.mkdir(DOCUMENT_FILES_DIR, { recursive: true });
+    await fs.mkdir(DOCUMENT_PREVIEWS_DIR, { recursive: true });
   } catch (error) {
     // ignore
   }
@@ -83,8 +88,15 @@ async function generatePdfPreview(
   }
 }
 
-export async function loader({}: LoaderFunctionArgs): Promise<LoaderData> {
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { user, headers } = await requireUser(request);
   const db = await getDb();
+
+  const userMotorcycles = await db.query.motorcycles.findMany({
+    where: eq(motorcycles.userId, user.id),
+  });
+
+  const userMotorcycleIdSet = new Set(userMotorcycles.map((moto) => moto.id));
 
   const docsRaw = await db
     .select({
@@ -105,9 +117,16 @@ export async function loader({}: LoaderFunctionArgs): Promise<LoaderData> {
       eq(documentMotorcycles.documentId, documents.id)
     )
     .leftJoin(motorcycles, eq(documentMotorcycles.motorcycleId, motorcycles.id))
+    .where(
+      or(
+        isNull(documentMotorcycles.motorcycleId),
+        eq(motorcycles.userId, user.id)
+      )
+    )
     .orderBy(desc(documents.createdAt));
 
   const docsMap = new Map<number, DocumentSummary>();
+  const accessibleDocs = new Set<number>();
 
   docsRaw.forEach((row) => {
     let summary = docsMap.get(row.id);
@@ -123,7 +142,11 @@ export async function loader({}: LoaderFunctionArgs): Promise<LoaderData> {
       };
       docsMap.set(row.id, summary);
     }
-    if (row.motorcycleId !== null && row.motorcycleId !== undefined) {
+
+    if (row.motorcycleId === null || row.motorcycleId === undefined) {
+      accessibleDocs.add(row.id);
+    } else if (userMotorcycleIdSet.has(row.motorcycleId)) {
+      accessibleDocs.add(row.id);
       summary.motorcycles.push({
         id: row.motorcycleId,
         make: row.motorcycleMake ?? "",
@@ -133,16 +156,21 @@ export async function loader({}: LoaderFunctionArgs): Promise<LoaderData> {
     }
   });
 
-  const allMotorcycles = await db.query.motorcycles.findMany();
+  const filteredDocuments = Array.from(docsMap.values()).filter((doc) =>
+    accessibleDocs.has(doc.id)
+  );
 
-  return {
-    documents: Array.from(docsMap.values()),
-    motorcycles: allMotorcycles,
-  };
+  return data(
+    {
+      documents: filteredDocuments,
+      motorcycles: userMotorcycles,
+    },
+    { headers: mergeHeaders(headers ?? {}) }
+  );
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { headers: sessionHeaders } = await requireUser(request);
+  const { user, headers: sessionHeaders } = await requireUser(request);
   const db = await getDb();
 
   const formData = await request.formData();
@@ -156,6 +184,15 @@ export async function action({ request }: ActionFunctionArgs) {
       ...init,
       headers: mergeHeaders(sessionHeaders ?? {}),
     });
+
+  const userMotorcycleIds = await db
+    .select({ id: motorcycles.id })
+    .from(motorcycles)
+    .where(eq(motorcycles.userId, user.id));
+
+  const userMotorcycleIdSet = new Set<number>(
+    userMotorcycleIds.map((row) => row.id)
+  );
 
   if (intent === "document-add") {
     const title = (formData.get("title") as string)?.trim();
@@ -173,6 +210,30 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
+    const sanitizedMotorcycleIds = motorcycleIdsRaw
+      .map((id) => Number.parseInt(id))
+      .filter((id) => !Number.isNaN(id));
+
+    if (motorcycleIdsRaw.length !== sanitizedMotorcycleIds.length) {
+      return respond(
+        {
+          success: false,
+          message: "Ungültige Motorrad-Auswahl.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!sanitizedMotorcycleIds.every((id) => userMotorcycleIdSet.has(id))) {
+      return respond(
+        {
+          success: false,
+          message: "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
+        },
+        { status: 400 }
+      );
+    }
+
     const fileExt = path.extname(file.name).toLowerCase();
     if (fileExt !== ".pdf") {
       return respond(
@@ -181,15 +242,15 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
-    await ensureDocumentsDir();
+    await ensureDocumentDirs();
 
     const uniqueName = `${randomUUID()}${fileExt}`;
-    const serverPath = path.join(DOCUMENTS_DIR, uniqueName);
-    const publicPath = path.posix.join(DOCUMENTS_PUBLIC_BASE, uniqueName);
+    const serverPath = path.join(DOCUMENT_FILES_DIR, uniqueName);
+    const publicPath = path.posix.join(DOCUMENT_FILES_PUBLIC_BASE, uniqueName);
     const previewFilename = `${path.parse(uniqueName).name}-preview.png`;
-    const previewServerPath = path.join(DOCUMENTS_DIR, previewFilename);
+    const previewServerPath = path.join(DOCUMENT_PREVIEWS_DIR, previewFilename);
     const previewPublicPath = path.posix.join(
-      DOCUMENTS_PUBLIC_BASE,
+      DOCUMENT_PREVIEWS_PUBLIC_BASE,
       previewFilename
     );
 
@@ -212,14 +273,13 @@ export async function action({ request }: ActionFunctionArgs) {
       .values(newDocument)
       .returning();
 
-    if (motorcycleIdsRaw.length > 0) {
-      const values: NewDocumentMotorcycle[] = motorcycleIdsRaw
-        .map((id) => Number.parseInt(id))
-        .filter((id) => !Number.isNaN(id))
-        .map((motorcycleId) => ({
+    if (sanitizedMotorcycleIds.length > 0) {
+      const values: NewDocumentMotorcycle[] = sanitizedMotorcycleIds.map(
+        (motorcycleId) => ({
           documentId: inserted.id,
           motorcycleId,
-        }));
+        })
+      );
 
       if (values.length > 0) {
         await db.insert(documentMotorcycles).values(values);
@@ -257,6 +317,53 @@ export async function action({ request }: ActionFunctionArgs) {
     let filePath = existing.filePath;
     let previewPath = existing.previewPath ?? null;
 
+    const sanitizedMotorcycleIds = motorcycleIdsRaw
+      .map((id) => Number.parseInt(id))
+      .filter((id) => !Number.isNaN(id));
+
+    if (motorcycleIdsRaw.length !== sanitizedMotorcycleIds.length) {
+      return respond(
+        {
+          success: false,
+          message: "Ungültige Motorrad-Auswahl.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const existingRelations = await db
+      .select({ motorcycleId: documentMotorcycles.motorcycleId })
+      .from(documentMotorcycles)
+      .where(eq(documentMotorcycles.documentId, documentId));
+
+    const existingMotorcycleIds = existingRelations
+      .map((relation) => relation.motorcycleId)
+      .filter((id): id is number => id !== null);
+
+    const canEdit =
+      existingMotorcycleIds.length === 0 ||
+      existingMotorcycleIds.some((id) => userMotorcycleIdSet.has(id));
+
+    if (!canEdit) {
+      return respond(
+        {
+          success: false,
+          message: "Du kannst dieses Dokument nicht bearbeiten.",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (!sanitizedMotorcycleIds.every((id) => userMotorcycleIdSet.has(id))) {
+      return respond(
+        {
+          success: false,
+          message: "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
+        },
+        { status: 400 }
+      );
+    }
+
     if (file instanceof File && file.size > 0) {
       const fileExt = path.extname(file.name).toLowerCase();
       if (fileExt !== ".pdf") {
@@ -266,14 +373,20 @@ export async function action({ request }: ActionFunctionArgs) {
         );
       }
 
-      await ensureDocumentsDir();
+      await ensureDocumentDirs();
       const uniqueName = `${randomUUID()}${fileExt}`;
-      const serverPath = path.join(DOCUMENTS_DIR, uniqueName);
-      const publicPath = path.posix.join(DOCUMENTS_PUBLIC_BASE, uniqueName);
+      const serverPath = path.join(DOCUMENT_FILES_DIR, uniqueName);
+      const publicPath = path.posix.join(
+        DOCUMENT_FILES_PUBLIC_BASE,
+        uniqueName
+      );
       const previewFilename = `${path.parse(uniqueName).name}-preview.png`;
-      const previewServerPath = path.join(DOCUMENTS_DIR, previewFilename);
+      const previewServerPath = path.join(
+        DOCUMENT_PREVIEWS_DIR,
+        previewFilename
+      );
       const previewPublicPath = path.posix.join(
-        DOCUMENTS_PUBLIC_BASE,
+        DOCUMENT_PREVIEWS_PUBLIC_BASE,
         previewFilename
       );
       const buffer = Buffer.from(await file.arrayBuffer());
@@ -306,14 +419,13 @@ export async function action({ request }: ActionFunctionArgs) {
       .delete(documentMotorcycles)
       .where(eq(documentMotorcycles.documentId, documentId));
 
-    if (motorcycleIdsRaw.length > 0) {
-      const values: NewDocumentMotorcycle[] = motorcycleIdsRaw
-        .map((id) => Number.parseInt(id))
-        .filter((id) => !Number.isNaN(id))
-        .map((motorcycleId) => ({
+    if (sanitizedMotorcycleIds.length > 0) {
+      const values: NewDocumentMotorcycle[] = sanitizedMotorcycleIds.map(
+        (motorcycleId) => ({
           documentId,
           motorcycleId,
-        }));
+        })
+      );
 
       if (values.length > 0) {
         await db.insert(documentMotorcycles).values(values);
@@ -339,6 +451,29 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (!existing) {
       return respond({ success: true, intent: "document-delete" }, { status: 200 });
+    }
+
+    const relations = await db
+      .select({ motorcycleId: documentMotorcycles.motorcycleId })
+      .from(documentMotorcycles)
+      .where(eq(documentMotorcycles.documentId, documentId));
+
+    const relationIds = relations
+      .map((relation) => relation.motorcycleId)
+      .filter((id): id is number => id !== null);
+
+    const canDelete =
+      relationIds.length === 0 ||
+      relationIds.every((id) => userMotorcycleIdSet.has(id));
+
+    if (!canDelete) {
+      return respond(
+        {
+          success: false,
+          message: "Du kannst dieses Dokument nicht löschen.",
+        },
+        { status: 403 }
+      );
     }
 
     await deleteFileIfExists(resolvePublicFilePath(existing.filePath));

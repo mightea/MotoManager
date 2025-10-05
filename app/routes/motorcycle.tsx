@@ -335,7 +335,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .update(motorcycles)
       .set(editMotorcycle)
       .where(
-        eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
+        and(eq(motorcycles.id, targetMotorcycle.id), eq(motorcycles.userId, user.id))
       );
 
     return respond({ success: true }, { status: 200 });
