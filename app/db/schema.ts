@@ -6,6 +6,7 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 export const motorcycles = sqliteTable("motorcycles", {
@@ -152,6 +153,46 @@ export const torqueSpecs = sqliteTable("torque_specs", {
     .default(sql`(CURRENT_TIMESTAMP)`),
 });
 
+export const users = sqliteTable(
+  "users",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    email: text().notNull(),
+    username: text().notNull(),
+    name: text().notNull(),
+    passwordHash: text("password_hash").notNull(),
+    role: text().notNull().default("user"),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+  },
+  (table) => ({
+    emailIdx: uniqueIndex("users_email_unique").on(table.email),
+    usernameIdx: uniqueIndex("users_username_unique").on(table.username),
+  })
+);
+
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    token: text().notNull(),
+    userId: int("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+  },
+  (table) => ({
+    tokenIdx: uniqueIndex("sessions_token_unique").on(table.token),
+  })
+);
+
 export const documents = sqliteTable("documents", {
   id: int().primaryKey({ autoIncrement: true }),
   title: text().notNull(),
@@ -195,6 +236,12 @@ export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type DocumentMotorcycle = typeof documentMotorcycles.$inferSelect;
 export type NewDocumentMotorcycle = typeof documentMotorcycles.$inferInsert;
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
 
 export type Motorcycle = typeof motorcycles.$inferSelect;
 export type NewMotorcycle = typeof motorcycles.$inferInsert;

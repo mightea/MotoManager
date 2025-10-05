@@ -20,6 +20,7 @@ import { de } from "date-fns/locale";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import DocumentDialog, { type DocumentDialogData } from "~/components/document-dialog";
+import { mergeHeaders, requireUser } from "~/services/auth.server";
 
 const DOCUMENTS_DIR = path.join(process.cwd(), "public", "documents");
 const DOCUMENTS_PUBLIC_BASE = "/documents";
@@ -141,10 +142,20 @@ export async function loader({}: LoaderFunctionArgs): Promise<LoaderData> {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const { headers: sessionHeaders } = await requireUser(request);
   const db = await getDb();
 
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  const respond = (
+    body: unknown,
+    init?: ResponseInit
+  ) =>
+    data(body, {
+      ...init,
+      headers: mergeHeaders(sessionHeaders ?? {}),
+    });
 
   if (intent === "document-add") {
     const title = (formData.get("title") as string)?.trim();
@@ -152,11 +163,11 @@ export async function action({ request }: ActionFunctionArgs) {
     const motorcycleIdsRaw = formData.getAll("motorcycleIds") as string[];
 
     if (!title) {
-      return data({ success: false, message: "Titel ist erforderlich." }, { status: 400 });
+      return respond({ success: false, message: "Titel ist erforderlich." }, { status: 400 });
     }
 
     if (!(file instanceof File) || file.size === 0) {
-      return data(
+      return respond(
         { success: false, message: "PDF-Datei ist erforderlich." },
         { status: 400 }
       );
@@ -164,7 +175,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     const fileExt = path.extname(file.name).toLowerCase();
     if (fileExt !== ".pdf") {
-      return data(
+      return respond(
         { success: false, message: "Nur PDF-Dateien werden unterstützt." },
         { status: 400 }
       );
@@ -215,7 +226,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     }
 
-    return data({ success: true, intent: "document-add" }, { status: 200 });
+    return respond({ success: true, intent: "document-add" }, { status: 200 });
   }
 
   if (intent === "document-edit") {
@@ -225,13 +236,13 @@ export async function action({ request }: ActionFunctionArgs) {
     const motorcycleIdsRaw = formData.getAll("motorcycleIds") as string[];
 
     if (Number.isNaN(documentId)) {
-      return data(
+      return respond(
         { success: false, message: "Dokument konnte nicht ermittelt werden." },
         { status: 400 }
       );
     }
     if (!title) {
-      return data({ success: false, message: "Titel ist erforderlich." }, { status: 400 });
+      return respond({ success: false, message: "Titel ist erforderlich." }, { status: 400 });
     }
 
     const [existing] = await db
@@ -240,7 +251,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .where(eq(documents.id, documentId));
 
     if (!existing) {
-      return data({ success: false, message: "Dokument wurde nicht gefunden." }, { status: 404 });
+      return respond({ success: false, message: "Dokument wurde nicht gefunden." }, { status: 404 });
     }
 
     let filePath = existing.filePath;
@@ -249,7 +260,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (file instanceof File && file.size > 0) {
       const fileExt = path.extname(file.name).toLowerCase();
       if (fileExt !== ".pdf") {
-        return data(
+        return respond(
           { success: false, message: "Nur PDF-Dateien werden unterstützt." },
           { status: 400 }
         );
@@ -309,13 +320,13 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     }
 
-    return data({ success: true, intent: "document-edit" }, { status: 200 });
+    return respond({ success: true, intent: "document-edit" }, { status: 200 });
   }
 
   if (intent === "document-delete") {
     const documentId = Number.parseInt((formData.get("documentId") as string) ?? "");
     if (Number.isNaN(documentId)) {
-      return data(
+      return respond(
         { success: false, message: "Dokument konnte nicht ermittelt werden." },
         { status: 400 }
       );
@@ -327,7 +338,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .where(eq(documents.id, documentId));
 
     if (!existing) {
-      return data({ success: true, intent: "document-delete" }, { status: 200 });
+      return respond({ success: true, intent: "document-delete" }, { status: 200 });
     }
 
     await deleteFileIfExists(resolvePublicFilePath(existing.filePath));
@@ -337,10 +348,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
     await db.delete(documents).where(eq(documents.id, documentId));
 
-    return data({ success: true, intent: "document-delete" }, { status: 200 });
+    return respond({ success: true, intent: "document-delete" }, { status: 200 });
   }
 
-  return data({ success: false, message: "Unbekannter Vorgang." }, { status: 400 });
+  return respond({ success: false, message: "Unbekannter Vorgang." }, { status: 400 });
 }
 
 export default function Documents() {

@@ -6,6 +6,7 @@ import {
   redirect,
   Scripts,
   ScrollRestoration,
+  data,
   type ActionFunctionArgs,
 } from "react-router";
 
@@ -18,22 +19,61 @@ import {
   motorcycles,
   type NewMotorcycle,
   currencySettings,
+  type User,
 } from "./db/schema";
 import db from "./db";
 import { SettingsProvider } from "./contexts/SettingsProvider";
+import { AuthProvider } from "./contexts/AuthProvider";
+import {
+  getCurrentSession,
+  isPublicPath,
+  mergeHeaders,
+  requireUser,
+} from "./services/auth.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
-  const [locations, currencies] = await Promise.all([
-    db.query.locations.findMany(),
-    db.query.currencySettings.findMany(),
-  ]);
+  const url = new URL(request.url);
 
-  return {
+  const { user, headers: sessionHeaders } = await getCurrentSession(request);
+  const publicPath = isPublicPath(url.pathname);
+
+  if (!user && !publicPath) {
+    const redirectTo = encodeURIComponent(
+      `${url.pathname}${url.search}${url.hash}`
+    );
+    const response = redirect(`/auth/login?redirectTo=${redirectTo}`);
+    const mergedHeaders = mergeHeaders(sessionHeaders ?? {});
+    mergedHeaders.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+    throw response;
+  }
+
+  const [locationResult, currencyResult] = user
+    ? await Promise.all([
+        db.query.locations.findMany(),
+        db.query.currencySettings.findMany(),
+      ])
+    : [[], []];
+
+  const payload = {
     theme,
-    locations,
-    currencies,
+    locations: locationResult,
+    currencies: currencyResult,
+    user: user ?? null,
+  } as {
+    theme: Awaited<ReturnType<typeof getTheme>>;
+    locations: typeof locationResult;
+    currencies: typeof currencyResult;
+    user: User | null;
   };
+
+  const merged = mergeHeaders(sessionHeaders ?? {});
+
+  return data(payload, {
+    headers: merged,
+  });
 }
 
 export const links: Route.LinksFunction = () => [
@@ -73,21 +113,24 @@ function MainApp() {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { theme, locations, currencies } = loaderData;
+  const { theme, locations, currencies, user } = loaderData;
 
   return (
     <ThemeProvider initialTheme={theme}>
-      <SettingsProvider
-        initialLocations={locations}
-        initialCurrencies={currencies}
-      >
-        <MainApp />
-      </SettingsProvider>
+      <AuthProvider initialUser={user}>
+        <SettingsProvider
+          initialLocations={locations}
+          initialCurrencies={currencies}
+        >
+          <MainApp />
+        </SettingsProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  const { headers } = await requireUser(request);
   const formData = await request.formData();
 
   const parseString = (value: FormDataEntryValue | null | undefined) =>
@@ -139,7 +182,12 @@ export async function action({ request }: ActionFunctionArgs) {
     .insert(motorcycles)
     .values(newMotorcycle)
     .returning();
-  return redirect(urlMotorcycle({ ...motorcycle[0] }));
+  const response = redirect(urlMotorcycle({ ...motorcycle[0] }));
+  const merged = mergeHeaders(headers ?? {});
+  merged.forEach((value, key) => {
+    response.headers.set(key, value);
+  });
+  return response;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -11,8 +11,9 @@ import {
 } from "~/components/ui/card";
 import { StorageLocationsForm } from "~/components/storage-locations-form";
 import { CurrencySettingsForm } from "~/components/currency-settings-form";
+import { UserManagementPanel } from "~/components/user-management-panel";
 import { getDb } from "~/db";
-import { currencySettings, locations } from "~/db/schema";
+import { currencySettings, locations, users } from "~/db/schema";
 import { useSettings } from "~/contexts/SettingsProvider";
 import {
   DEFAULT_CURRENCY_CODE,
@@ -20,10 +21,23 @@ import {
   findCurrencyPreset,
 } from "~/constants";
 import type { Route } from "./+types/settings";
+import {
+  createUser,
+  deleteUser,
+  listUsers,
+  mergeHeaders,
+  requireAdmin,
+  requireUser,
+  updateUserPassword,
+  updateUserRole,
+} from "~/services/auth.server";
+import { USER_ROLES, type PublicUser, type UserRole } from "~/types/auth";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Settings" }];
 }
+
+const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
 
 type FrankfurterResponse = {
   rates?: Record<string, number>;
@@ -68,27 +82,59 @@ async function fetchConversionRate(code: string) {
   return rate;
 }
 
-export async function loader({}: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
+  const { user, headers } = await requireUser(request);
   const db = await getDb();
 
-  const [locationResult, currencyResult] = await Promise.all([
+  const [locationResult, currencyResult, usersList] = await Promise.all([
     db.query.locations.findMany(),
     db.query.currencySettings.findMany(),
+    user.role === "admin" ? listUsers() : Promise.resolve<PublicUser[]>([]),
   ]);
 
-  return {
-    locations: locationResult,
-    currencies: currencyResult,
-  };
+  return data(
+    {
+      locations: locationResult,
+      currencies: currencyResult,
+      users: usersList,
+      canManageUsers: user.role === "admin",
+      currentUserId: user.id,
+    },
+    { headers: mergeHeaders(headers ?? {}) }
+  );
 }
 
-export async function action({ request, params }: Route.ActionArgs) {
+export async function action({ request }: Route.ActionArgs) {
+  const { user, headers: sessionHeaders } = await requireUser(request);
   const db = await getDb();
 
   const formData = await request.formData();
   const fields = Object.fromEntries(formData);
 
   const { intent } = fields;
+
+  const headersRecord = sessionHeaders ?? {};
+  const respond = (
+    body: unknown,
+    init?: ResponseInit & { headers?: HeadersInit }
+  ) => {
+    const headerFragments: Record<string, string>[] = [headersRecord];
+    if (init?.headers) {
+      const additional = new Headers(init.headers);
+      const additionalRecord: Record<string, string> = {};
+      additional.forEach((value, key) => {
+        additionalRecord[key] = value;
+      });
+      headerFragments.push(additionalRecord);
+    }
+
+    const merged = mergeHeaders(...headerFragments);
+
+    return data(body, {
+      ...init,
+      headers: merged,
+    });
+  };
 
   if (intent === "location-add") {
     const item = await db
@@ -98,7 +144,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       })
       .returning();
 
-    return data({
+    return respond({
       success: true,
       name: item[0].name,
       intent: "location-add",
@@ -114,7 +160,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(eq(locations.id, Number.parseInt(fields.id as string)))
       .returning();
 
-    return data({
+    return respond({
       success: true,
       name: item[0].name,
       intent: "location-edit",
@@ -127,7 +173,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(eq(locations.id, Number.parseInt(fields.id as string)))
       .returning();
 
-    return data({
+    return respond({
       success: true,
       intent: "location-delete",
       name: removed[0]?.name ?? (fields.name ? String(fields.name) : undefined),
@@ -140,7 +186,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const label = String(fields.label ?? "").trim();
 
     if (!/^[A-Z]{2,5}$/.test(code)) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-add",
         message:
@@ -149,7 +195,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
 
     if (!symbol || !label) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-add",
         message: "Symbol und Bezeichnung sind erforderlich.",
@@ -163,7 +209,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     if (existing.length > 0) {
       const preset = findCurrencyPreset(code);
-      return data({
+      return respond({
         success: false,
         intent: "currency-add",
         message: `${preset?.label ?? code} ist bereits hinterlegt.`,
@@ -174,7 +220,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     try {
       conversionFactor = await fetchConversionRate(code);
     } catch (error) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-add",
         message:
@@ -193,7 +239,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       })
       .returning();
 
-    return data({
+    return respond({
       success: true,
       intent: "currency-add",
       code: inserted[0].code,
@@ -211,7 +257,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const conversionFactor = Number.parseFloat(conversionFactorRaw);
 
     if (!Number.isInteger(id)) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-edit",
         message: "Unbekannte Währung.",
@@ -219,7 +265,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
 
     if (!/^[A-Z]{2,5}$/.test(code)) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-edit",
         message:
@@ -228,7 +274,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
 
     if (!symbol || !label) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-edit",
         message: "Symbol und Bezeichnung sind erforderlich.",
@@ -236,7 +282,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
 
     if (!Number.isFinite(conversionFactor) || conversionFactor <= 0) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-edit",
         message: "Bitte gib einen gültigen, positiven Umrechnungsfaktor an.",
@@ -254,7 +300,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const target = current.at(0);
 
     if (!target) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-edit",
         message: "Die Währung wurde nicht gefunden.",
@@ -265,7 +311,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       target.code === DEFAULT_CURRENCY_CODE &&
       code !== DEFAULT_CURRENCY_CODE
     ) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-edit",
         message: "Der Code der Standardwährung kann nicht geändert werden.",
@@ -282,7 +328,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     if (duplicates.some((entry) => entry.id !== id)) {
       const preset = findCurrencyPreset(code);
-      return data({
+      return respond({
         success: false,
         intent: "currency-edit",
         message: `${preset?.label ?? code} ist bereits hinterlegt.`,
@@ -303,7 +349,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(eq(currencySettings.id, id))
       .returning();
 
-    return data({
+    return respond({
       success: true,
       intent: "currency-edit",
       code: updated[0].code,
@@ -316,7 +362,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const code = String(fields.code ?? "").toUpperCase();
 
     if (code === DEFAULT_CURRENCY_CODE) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-delete",
         message: "Die Standardwährung kann nicht entfernt werden.",
@@ -329,14 +375,14 @@ export async function action({ request, params }: Route.ActionArgs) {
       .returning();
 
     if (removed.length === 0) {
-      return data({
+      return respond({
         success: false,
         intent: "currency-delete",
         message: "Die Währung konnte nicht entfernt werden.",
       });
     }
 
-    return data({
+    return respond({
       success: true,
       intent: "currency-delete",
       code: removed[0].code,
@@ -351,7 +397,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
 
     if (refreshable.length === 0) {
-      return data({
+      return respond({
         success: true,
         intent: "currency-refresh",
         updated: 0,
@@ -369,7 +415,7 @@ export async function action({ request, params }: Route.ActionArgs) {
           code: currency.code,
         });
       } catch (error) {
-        return data({
+        return respond({
           success: false,
           intent: "currency-refresh",
           message:
@@ -386,17 +432,268 @@ export async function action({ request, params }: Route.ActionArgs) {
         .where(eq(currencySettings.id, update.id));
     }
 
-    return data({
+    return respond({
       success: true,
       intent: "currency-refresh",
       updated: updates.length,
     });
   }
+
+  if (intent === "user-create") {
+    requireAdmin(user);
+    const name = String(fields.name ?? "").trim();
+    const email = String(fields.email ?? "").trim();
+    const username = String(fields.username ?? "").trim();
+    const password = String(fields.password ?? "");
+    const roleInput = String(fields.role ?? "user");
+
+    if (name.length < 2) {
+      return respond(
+        {
+          success: false,
+          intent: "user-create",
+          message: "Der Name muss mindestens 2 Zeichen lang sein.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!/.+@.+\..+/i.test(email)) {
+      return respond(
+        {
+          success: false,
+          intent: "user-create",
+          message: "Bitte gib eine gültige E-Mail-Adresse ein.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!USERNAME_REGEX.test(username)) {
+      return respond(
+        {
+          success: false,
+          intent: "user-create",
+          message:
+            "Der Benutzername muss 3-32 Zeichen lang sein und darf nur Buchstaben, Zahlen sowie ._- enthalten.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return respond(
+        {
+          success: false,
+          intent: "user-create",
+          message: "Das Passwort muss mindestens 8 Zeichen haben.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!USER_ROLES.includes(roleInput as UserRole)) {
+      return respond(
+        {
+          success: false,
+          intent: "user-create",
+          message: "Die ausgewählte Rolle ist ungültig.",
+        },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const created = await createUser({
+        name,
+        email,
+        username,
+        password,
+        role: roleInput as UserRole,
+      });
+
+      return respond({
+        success: true,
+        intent: "user-create",
+        user: created,
+      });
+    } catch (error) {
+      return respond(
+        {
+          success: false,
+          intent: "user-create",
+          message:
+            (error instanceof Error && error.message) ||
+            "Der Benutzer konnte nicht angelegt werden.",
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (intent === "user-update-role") {
+    requireAdmin(user);
+    const targetId = Number.parseInt(String(fields.userId ?? ""), 10);
+    const roleInput = String(fields.role ?? "");
+
+    if (!Number.isInteger(targetId)) {
+      return respond(
+        {
+          success: false,
+          intent: "user-update-role",
+          message: "Der Benutzer konnte nicht ermittelt werden.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!USER_ROLES.includes(roleInput as UserRole)) {
+      return respond(
+        {
+          success: false,
+          intent: "user-update-role",
+          message: "Die ausgewählte Rolle ist ungültig.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (targetId === user.id && roleInput !== "admin") {
+      return respond(
+        {
+          success: false,
+          intent: "user-update-role",
+          message: "Du kannst deine eigene Rolle nicht entfernen.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (roleInput !== "admin") {
+      const adminCount = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.role, "admin"));
+
+      const lastAdmin = adminCount.length <= 1 && adminCount[0]?.id === targetId;
+      if (lastAdmin) {
+        return respond(
+          {
+            success: false,
+            intent: "user-update-role",
+            message: "Es muss mindestens ein Administrator bestehen bleiben.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    const updated = await updateUserRole(targetId, roleInput as UserRole);
+    return respond({ success: true, intent: "user-update-role", user: updated });
+  }
+
+  if (intent === "user-reset-password") {
+    const targetId = Number.parseInt(String(fields.userId ?? ""), 10);
+    const password = String(fields.password ?? "");
+
+    if (!Number.isInteger(targetId)) {
+      return respond(
+        {
+          success: false,
+          intent: "user-reset-password",
+          message: "Der Benutzer konnte nicht ermittelt werden.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return respond(
+        {
+          success: false,
+          intent: "user-reset-password",
+          message: "Das Passwort muss mindestens 8 Zeichen haben.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (targetId !== user.id) {
+      requireAdmin(user);
+    }
+
+    await updateUserPassword(targetId, password);
+
+    return respond({
+      success: true,
+      intent: "user-reset-password",
+      userId: targetId,
+      isSelf: targetId === user.id,
+    });
+  }
+
+  if (intent === "user-delete") {
+    requireAdmin(user);
+    const targetId = Number.parseInt(String(fields.userId ?? ""), 10);
+
+    if (!Number.isInteger(targetId)) {
+      return respond(
+        {
+          success: false,
+          intent: "user-delete",
+          message: "Der Benutzer konnte nicht ermittelt werden.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (targetId === user.id) {
+      return respond(
+        {
+          success: false,
+          intent: "user-delete",
+          message: "Du kannst dich nicht selbst entfernen.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const adminCount = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.role, "admin"));
+
+    const lastAdmin = adminCount.length <= 1 && adminCount[0]?.id === targetId;
+    if (lastAdmin) {
+      return respond(
+        {
+          success: false,
+          intent: "user-delete",
+          message: "Es muss mindestens ein Administrator bestehen bleiben.",
+        },
+        { status: 400 }
+      );
+    }
+
+    await deleteUser(targetId);
+
+    return respond({ success: true, intent: "user-delete", userId: targetId });
+  }
+
+  return respond(
+    { success: false, message: `Unhandled intent ${intent}` },
+    { status: 500 }
+  );
 }
 
 export default function Settings() {
-  const { locations: loaderLocations, currencies: loaderCurrencies } =
-    useLoaderData<typeof loader>();
+  const {
+    locations: loaderLocations,
+    currencies: loaderCurrencies,
+    users: loaderUsers,
+    canManageUsers,
+    currentUserId,
+  } = useLoaderData<typeof loader>();
   const { setLocations, setCurrencies } = useSettings();
 
   useEffect(() => {
@@ -450,6 +747,14 @@ export default function Settings() {
           </CardContent>
         </Card>
       </section>
+
+      {canManageUsers && (
+        <UserManagementPanel
+          users={loaderUsers}
+          currentUserId={currentUserId}
+          roles={USER_ROLES}
+        />
+      )}
     </main>
   );
 }

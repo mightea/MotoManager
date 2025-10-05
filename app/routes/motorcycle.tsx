@@ -35,6 +35,7 @@ import DocumentList, {
 } from "~/components/document-list";
 import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
+import { mergeHeaders, requireUser } from "~/services/auth.server";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const db = await getDb();
@@ -168,6 +169,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
+  const { headers: sessionHeaders } = await requireUser(request);
   const db = await getDb();
 
   const formData = await request.formData();
@@ -176,6 +178,15 @@ export async function action({ request, params }: Route.ActionArgs) {
   const { intent } = fields;
   console.log("Action called with intent:", intent);
   console.log("Fields:", fields);
+
+  const respond = (
+    body: unknown,
+    init?: ResponseInit
+  ) =>
+    data(body, {
+      ...init,
+      headers: mergeHeaders(sessionHeaders ?? {}),
+    });
 
   if (intent === "issue-add") {
     const newIssue: NewIssue = {
@@ -192,7 +203,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const result = await db.insert(issues).values(newIssue);
     console.log(result);
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "issue-edit") {
@@ -214,7 +225,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .set(editIssue)
       .where(eq(issues.id, Number.parseInt(fields.issueId as string)));
 
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "issue-delete") {
@@ -223,7 +234,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .delete(issues)
       .where(eq(issues.id, Number.parseInt(fields.issueId as string)));
 
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-edit") {
@@ -253,7 +264,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
       );
 
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-delete") {
@@ -262,7 +273,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const motorcycleId = Number.parseInt(rawMotorcycleId?.toString() ?? "", 10);
 
     if (Number.isNaN(motorcycleId)) {
-      return data(
+      return respond(
         { success: false, message: "Motorrad konnte nicht ermittelt werden." },
         { status: 400 }
       );
@@ -296,7 +307,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
       );
 
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-odo") {
@@ -308,7 +319,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(
         eq(motorcycles.id, Number.parseInt(fields.motorcycleId as string))
       );
-    return data({ success: true, intent: "motorcycle-odo" }, { status: 200 });
+    return respond({ success: true, intent: "motorcycle-odo" }, { status: 200 });
   }
 
   if (intent === "maintenance-add") {
@@ -319,7 +330,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .returning();
 
     console.log("Inserted Maintenance Item:", item);
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "maintenance-edit") {
@@ -336,7 +347,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     console.log("Edited Maintenance Item:", item);
 
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "maintenance-delete") {
@@ -347,7 +358,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         eq(maintenanceRecords.id, Number.parseInt(fields.logId as string))
       );
 
-    return data({ success: true }, { status: 200 });
+    return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "location-update") {
@@ -355,7 +366,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const motorcycleId = Number.parseInt(params.motorcycleId);
     if (Number.isNaN(motorcycleId)) {
-      return data(
+      return respond(
         { success: false, message: "Motorrad konnte nicht ermittelt werden." },
         { status: 400 }
       );
@@ -366,7 +377,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const locationId = Number.parseInt(locationIdRaw ?? "");
 
     if (Number.isNaN(locationId)) {
-      return data(
+      return respond(
         { success: false, message: "Standort ist erforderlich." },
         { status: 400 }
       );
@@ -398,7 +409,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(eq(locations.id, insertedRecord.locationId))
       .limit(1);
 
-    return data(
+    return respond(
       {
         success: true,
         intent: "location-update",
@@ -415,7 +426,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "torque-add") {
     const motorcycleId = Number.parseInt(params.motorcycleId);
     if (Number.isNaN(motorcycleId)) {
-      return data(
+      return respond(
         { success: false, message: "Motorrad konnte nicht ermittelt werden." },
         { status: 400 }
       );
@@ -423,7 +434,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const torque = Number.parseFloat((fields.torque as string) ?? "");
     if (Number.isNaN(torque)) {
-      return data(
+      return respond(
         { success: false, message: "Drehmoment ist ungültig." },
         { status: 400 }
       );
@@ -432,7 +443,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const category = (fields.category as string | undefined)?.trim();
     const name = (fields.name as string | undefined)?.trim();
     if (!category || !name) {
-      return data(
+      return respond(
         { success: false, message: "Kategorie und Bezeichnung sind erforderlich." },
         { status: 400 }
       );
@@ -461,13 +472,13 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     await db.insert(torqueSpecs).values(newSpec);
 
-    return data({ success: true, intent: "torque-add" }, { status: 200 });
+    return respond({ success: true, intent: "torque-add" }, { status: 200 });
   }
 
   if (intent === "torque-edit") {
     const specId = Number.parseInt((fields.torqueId as string) ?? "");
     if (Number.isNaN(specId)) {
-      return data(
+      return respond(
         { success: false, message: "Drehmomentwert konnte nicht ermittelt werden." },
         { status: 400 }
       );
@@ -476,7 +487,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const category = (fields.category as string | undefined)?.trim();
     const name = (fields.name as string | undefined)?.trim();
     if (!category || !name) {
-      return data(
+      return respond(
         { success: false, message: "Kategorie und Bezeichnung sind erforderlich." },
         { status: 400 }
       );
@@ -484,7 +495,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     const torque = Number.parseFloat((fields.torque as string) ?? "");
     if (Number.isNaN(torque)) {
-      return data(
+      return respond(
         { success: false, message: "Drehmoment ist ungültig." },
         { status: 400 }
       );
@@ -513,13 +524,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       })
       .where(eq(torqueSpecs.id, specId));
 
-    return data({ success: true, intent: "torque-edit" }, { status: 200 });
+    return respond({ success: true, intent: "torque-edit" }, { status: 200 });
   }
 
   if (intent === "torque-delete") {
     const specId = Number.parseInt((fields.torqueId as string) ?? "");
     if (Number.isNaN(specId)) {
-      return data(
+      return respond(
         { success: false, message: "Drehmomentwert konnte nicht ermittelt werden." },
         { status: 400 }
       );
@@ -527,10 +538,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     await db.delete(torqueSpecs).where(eq(torqueSpecs.id, specId));
 
-    return data({ success: true, intent: "torque-delete" }, { status: 200 });
+    return respond({ success: true, intent: "torque-delete" }, { status: 200 });
   }
 
-  return data(
+  return respond(
     { success: false, message: `Unhandled intent ${intent}` },
     { status: 500 }
   );

@@ -1,7 +1,18 @@
-import { Bike, Settings } from "lucide-react";
-import { Link, NavLink } from "react-router";
+import { Bike, LogOut, Settings } from "lucide-react";
+import { Link, NavLink, useSubmit } from "react-router";
 import { ThemeToggle } from "./theme-toggle";
 import { Button } from "./ui/button";
+import { useAuth } from "~/contexts/AuthProvider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import { useMemo } from "react";
 
 const navLinks = [
   { href: "/", label: "Übersicht" },
@@ -10,6 +21,27 @@ const navLinks = [
 ];
 
 export function Header() {
+  const submit = useSubmit();
+  const { user } = useAuth();
+
+  const initials = useMemo(() => {
+    if (!user?.name) {
+      return "MB";
+    }
+
+    const letters = user.name
+      .split(" ")
+      .map((part) => part.trim().charAt(0).toUpperCase())
+      .filter(Boolean)
+      .slice(0, 2);
+
+    return letters.length > 0 ? letters.join("") : "MB";
+  }, [user?.name]);
+
+  const handleLogout = () => {
+    submit(null, { method: "post", action: "/auth/logout" });
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full">
       <div className="absolute inset-0 h-[140px] bg-gradient-to-b from-background/80 via-background/60 to-transparent blur-xl" aria-hidden="true" />
@@ -49,6 +81,51 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 px-2"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="text-xs uppercase">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden text-sm font-medium md:inline">
+                      {user.name}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold leading-none">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        @{user.username}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Abmelden
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button asChild variant="ghost" size="icon" className="md:hidden">
               <Link to="/settings" aria-label="Einstellungen">
                 <Settings className="h-5 w-5" />
