@@ -11,6 +11,7 @@ import {
 } from "~/db/schema";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Bike, PlusCircle, FileText } from "lucide-react";
 import { AddMotorcycleDialog } from "~/components/add-motorcycle-dialog";
 import { formatCurrency } from "~/utils/numberUtils";
@@ -281,7 +282,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <div className="space-y-8">
         {hasMotorcycles ? (
           <>
-            <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h1 className="text-3xl font-headline font-semibold text-foreground">
                   Deine Motorräder
@@ -290,7 +291,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                   Überblick über Wartung, Kilometerstände und aktuelle Dokumente.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <AddMotorcycleDialog>
                   <Button variant="outline" className="gap-2">
                     <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
@@ -304,7 +305,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               </div>
             </header>
 
-            <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {motorcycles.map((moto) => (
                 <MotorcycleSummaryCard key={moto.id} {...moto} />
               ))}
@@ -312,20 +313,20 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </>
         ) : (
           <>
-            <div className="overflow-hidden rounded-2xl border border-border/60 bg-white/80 p-5 shadow-lg backdrop-blur-xl dark:border-border/30 dark:bg-slate-900/80 md:p-6">
-              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <Card className="md:p-8">
+              <CardHeader className="gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-[0.65rem] uppercase tracking-[0.32em] text-muted-foreground">
                     Erste Schritte
                   </p>
-                  <h1 className="mt-2 text-3xl font-headline font-semibold leading-tight text-foreground md:text-[2.35rem]">
+                  <CardTitle className="mt-2 text-3xl font-headline leading-tight md:text-[2.35rem]">
                     Willkommen im Cockpit deiner Bikes
-                  </h1>
+                  </CardTitle>
                   <p className="mt-3 text-sm text-muted-foreground max-w-2xl">
                     Lege dein erstes Motorrad an, um Wartungen, Dokumente und Standorte im Blick zu behalten.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                   <AddMotorcycleDialog>
                     <Button className="h-10 gap-2 px-5">
                       <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
@@ -337,58 +338,58 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     </Link>
                   </Button>
                 </div>
-              </div>
-            </div>
-
-            <div className="text-center py-16 border-2 border-dashed rounded-lg">
-              <Bike className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h2 className="mt-4 text-2xl font-semibold">
-                Noch keine Motorräder erfasst
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                Lege jetzt los und füge dein erstes Motorrad hinzu.
-              </p>
-              <div className="mt-6">
-                <AddMotorcycleDialog>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad hinzufügen
-                  </Button>
-                </AddMotorcycleDialog>
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-border/50 bg-background/60 px-6 py-12 text-center">
+                  <Bike className="h-12 w-12 text-muted-foreground" />
+                  <div>
+                    <h2 className="text-2xl font-semibold text-foreground">
+                      Noch keine Motorräder erfasst
+                    </h2>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Lege jetzt los und füge dein erstes Motorrad hinzu.
+                    </p>
+                  </div>
+                  <AddMotorcycleDialog>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad hinzufügen
+                    </Button>
+                  </AddMotorcycleDialog>
+                </div>
+              </CardContent>
+            </Card>
           </>
         )}
 
         {hasMotorcycles && (
-          <section className="rounded-2xl border border-border/60 bg-white/80 p-6 shadow-lg backdrop-blur-xl dark:border-border/30 dark:bg-slate-900/80">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">
-                  Jahresstatistiken
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Aggregierte Kennzahlen deiner Flotte {stats.year}.
-                </p>
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">Jahresstatistiken</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Aggregierte Kennzahlen deiner Flotte {stats.year}.
+              </p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {statsCards.map((card) => (
+                  <Card
+                    key={card.label}
+                    className="rounded-xl border-border/40 bg-white/70 dark:bg-slate-900/60"
+                  >
+                    <CardContent className="space-y-2 p-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {card.label}
+                      </p>
+                      <p className="text-xl font-semibold text-foreground">
+                        {card.value}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{card.hint}</p>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {statsCards.map((card) => (
-                <div
-                  key={card.label}
-                  className="rounded-xl border border-border/50 bg-background/80 p-4 shadow-sm"
-                >
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {card.label}
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {card.value}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">{card.hint}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+            </CardContent>
+          </Card>
         )}
       </div>
     </>
