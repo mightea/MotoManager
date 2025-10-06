@@ -138,7 +138,10 @@ export function AddStorageLocationDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex h-full flex-col gap-4"
+          >
             <FormField
               control={form.control}
               name="name"

@@ -151,7 +151,7 @@ export function AddMotorcycleDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form method="post">
+          <form method="post" className="flex h-full flex-col">
             <input
               type="hidden"
               name="motorcycleId"
@@ -168,7 +168,7 @@ export function AddMotorcycleDialog({
                 tabIndex={-1}
               />
             )}
-            <ScrollArea className="max-h-[70vh] pr-6">
+            <ScrollArea className="flex-1 overflow-y-auto pr-6">
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-muted-foreground pt-4">
                   Allgemein

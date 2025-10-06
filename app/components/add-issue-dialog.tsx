@@ -131,120 +131,122 @@ export function AddIssueDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form method="post" className="space-y-4">
+          <form method="post" className="flex h-full flex-col gap-4">
             <input type="hidden" name="motorcycleId" value={motorcycle.id} />
             <input type="hidden" name="issueId" value={issueToEdit?.id ?? ""} />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Beschreibung</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Beschreibe den Mangel..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
               <FormField
                 control={form.control}
-                name="priority"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priorität</FormLabel>
-                    <Select
-                      name={field.name}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Priorität wählen" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="low">Niedrig</SelectItem>
-                        <SelectItem value="medium">Mittel</SelectItem>
-                        <SelectItem value="high">Hoch</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      name={field.name}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Status wählen" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="new">Offen</SelectItem>
-                        <SelectItem value="in_progress">
-                          In Bearbeitung
-                        </SelectItem>
-                        <SelectItem value="done">Erledigt</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Datum</FormLabel>
-                    <Input type="date" {...field} />
+                    <FormLabel>Beschreibung</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Beschreibe den Mangel..."
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="odo"
-                render={({ field }) => {
-                  const value =
-                    field.value === undefined || field.value === null
-                      ? ""
-                      : (field.value as number | string);
-
-                  return (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Kilometerstand</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Kilometerstand"
-                          {...field}
-                          value={value}
-                        />
-                      </FormControl>
+                      <FormLabel>Priorität</FormLabel>
+                      <Select
+                        name={field.name}
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Priorität wählen" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Niedrig</SelectItem>
+                          <SelectItem value="medium">Mittel</SelectItem>
+                          <SelectItem value="high">Hoch</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
-                  );
-                }}
-              />
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        name={field.name}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Status wählen" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="new">Offen</SelectItem>
+                          <SelectItem value="in_progress">
+                            In Bearbeitung
+                          </SelectItem>
+                          <SelectItem value="done">Erledigt</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Datum</FormLabel>
+                      <Input type="date" {...field} />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="odo"
+                  render={({ field }) => {
+                    const value =
+                      field.value === undefined || field.value === null
+                        ? ""
+                        : (field.value as number | string);
+
+                    return (
+                      <FormItem>
+                        <FormLabel>Kilometerstand</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Kilometerstand"
+                            {...field}
+                            value={value}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
             </div>
             <DialogFooter>
               {isEditMode && (
