@@ -23,7 +23,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import MaintenanceLogTable from "~/components/maintenance-log-table";
 import { OpenIssuesCard } from "~/components/open-issues-card";
 import { Button } from "~/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import {
+  ClipboardList,
+  FileText,
+  Gauge,
+  Info,
+  PlusCircle,
+} from "lucide-react";
 import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
 import { data, redirect } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
@@ -610,34 +616,106 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
   const { make, model } = motorcycle;
   const location = useLocation();
   const navigate = useNavigate();
-  const validTabs = ["maintenance", "torque", "documents"] as const;
+  const validTabs = ["info", "maintenance", "torque", "documents"] as const;
 
   const getTabFromHash = (hash: string) => {
     const normalized = hash.startsWith("#") ? hash.slice(1) : hash;
     return (validTabs as readonly string[]).includes(normalized)
-      ? normalized
-      : "maintenance";
+      ? (normalized as (typeof validTabs)[number])
+      : null;
   };
 
-  const [activeTab, setActiveTab] = useState<string>(() =>
-    getTabFromHash(location.hash)
-  );
+  const [activeTab, setActiveTab] = useState<(typeof validTabs)[number]>(() => {
+    const hashTab = getTabFromHash(location.hash);
+    if (hashTab) {
+      return hashTab;
+    }
+
+    if (typeof window !== "undefined") {
+      const isLargeScreen = window.matchMedia("(min-width: 1024px)").matches;
+      if (!isLargeScreen) {
+        return "info";
+      }
+    }
+
+    return "maintenance";
+  });
 
   useEffect(() => {
     const hashTab = getTabFromHash(location.hash);
-    if (hashTab !== activeTab) {
+    if (hashTab && hashTab !== activeTab) {
       setActiveTab(hashTab);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.hash]);
+  }, [location.hash, activeTab]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+
+    const syncTabWithViewport = (isLargeScreen: boolean) => {
+      if (isLargeScreen && activeTab === "info") {
+        const nextTab: (typeof validTabs)[number] = "maintenance";
+        setActiveTab(nextTab);
+        navigate(
+          {
+            pathname: location.pathname,
+            search: location.search,
+            hash: `#${nextTab}`,
+          },
+          { replace: true }
+        );
+        return;
+      }
+
+      if (!isLargeScreen && activeTab === "maintenance" && !location.hash) {
+        const nextTab: (typeof validTabs)[number] = "info";
+        setActiveTab(nextTab);
+        navigate(
+          {
+            pathname: location.pathname,
+            search: location.search,
+            hash: `#${nextTab}`,
+          },
+          { replace: true }
+        );
+      }
+    };
+
+    syncTabWithViewport(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      syncTabWithViewport(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === "function") {
+        mediaQuery.removeEventListener("change", handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, [activeTab, location.hash, location.pathname, location.search, navigate]);
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
+    const nextValue = (validTabs as readonly string[]).includes(value)
+      ? (value as (typeof validTabs)[number])
+      : activeTab;
+
+    setActiveTab(nextValue);
     navigate(
       {
         pathname: location.pathname,
         search: location.search,
-        hash: `#${value}`,
+        hash: `#${nextValue}`,
       },
       { replace: true }
     );
@@ -652,7 +730,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     >
       <title>{`${make} ${model} - MotoManager`}</title>
       <div className="grid gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-2 xl:col-span-2 space-y-8">
+        <div className="hidden space-y-8 lg:block lg:col-span-2 xl:col-span-2">
           <MotorcycleInfo />
           <OpenIssuesCard
             motorcycle={motorcycle}
@@ -666,11 +744,47 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
             onValueChange={handleTabChange}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="maintenance">Wartungsprotokoll</TabsTrigger>
-              <TabsTrigger value="torque">Drehmomentwerte</TabsTrigger>
-              <TabsTrigger value="documents">Dokumente</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 gap-2 sm:grid-cols-4 lg:grid-cols-3">
+              <TabsTrigger
+                value="info"
+                aria-label="Übersicht"
+                className="flex items-center justify-center px-2 py-2 text-sm font-medium lg:hidden"
+              >
+                <Info className="h-4 w-4" />
+              </TabsTrigger>
+              <TabsTrigger
+                value="maintenance"
+                aria-label="Wartungsprotokoll"
+                className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
+              >
+                <ClipboardList className="h-4 w-4" />
+                <span className="hidden lg:inline">Wartungsprotokoll</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="torque"
+                aria-label="Drehmomentwerte"
+                className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
+              >
+                <Gauge className="h-4 w-4" />
+                <span className="hidden lg:inline">Drehmomentwerte</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="documents"
+                aria-label="Dokumente"
+                className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="hidden lg:inline">Dokumente</span>
+              </TabsTrigger>
             </TabsList>
+            <TabsContent value="info" className="space-y-8 lg:hidden">
+              <MotorcycleInfo />
+              <OpenIssuesCard
+                motorcycle={motorcycle}
+                issues={issues}
+                currentOdometer={currentOdo}
+              />
+            </TabsContent>
             <TabsContent value="maintenance">
               <Card>
                 <CardHeader>
