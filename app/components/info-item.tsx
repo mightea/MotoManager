@@ -30,9 +30,7 @@ export const InfoItem = ({
   valueClassName?: string;
   children?: ReactNode;
 }) => {
-  console.log({ value });
   if (isEmptyValue(value)) {
-    console.log("empty value", value);
     return null;
   }
   return (
