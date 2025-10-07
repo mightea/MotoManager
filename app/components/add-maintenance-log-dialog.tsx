@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -101,7 +99,9 @@ const baseSchema = z.object({
   date: z.string().min(1, "Ein Datum ist erforderlich."),
   odo: z.coerce.number().min(1, "Der Kilometerstand muss größer als 0 sein."),
   cost: z.coerce.number(),
-  description: z.string().max(1000, "Die Beschreibung darf nicht länger als 1000 Zeichen sein."),
+  description: z
+    .string()
+    .max(1000, "Die Beschreibung darf nicht länger als 1000 Zeichen sein."),
 });
 
 // Schemas for each log type
@@ -115,17 +115,15 @@ const repairLogSchema = baseSchema.extend({
 
 const fluidChangeLogSchema = baseSchema.extend({
   type: z.literal("fluid"),
-  fluidType: z.enum(
-    [
-      "engineoil",
-      "gearboxoil",
-      "finaldriveoil",
-      "driveshaftoil",
-      "forkoil",
-      "breakfluid",
-      "coolant",
-    ] as const
-  ),
+  fluidType: z.enum([
+    "engineoil",
+    "gearboxoil",
+    "finaldriveoil",
+    "driveshaftoil",
+    "forkoil",
+    "breakfluid",
+    "coolant",
+  ] as const),
   brand: z.string().min(2, "Marke ist erforderlich."),
   viscosity: z.string().min(2, "Viskosität ist erforderlich."),
   oilType: z
@@ -149,9 +147,13 @@ const batteryChangeLogSchema = baseSchema.extend({
   type: z.literal("battery"),
   brand: z.string().min(2, "Marke ist erforderlich."),
   model: z.string().min(2, "Modell ist erforderlich."),
-  batteryType: z.enum(
-    ["lead-acid", "gel", "agm", "lithium-ion", "other"] as const
-  ),
+  batteryType: z.enum([
+    "lead-acid",
+    "gel",
+    "agm",
+    "lithium-ion",
+    "other",
+  ] as const),
 });
 
 const brakePadChangeLogSchema = baseSchema.extend({
@@ -205,10 +207,10 @@ export function AddMaintenanceLogDialog({
   const [open, setOpen] = useState(false);
   const isEditMode = !!logToEdit;
 
-const getInitialFormValues = (): FormValues => {
-  if (isEditMode && logToEdit) {
-    const baseValues = {
-      type: logToEdit.type,
+  const getInitialFormValues = (): FormValues => {
+    if (isEditMode && logToEdit) {
+      const baseValues = {
+        type: logToEdit.type,
         date: dateInputString(logToEdit.date),
         odo: logToEdit.odo,
         cost: logToEdit.cost ?? 0.0,
@@ -273,7 +275,7 @@ const getInitialFormValues = (): FormValues => {
   const handleDelete = () => {
     fetcher.submit(
       { intent: "maintenance-delete", logId: logToEdit?.id ?? "" },
-      { method: "post" }
+      { method: "post" },
     );
 
     setOpen(false);
@@ -285,7 +287,7 @@ const getInitialFormValues = (): FormValues => {
 
     formData.append(
       "intent",
-      isEditMode ? "maintenance-edit" : "maintenance-add"
+      isEditMode ? "maintenance-edit" : "maintenance-add",
     );
     formData.append("maintenanceId", (logToEdit?.id ?? "").toString());
     formData.append("motorcycleId", motorcycle.id.toString());

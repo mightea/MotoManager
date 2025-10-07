@@ -33,7 +33,7 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 4,
       }),
-    []
+    [],
   );
 
   const formatConversion = (value: number) => conversionFormatter.format(value);
@@ -47,7 +47,7 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
         intent: "currency-delete",
         code,
       },
-      { method: "post" }
+      { method: "post" },
     );
   };
 
@@ -121,7 +121,10 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
       return false;
     }
 
-    const formId = Number.parseInt(String(fetcher.formData?.get("id") ?? ""), 10);
+    const formId = Number.parseInt(
+      String(fetcher.formData?.get("id") ?? ""),
+      10,
+    );
     return Number.isFinite(formId) && formId === id;
   };
 
@@ -141,7 +144,8 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
       toast({
         title: "Aktualisierung fehlgeschlagen",
         description:
-          result.message ?? "Die Wechselkurse konnten nicht aktualisiert werden.",
+          result.message ??
+          "Die Wechselkurse konnten nicht aktualisiert werden.",
         variant: "destructive",
       });
       return;
@@ -166,7 +170,7 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
 
   const isRefreshing = refreshFetcher.state !== "idle";
   const hasRefreshableCurrencies = currencies.some(
-    (currency) => currency.code !== DEFAULT_CURRENCY_CODE
+    (currency) => currency.code !== DEFAULT_CURRENCY_CODE,
   );
 
   if (!isMounted) {
@@ -196,8 +200,7 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
           </div>
         ) : (
           currencies.map((currency) => {
-            const isDefaultCurrency =
-              currency.code === DEFAULT_CURRENCY_CODE;
+            const isDefaultCurrency = currency.code === DEFAULT_CURRENCY_CODE;
             const existingCodes = currencies
               .filter((item) => item.id !== currency.id)
               .map((item) => item.code);
@@ -227,7 +230,8 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    1 {currency.code} = {formatConversion(currency.conversionFactor)}{' '}
+                    1 {currency.code} ={" "}
+                    {formatConversion(currency.conversionFactor)}{" "}
                     {DEFAULT_CURRENCY_CODE}
                   </p>
                 </div>

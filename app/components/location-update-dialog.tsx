@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, type ReactNode, useEffect, useMemo } from "react";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -144,7 +142,9 @@ export function LocationUpdateDialog({
           setCurrentOdo(location.odometer);
         }
         setLocationHistory((prev) => {
-          const withoutInserted = prev.filter((entry) => entry.id !== location.id);
+          const withoutInserted = prev.filter(
+            (entry) => entry.id !== location.id,
+          );
           return [location, ...withoutInserted];
         });
       }
@@ -175,7 +175,7 @@ export function LocationUpdateDialog({
 
       const previousEntry = index === 0 ? null : locationHistory[index - 1];
       const endDate = previousEntry
-        ? safeParseDate(previousEntry.date) ?? startDate
+        ? (safeParseDate(previousEntry.date) ?? startDate)
         : new Date();
 
       const dateLabel = format(startDate, "d. MMM yyyy", { locale: de });

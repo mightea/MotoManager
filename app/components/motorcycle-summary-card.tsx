@@ -1,6 +1,4 @@
 import { Link } from "react-router";
-import type { Motorcycle } from "../db/schema";
-import { getAgeInDays, getAgeText, nextInpectionDays } from "~/utils/dateUtils";
 import {
   Card,
   CardContent,
@@ -82,7 +80,7 @@ export const MotorcycleSummaryCard = ({
           value={odometerThisYear.toLocaleString()}
           valuePrefix="km"
           valueClassName={cn(
-            odometerThisYear < MIN_KM_PER_YEAR && "text-amber-600"
+            odometerThisYear < MIN_KM_PER_YEAR && "text-amber-600",
           )}
         />
         <InfoItem

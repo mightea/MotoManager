@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useFetcher } from "react-router";
 import {
@@ -36,7 +34,11 @@ export function TorqueSpecDialog({
   const formKey = `${spec ? `edit-${spec.id}` : "new"}-${open ? "open" : "closed"}`;
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data && (fetcher.data as any)?.success) {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      (fetcher.data as any)?.success
+    ) {
       if (!spec) {
         formRef.current?.reset();
       }
@@ -47,7 +49,7 @@ export function TorqueSpecDialog({
   const handleDelete = () => {
     if (!spec) return;
     const confirmed = window.confirm(
-      `Drehmomentwert "${spec.name}" wirklich löschen?`
+      `Drehmomentwert "${spec.name}" wirklich löschen?`,
     );
     if (!confirmed) return;
 
@@ -56,7 +58,7 @@ export function TorqueSpecDialog({
         intent: "torque-delete",
         torqueId: spec.id,
       },
-      { method: "post" }
+      { method: "post" },
     );
   };
 

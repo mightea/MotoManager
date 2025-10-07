@@ -165,7 +165,7 @@ export default function MaintenanceLogTable({
 
     if (log.brand)
       details.push(
-        <DetailRow key="brand" icon={Tag} label="Marke" value={log.brand} />
+        <DetailRow key="brand" icon={Tag} label="Marke" value={log.brand} />,
       );
     if (log.model)
       details.push(
@@ -174,7 +174,7 @@ export default function MaintenanceLogTable({
           icon={Car}
           label="Modell/Typ"
           value={log.model}
-        />
+        />,
       );
 
     if (log.type === "fluid") {
@@ -185,7 +185,7 @@ export default function MaintenanceLogTable({
             icon={Droplets}
             label="Flüssigkeit"
             value={FluidTypeLabels[log.fluidType]}
-          />
+          />,
         );
       if (log.viscosity)
         details.push(
@@ -194,7 +194,7 @@ export default function MaintenanceLogTable({
             icon={Gauge}
             label="Viskosität/Typ"
             value={log.viscosity}
-          />
+          />,
         );
 
       if (log.oilType) {
@@ -204,7 +204,7 @@ export default function MaintenanceLogTable({
             icon={Droplets}
             label="Öltyp"
             value={OilTypeLabels[log.oilType]}
-          />
+          />,
         );
       }
     }
@@ -218,7 +218,7 @@ export default function MaintenanceLogTable({
             icon={MapPin}
             label="Position"
             value={TirePositionLabels[log.tirePosition]}
-          />
+          />,
         );
       if (log.tireSize)
         details.push(
@@ -227,7 +227,7 @@ export default function MaintenanceLogTable({
             icon={Milestone}
             label="Grösse"
             value={log.tireSize}
-          />
+          />,
         );
       if (tireInfo && tireInfo.date) {
         details.push(
@@ -236,7 +236,7 @@ export default function MaintenanceLogTable({
             icon={Calendar}
             label="Herstellungsdatum"
             value={tireInfo.manufacturingDate}
-          />
+          />,
         );
       }
     }
@@ -248,7 +248,7 @@ export default function MaintenanceLogTable({
           icon={Layers}
           label="Batterietyp"
           value={log.batteryType}
-        />
+        />,
       );
     }
 

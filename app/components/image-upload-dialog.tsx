@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef, type ReactNode } from "react";
 import {
   Dialog,
@@ -47,7 +45,7 @@ export function ImageUploadDialog({
       setCrop(undefined); // Makes crop preview update between images.
       const reader = new FileReader();
       reader.addEventListener("load", () =>
-        setImgSrc(reader.result?.toString() || "")
+        setImgSrc(reader.result?.toString() || ""),
       );
       reader.readAsDataURL(e.target.files[0]);
     }
@@ -64,10 +62,10 @@ export function ImageUploadDialog({
         },
         aspectRatio,
         width,
-        height
+        height,
       ),
       width,
-      height
+      height,
     );
     setCrop(crop);
     setCompletedCrop(crop);
@@ -86,7 +84,7 @@ export function ImageUploadDialog({
 
     const offscreen = new OffscreenCanvas(
       crop.width * scaleX,
-      crop.height * scaleY
+      crop.height * scaleY,
     );
     const ctx = offscreen.getContext("2d");
     if (!ctx) {
@@ -102,7 +100,7 @@ export function ImageUploadDialog({
       0,
       0,
       crop.width * scaleX,
-      crop.height * scaleY
+      crop.height * scaleY,
     );
 
     // Convert OffscreenCanvas to a Blob, then to a data URL

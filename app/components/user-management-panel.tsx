@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import {
@@ -67,8 +65,7 @@ export function UserManagementPanel({
   }, [createFetcher.state, createFetcher.data]);
 
   const createError =
-    createFetcher.data?.intent === "user-create" &&
-    !createFetcher.data.success
+    createFetcher.data?.intent === "user-create" && !createFetcher.data.success
       ? createFetcher.data.message
       : null;
 
@@ -77,7 +74,7 @@ export function UserManagementPanel({
       new Intl.DateTimeFormat("de-CH", {
         dateStyle: "medium",
       }),
-    []
+    [],
   );
 
   return (
@@ -172,7 +169,10 @@ export function UserManagementPanel({
               )}
             </div>
             <div className="md:col-span-2 flex justify-end">
-              <Button type="submit" disabled={createFetcher.state === "submitting"}>
+              <Button
+                type="submit"
+                disabled={createFetcher.state === "submitting"}
+              >
                 {createFetcher.state === "submitting"
                   ? "Wird angelegt..."
                   : "Benutzer erstellen"}
@@ -270,8 +270,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
   }, [deleteFetcher.state, deleteFetcher.data]);
 
   const roleError =
-    roleFetcher.data?.intent === "user-update-role" &&
-    !roleFetcher.data.success
+    roleFetcher.data?.intent === "user-update-role" && !roleFetcher.data.success
       ? roleFetcher.data.message
       : null;
 
@@ -282,8 +281,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
       : null;
 
   const deleteError =
-    deleteFetcher.data?.intent === "user-delete" &&
-    !deleteFetcher.data.success
+    deleteFetcher.data?.intent === "user-delete" && !deleteFetcher.data.success
       ? deleteFetcher.data.message
       : null;
 
@@ -304,7 +302,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
         userId: user.id,
         role: normalized,
       },
-      { method: "post" }
+      { method: "post" },
     );
   };
 
@@ -323,7 +321,11 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
         </div>
         <div className="flex flex-col gap-2 md:items-end">
           <div className="flex items-center gap-2">
-            <Select value={role} onValueChange={handleRoleChange} disabled={roleFetcher.state === "submitting"}>
+            <Select
+              value={role}
+              onValueChange={handleRoleChange}
+              disabled={roleFetcher.state === "submitting"}
+            >
               <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
@@ -339,9 +341,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
               {role === "admin" ? "Admin" : "Benutzer"}
             </Badge>
           </div>
-          {roleError && (
-            <p className="text-xs text-destructive">{roleError}</p>
-          )}
+          {roleError && <p className="text-xs text-destructive">{roleError}</p>}
           <p className="hidden text-xs text-muted-foreground md:block">
             Aktiv seit {formattedDate}
           </p>
@@ -435,7 +435,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
                         intent: "user-delete",
                         userId: user.id,
                       },
-                      { method: "post" }
+                      { method: "post" },
                     )
                   }
                   className="bg-destructive hover:bg-destructive/90"

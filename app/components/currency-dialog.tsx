@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -106,7 +101,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
         label: currency.label ?? "",
         conversionFactor: disableConversionFactor
           ? 1
-          : currency.conversionFactor ?? 1,
+          : (currency.conversionFactor ?? 1),
       };
     }
     return { ...defaultValues };
@@ -125,7 +120,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 6,
       }),
-    []
+    [],
   );
   const numericConversionFactor =
     typeof watchedConversionFactor === "number"
@@ -169,12 +164,13 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
 
   const normalizedExistingCodes = useMemo(
     () => existingCodes.map((code) => code.toUpperCase()),
-    [existingCodes]
+    [existingCodes],
   );
 
   const isSubmitting =
     fetcher.state !== "idle" &&
-    fetcher.formData?.get("intent") === (isEdit ? "currency-edit" : "currency-add");
+    fetcher.formData?.get("intent") ===
+      (isEdit ? "currency-edit" : "currency-add");
 
   useEffect(() => {
     if (!open || isEdit) {
@@ -252,7 +248,10 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const handleCodeChange = (value: string) => {
     const sanitized = value.toUpperCase().replace(/[^A-Z]/g, "");
     form.clearErrors("code");
-    form.setValue("code", sanitized, { shouldValidate: true, shouldDirty: true });
+    form.setValue("code", sanitized, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
 
     if (!sanitized) {
       return;
@@ -286,7 +285,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const handleSubmit = (values: FormValues) => {
     const parsed = formSchema.parse(values) as FormOutput;
     const normalizedCode = disableCode
-      ? currency?.code ?? parsed.code.trim().toUpperCase()
+      ? (currency?.code ?? parsed.code.trim().toUpperCase())
       : parsed.code.trim().toUpperCase();
 
     if (!disableCode && normalizedExistingCodes.includes(normalizedCode)) {
@@ -319,17 +318,19 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const conversionDescription = isEdit
     ? `Wie viele ${DEFAULT_CURRENCY_CODE} entspricht 1 ${selectedCode || "?"}?`
     : rateStatus === "loading"
-    ? `Kurs für ${selectedCode || "?"} wird geladen …`
-    : rateStatus === "error"
-    ? rateError ?? "Kurs konnte nicht geladen werden."
-    : `Der aktuelle Kurs wird automatisch über Frankfurter gesetzt.`;
+      ? `Kurs für ${selectedCode || "?"} wird geladen …`
+      : rateStatus === "error"
+        ? (rateError ?? "Kurs konnte nicht geladen werden.")
+        : `Der aktuelle Kurs wird automatisch über Frankfurter gesetzt.`;
 
   const triggerNode = (() => {
     if (props.mode === "edit") {
-      return props.trigger ?? (
-        <Button variant="ghost" size="icon">
-          <PencilLine className="h-4 w-4" />
-        </Button>
+      return (
+        props.trigger ?? (
+          <Button variant="ghost" size="icon">
+            <PencilLine className="h-4 w-4" />
+          </Button>
+        )
       );
     }
 
@@ -363,7 +364,10 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="code"
@@ -404,12 +408,12 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
                       <Input
                         placeholder="z.B. €"
                         {...field}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
 
               <FormField
@@ -442,37 +446,40 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
 
                 return (
                   <FormItem>
-                  <FormLabel>
-                    Umrechnungsfaktor zu {DEFAULT_CURRENCY_CODE}
-                  </FormLabel>
-                  <FormDescription>
-                    {conversionDescription}
-                    {isAdd &&
-                      rateStatus === "success" &&
-                      Number.isFinite(numericConversionFactor) && (
-                        <span className="ml-1 font-medium">
-                          ({conversionFormatter.format(numericConversionFactor)}{' '}
-                          {DEFAULT_CURRENCY_CODE} für 1 {selectedCode || "?"})
-                        </span>
-                      )}
-                  </FormDescription>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0.0001}
-                      step="0.0001"
-                      inputMode="decimal"
-                      {...field}
-                      value={value}
-                      onChange={(event) => field.onChange(event.target.value)}
-                      disabled={
-                        disableConversionFactor || isSubmitting || isAdd
-                      }
-                      readOnly={isAdd || disableConversionFactor}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                    <FormLabel>
+                      Umrechnungsfaktor zu {DEFAULT_CURRENCY_CODE}
+                    </FormLabel>
+                    <FormDescription>
+                      {conversionDescription}
+                      {isAdd &&
+                        rateStatus === "success" &&
+                        Number.isFinite(numericConversionFactor) && (
+                          <span className="ml-1 font-medium">
+                            (
+                            {conversionFormatter.format(
+                              numericConversionFactor,
+                            )}{" "}
+                            {DEFAULT_CURRENCY_CODE} für 1 {selectedCode || "?"})
+                          </span>
+                        )}
+                    </FormDescription>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0.0001}
+                        step="0.0001"
+                        inputMode="decimal"
+                        {...field}
+                        value={value}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        disabled={
+                          disableConversionFactor || isSubmitting || isAdd
+                        }
+                        readOnly={isAdd || disableConversionFactor}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 );
               }}
             />

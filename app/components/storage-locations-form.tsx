@@ -34,7 +34,8 @@ export function StorageLocationsForm() {
             <div>
               <p className="font-medium">Noch keine Standorte erfasst</p>
               <p className="text-sm text-muted-foreground">
-                Lege Garagen oder Stellplätze an, um deine Motorräder zuzuordnen.
+                Lege Garagen oder Stellplätze an, um deine Motorräder
+                zuzuordnen.
               </p>
             </div>
           </div>

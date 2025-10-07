@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Award,
   Bike,
@@ -63,7 +61,7 @@ function ManualOdometerInput({
         motorcycleId: motorcycle.id,
         manualOdo: odoValue,
       },
-      { method: "post" }
+      { method: "post" },
     );
   };
 
@@ -125,7 +123,7 @@ function CurrentLocationInfo({
     } else {
       const daysSinceUpdate = Math.max(
         0,
-        differenceInDays(now, lastUpdatedDate)
+        differenceInDays(now, lastUpdatedDate),
       );
       if (daysSinceUpdate === 0) {
         lastUpdatedLabel = "heute";
@@ -174,7 +172,7 @@ export default function MotorcycleInfo() {
         motorcycleId: motorcycle.id,
         image: newImageUrl,
       },
-      { method: "post" }
+      { method: "post" },
     );
   };
 
@@ -278,7 +276,7 @@ export default function MotorcycleInfo() {
                     value={format(
                       new Date(motorcycle.firstRegistration),
                       "d. MMM yyyy",
-                      { locale: de }
+                      { locale: de },
                     )}
                   />
                 )}
@@ -291,7 +289,7 @@ export default function MotorcycleInfo() {
                         ? format(
                             new Date(motorcycle.lastInspection),
                             "d. MMM yyyy",
-                            { locale: de }
+                            { locale: de },
                           )
                         : "-"
                     }
@@ -306,7 +304,7 @@ export default function MotorcycleInfo() {
                     value={format(
                       new Date(motorcycle.purchaseDate),
                       "d. MMM yyyy",
-                      { locale: de }
+                      { locale: de },
                     )}
                   />
                 )}

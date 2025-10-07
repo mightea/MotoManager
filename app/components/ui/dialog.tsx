@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -21,7 +19,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
+      className,
     )}
     {...props}
   />
@@ -40,7 +38,7 @@ const DialogContent = React.forwardRef<
         "fixed inset-0 z-50 flex h-full w-full flex-col overflow-y-auto bg-background px-4 py-5 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         "sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[calc(100vh-5rem)] sm:w-full sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:px-6 sm:py-6 sm:shadow-xl sm:backdrop-blur supports-[backdrop-filter]:sm:backdrop-blur-xl",
         "gap-5 sm:gap-6",
-        className
+        className,
       )}
       {...props}
     >
@@ -61,7 +59,7 @@ const DialogHeader = ({
   <div
     className={cn(
       "flex flex-col space-y-1.5 text-center sm:text-left",
-      className
+      className,
     )}
     {...props}
   />
@@ -76,7 +74,7 @@ const DialogFooter = ({
     className={cn(
       "sticky bottom-0 left-0 right-0 z-10 mt-4 flex flex-col-reverse gap-2 border-t border-border/60 bg-background/95 p-4 shadow-[0_-12px_24px_-20px_rgb(15_23_42/0.35)] backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm",
       "sm:static sm:mt-6 sm:flex-row sm:items-center sm:justify-end sm:space-x-2 sm:gap-2 sm:border-t sm:border-border/50 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none",
-      className
+      className,
     )}
     {...props}
   />
@@ -91,7 +89,7 @@ const DialogTitle = React.forwardRef<
     ref={ref}
     className={cn(
       "text-lg font-semibold leading-none tracking-tight",
-      className
+      className,
     )}
     {...props}
   />

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useFetcher } from "react-router";
 import {
@@ -43,7 +41,11 @@ export function DocumentDialog({
   const intent = document ? "document-edit" : "document-add";
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data && (fetcher.data as any)?.success) {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      (fetcher.data as any)?.success
+    ) {
       if (!document) {
         formRef.current?.reset();
       }
@@ -54,7 +56,7 @@ export function DocumentDialog({
   const handleDelete = () => {
     if (!document) return;
     const confirmed = window.confirm(
-      `Dokument "${document.title}" wirklich löschen?`
+      `Dokument "${document.title}" wirklich löschen?`,
     );
     if (!confirmed) return;
 
@@ -63,7 +65,7 @@ export function DocumentDialog({
         intent: "document-delete",
         documentId: document.id,
       },
-      { method: "post" }
+      { method: "post" },
     );
   };
 
@@ -89,7 +91,9 @@ export function DocumentDialog({
           key={formKey}
         >
           <input type="hidden" name="intent" value={intent} />
-          {document && <input type="hidden" name="documentId" value={document.id} />}
+          {document && (
+            <input type="hidden" name="documentId" value={document.id} />
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="title">Titel</Label>
@@ -126,9 +130,13 @@ export function DocumentDialog({
             </p>
             <div className="grid gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
               {motorcycles.map((moto) => {
-                const checked = document?.motorcycleIds?.includes(moto.id) ?? false;
+                const checked =
+                  document?.motorcycleIds?.includes(moto.id) ?? false;
                 return (
-                  <label key={moto.id} className="flex items-center gap-3 text-sm">
+                  <label
+                    key={moto.id}
+                    className="flex items-center gap-3 text-sm"
+                  >
                     <input
                       type="checkbox"
                       name="motorcycleIds"

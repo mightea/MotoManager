@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, type ReactNode, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -86,7 +84,7 @@ export function AddIssueDialog({
   const handleDelete = () => {
     fetcher.submit(
       { intent: "issue-delete", issueId: issueToEdit?.id ?? "" },
-      { method: "post" }
+      { method: "post" },
     );
 
     setOpen(false);

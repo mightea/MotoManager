@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -21,9 +19,10 @@ export function DocumentList({ documents }: DocumentListProps) {
   const sortedDocs = useMemo(
     () =>
       [...documents].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
-    [documents]
+    [documents],
   );
 
   if (sortedDocs.length === 0) {
@@ -56,9 +55,12 @@ export function DocumentList({ documents }: DocumentListProps) {
             </div>
             <div className="flex flex-col gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-foreground">{doc.title}</h3>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {doc.title}
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  Hinterlegt am {new Date(doc.createdAt).toLocaleDateString("de-CH")}
+                  Hinterlegt am{" "}
+                  {new Date(doc.createdAt).toLocaleDateString("de-CH")}
                 </p>
               </div>
               <Button asChild variant="outline" size="sm" className="w-fit">

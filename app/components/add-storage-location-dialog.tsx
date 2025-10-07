@@ -85,14 +85,14 @@ export function AddStorageLocationDialog({
         id: locationToEdit?.id ?? "",
         ...values,
       },
-      { method: "post" }
+      { method: "post" },
     );
   };
 
   const handleDelete = () => {
     fetcher.submit(
       { intent: "location-delete", id: locationToEdit?.id ?? "" },
-      { method: "post" }
+      { method: "post" },
     );
   };
 

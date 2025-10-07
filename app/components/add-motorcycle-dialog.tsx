@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -48,7 +46,7 @@ const formSchema = z.object({
     .min(1900, "Baujahr muss nach 1900 liegen.")
     .max(
       new Date().getFullYear() + 1,
-      "Baujahr kann nicht in der Zukunft liegen."
+      "Baujahr kann nicht in der Zukunft liegen.",
     ),
 
   vin: z.string().min(1, "FIN ist erforderlich."),
@@ -96,7 +94,7 @@ export function AddMotorcycleDialog({
     if (open) {
       if (isEditMode && motorcycleToEdit) {
         const firstRegistration = dateInputString(
-          motorcycleToEdit.firstRegistration
+          motorcycleToEdit.firstRegistration,
         );
         const lastInspection = dateInputString(motorcycleToEdit.lastInspection);
         const purchaseDate = dateInputString(motorcycleToEdit.purchaseDate);
@@ -436,7 +434,8 @@ export function AddMotorcycleDialog({
                       </AlertDialogTitle>
                       <AlertDialogDescription>
                         Diese Aktion kann nicht rückgängig gemacht werden.
-                        Dadurch werden alle zugehörigen Daten dauerhaft entfernt.
+                        Dadurch werden alle zugehörigen Daten dauerhaft
+                        entfernt.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
