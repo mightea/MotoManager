@@ -5,6 +5,9 @@ import { parseISO } from "date-fns/parseISO";
 import { differenceInDays } from "date-fns/differenceInDays";
 import { differenceInMonths } from "date-fns/differenceInMonths";
 import { de } from "date-fns/locale/de";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFetcher } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -33,16 +36,15 @@ import {
 } from "~/components/ui/select";
 import { Input } from "./ui/input";
 import type { Motorcycle } from "~/db/schema";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useSettings } from "~/contexts/SettingsProvider";
 import {
   useMotorcycle,
   type CurrentLocationWithName,
 } from "~/contexts/MotorcycleProvider";
-import { useFetcher } from "react-router";
 import { toast } from "~/hooks/use-toast";
 import { Separator } from "./ui/separator";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
 
 const UNKNOWN_LOCATION_LABEL = "Unbekannter Standort";
 
@@ -93,6 +95,7 @@ export function LocationUpdateDialog({
     locationHistory,
     setLocationHistory,
   } = useMotorcycle();
+  const isMobile = useIsMobile();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -175,7 +178,7 @@ export function LocationUpdateDialog({
 
       const previousEntry = index === 0 ? null : locationHistory[index - 1];
       const endDate = previousEntry
-        ? (safeParseDate(previousEntry.date) ?? startDate)
+        ? safeParseDate(previousEntry.date) ?? startDate
         : new Date();
 
       const dateLabel = format(startDate, "d. MMM yyyy", { locale: de });
@@ -191,78 +194,85 @@ export function LocationUpdateDialog({
     });
   }, [locationHistory]);
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Standort aktualisieren</DialogTitle>
-          <DialogDescription>
-            Aktualisiere den aktuellen Standort für deine {motorcycle.make}.
-          </DialogDescription>
-        </DialogHeader>
+  const mainContent = (
+    <>
+      <DialogHeader>
+        <DialogTitle>Standort aktualisieren</DialogTitle>
+        <DialogDescription>
+          Aktualisiere den aktuellen Standort für deine {motorcycle.make}.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex-1 overflow-y-auto pr-1 sm:pr-2">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="storageLocationId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Standort</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Standort wählen" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {storageLocations.map((location) => (
-                        <SelectItem key={location.id} value={`${location.id}`}>
-                          {location.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="odometer"
-              render={({ field }) => {
-                const value =
-                  field.value === undefined || field.value === null
-                    ? ""
-                    : (field.value as number | string);
-
-                return (
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex h-full flex-col gap-4"
+          >
+            <div className="flex-1 space-y-4">
+              <FormField
+                control={form.control}
+                name="storageLocationId"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Aktueller Kilometerstand</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} value={value} />
-                    </FormControl>
+                    <FormLabel>Standort</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Standort wählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {storageLocations.map((location) => (
+                          <SelectItem
+                            key={location.id}
+                            value={`${location.id}`}
+                          >
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
-                );
-              }}
-            />
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Datum</FormLabel>
-                  <Input type="date" {...field} />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="odometer"
+                render={({ field }) => {
+                  const value =
+                    field.value === undefined || field.value === null
+                      ? ""
+                      : (field.value as number | string);
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Aktueller Kilometerstand</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} value={value} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Datum</FormLabel>
+                    <Input type="date" {...field} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <DialogFooter>
               <Button
@@ -312,6 +322,21 @@ export function LocationUpdateDialog({
             </div>
           </div>
         )}
+      </div>
+    </>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        className={cn(
+          isMobile &&
+            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
+          !isMobile && "sm:max-w-[425px]",
+        )}
+      >
+        {mainContent}
       </DialogContent>
     </Dialog>
   );

@@ -3,6 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
+import { Trash2 } from "lucide-react";
+import { useFetcher } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -48,15 +50,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./ui/alert-dialog";
-import {
-  AlertDialogCancel,
   AlertDialogTrigger,
-} from "@radix-ui/react-alert-dialog";
-import { Trash2 } from "lucide-react";
-import { useFetcher } from "react-router";
+} from "./ui/alert-dialog";
+import { AlertDialogCancel } from "@radix-ui/react-alert-dialog";
 import { dateInputString } from "~/utils/dateUtils";
 import { getMaintenanceIcon } from "~/utils/motorcycleUtils";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
 
 const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
   { value: "service", label: "Service / Inspektion" },
@@ -206,6 +206,7 @@ export function AddMaintenanceLogDialog({
 }: AddMaintenanceLogDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!logToEdit;
+  const isMobile = useIsMobile();
 
   const getInitialFormValues = (): FormValues => {
     if (isEditMode && logToEdit) {
@@ -330,27 +331,26 @@ export function AddMaintenanceLogDialog({
   const logType = form.watch("type");
   const fluidType = form.watch("fluidType");
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode
-              ? "Wartungseintrag bearbeiten"
-              : "Neuen Wartungseintrag hinzufügen"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode
-              ? "Aktualisiere die Details für diesen Service."
-              : `Erfasse einen neuen Service oder eine Reparatur für deine ${motorcycle.make} ${motorcycle.model}.`}
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit, onError)}
-            className="space-y-4 max-h-[70vh] overflow-y-auto pr-4"
-          >
+  const mainContent = (
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          {isEditMode
+            ? "Wartungseintrag bearbeiten"
+            : "Neuen Wartungseintrag hinzufügen"}
+        </DialogTitle>
+        <DialogDescription>
+          {isEditMode
+            ? "Aktualisiere die Details für diesen Service."
+            : `Erfasse einen neuen Service oder eine Reparatur für deine ${motorcycle.make} ${motorcycle.model}.`}
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onError)}
+          className="flex h-full flex-col gap-4"
+        >
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
             <FormField
               control={form.control}
               name="type"
@@ -387,7 +387,7 @@ export function AddMaintenanceLogDialog({
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
               <FormField
                 control={form.control}
                 name="date"
@@ -432,7 +432,7 @@ export function AddMaintenanceLogDialog({
             {/* Tire specific fields */}
             {logType === "tire" && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
                   <FormField
                     control={form.control}
                     name={"brand"}
@@ -530,7 +530,7 @@ export function AddMaintenanceLogDialog({
             {/* Tire specific fields */}
             {logType === "battery" && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
                   <FormField
                     control={form.control}
                     name="batteryType"
@@ -646,7 +646,7 @@ export function AddMaintenanceLogDialog({
                     )}
                   />
                 )}
-                <div className="grid grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
                   <FormField
                     control={form.control}
                     name="brand"
@@ -722,56 +722,71 @@ export function AddMaintenanceLogDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter className="sm:justify-between pt-4 -mx-4 px-4 pb-0 bg-background sticky bottom-0">
-              {isEditMode && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="sm:mr-auto"
+          </div>
+          <DialogFooter className="sm:justify-between pt-4">
+            {isEditMode && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="sm:mr-auto"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Löschen
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Eintrag wirklich löschen?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Diese Aktion kann nicht rückgängig gemacht werden.
+                      Dadurch wird der Wartungseintrag dauerhaft gelöscht.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive hover:bg-destructive/90"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
                       Löschen
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Eintrag wirklich löschen?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Diese Aktion kann nicht rückgängig gemacht werden.
-                        Dadurch wird der Wartungseintrag dauerhaft gelöscht.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDelete}
-                        className="bg-destructive hover:bg-destructive/90"
-                      >
-                        Löschen
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-              <div className="flex gap-2 justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                >
-                  Abbrechen
-                </Button>
-                <Button type="submit">
-                  {isEditMode ? "Änderungen speichern" : "Eintrag speichern"}
-                </Button>
-              </div>
-            </DialogFooter>
-          </form>
-        </Form>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit">
+                {isEditMode ? "Änderungen speichern" : "Eintrag speichern"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        className={cn(
+          isMobile &&
+            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
+          !isMobile && "sm:max-w-[520px]",
+        )}
+      >
+        {mainContent}
       </DialogContent>
     </Dialog>
   );

@@ -31,6 +31,8 @@ import {
   findCurrencyPreset,
 } from "~/constants";
 import type { Currency } from "~/contexts/SettingsProvider";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
 
 const formSchema = z.object({
   code: z
@@ -90,6 +92,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const isEdit = props.mode === "edit";
   const isAdd = !isEdit;
   const currency = isEdit ? props.currency : undefined;
+  const isMobile = useIsMobile();
 
   const [open, setOpen] = useState(false);
 
@@ -101,7 +104,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
         label: currency.label ?? "",
         conversionFactor: disableConversionFactor
           ? 1
-          : (currency.conversionFactor ?? 1),
+          : currency.conversionFactor ?? 1,
       };
     }
     return { ...defaultValues };
@@ -284,7 +287,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const handleSubmit = (values: FormValues) => {
     const parsed = formSchema.parse(values) as FormOutput;
     const normalizedCode = disableCode
-      ? (currency?.code ?? parsed.code.trim().toUpperCase())
+      ? currency?.code ?? parsed.code.trim().toUpperCase()
       : parsed.code.trim().toUpperCase();
 
     if (!disableCode && normalizedExistingCodes.includes(normalizedCode)) {
@@ -317,10 +320,10 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const conversionDescription = isEdit
     ? `Wie viele ${DEFAULT_CURRENCY_CODE} entspricht 1 ${selectedCode || "?"}?`
     : rateStatus === "loading"
-      ? `Kurs für ${selectedCode || "?"} wird geladen …`
-      : rateStatus === "error"
-        ? (rateError ?? "Kurs konnte nicht geladen werden.")
-        : `Der aktuelle Kurs wird automatisch über Frankfurter gesetzt.`;
+    ? `Kurs für ${selectedCode || "?"} wird geladen …`
+    : rateStatus === "error"
+    ? rateError ?? "Kurs konnte nicht geladen werden."
+    : `Der aktuelle Kurs wird automatisch über Frankfurter gesetzt.`;
 
   const triggerNode = (() => {
     if (props.mode === "edit") {
@@ -349,24 +352,25 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
 
   const title = isEdit ? "Währung bearbeiten" : "Währung hinzufügen";
   const description = isEdit
-    ? `Passe Symbol, Bezeichnung oder den Umrechnungsfaktor für ${currency?.code} an.`
+    ? `Passe Symbol, Bezeichnung oder den Umrechnungsfaktor für ${
+        currency?.code
+      } an.`
     : "Lege Symbol, Bezeichnung und Umrechnung zur Standardwährung fest.";
   const submitLabel = isEdit ? "Aktualisieren" : "Speichern";
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{triggerNode}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
+  const mainContent = (
+    <>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{description}</DialogDescription>
+      </DialogHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex h-full flex-col gap-4"
+        >
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
             <FormField
               control={form.control}
               name="code"
@@ -397,7 +401,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
               )}
             />
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
               <FormField
                 control={form.control}
                 name="symbol"
@@ -483,22 +487,37 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
                 );
               }}
             />
+          </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isSubmitting}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={disableSubmit}>
-                {submitLabel}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isSubmitting}
+            >
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={disableSubmit}>
+              {submitLabel}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{triggerNode}</DialogTrigger>
+      <DialogContent
+        className={cn(
+          isMobile &&
+            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
+          !isMobile && "sm:max-w-md",
+        )}
+      >
+        {mainContent}
       </DialogContent>
     </Dialog>
   );

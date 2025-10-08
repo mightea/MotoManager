@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useFetcher } from "react-router";
+
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,8 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { Motorcycle } from "~/db/schema";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
 
 export interface DocumentDialogData {
   id: number;
@@ -37,8 +40,11 @@ export function DocumentDialog({
   const fetcher = useFetcher();
   const formRef = useRef<HTMLFormElement>(null);
   const isSubmitting = fetcher.state !== "idle";
-  const formKey = `${document ? `edit-${document.id}` : "new"}-${open ? "open" : "closed"}`;
+  const formKey = `${
+    document ? `edit-${document.id}` : "new"
+  }-${open ? "open" : "closed"}`;
   const intent = document ? "document-edit" : "document-add";
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (
@@ -69,27 +75,26 @@ export function DocumentDialog({
     );
   };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {document ? "Dokument bearbeiten" : "Dokument hochladen"}
-          </DialogTitle>
-          <DialogDescription>
-            {document
-              ? "Passe Titel, Zuordnung oder Datei dieses Dokuments an."
-              : "Lade ein PDF hoch und ordne es deinen Motorrädern zu."}
-          </DialogDescription>
-        </DialogHeader>
-        <fetcher.Form
-          method="post"
-          encType="multipart/form-data"
-          className="space-y-4"
-          ref={formRef}
-          key={formKey}
-        >
+  const mainContent = (
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          {document ? "Dokument bearbeiten" : "Dokument hochladen"}
+        </DialogTitle>
+        <DialogDescription>
+          {document
+            ? "Passe Titel, Zuordnung oder Datei dieses Dokuments an."
+            : "Lade ein PDF hoch und ordne es deinen Motorrädern zu."}
+        </DialogDescription>
+      </DialogHeader>
+      <fetcher.Form
+        method="post"
+        encType="multipart/form-data"
+        className="flex h-full flex-col gap-4"
+        ref={formRef}
+        key={formKey}
+      >
+        <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
           <input type="hidden" name="intent" value={intent} />
           {document && (
             <input type="hidden" name="documentId" value={document.id} />
@@ -153,32 +158,47 @@ export function DocumentDialog({
               })}
             </div>
           </div>
+        </div>
 
-          <DialogFooter>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isSubmitting}
+          >
+            Abbrechen
+          </Button>
+          {document && (
             <Button
               type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              onClick={handleDelete}
               disabled={isSubmitting}
             >
-              Abbrechen
+              Löschen
             </Button>
-            {document && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                onClick={handleDelete}
-                disabled={isSubmitting}
-              >
-                Löschen
-              </Button>
-            )}
-            <Button type="submit" disabled={isSubmitting}>
-              {document ? "Speichern" : "Hochladen"}
-            </Button>
-          </DialogFooter>
-        </fetcher.Form>
+          )}
+          <Button type="submit" disabled={isSubmitting}>
+            {document ? "Speichern" : "Hochladen"}
+          </Button>
+        </DialogFooter>
+      </fetcher.Form>
+    </>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        className={cn(
+          isMobile &&
+            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
+          !isMobile && "sm:max-w-md",
+        )}
+      >
+        {mainContent}
       </DialogContent>
     </Dialog>
   );

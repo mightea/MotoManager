@@ -2,6 +2,8 @@ import { useState, type ReactNode, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Trash2 } from "lucide-react";
+import { useFetcher } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -42,9 +44,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
-import { Trash2 } from "lucide-react";
-import { useFetcher } from "react-router";
 import { dateInputString } from "~/utils/dateUtils";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
 
 const issueSchema = z.object({
   date: z.string().min(1, "Ein Datum ist erforderlich."),
@@ -74,6 +76,7 @@ export function AddIssueDialog({
 }: AddIssueDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!issueToEdit;
+  const isMobile = useIsMobile();
 
   const form = useForm<IssueFormValues>({
     resolver: zodResolver(issueSchema),
@@ -110,195 +113,215 @@ export function AddIssueDialog({
         });
       }
     }
-  }, [open, isEditMode, issueToEdit, form]);
+  }, [open, isEditMode, issueToEdit, form, currentOdometer]);
+  
+  const mainContent = (
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          {isEditMode ? "Mangel bearbeiten" : "Neuen Mangel erfassen"}
+        </DialogTitle>
+        <DialogDescription>
+          {isEditMode
+            ? "Aktualisiere die Details zu diesem Mangel."
+            : `Erfasse einen neuen Mangel für deine ${
+                motorcycle?.make ?? ""
+              } ${motorcycle?.model ?? ""}.`}
+        </DialogDescription>
+      </DialogHeader>
+      <Form {...form}>
+        <form
+          method="post"
+          className="flex h-full flex-col gap-4"
+          onSubmit={(e) => {
+            form.handleSubmit(() => {
+              // No client-side validation needed, handled by server
+            })(e);
+          }}
+        >
+          <input type="hidden" name="motorcycleId" value={motorcycle.id} />
+          <input type="hidden" name="issueId" value={issueToEdit?.id ?? ""} />
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Beschreibung</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Beschreibe den Mangel..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Mangel bearbeiten" : "Neuen Mangel erfassen"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode
-              ? "Aktualisiere die Details zu diesem Mangel."
-              : `Erfasse einen neuen Mangel für deine ${
-                  motorcycle?.make ?? ""
-                } ${motorcycle?.model ?? ""}.`}
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form method="post" className="flex h-full flex-col gap-4">
-            <input type="hidden" name="motorcycleId" value={motorcycle.id} />
-            <input type="hidden" name="issueId" value={issueToEdit?.id ?? ""} />
-            <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
+            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
               <FormField
                 control={form.control}
-                name="description"
+                name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Beschreibung</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Beschreibe den Mangel..."
-                        {...field}
-                      />
-                    </FormControl>
+                    <FormLabel>Priorität</FormLabel>
+                    <Select
+                      name={field.name}
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Priorität wählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Niedrig</SelectItem>
+                        <SelectItem value="medium">Mittel</SelectItem>
+                        <SelectItem value="high">Hoch</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      name={field.name}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Status wählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="new">Offen</SelectItem>
+                        <SelectItem value="in_progress">
+                          In Bearbeitung
+                        </SelectItem>
+                        <SelectItem value="done">Erledigt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Datum</FormLabel>
+                    <Input type="date" {...field} />
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Priorität</FormLabel>
-                      <Select
-                        name={field.name}
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Priorität wählen" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="low">Niedrig</SelectItem>
-                          <SelectItem value="medium">Mittel</SelectItem>
-                          <SelectItem value="high">Hoch</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        name={field.name}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Status wählen" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="new">Offen</SelectItem>
-                          <SelectItem value="in_progress">
-                            In Bearbeitung
-                          </SelectItem>
-                          <SelectItem value="done">Erledigt</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Datum</FormLabel>
-                      <Input type="date" {...field} />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="odo"
+                render={({ field }) => {
+                  const value =
+                    field.value === undefined || field.value === null
+                      ? ""
+                      : (field.value as number | string);
 
-                <FormField
-                  control={form.control}
-                  name="odo"
-                  render={({ field }) => {
-                    const value =
-                      field.value === undefined || field.value === null
-                        ? ""
-                        : (field.value as number | string);
-
-                    return (
-                      <FormItem>
-                        <FormLabel>Kilometerstand</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Kilometerstand"
-                            {...field}
-                            value={value}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-              </div>
+                  return (
+                    <FormItem>
+                      <FormLabel>Kilometerstand</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Kilometerstand"
+                          {...field}
+                          value={value}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
             </div>
-            <DialogFooter>
-              {isEditMode && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="sm:mr-auto"
+          </div>
+          <DialogFooter>
+            {isEditMode && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="sm:mr-auto"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Löschen
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Mangel wirklich löschen?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Diese Aktion kann nicht rückgängig gemacht werden.
+                      Dadurch wird der Mangel dauerhaft aus deinen
+                      Aufzeichnungen entfernt.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive hover:bg-destructive/90"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
                       Löschen
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Mangel wirklich löschen?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Diese Aktion kann nicht rückgängig gemacht werden.
-                        Dadurch wird der Mangel dauerhaft aus deinen
-                        Aufzeichnungen entfernt.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDelete}
-                        className="bg-destructive hover:bg-destructive/90"
-                      >
-                        Löschen
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button
-                type="submit"
-                name="intent"
-                value={isEditMode ? "issue-edit" : "issue-add"}
-              >
-                {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="submit"
+              name="intent"
+              value={isEditMode ? "issue-edit" : "issue-add"}
+            >
+              {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
+    </>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        className={cn(
+          isMobile &&
+            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
+          !isMobile && "sm:max-w-[480px]",
+        )}
+      >
+        {mainContent}
       </DialogContent>
     </Dialog>
   );

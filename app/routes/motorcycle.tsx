@@ -33,7 +33,6 @@ import TorqueSpecificationsPanel from "~/components/torque-specifications-panel"
 import DocumentList, {
   type DocumentListItem,
 } from "~/components/document-list";
-import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
@@ -635,111 +634,15 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     documents,
   } = loaderData;
   const { make, model } = motorcycle;
-  const location = useLocation();
-  const navigate = useNavigate();
   const validTabs = ["info", "maintenance", "torque", "documents"] as const;
-
-  const getTabFromHash = (hash: string) => {
-    const normalized = hash.startsWith("#") ? hash.slice(1) : hash;
-    return (validTabs as readonly string[]).includes(normalized)
-      ? (normalized as (typeof validTabs)[number])
-      : null;
-  };
-
-  const [activeTab, setActiveTab] = useState<(typeof validTabs)[number]>(() => {
-    const hashTab = getTabFromHash(location.hash);
-    if (hashTab) {
-      return hashTab;
-    }
-
-    if (typeof window !== "undefined") {
-      const isLargeScreen = window.matchMedia("(min-width: 1024px)").matches;
-      if (!isLargeScreen) {
-        return "info";
-      }
-    }
-
-    return "maintenance";
-  });
-
-  useEffect(() => {
-    const hashTab = getTabFromHash(location.hash);
-    if (hashTab && hashTab !== activeTab) {
-      setActiveTab(hashTab);
-    }
-  }, [location.hash, activeTab]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-
-    const syncTabWithViewport = (isLargeScreen: boolean) => {
-      if (isLargeScreen && activeTab === "info") {
-        const nextTab: (typeof validTabs)[number] = "maintenance";
-        setActiveTab(nextTab);
-        navigate(
-          {
-            pathname: location.pathname,
-            search: location.search,
-            hash: `#${nextTab}`,
-          },
-          { replace: true },
-        );
-        return;
-      }
-
-      if (!isLargeScreen && activeTab === "maintenance" && !location.hash) {
-        const nextTab: (typeof validTabs)[number] = "info";
-        setActiveTab(nextTab);
-        navigate(
-          {
-            pathname: location.pathname,
-            search: location.search,
-            hash: `#${nextTab}`,
-          },
-          { replace: true },
-        );
-      }
-    };
-
-    syncTabWithViewport(mediaQuery.matches);
-
-    const handleChange = (event: MediaQueryListEvent) => {
-      syncTabWithViewport(event.matches);
-    };
-
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleChange);
-    } else {
-      mediaQuery.addListener(handleChange);
-    }
-
-    return () => {
-      if (typeof mediaQuery.removeEventListener === "function") {
-        mediaQuery.removeEventListener("change", handleChange);
-      } else {
-        mediaQuery.removeListener(handleChange);
-      }
-    };
-  }, [activeTab, location.hash, location.pathname, location.search, navigate]);
+  const [activeTab, setActiveTab] =
+    useState<(typeof validTabs)[number]>("info");
 
   const handleTabChange = (value: string) => {
     const nextValue = (validTabs as readonly string[]).includes(value)
       ? (value as (typeof validTabs)[number])
       : activeTab;
-
     setActiveTab(nextValue);
-    navigate(
-      {
-        pathname: location.pathname,
-        search: location.search,
-        hash: `#${nextValue}`,
-      },
-      { replace: true },
-    );
   };
 
   return (

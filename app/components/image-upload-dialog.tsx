@@ -1,4 +1,11 @@
 import { useState, useRef, type ReactNode } from "react";
+import ReactCrop, {
+  centerCrop,
+  makeAspectCrop,
+  type Crop,
+} from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+
 import {
   Dialog,
   DialogContent,
@@ -9,18 +16,9 @@ import {
   DialogClose,
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
-import ReactCrop, {
-  centerCrop,
-  makeAspectCrop,
-  type Crop,
-} from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
 import { Input } from "./ui/input";
-
-// Helper function to generate cropped image from a canvas
-function canvasToDataUrl(canvas: HTMLCanvasElement): string {
-  return canvas.toDataURL("image/jpeg", 0.9); // Use JPEG for better compression
-}
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn } from "~/lib/utils";
 
 type ImageUploadDialogProps = {
   children: ReactNode;
@@ -39,6 +37,7 @@ export function ImageUploadDialog({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
+  const isMobile = useIsMobile();
 
   function onSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files.length > 0) {
@@ -117,66 +116,78 @@ export function ImageUploadDialog({
     };
   }
 
+  const mainContent = (
+    <>
+      <DialogHeader>
+        <DialogTitle>Bild hochladen und zuschneiden</DialogTitle>
+      </DialogHeader>
+      <div className="grid flex-1 gap-4 py-4 overflow-y-auto">
+        {!imgSrc ? (
+          <div className="flex flex-col items-center gap-4 p-8 border-2 border-dashed rounded-md">
+            <p>Wähle eine Bilddatei von deinem Gerät.</p>
+            <Input
+              id="picture"
+              type="file"
+              accept="image/*"
+              onChange={onSelectFile}
+              className="max-w-xs"
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4">
+            <ReactCrop
+              crop={crop}
+              onChange={(_, percentCrop) => setCrop(percentCrop)}
+              onComplete={(c) => setCompletedCrop(c)}
+              aspect={aspectRatio}
+              minWidth={100}
+            >
+              <img
+                ref={imgRef}
+                alt="Crop me"
+                src={imgSrc}
+                onLoad={onImageLoad}
+                className="max-h-[60vh] object-contain"
+              />
+            </ReactCrop>
+            {/* Hidden canvas for drawing the cropped image */}
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+          </div>
+        )}
+      </div>
+      <DialogFooter>
+        {imgSrc && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setImgSrc("")}
+          >
+            Anderes Bild wählen
+          </Button>
+        )}
+        <DialogClose asChild>
+          <Button type="button" variant="secondary">
+            Abbrechen
+          </Button>
+        </DialogClose>
+        <Button onClick={handleCrop} disabled={!completedCrop || !imgSrc}>
+          Zuschneiden und Speichern
+        </Button>
+      </DialogFooter>
+    </>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[625px]">
-        <DialogHeader>
-          <DialogTitle>Bild hochladen und zuschneiden</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {!imgSrc ? (
-            <div className="flex flex-col items-center gap-4 p-8 border-2 border-dashed rounded-md">
-              <p>Wähle eine Bilddatei von deinem Gerät.</p>
-              <Input
-                id="picture"
-                type="file"
-                accept="image/*"
-                onChange={onSelectFile}
-                className="max-w-xs"
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <ReactCrop
-                crop={crop}
-                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                onComplete={(c) => setCompletedCrop(c)}
-                aspect={aspectRatio}
-                minWidth={100}
-              >
-                <img
-                  ref={imgRef}
-                  alt="Crop me"
-                  src={imgSrc}
-                  onLoad={onImageLoad}
-                  className="max-h-[60vh] object-contain"
-                />
-              </ReactCrop>
-              {/* Hidden canvas for drawing the cropped image */}
-              <canvas ref={canvasRef} style={{ display: "none" }} />
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          {imgSrc && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setImgSrc("")}
-            >
-              Anderes Bild wählen
-            </Button>
-          )}
-          <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Abbrechen
-            </Button>
-          </DialogClose>
-          <Button onClick={handleCrop} disabled={!completedCrop || !imgSrc}>
-            Zuschneiden und Speichern
-          </Button>
-        </DialogFooter>
+      <DialogContent
+        className={cn(
+          isMobile &&
+            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
+          !isMobile && "sm:max-w-[625px]",
+        )}
+      >
+        {mainContent}
       </DialogContent>
     </Dialog>
   );
