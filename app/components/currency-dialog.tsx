@@ -138,7 +138,6 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
     } else {
       form.reset(initialValues);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialValues]);
 
   useEffect(() => {
@@ -390,7 +389,8 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
                     />
                   </FormControl>
                   <FormDescription>
-                    Verwende Großbuchstaben, z.B. "USD" oder "GBP".
+                    Verwende Großbuchstaben, z.B. &quot;USD&quot; oder
+                    &quot;GBP&quot;.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

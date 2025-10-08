@@ -23,13 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import MaintenanceLogTable from "~/components/maintenance-log-table";
 import { OpenIssuesCard } from "~/components/open-issues-card";
 import { Button } from "~/components/ui/button";
-import {
-  ClipboardList,
-  FileText,
-  Gauge,
-  Info,
-  PlusCircle,
-} from "lucide-react";
+import { ClipboardList, FileText, Gauge, Info, PlusCircle } from "lucide-react";
 import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
 import { data, redirect } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
@@ -54,7 +48,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   const result = await db.query.motorcycles.findFirst({
-    where: and(eq(motorcycles.id, motorcycleId), eq(motorcycles.userId, user.id)),
+    where: and(
+      eq(motorcycles.id, motorcycleId),
+      eq(motorcycles.userId, user.id),
+    ),
   });
 
   if (result === undefined) {
@@ -108,7 +105,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     .from(documents)
     .leftJoin(
       documentMotorcycles,
-      eq(documentMotorcycles.documentId, documents.id)
+      eq(documentMotorcycles.documentId, documents.id),
     );
 
   const documentsMap = new Map<
@@ -141,9 +138,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     }
   });
 
-  const documentSummaries: DocumentListItem[] = Array.from(documentsMap.values())
+  const documentSummaries: DocumentListItem[] = Array.from(
+    documentsMap.values(),
+  )
     .filter(
-      (doc) => doc.motorcycleIds.length === 0 || doc.motorcycleIds.includes(motorcycleId)
+      (doc) =>
+        doc.motorcycleIds.length === 0 ||
+        doc.motorcycleIds.includes(motorcycleId),
     )
     .map((doc) => ({
       id: doc.id,
@@ -174,7 +175,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       torqueSpecifications,
       documents: documentSummaries,
     },
-    { headers: mergeHeaders(headers ?? {}) }
+    { headers: mergeHeaders(headers ?? {}) },
   );
 }
 
@@ -185,10 +186,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const fields = Object.fromEntries(formData);
 
-  const respond = (
-    body: unknown,
-    init?: ResponseInit
-  ) =>
+  const respond = (body: unknown, init?: ResponseInit) =>
     data(body, {
       ...init,
       headers: mergeHeaders(sessionHeaders ?? {}),
@@ -202,18 +200,21 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (Number.isNaN(motorcycleId)) {
     return respond(
       { success: false, message: "Motorrad konnte nicht ermittelt werden." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const targetMotorcycle = await db.query.motorcycles.findFirst({
-    where: and(eq(motorcycles.id, motorcycleId), eq(motorcycles.userId, user.id)),
+    where: and(
+      eq(motorcycles.id, motorcycleId),
+      eq(motorcycles.userId, user.id),
+    ),
   });
 
   if (!targetMotorcycle) {
     return respond(
       { success: false, message: "Motorrad wurde nicht gefunden." },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -255,8 +256,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(
         and(
           eq(issues.id, Number.parseInt(fields.issueId as string)),
-          eq(issues.motorcycleId, targetMotorcycle.id)
-        )
+          eq(issues.motorcycleId, targetMotorcycle.id),
+        ),
       );
 
     return respond({ success: true }, { status: 200 });
@@ -269,8 +270,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(
         and(
           eq(issues.id, Number.parseInt(fields.issueId as string)),
-          eq(issues.motorcycleId, targetMotorcycle.id)
-        )
+          eq(issues.motorcycleId, targetMotorcycle.id),
+        ),
       );
 
     return respond({ success: true }, { status: 200 });
@@ -302,8 +303,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(
         and(
           eq(motorcycles.id, targetMotorcycle.id),
-          eq(motorcycles.userId, user.id)
-        )
+          eq(motorcycles.userId, user.id),
+        ),
       );
 
     return respond({ success: true }, { status: 200 });
@@ -313,9 +314,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     await db
       .delete(maintenanceRecords)
       .where(eq(maintenanceRecords.motorcycleId, targetMotorcycle.id));
-    await db
-      .delete(issues)
-      .where(eq(issues.motorcycleId, targetMotorcycle.id));
+    await db.delete(issues).where(eq(issues.motorcycleId, targetMotorcycle.id));
     await db
       .delete(locationRecords)
       .where(eq(locationRecords.motorcycleId, targetMotorcycle.id));
@@ -325,9 +324,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     await db
       .delete(torqueSpecs)
       .where(eq(torqueSpecs.motorcycleId, targetMotorcycle.id));
-    await db
-      .delete(motorcycles)
-      .where(eq(motorcycles.id, targetMotorcycle.id));
+    await db.delete(motorcycles).where(eq(motorcycles.id, targetMotorcycle.id));
 
     return redirect("/");
   }
@@ -341,7 +338,10 @@ export async function action({ request, params }: Route.ActionArgs) {
       .update(motorcycles)
       .set(editMotorcycle)
       .where(
-        and(eq(motorcycles.id, targetMotorcycle.id), eq(motorcycles.userId, user.id))
+        and(
+          eq(motorcycles.id, targetMotorcycle.id),
+          eq(motorcycles.userId, user.id),
+        ),
       );
 
     return respond({ success: true }, { status: 200 });
@@ -354,15 +354,24 @@ export async function action({ request, params }: Route.ActionArgs) {
         manualOdo: parseIntSafe(fields.manualOdo as string),
       } satisfies EditorMotorcycle)
       .where(
-        and(eq(motorcycles.id, targetMotorcycle.id), eq(motorcycles.userId, user.id))
+        and(
+          eq(motorcycles.id, targetMotorcycle.id),
+          eq(motorcycles.userId, user.id),
+        ),
       );
-    return respond({ success: true, intent: "motorcycle-odo" }, { status: 200 });
+    return respond(
+      { success: true, intent: "motorcycle-odo" },
+      { status: 200 },
+    );
   }
 
   if (intent === "maintenance-add") {
-    console.log(formData);
-    const { intent: _intent, maintenanceId: _maintenanceId, motorcycleId: _mid, ...rest } =
-      fields as Record<string, unknown>;
+    const {
+      intent: _intent,
+      maintenanceId: _maintenanceId,
+      motorcycleId: _mid,
+      ...rest
+    } = fields as Record<string, unknown>;
     const item = await db
       .insert(maintenanceRecords)
       .values({
@@ -392,10 +401,10 @@ export async function action({ request, params }: Route.ActionArgs) {
         and(
           eq(
             maintenanceRecords.id,
-            Number.parseInt((maintenanceId as string) ?? "")
+            Number.parseInt((maintenanceId as string) ?? ""),
           ),
-          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id)
-        )
+          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id),
+        ),
       )
       .returning();
 
@@ -411,8 +420,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(
         and(
           eq(maintenanceRecords.id, Number.parseInt(fields.logId as string)),
-          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id)
-        )
+          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id),
+        ),
       );
 
     return respond({ success: true }, { status: 200 });
@@ -427,10 +436,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     if (Number.isNaN(locationId)) {
       return respond(
-      { success: false, message: "Standort ist erforderlich." },
-      { status: 400 }
-    );
-  }
+        { success: false, message: "Standort ist erforderlich." },
+        { status: 400 },
+      );
+    }
 
     const selectedLocation = await db.query.locations.findFirst({
       where: and(eq(locations.id, locationId), eq(locations.userId, user.id)),
@@ -439,7 +448,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     if (!selectedLocation) {
       return respond(
         { success: false, message: "Standort wurde nicht gefunden." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -470,7 +479,7 @@ export async function action({ request, params }: Route.ActionArgs) {
           locationName: selectedLocation.name,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   }
 
@@ -479,7 +488,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     if (Number.isNaN(torque)) {
       return respond(
         { success: false, message: "Drehmoment ist ungültig." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -487,8 +496,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     const name = (fields.name as string | undefined)?.trim();
     if (!category || !name) {
       return respond(
-        { success: false, message: "Kategorie und Bezeichnung sind erforderlich." },
-        { status: 400 }
+        {
+          success: false,
+          message: "Kategorie und Bezeichnung sind erforderlich.",
+        },
+        { status: 400 },
       );
     }
 
@@ -522,8 +534,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     const specId = Number.parseInt((fields.torqueId as string) ?? "");
     if (Number.isNaN(specId)) {
       return respond(
-        { success: false, message: "Drehmomentwert konnte nicht ermittelt werden." },
-        { status: 400 }
+        {
+          success: false,
+          message: "Drehmomentwert konnte nicht ermittelt werden.",
+        },
+        { status: 400 },
       );
     }
 
@@ -531,8 +546,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     const name = (fields.name as string | undefined)?.trim();
     if (!category || !name) {
       return respond(
-        { success: false, message: "Kategorie und Bezeichnung sind erforderlich." },
-        { status: 400 }
+        {
+          success: false,
+          message: "Kategorie und Bezeichnung sind erforderlich.",
+        },
+        { status: 400 },
       );
     }
 
@@ -540,7 +558,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     if (Number.isNaN(torque)) {
       return respond(
         { success: false, message: "Drehmoment ist ungültig." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -568,8 +586,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(
         and(
           eq(torqueSpecs.id, specId),
-          eq(torqueSpecs.motorcycleId, targetMotorcycle.id)
-        )
+          eq(torqueSpecs.motorcycleId, targetMotorcycle.id),
+        ),
       );
 
     return respond({ success: true, intent: "torque-edit" }, { status: 200 });
@@ -579,8 +597,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     const specId = Number.parseInt((fields.torqueId as string) ?? "");
     if (Number.isNaN(specId)) {
       return respond(
-        { success: false, message: "Drehmomentwert konnte nicht ermittelt werden." },
-        { status: 400 }
+        {
+          success: false,
+          message: "Drehmomentwert konnte nicht ermittelt werden.",
+        },
+        { status: 400 },
       );
     }
 
@@ -589,8 +610,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       .where(
         and(
           eq(torqueSpecs.id, specId),
-          eq(torqueSpecs.motorcycleId, targetMotorcycle.id)
-        )
+          eq(torqueSpecs.motorcycleId, targetMotorcycle.id),
+        ),
       );
 
     return respond({ success: true, intent: "torque-delete" }, { status: 200 });
@@ -598,7 +619,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   return respond(
     { success: false, message: `Unhandled intent ${intent}` },
-    { status: 500 }
+    { status: 500 },
   );
 }
 
@@ -665,7 +686,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
             search: location.search,
             hash: `#${nextTab}`,
           },
-          { replace: true }
+          { replace: true },
         );
         return;
       }
@@ -679,7 +700,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
             search: location.search,
             hash: `#${nextTab}`,
           },
-          { replace: true }
+          { replace: true },
         );
       }
     };
@@ -717,7 +738,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
         search: location.search,
         hash: `#${nextValue}`,
       },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -789,7 +810,9 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
               <Card>
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <CardTitle className="text-2xl">Wartungsprotokoll</CardTitle>
+                    <CardTitle className="text-2xl">
+                      Wartungsprotokoll
+                    </CardTitle>
                     <AddMaintenanceLogDialog
                       motorcycle={motorcycle}
                       currentOdometer={currentOdo}

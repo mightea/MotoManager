@@ -18,7 +18,6 @@ import { urlMotorcycle } from "./utils/urlUtils";
 import {
   motorcycles,
   type NewMotorcycle,
-  currencySettings,
   locations as locationsTable,
   type User,
 } from "./db/schema";
@@ -42,7 +41,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!user && !publicPath) {
     const redirectTo = encodeURIComponent(
-      `${url.pathname}${url.search}${url.hash}`
+      `${url.pathname}${url.search}${url.hash}`,
     );
     const response = redirect(`/auth/login?redirectTo=${redirectTo}`);
     const mergedHeaders = mergeHeaders(sessionHeaders ?? {});
@@ -140,14 +139,16 @@ export async function action({ request }: ActionFunctionArgs) {
   const parseString = (value: FormDataEntryValue | null | undefined) =>
     typeof value === "string" ? value : "";
 
-  const parseOptionalString = (value: FormDataEntryValue | null | undefined) => {
+  const parseOptionalString = (
+    value: FormDataEntryValue | null | undefined,
+  ) => {
     const str = parseString(value).trim();
     return str.length > 0 ? str : undefined;
   };
 
   const parseNumber = (
     value: FormDataEntryValue | null | undefined,
-    fallback?: number
+    fallback?: number,
   ) => {
     const parsed = Number.parseFloat(parseString(value));
     return Number.isNaN(parsed) ? fallback : parsed;
@@ -155,7 +156,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const parseInteger = (
     value: FormDataEntryValue | null | undefined,
-    fallback?: number
+    fallback?: number,
   ) => {
     const parsed = Number.parseInt(parseString(value), 10);
     return Number.isNaN(parsed) ? fallback : parsed;

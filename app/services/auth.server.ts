@@ -1,4 +1,8 @@
-import { randomBytes, timingSafeEqual, scrypt as nodeScrypt } from "node:crypto";
+import {
+  randomBytes,
+  timingSafeEqual,
+  scrypt as nodeScrypt,
+} from "node:crypto";
 import { promisify } from "node:util";
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "~/db";
@@ -12,11 +16,7 @@ import {
   type NewUser,
   type NewSession,
 } from "~/db/schema";
-import {
-  USER_ROLES,
-  type PublicUser,
-  type UserRole,
-} from "~/types/auth";
+import { type PublicUser, type UserRole } from "~/types/auth";
 
 const scrypt = promisify(nodeScrypt);
 
@@ -26,6 +26,7 @@ const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 const SECURE_COOKIE = process.env.NODE_ENV === "production";
 
 export function toPublicUser(user: User): PublicUser {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passwordHash: _passwordHash, ...rest } = user;
   return {
     ...rest,
@@ -50,7 +51,7 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(
   password: string,
-  hashed: string
+  hashed: string,
 ): Promise<boolean> {
   const [salt, key] = hashed.split(":");
   if (!salt || !key) {
@@ -95,11 +96,13 @@ function parseCookieHeader(request: Request): string | null {
     return null;
   }
 
-  return header
-    .split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${SESSION_COOKIE_NAME}=`))
-    ?.slice(SESSION_COOKIE_NAME.length + 1) ?? null;
+  return (
+    header
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(`${SESSION_COOKIE_NAME}=`))
+      ?.slice(SESSION_COOKIE_NAME.length + 1) ?? null
+  );
 }
 
 export type AuthSession = {
@@ -108,7 +111,9 @@ export type AuthSession = {
   headers: Record<string, string>;
 };
 
-export async function getCurrentSession(request: Request): Promise<AuthSession> {
+export async function getCurrentSession(
+  request: Request,
+): Promise<AuthSession> {
   const token = parseCookieHeader(request);
 
   if (!token) {
@@ -152,7 +157,9 @@ export async function getCurrentSession(request: Request): Promise<AuthSession> 
     };
   }
 
-  const renewedExpiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
+  const renewedExpiresAt = new Date(
+    Date.now() + SESSION_DURATION_MS,
+  ).toISOString();
   await db
     .update(sessions)
     .set({ expiresAt: renewedExpiresAt })
@@ -214,7 +221,9 @@ export async function findUserByUsername(username: string) {
 
 export async function getUserCount() {
   const db = await getDb();
-  const [result] = await db.select({ count: sql<number>`count(*)` }).from(users);
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(users);
 
   return result?.count ?? 0;
 }
@@ -223,14 +232,16 @@ export async function createUser(
   input: Pick<NewUser, "email" | "name" | "username"> & {
     password: string;
     role?: UserRole;
-  }
+  },
 ): Promise<PublicUser> {
   const db = await getDb();
 
   const normalizedEmail = normalizeEmail(input.email);
   const existing = await findUserByEmail(normalizedEmail);
   if (existing) {
-    throw new Error("Es existiert bereits ein Benutzer mit dieser E-Mail-Adresse.");
+    throw new Error(
+      "Es existiert bereits ein Benutzer mit dieser E-Mail-Adresse.",
+    );
   }
 
   const normalizedUsername = normalizeUsername(input.username);
@@ -272,7 +283,7 @@ export async function updateUserPassword(userId: number, password: string) {
 
 export async function verifyLogin(
   identifier: string,
-  password: string
+  password: string,
 ): Promise<User | null> {
   const normalized = identifier.trim().toLowerCase();
 
