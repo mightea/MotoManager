@@ -20,4 +20,8 @@ export default [
 
     route("/motorcycle/:slug/:motorcycleId", "routes/motorcycle.tsx"),
   ]),
+  route(
+    "/.well-known/appspecific/com.chrome.devtools.json",
+    "routes/com.chrome.devtools.json.tsx",
+  ),
 ] satisfies RouteConfig;
