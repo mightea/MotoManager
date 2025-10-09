@@ -54,7 +54,6 @@ export const motorcycles = sqliteTable("motorcycles", {
     .default(false),
 
   firstRegistration: text(),
-  lastInspection: text(),
 
   initialOdo: int().notNull().default(0),
   manualOdo: int("manual_odo").default(0), // for manual adjustments
@@ -72,7 +71,8 @@ export type MaintenanceType =
   | "fluid"
   | "general"
   | "repair"
-  | "service";
+  | "service"
+  | "inspection";
 
 export type FluidType =
   | "engineoil"
@@ -115,6 +115,9 @@ export const maintenanceRecords = sqliteTable("maintenance_records", {
   fluidType: text("fluid_type").$type<FluidType>(), // optional, e.g. "engineoil"
   viscosity: text("viscosity"), // optional, e.g. "10W40"
   oilType: text("oil_type").$type<OilType>(), // optional, e.g. "synthetic", "semi-synthetic"
+
+  // Inspection-specific fields
+  inspectionLocation: text("inspection_location"), // optional, e.g. "TCS Zürich"
 });
 
 export const issues = sqliteTable("issues", {

@@ -287,7 +287,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       firstRegistration: fields.firstRegistration as string,
       purchaseDate: fields.purchaseDate as string,
       purchasePrice: Number.parseFloat(fields.purchasePrice as string),
-      lastInspection: fields.lastInspection as string,
       vehicleIdNr: fields.vehicleIdNr as string,
       vin: fields.vin as string,
       numberPlate: fields.numberPlate as string,

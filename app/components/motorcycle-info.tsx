@@ -280,21 +280,6 @@ export default function MotorcycleInfo() {
                     )}
                   />
                 )}
-                {motorcycle.lastInspection && (
-                  <InfoItem
-                    icon={ShieldCheck}
-                    label="Letzte MFK"
-                    value={
-                      motorcycle.lastInspection
-                        ? format(
-                            new Date(motorcycle.lastInspection),
-                            "d. MMM yyyy",
-                            { locale: de },
-                          )
-                        : "-"
-                    }
-                  />
-                )}
                 <Separator className="my-3" />
 
                 {motorcycle.purchaseDate && (

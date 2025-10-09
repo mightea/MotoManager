@@ -91,6 +91,8 @@ const getLogBadgeText = (item: MaintenanceRecord): string => {
       return "Reparatur";
     case "service":
       return "Service";
+    case "inspection":
+      return "Fahrzeugprüfung";
     default:
       return "Allgemein";
   }
@@ -128,6 +130,8 @@ const getDescription = (log: MaintenanceRecord): string => {
       return "Reparatur durchgeführt";
     case "service":
       return "Service durchgeführt";
+    case "inspection":
+      return `Fahrzeugprüfung bei ${log.inspectionLocation} durchgeführt`;
     default:
       return "";
   }

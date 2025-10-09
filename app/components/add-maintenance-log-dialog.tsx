@@ -59,7 +59,8 @@ import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
 
 const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
-  { value: "service", label: "Service / Inspektion" },
+  { value: "service", label: "Service" },
+  { value: "inspection", label: "Inspektion" },
   { value: "repair", label: "Reparatur" },
   { value: "general", label: "Allgemein" },
   { value: "fluid", label: "Flüssigkeitswechsel" },
@@ -176,6 +177,11 @@ const chainChangeLogSchema = baseSchema.extend({
   //  }),
 });
 
+const inspectionLogSchema = baseSchema.extend({
+  type: z.literal("inspection"),
+  inspectionLocation: z.string().min(2, "Ort ist erforderlich."),
+});
+
 const formSchema = z.discriminatedUnion("type", [
   generalLogSchema,
   repairLogSchema,
@@ -185,6 +191,7 @@ const formSchema = z.discriminatedUnion("type", [
   brakePadChangeLogSchema,
   brakeRotorChangeLogSchema,
   chainChangeLogSchema,
+  inspectionLogSchema,
 ]);
 
 type FormSchema = typeof formSchema;
@@ -245,6 +252,12 @@ export function AddMaintenanceLogDialog({
             brand: logToEdit.brand ?? "",
             viscosity: logToEdit.viscosity ?? "",
             oilType: logToEdit.oilType,
+          };
+        case "inspection":
+          return {
+            ...baseValues,
+            type: "inspection",
+            inspectionLocation: logToEdit.inspectionLocation ?? "",
           };
         case "general":
         default:
@@ -675,6 +688,22 @@ export function AddMaintenanceLogDialog({
                   />
                 </div>
               </>
+            )}
+
+            {logType === "inspection" && (
+              <FormField
+                control={form.control}
+                name="inspectionLocation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ort der Inspektion</FormLabel>
+                    <FormControl>
+                      <Input placeholder="z.B. TCS Zürich" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             <FormField

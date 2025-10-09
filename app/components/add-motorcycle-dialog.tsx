@@ -62,7 +62,6 @@ const formSchema = z.object({
   firstRegistration: z
     .string()
     .min(1, "Datum der 1. Inverkehrssetzung ist erforderlich."),
-  lastInspection: z.string().optional(),
 
   initialOdo: z.coerce
     .number()
@@ -100,7 +99,6 @@ export function AddMotorcycleDialog({
         const firstRegistration = dateInputString(
           motorcycleToEdit.firstRegistration,
         );
-        const lastInspection = dateInputString(motorcycleToEdit.lastInspection);
         const purchaseDate = dateInputString(motorcycleToEdit.purchaseDate);
 
         form.reset({
@@ -113,7 +111,6 @@ export function AddMotorcycleDialog({
           isVeteran: motorcycleToEdit.isVeteran,
           isArchived: motorcycleToEdit.isArchived,
           firstRegistration: firstRegistration || "",
-          lastInspection: lastInspection || undefined,
           initialOdo: motorcycleToEdit.initialOdo,
           purchaseDate: purchaseDate || "",
           purchasePrice: motorcycleToEdit.purchasePrice ?? 0,
@@ -129,7 +126,6 @@ export function AddMotorcycleDialog({
           isVeteran: false,
           isArchived: false,
           firstRegistration: "",
-          lastInspection: undefined,
           initialOdo: 0,
           purchaseDate: "",
           purchasePrice: 0,
@@ -285,19 +281,6 @@ export function AddMotorcycleDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>1. Inverkehrssetzung (36)</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastInspection"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Letzte MFK (Optional, 39)</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>

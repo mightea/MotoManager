@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import { de } from "date-fns/locale";
-import { Battery, Droplets, Replace, Wrench } from "lucide-react";
+import { Battery, Droplets, Replace, Search, Wrench } from "lucide-react";
 import type { ReactElement } from "react";
 import type { MaintenanceType } from "~/db/schema";
 import { isFalsy } from "./falsyUtils";
@@ -63,6 +63,8 @@ export const getMaintenanceIcon = ({
       return <Replace className={className} />;
     case "battery":
       return <Battery className={className} />;
+    case "inspection":
+      return <Search className={className} />;
     default:
       return <Wrench className={className} />;
   }
