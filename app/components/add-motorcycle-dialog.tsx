@@ -38,8 +38,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
@@ -83,7 +81,6 @@ export function AddMotorcycleDialog({
   const [open, setOpen] = useState(false);
   const isEditMode = !!motorcycleToEdit;
   const deleteSubmitRef = useRef<HTMLButtonElement>(null);
-  const isMobile = useIsMobile();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -169,7 +166,7 @@ export function AddMotorcycleDialog({
               <h4 className="text-sm font-medium text-muted-foreground pt-4">
                 Allgemein
               </h4>
-              <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="make"
@@ -198,7 +195,7 @@ export function AddMotorcycleDialog({
                   )}
                 />
               </div>
-              <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="modelYear"
@@ -242,7 +239,7 @@ export function AddMotorcycleDialog({
               <h4 className="text-sm font-medium text-muted-foreground pt-4">
                 Identifikation
               </h4>
-              <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="vin"
@@ -274,7 +271,7 @@ export function AddMotorcycleDialog({
               <h4 className="text-sm font-medium text-muted-foreground pt-4">
                 Daten & Termine
               </h4>
-              <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+              <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="firstRegistration"
@@ -293,7 +290,7 @@ export function AddMotorcycleDialog({
               <h4 className="text-sm font-medium text-muted-foreground pt-4">
                 Anschaffung
               </h4>
-              <div className={cn("grid gap-4", !isMobile && "grid-cols-3")}>
+              <div className="grid gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="purchaseDate"
@@ -457,13 +454,7 @@ export function AddMotorcycleDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-2xl",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-2xl md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

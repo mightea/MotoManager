@@ -37,8 +37,6 @@ import {
 import { Input } from "~/components/ui/input";
 import { useToast } from "~/hooks/use-toast";
 import type { Location } from "~/db/schema";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(2, "Der Name muss mindestens 2 Zeichen haben."),
@@ -56,7 +54,6 @@ export function AddStorageLocationDialog({
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!locationToEdit;
-  const isMobile = useIsMobile();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -211,13 +208,7 @@ export function AddStorageLocationDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-[425px]",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[425px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

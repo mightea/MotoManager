@@ -45,8 +45,6 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 import { dateInputString } from "~/utils/dateUtils";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 const issueSchema = z.object({
   date: z.string().min(1, "Ein Datum ist erforderlich."),
@@ -76,7 +74,6 @@ export function AddIssueDialog({
 }: AddIssueDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!issueToEdit;
-  const isMobile = useIsMobile();
 
   const form = useForm<IssueFormValues>({
     resolver: zodResolver(issueSchema),
@@ -159,7 +156,7 @@ export function AddIssueDialog({
               )}
             />
 
-            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+            <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="priority"
@@ -215,7 +212,7 @@ export function AddIssueDialog({
                 )}
               />
             </div>
-            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+            <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="date"
@@ -314,13 +311,7 @@ export function AddIssueDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-[480px]",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[480px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

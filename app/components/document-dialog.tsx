@@ -14,8 +14,6 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { Motorcycle } from "~/db/schema";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 export interface DocumentDialogData {
   id: number;
@@ -44,7 +42,6 @@ export function DocumentDialog({
     document ? `edit-${document.id}` : "new"
   }-${open ? "open" : "closed"}`;
   const intent = document ? "document-edit" : "document-add";
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (
@@ -191,13 +188,7 @@ export function DocumentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-md",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

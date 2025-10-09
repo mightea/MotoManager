@@ -55,8 +55,6 @@ import {
 import { AlertDialogCancel } from "@radix-ui/react-alert-dialog";
 import { dateInputString } from "~/utils/dateUtils";
 import { getMaintenanceIcon } from "~/utils/motorcycleUtils";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
   { value: "service", label: "Service" },
@@ -213,7 +211,6 @@ export function AddMaintenanceLogDialog({
 }: AddMaintenanceLogDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!logToEdit;
-  const isMobile = useIsMobile();
 
   const getInitialFormValues = (): FormValues => {
     if (isEditMode && logToEdit) {
@@ -400,7 +397,7 @@ export function AddMaintenanceLogDialog({
                 </FormItem>
               )}
             />
-            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+            <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="date"
@@ -445,7 +442,7 @@ export function AddMaintenanceLogDialog({
             {/* Tire specific fields */}
             {logType === "tire" && (
               <>
-                <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+                <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name={"brand"}
@@ -543,7 +540,7 @@ export function AddMaintenanceLogDialog({
             {/* Tire specific fields */}
             {logType === "battery" && (
               <>
-                <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+                <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="batteryType"
@@ -659,7 +656,7 @@ export function AddMaintenanceLogDialog({
                     )}
                   />
                 )}
-                <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+                <div className="grid gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="brand"
@@ -808,13 +805,7 @@ export function AddMaintenanceLogDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-[520px]",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[520px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

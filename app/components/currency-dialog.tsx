@@ -31,8 +31,6 @@ import {
   findCurrencyPreset,
 } from "~/constants";
 import type { Currency } from "~/contexts/SettingsProvider";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 const formSchema = z.object({
   code: z
@@ -92,7 +90,6 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const isEdit = props.mode === "edit";
   const isAdd = !isEdit;
   const currency = isEdit ? props.currency : undefined;
-  const isMobile = useIsMobile();
 
   const [open, setOpen] = useState(false);
 
@@ -401,7 +398,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
               )}
             />
 
-            <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+            <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="symbol"
@@ -510,13 +507,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{triggerNode}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-md",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

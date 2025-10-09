@@ -17,8 +17,6 @@ import {
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Input } from "./ui/input";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 type ImageUploadDialogProps = {
   children: ReactNode;
@@ -37,7 +35,6 @@ export function ImageUploadDialog({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
-  const isMobile = useIsMobile();
 
   function onSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files.length > 0) {
@@ -180,13 +177,7 @@ export function ImageUploadDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-[625px]",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[625px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

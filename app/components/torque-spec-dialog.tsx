@@ -15,8 +15,6 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
 import type { TorqueSpecification } from "~/db/schema";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 interface TorqueSpecDialogProps {
   motorcycleId: number;
@@ -35,7 +33,6 @@ export function TorqueSpecDialog({
   const isSubmitting = fetcher.state !== "idle";
   const intent = spec ? "torque-edit" : "torque-add";
   const formKey = `${spec ? `edit-${spec.id}` : "new"}-${    open ? "open" : "closed"  }`;
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (
@@ -96,7 +93,7 @@ export function TorqueSpecDialog({
               name="category"
               required
               defaultValue={spec?.category ?? ""}
-              placeholder="z.B. Motor"
+              placeholder="z.b. Motor"
             />
           </div>
 
@@ -107,11 +104,11 @@ export function TorqueSpecDialog({
               name="name"
               required
               defaultValue={spec?.name ?? ""}
-              placeholder="z.B. Zylinderkopfbolzen"
+              placeholder="z.b. Zylinderkopfbolzen"
             />
           </div>
 
-          <div className={cn("grid gap-4", !isMobile && "grid-cols-2")}>
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="torque">Drehmoment (Nm)</Label>
               <Input
@@ -183,13 +180,7 @@ export function TorqueSpecDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-md",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>

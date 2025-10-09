@@ -43,8 +43,6 @@ import {
 } from "~/contexts/MotorcycleProvider";
 import { toast } from "~/hooks/use-toast";
 import { Separator } from "./ui/separator";
-import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
 
 const UNKNOWN_LOCATION_LABEL = "Unbekannter Standort";
 
@@ -95,7 +93,6 @@ export function LocationUpdateDialog({
     locationHistory,
     setLocationHistory,
   } = useMotorcycle();
-  const isMobile = useIsMobile();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -329,13 +326,7 @@ export function LocationUpdateDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className={cn(
-          isMobile &&
-            "flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-full",
-          !isMobile && "sm:max-w-[425px]",
-        )}
-      >
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[425px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
         {mainContent}
       </DialogContent>
     </Dialog>
