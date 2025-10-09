@@ -7,7 +7,12 @@ import TorqueSpecificationsPanel from "./torque-specifications-panel";
 import DocumentList, { type DocumentListItem } from "./document-list";
 import { AddMaintenanceLogDialog } from "./add-maintenance-log-dialog";
 import { Button } from "./ui/button";
-import type { MaintenanceRecord, Motorcycle, TorqueSpecification } from "~/db/schema";
+import type {
+  MaintenanceRecord,
+  Motorcycle,
+  TorqueSpecification,
+} from "~/db/schema";
+import { cn } from "~/lib/utils";
 
 interface MotorcycleDesktopTabsProps {
   motorcycle: Motorcycle;
@@ -35,7 +40,12 @@ export function MotorcycleDesktopTabs({
       className="w-full"
       defaultValue="maintenance"
     >
-      <TabsList className="grid w-full grid-cols-3 gap-2">
+      <TabsList
+        className={cn(
+          "grid w-full gap-2",
+          documents.length > 0 ? "grid-cols-3" : "grid-cols-2",
+        )}
+      >
         <TabsTrigger
           value="maintenance"
           aria-label="Wartungsprotokoll"
@@ -52,14 +62,16 @@ export function MotorcycleDesktopTabs({
           <Gauge className="h-4 w-4" />
           <span className="hidden lg:inline">Drehmomentwerte</span>
         </TabsTrigger>
-        <TabsTrigger
-          value="documents"
-          aria-label="Dokumente"
-          className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
-        >
-          <FileText className="h-4 w-4" />
-          <span className="hidden lg:inline">Dokumente</span>
-        </TabsTrigger>
+        {documents.length > 0 && (
+          <TabsTrigger
+            value="documents"
+            aria-label="Dokumente"
+            className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
+          >
+            <FileText className="h-4 w-4" />
+            <span className="hidden lg:inline">Dokumente</span>
+          </TabsTrigger>
+        )}
       </TabsList>
       <TabsContent value="maintenance">
         <Card>

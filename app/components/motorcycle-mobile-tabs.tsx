@@ -7,9 +7,15 @@ import TorqueSpecificationsPanel from "./torque-specifications-panel";
 import DocumentList, { type DocumentListItem } from "./document-list";
 import { AddMaintenanceLogDialog } from "./add-maintenance-log-dialog";
 import { Button } from "./ui/button";
-import type { Issue, MaintenanceRecord, Motorcycle, TorqueSpecification } from "~/db/schema";
+import type {
+  Issue,
+  MaintenanceRecord,
+  Motorcycle,
+  TorqueSpecification,
+} from "~/db/schema";
 import MotorcycleInfo from "./motorcycle-info";
 import { OpenIssuesCard } from "./open-issues-card";
+import { cn } from "~/lib/utils";
 
 interface MotorcycleMobileTabsProps {
   motorcycle: Motorcycle;
@@ -39,7 +45,12 @@ export function MotorcycleMobileTabs({
       className="w-full"
       defaultValue="info"
     >
-      <TabsList className="grid w-full grid-cols-4 gap-2">
+      <TabsList
+        className={cn(
+          "grid w-full gap-2",
+          documents.length > 0 ? "grid-cols-4" : "grid-cols-3",
+        )}
+      >
         <TabsTrigger
           value="info"
           aria-label="Übersicht"
@@ -61,13 +72,15 @@ export function MotorcycleMobileTabs({
         >
           <Gauge className="h-4 w-4" />
         </TabsTrigger>
-        <TabsTrigger
-          value="documents"
-          aria-label="Dokumente"
-          className="flex items-center justify-center px-2 py-2 text-sm font-medium"
-        >
-          <FileText className="h-4 w-4" />
-        </TabsTrigger>
+        {documents.length > 0 && (
+          <TabsTrigger
+            value="documents"
+            aria-label="Dokumente"
+            className="flex items-center justify-center px-2 py-2 text-sm font-medium"
+          >
+            <FileText className="h-4 w-4" />
+          </TabsTrigger>
+        )}
       </TabsList>
       <TabsContent value="info" className="space-y-8">
         <MotorcycleInfo />
