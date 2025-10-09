@@ -119,6 +119,8 @@ function dispatch(action: Action) {
   });
 }
 
+const genId = () => Math.random().toString(36).substring(2, 9);
+
 type Toast = Omit<ToasterToast, "id">;
 
 function toast({ ...props }: Toast) {

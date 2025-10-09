@@ -208,7 +208,7 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
             return (
               <div
                 key={currency.id}
-                className="flex items-center justify-between rounded-lg border border-border/80 bg-card/80 p-4 shadow-sm backdrop-blur"
+                className="flex flex-col items-start gap-4 rounded-lg border border-border/80 bg-card/80 p-4 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-muted-foreground">

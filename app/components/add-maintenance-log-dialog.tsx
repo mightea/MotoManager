@@ -55,6 +55,7 @@ import {
 import { AlertDialogCancel } from "@radix-ui/react-alert-dialog";
 import { dateInputString } from "~/utils/dateUtils";
 import { getMaintenanceIcon } from "~/utils/motorcycleUtils";
+import { useSettings } from "~/contexts/SettingsProvider";
 
 const maintenanceTypes: { value: MaintenanceType; label: string }[] = [
   { value: "service", label: "Service" },
@@ -101,6 +102,7 @@ const baseSchema = z.object({
   description: z
     .string()
     .max(1000, "Die Beschreibung darf nicht länger als 1000 Zeichen sein."),
+  currencyCode: z.string().min(1, "Währung ist erforderlich."),
 });
 
 // Schemas for each log type
@@ -211,6 +213,7 @@ export function AddMaintenanceLogDialog({
 }: AddMaintenanceLogDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!logToEdit;
+  const { currencies } = useSettings();
 
   const getInitialFormValues = (): FormValues => {
     if (isEditMode && logToEdit) {
@@ -220,6 +223,7 @@ export function AddMaintenanceLogDialog({
         odo: logToEdit.odo,
         cost: logToEdit.cost ?? 0.0,
         description: logToEdit.description ?? "",
+        currencyCode: logToEdit.currency ?? motorcycle.currencyCode ?? "CHF",
       };
 
       switch (logToEdit.type) {
@@ -267,6 +271,7 @@ export function AddMaintenanceLogDialog({
       cost: 0.0,
       odo: currentOdometer ?? 0,
       description: "",
+      currencyCode: motorcycle.currencyCode ?? "CHF",
     } as FormValues;
   };
 
@@ -728,6 +733,33 @@ export function AddMaintenanceLogDialog({
                   </FormItem>
                 );
               }}
+            />
+            <FormField
+              control={form.control}
+              name="currencyCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Währung</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Währung wählen" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {currencies.map((currency) => (
+                        <SelectItem key={currency.id} value={currency.code}>
+                          {currency.code} - {currency.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             <FormField
               control={form.control}

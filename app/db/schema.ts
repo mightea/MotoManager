@@ -60,6 +60,7 @@ export const motorcycles = sqliteTable("motorcycles", {
 
   purchaseDate: text("purchase_date"), // SQLite DATE stored as TEXT
   purchasePrice: real("purchase_price"), // decimal‐friendly REAL column
+  currencyCode: text("currency_code"),
 });
 
 export type MaintenanceType =

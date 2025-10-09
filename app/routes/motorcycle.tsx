@@ -150,6 +150,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     result.initialOdo,
     ...maintenanceItems.map((m) => m.odo),
     ...issuesItems.map((i) => i.odo),
+    ...locationHistory
+      .map((l) => l.odometer)
+      .filter((o): o is number => o !== null),
   ];
 
   // Get the current odometer reading, which is the highest value
@@ -283,6 +286,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       vin: fields.vin as string,
       numberPlate: fields.numberPlate as string,
       initialOdo: Number.parseInt(fields.initialOdo as string),
+      currencyCode: fields.currencyCode as string,
     };
 
     console.log("Editing motorcycle:", editMotorcycle);

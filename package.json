@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
-    "db:migrate": "ts-node ./scripts/migrate.ts"
+    "db:migrate": "ts-node ./scripts/migrate.ts",
+    "approve-builds": "pnpm approve-builds"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -87,5 +88,12 @@
     "vite": "^7.1.9",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "better-sqlite3",
+      "esbuild"
+    ]
   }
 }

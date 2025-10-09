@@ -298,7 +298,7 @@ export default function MotorcycleInfo() {
                     label="Kaufpreis"
                     value={new Intl.NumberFormat("de-CH", {
                       style: "currency",
-                      currency: "CHF",
+                      currency: motorcycle.currencyCode ?? "CHF",
                     }).format(motorcycle.purchasePrice)}
                   />
                 )}

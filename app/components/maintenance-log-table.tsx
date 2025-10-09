@@ -321,7 +321,9 @@ export default function MaintenanceLogTable({
               {(log.cost ?? 0) > 0 && (
                 <div className="flex justify-between text-sm pt-2">
                   <p className="text-muted-foreground">Kosten</p>
-                  <p className="font-medium">{formatCurrency(log.cost)}</p>
+                  <p className="font-medium">
+                    {formatCurrency(log.cost, log.currency)}
+                  </p>
                 </div>
               )}
               {renderLogDetails(log)}

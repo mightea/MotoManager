@@ -39,6 +39,15 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { useSettings } from "~/contexts/SettingsProvider";
+
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
   model: z.string().min(1, "Modell ist erforderlich."),
@@ -66,6 +75,7 @@ const formSchema = z.object({
     .min(0, "Anfänglicher Kilometerstand ist erforderlich."),
   purchaseDate: z.string().min(1, "Ein Kaufdatum ist erforderlich."),
   purchasePrice: z.coerce.number().min(0, "Kaufpreis ist erforderlich."),
+  currencyCode: z.string().min(1, "Währung ist erforderlich."),
 });
 
 type FormValues = z.input<typeof formSchema>;
@@ -81,6 +91,7 @@ export function AddMotorcycleDialog({
   const [open, setOpen] = useState(false);
   const isEditMode = !!motorcycleToEdit;
   const deleteSubmitRef = useRef<HTMLButtonElement>(null);
+  const { currencies } = useSettings();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -111,6 +122,7 @@ export function AddMotorcycleDialog({
           initialOdo: motorcycleToEdit.initialOdo,
           purchaseDate: purchaseDate || "",
           purchasePrice: motorcycleToEdit.purchasePrice ?? 0,
+          currencyCode: motorcycleToEdit.currencyCode ?? "CHF",
         });
       } else {
         form.reset({
@@ -126,6 +138,7 @@ export function AddMotorcycleDialog({
           initialOdo: 0,
           purchaseDate: "",
           purchasePrice: 0,
+          currencyCode: "CHF",
         });
       }
     }
@@ -162,6 +175,11 @@ export function AddMotorcycleDialog({
             />
           )}
           <ScrollArea className="flex-1 overflow-y-auto pr-6">
+            <input
+              type="hidden"
+              name="currencyCode"
+              value={form.watch("currencyCode")}
+            />
             <div className="space-y-4">
               <h4 className="text-sm font-medium text-muted-foreground pt-4">
                 Allgemein
@@ -340,7 +358,7 @@ export function AddMotorcycleDialog({
 
                     return (
                       <FormItem>
-                        <FormLabel>Kaufpreis (CHF)</FormLabel>
+                        <FormLabel>Kaufpreis</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -356,6 +374,33 @@ export function AddMotorcycleDialog({
                   }}
                 />
               </div>
+              <FormField
+                control={form.control}
+                name="currencyCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Währung</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Währung wählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.id} value={currency.code}>
+                            {currency.code} - {currency.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <h4 className="text-sm font-medium text-muted-foreground pt-4">
                 Status
