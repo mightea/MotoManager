@@ -70,7 +70,7 @@ async function fetchConversionRate(code: string) {
   let payload: FrankfurterResponse;
   try {
     payload = (await response.json()) as FrankfurterResponse;
-  } catch (error) {
+  } catch {
     throw new Error("Antwort der Frankfurter API konnte nicht gelesen werden.");
   }
 

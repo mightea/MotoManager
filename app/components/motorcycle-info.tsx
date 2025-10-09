@@ -9,7 +9,6 @@ import {
   Milestone,
   Pencil,
   Save,
-  ShieldCheck,
   Warehouse,
   Wrench,
 } from "lucide-react";

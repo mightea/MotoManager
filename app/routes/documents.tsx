@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import DocumentDialog, { type DocumentDialogData } from "~/components/document-dialog";
+import DocumentDialog from "~/components/document-dialog";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
 const DOCUMENTS_BASE_DIR = path.join(process.cwd(), "public", "documents");
@@ -57,7 +57,7 @@ async function ensureDocumentDirs() {
   try {
     await fs.mkdir(DOCUMENT_FILES_DIR, { recursive: true });
     await fs.mkdir(DOCUMENT_PREVIEWS_DIR, { recursive: true });
-  } catch (error) {
+  } catch {
     // ignore
   }
 }

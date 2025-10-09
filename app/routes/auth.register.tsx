@@ -4,7 +4,6 @@ import {
   data,
   redirect,
   useActionData,
-  useLoaderData,
   useNavigation,
 } from "react-router";
 import type { Route } from "./+types/auth.register";

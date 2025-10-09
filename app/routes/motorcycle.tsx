@@ -1,39 +1,31 @@
 import type { Route } from "./+types/motorcycle";
 import { getDb } from "~/db";
 import {
-  issues,
-  documents,
-  documentMotorcycles,
-  locationRecords,
-  locations,
-  maintenanceRecords,
-  motorcycles,
-  torqueSpecs,
   type EditorIssue,
   type EditorMotorcycle,
-  type Motorcycle,
-  type NewCurrentLocationRecord,
   type NewIssue,
   type NewMaintenanceRecord,
   type NewTorqueSpecification,
+  type NewCurrentLocationRecord,
+  motorcycles,
+  maintenanceRecords,
+  documentMotorcycles,
+  documents,
+  issues,
+  locationRecords,
+  locations,
+  torqueSpecs,
 } from "~/db/schema";
 import { and, asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import MaintenanceLogTable from "~/components/maintenance-log-table";
 import { OpenIssuesCard } from "~/components/open-issues-card";
-import { Button } from "~/components/ui/button";
-import { ClipboardList, FileText, Gauge, Info, PlusCircle } from "lucide-react";
-import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
 import { data, redirect } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
 import { MotorcycleProvider } from "~/contexts/MotorcycleProvider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import TorqueSpecificationsPanel from "~/components/torque-specifications-panel";
-import DocumentList, {
-  type DocumentListItem,
-} from "~/components/document-list";
-import { useEffect, useState } from "react";
+import { type DocumentListItem } from "~/components/document-list";
+import { MotorcycleDesktopTabs } from "~/components/motorcycle-desktop-tabs";
+import { MotorcycleMobileTabs } from "~/components/motorcycle-mobile-tabs";
+import { useState } from "react";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -364,12 +356,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "maintenance-add") {
-    const {
-      intent: _intent,
-      maintenanceId: _maintenanceId,
-      motorcycleId: _mid,
-      ...rest
-    } = fields as Record<string, unknown>;
+    const { ...rest } = fields as Record<string, unknown>;
     const item = await db
       .insert(maintenanceRecords)
       .values({
@@ -383,28 +370,11 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "maintenance-edit") {
-    const {
-      intent: _intent,
-      maintenanceId,
-      motorcycleId: _mid,
-      ...rest
-    } = fields as Record<string, unknown>;
-    const item = await db
-      .update(maintenanceRecords)
-      .set({
-        ...(rest as unknown as NewMaintenanceRecord),
-        motorcycleId,
-      })
-      .where(
-        and(
-          eq(
-            maintenanceRecords.id,
-            Number.parseInt((maintenanceId as string) ?? ""),
-          ),
-          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id),
-        ),
-      )
-      .returning();
+    const { ...rest } = fields as Record<string, unknown>;
+    const item = await db.update(maintenanceRecords).set({
+      ...(rest as unknown as NewMaintenanceRecord),
+      motorcycleId,
+    });
 
     console.log("Edited Maintenance Item:", item);
 
@@ -662,88 +632,29 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
           />
         </div>
         <div className="lg:col-span-3 xl:col-span-3">
-          <Tabs
-            value={activeTab}
-            onValueChange={handleTabChange}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-4 gap-2 sm:grid-cols-4 lg:grid-cols-3">
-              <TabsTrigger
-                value="info"
-                aria-label="Übersicht"
-                className="flex items-center justify-center px-2 py-2 text-sm font-medium lg:hidden"
-              >
-                <Info className="h-4 w-4" />
-              </TabsTrigger>
-              <TabsTrigger
-                value="maintenance"
-                aria-label="Wartungsprotokoll"
-                className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
-              >
-                <ClipboardList className="h-4 w-4" />
-                <span className="hidden lg:inline">Wartungsprotokoll</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="torque"
-                aria-label="Drehmomentwerte"
-                className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
-              >
-                <Gauge className="h-4 w-4" />
-                <span className="hidden lg:inline">Drehmomentwerte</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="documents"
-                aria-label="Dokumente"
-                className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
-              >
-                <FileText className="h-4 w-4" />
-                <span className="hidden lg:inline">Dokumente</span>
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="info" className="space-y-8 lg:hidden">
-              <MotorcycleInfo />
-              <OpenIssuesCard
-                motorcycle={motorcycle}
-                issues={issues}
-                currentOdometer={currentOdo}
-              />
-            </TabsContent>
-            <TabsContent value="maintenance">
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <CardTitle className="text-2xl">
-                      Wartungsprotokoll
-                    </CardTitle>
-                    <AddMaintenanceLogDialog
-                      motorcycle={motorcycle}
-                      currentOdometer={currentOdo}
-                    >
-                      <Button>
-                        <PlusCircle className="h-4 w-4" />
-                        Eintrag hinzufügen
-                      </Button>
-                    </AddMaintenanceLogDialog>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <MaintenanceLogTable
-                    logs={maintenanceEntries}
-                    motorcycle={motorcycle}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="torque">
-              <TorqueSpecificationsPanel
-                motorcycleId={motorcycle.id}
-                specs={torqueSpecifications}
-              />
-            </TabsContent>
-            <TabsContent value="documents">
-              <DocumentList documents={documents} />
-            </TabsContent>
-          </Tabs>
+          <div className="lg:hidden">
+            <MotorcycleMobileTabs
+              motorcycle={motorcycle}
+              issues={issues}
+              maintenanceEntries={maintenanceEntries}
+              torqueSpecifications={torqueSpecifications}
+              documents={documents}
+              currentOdo={currentOdo}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+            />
+          </div>
+          <div className="hidden lg:block">
+            <MotorcycleDesktopTabs
+              motorcycle={motorcycle}
+              maintenanceEntries={maintenanceEntries}
+              torqueSpecifications={torqueSpecifications}
+              documents={documents}
+              currentOdo={currentOdo}
+              activeTab={activeTab === "info" ? "maintenance" : activeTab}
+              onTabChange={handleTabChange}
+            />
+          </div>
         </div>
       </div>
     </MotorcycleProvider>
