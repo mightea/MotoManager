@@ -28,7 +28,7 @@ export const users = sqliteTable(
   (table) => ({
     emailIdx: uniqueIndex("users_email_unique").on(table.email),
     usernameIdx: uniqueIndex("users_username_unique").on(table.username),
-  })
+  }),
 );
 
 export const motorcycles = sqliteTable("motorcycles", {
@@ -200,7 +200,7 @@ export const sessions = sqliteTable(
   },
   (table) => ({
     tokenIdx: uniqueIndex("sessions_token_unique").on(table.token),
-  })
+  }),
 );
 
 export const documents = sqliteTable("documents", {
@@ -228,7 +228,7 @@ export const documentMotorcycles = sqliteTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.documentId, table.motorcycleId] }),
-  })
+  }),
 );
 
 export type Location = typeof locations.$inferSelect;

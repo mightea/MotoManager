@@ -3,17 +3,24 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import Home from "~/routes/home";
 import { SettingsProvider } from "~/contexts/SettingsProvider";
+import type { CurrencySetting } from "~/db/schema";
 
 describe("Home route", () => {
   it("shows the empty state when no motorcycles are available", () => {
     render(
       <MemoryRouter>
         <SettingsProvider
-          settings={{
-            currencies: [{ id: 1, code: "USD", label: "US Dollar" }],
-            storageLocations: [],
-            users: [],
-          }}
+          initialCurrencies={[
+            {
+              id: 1,
+              code: "USD",
+              symbol: "US$",
+              label: "US Dollar",
+              conversionFactor: 1,
+              createdAt: new Date().toISOString(),
+            } satisfies CurrencySetting,
+          ]}
+          initialLocations={[]}
         >
           <Home
             {...({

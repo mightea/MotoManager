@@ -178,7 +178,6 @@ export async function action({ request }: ActionFunctionArgs) {
     isVeteran: parseBoolean(formData.get("isVeteran")),
     isArchived: parseBoolean(formData.get("isArchived")),
     firstRegistration: parseString(formData.get("firstRegistration")),
-    lastInspection: parseOptionalString(formData.get("lastInspection")),
     initialOdo: parseInteger(formData.get("initialOdo")) ?? 0,
     purchaseDate: parseString(formData.get("purchaseDate")),
     purchasePrice: parseNumber(formData.get("purchasePrice")) ?? 0,

@@ -64,6 +64,12 @@ const SidebarProvider = React.forwardRef<
     ref,
   ) => {
     const [openMobile, setOpenMobile] = React.useState(false);
+    const [isMobile, setIsMobile] = React.useState(() => {
+      if (typeof window === "undefined") {
+        return false;
+      }
+      return window.matchMedia("(max-width: 768px)").matches;
+    });
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -83,6 +89,28 @@ const SidebarProvider = React.forwardRef<
       },
       [setOpenProp, open],
     );
+
+    React.useEffect(() => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const mediaQuery = window.matchMedia("(max-width: 768px)");
+
+      const handleChange = (event: MediaQueryListEvent) => {
+        setIsMobile(event.matches);
+      };
+
+      setIsMobile(mediaQuery.matches);
+
+      if (typeof mediaQuery.addEventListener === "function") {
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+      }
+
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }, []);
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
@@ -116,9 +144,10 @@ const SidebarProvider = React.forwardRef<
         setOpen,
         openMobile,
         setOpenMobile,
+        isMobile,
         toggleSidebar,
       }),
-      [state, open, setOpen, openMobile, setOpenMobile, toggleSidebar],
+      [state, open, setOpen, openMobile, setOpenMobile, toggleSidebar, isMobile],
     );
 
     return (

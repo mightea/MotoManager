@@ -76,10 +76,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   const items: MotorcycleData[] = motorcyclesList.map((moto) => {
     const mIssues = issues.filter((i) => i.motorcycleId === moto.id);
     const maintenanceItems = maintenance.filter(
-      (m) => m.motorcycleId === moto.id
+      (m) => m.motorcycleId === moto.id,
     );
     const locationItems = locationHistory.filter(
-      (record) => record.motorcycleId === moto.id && record.odometer !== null
+      (record) => record.motorcycleId === moto.id && record.odometer !== null,
     );
 
     const issuesCount = mIssues.filter((i) => i.status !== "done").length;
@@ -92,12 +92,12 @@ export async function loader({ request }: Route.LoaderArgs) {
       ...locationItems.map((record) => record.odometer ?? undefined),
     ].filter(
       (value): value is number =>
-        typeof value === "number" && Number.isFinite(value)
+        typeof value === "number" && Number.isFinite(value),
     );
 
     const maxOdo = odometerValues.reduce(
       (max, value) => (value > max ? value : max),
-      moto.initialOdo
+      moto.initialOdo,
     );
 
     const odometerByYear = new Map<number, number>();
@@ -142,7 +142,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const totalKmThisYear = items.reduce(
     (sum, moto) => sum + (moto.odometerThisYear ?? 0),
-    0
+    0,
   );
   const totalKmOverall = items.reduce((sum, moto) => {
     const distance = Math.max(0, (moto.odometer ?? 0) - (moto.initialOdo ?? 0));
@@ -150,7 +150,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }, 0);
   const totalActiveIssues = items.reduce(
     (sum, moto) => sum + (moto.numberOfIssues ?? 0),
-    0
+    0,
   );
   const totalMaintenanceCostThisYear = maintenance.reduce((sum, entry) => {
     if (!entry.date || entry.cost == null) {
@@ -193,7 +193,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return data(
     { motorcycles: motorcyclesList, items, stats },
-    { headers: mergeHeaders(headers ?? {}) }
+    { headers: mergeHeaders(headers ?? {}) },
   );
 }
 
@@ -209,7 +209,6 @@ export async function action({ request }: Route.ActionArgs) {
       vin: "",
       vehicleIdNr: "",
       firstRegistration: "",
-      lastInspection: "",
       isVeteran: false,
       initialOdo: 0,
       userId: user.id,
@@ -231,7 +230,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       new Intl.NumberFormat("de-CH", {
         maximumFractionDigits: 0,
       }),
-    []
+    [],
   );
   const statsCards = hasMotorcycles
     ? [
@@ -263,13 +262,15 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         {
           label: "Fleißigstes Bike",
           value: stats.topRider
-            ? `${[stats.topRider.make, stats.topRider.model]
-                .filter(Boolean)
-                .join(" ") || "Unbekannt"}`
+            ? `${
+                [stats.topRider.make, stats.topRider.model]
+                  .filter(Boolean)
+                  .join(" ") || "Unbekannt"
+              }`
             : "–",
           hint: stats.topRider
             ? `${kmFormatter.format(
-                stats.topRider.odometerThisYear
+                stats.topRider.odometerThisYear,
               )} km in ${stats.year}`
             : "Noch keine Kilometer erfasst.",
         },
@@ -288,7 +289,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                   Deine Motorräder
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Überblick über Wartung, Kilometerstände und aktuelle Dokumente.
+                  Überblick über Wartung, Kilometerstände und aktuelle
+                  Dokumente.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -323,7 +325,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     Willkommen im Cockpit deiner Bikes
                   </CardTitle>
                   <p className="mt-3 text-sm text-muted-foreground max-w-2xl">
-                    Lege dein erstes Motorrad an, um Wartungen, Dokumente und Standorte im Blick zu behalten.
+                    Lege dein erstes Motorrad an, um Wartungen, Dokumente und
+                    Standorte im Blick zu behalten.
                   </p>
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
@@ -332,7 +335,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                       <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
                     </Button>
                   </AddMotorcycleDialog>
-                  <Button asChild variant="secondary" className="h-10 gap-2 px-5">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="h-10 gap-2 px-5"
+                  >
                     <Link to="/documents">
                       <FileText className="h-4 w-4" /> Dokumente öffnen
                     </Link>
@@ -352,7 +359,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                   </div>
                   <AddMotorcycleDialog>
                     <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes Motorrad hinzufügen
+                      <PlusCircle className="mr-2 h-4 w-4" /> Dein erstes
+                      Motorrad hinzufügen
                     </Button>
                   </AddMotorcycleDialog>
                 </div>
@@ -383,7 +391,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                       <p className="text-xl font-semibold text-foreground">
                         {card.value}
                       </p>
-                      <p className="text-xs text-muted-foreground">{card.hint}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {card.hint}
+                      </p>
                     </CardContent>
                   </Card>
                 ))}

@@ -35,18 +35,18 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-0 z-50 flex h-full w-full flex-col overflow-y-auto bg-background px-4 py-5 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[calc(100vh-5rem)] sm:w-full sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:px-6 sm:py-6 sm:shadow-xl sm:backdrop-blur supports-[backdrop-filter]:sm:backdrop-blur-xl",
+        "fixed inset-0 z-50 flex h-svh w-full flex-col overflow-y-auto bg-background px-4 py-5 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:px-6 sm:py-6 sm:shadow-xl sm:backdrop-blur supports-[backdrop-filter]:sm:backdrop-blur-xl md:max-w-xl lg:max-w-2xl",
         "gap-5 sm:gap-6",
         className,
       )}
       {...props}
     >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+      <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-muted-foreground transition hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
+      {children}
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
@@ -58,7 +58,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
+      "flex flex-col space-y-1.5 text-center sm:text-left sm:pr-10",
       className,
     )}
     {...props}
@@ -72,8 +72,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "sticky bottom-0 left-0 right-0 z-10 mt-4 flex flex-col-reverse gap-2 border-t border-border/60 bg-background/95 p-4 shadow-[0_-12px_24px_-20px_rgb(15_23_42/0.35)] backdrop-blur supports-[backdrop-filter]:backdrop-blur-sm",
-      "sm:static sm:mt-6 sm:flex-row sm:items-center sm:justify-end sm:space-x-2 sm:gap-2 sm:border-t sm:border-border/50 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none",
+      "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2",
       className,
     )}
     {...props}
