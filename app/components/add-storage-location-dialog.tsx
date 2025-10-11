@@ -138,21 +138,23 @@ export function AddStorageLocationDialog({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex h-full flex-col gap-4"
+          className="flex flex-1 flex-col gap-6 overflow-hidden"
         >
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name des Standorts</FormLabel>
-                <FormControl>
-                  <Input placeholder="z.B. Garage Zuhause" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-0">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name des Standorts</FormLabel>
+                  <FormControl>
+                    <Input placeholder="z.B. Garage Zuhause" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <DialogFooter>
             {isEditMode && (
               <AlertDialog>
@@ -160,7 +162,7 @@ export function AddStorageLocationDialog({
                   <Button
                     type="button"
                     variant="destructive"
-                    className="mr-auto"
+                    className="w-full sm:mr-auto sm:w-auto"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Löschen
@@ -193,10 +195,11 @@ export function AddStorageLocationDialog({
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              className="w-full sm:w-auto"
             >
               Abbrechen
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="w-full sm:w-auto">
               {isEditMode ? "Speichern" : "Hinzufügen"}
             </Button>
           </DialogFooter>
@@ -208,7 +211,7 @@ export function AddStorageLocationDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[425px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
+      <DialogContent className="sm:max-w-md">
         {mainContent}
       </DialogContent>
     </Dialog>

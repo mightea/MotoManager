@@ -199,13 +199,13 @@ export function LocationUpdateDialog({
           Aktualisiere den aktuellen Standort für deine {motorcycle.make}.
         </DialogDescription>
       </DialogHeader>
-      <div className="flex-1 overflow-y-auto pr-1 sm:pr-2">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex h-full flex-col gap-4"
-          >
-            <div className="flex-1 space-y-4">
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-1 flex-col gap-6 overflow-hidden"
+        >
+          <div className="flex-1 space-y-6 overflow-y-auto pr-1 sm:pr-0">
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name="storageLocationId"
@@ -270,63 +270,66 @@ export function LocationUpdateDialog({
                 )}
               />
             </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit">Speichern</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-        {historyItems.length > 0 && (
-          <div className="mt-6 space-y-4">
-            <Separator />
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                Bisherige Standorte
-              </h3>
-              <ul className="mt-3 space-y-2">
-                {historyItems.map((item) => (
-                  <li
-                    key={item.id}
-                    className="rounded-md border border-border bg-muted/40 p-3 text-sm"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium">{item.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {item.dateLabel}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Kilometerstand:
-                      <span className="font-medium">
-                        {typeof item.odometer === "number"
-                          ? ` ${item.odometer.toLocaleString("de-CH")} km`
-                          : " –"}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Dauer: {item.durationLabel}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {historyItems.length > 0 && (
+              <div className="space-y-4">
+                <Separator />
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Bisherige Standorte
+                  </h3>
+                  <ul className="mt-3 space-y-2">
+                    {historyItems.map((item) => (
+                      <li
+                        key={item.id}
+                        className="rounded-md border border-border bg-muted/40 p-3 text-sm"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {item.dateLabel}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Kilometerstand:
+                          <span className="font-medium">
+                            {typeof item.odometer === "number"
+                              ? ` ${item.odometer.toLocaleString("de-CH")} km`
+                              : " –"}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Dauer: {item.durationLabel}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Abbrechen
+            </Button>
+            <Button type="submit" className="w-full sm:w-auto">
+              Speichern
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
     </>
   );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[425px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
+      <DialogContent className="sm:max-w-md">
         {mainContent}
       </DialogContent>
     </Dialog>

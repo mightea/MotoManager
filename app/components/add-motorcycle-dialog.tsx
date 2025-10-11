@@ -24,7 +24,6 @@ import {
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import type { Motorcycle } from "~/db/schema";
-import { ScrollArea } from "./ui/scroll-area";
 import { Checkbox } from "./ui/checkbox";
 import { dateInputString } from "~/utils/dateUtils";
 import {
@@ -157,7 +156,10 @@ export function AddMotorcycleDialog({
         </DialogDescription>
       </DialogHeader>
       <Form {...form}>
-        <form method="post" className="flex h-full flex-col">
+        <form
+          method="post"
+          className="flex flex-1 flex-col gap-6 overflow-hidden"
+        >
           <input
             type="hidden"
             name="motorcycleId"
@@ -174,7 +176,7 @@ export function AddMotorcycleDialog({
               tabIndex={-1}
             />
           )}
-          <ScrollArea className="flex-1 overflow-y-auto pr-6">
+          <div className="flex-1 space-y-6 overflow-y-auto pb-4 pr-1 sm:pr-0">
             <input
               type="hidden"
               name="currencyCode"
@@ -440,15 +442,15 @@ export function AddMotorcycleDialog({
                 />
               </div>
             </div>
-          </ScrollArea>
-          <DialogFooter className="pt-6">
+          </div>
+          <DialogFooter>
             {isEditMode && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     type="button"
                     variant="destructive"
-                    className="sm:mr-auto"
+                    className="w-full sm:mr-auto sm:w-auto"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Motorrad löschen
@@ -484,10 +486,16 @@ export function AddMotorcycleDialog({
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              className="w-full sm:w-auto"
             >
               Abbrechen
             </Button>
-            <Button type="submit" name="intent" value="motorcycle-edit">
+            <Button
+              type="submit"
+              name="intent"
+              value="motorcycle-edit"
+              className="w-full sm:w-auto"
+            >
               {isEditMode ? "Änderungen speichern" : "Motorrad hinzufügen"}
             </Button>
           </DialogFooter>
@@ -499,7 +507,7 @@ export function AddMotorcycleDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-2xl md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
+      <DialogContent className="lg:max-w-3xl">
         {mainContent}
       </DialogContent>
     </Dialog>

@@ -129,7 +129,7 @@ export function AddIssueDialog({
       <Form {...form}>
         <form
           method="post"
-          className="flex h-full flex-col gap-4"
+          className="flex flex-1 flex-col gap-6 overflow-hidden"
           onSubmit={(e) => {
             form.handleSubmit(() => {
               // No client-side validation needed, handled by server
@@ -138,7 +138,7 @@ export function AddIssueDialog({
         >
           <input type="hidden" name="motorcycleId" value={motorcycle.id} />
           <input type="hidden" name="issueId" value={issueToEdit?.id ?? ""} />
-          <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-0">
             <FormField
               control={form.control}
               name="description"
@@ -259,7 +259,7 @@ export function AddIssueDialog({
                   <Button
                     type="button"
                     variant="destructive"
-                    className="sm:mr-auto"
+                    className="w-full sm:mr-auto sm:w-auto"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Löschen
@@ -292,6 +292,7 @@ export function AddIssueDialog({
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              className="w-full sm:w-auto"
             >
               Abbrechen
             </Button>
@@ -299,6 +300,7 @@ export function AddIssueDialog({
               type="submit"
               name="intent"
               value={isEditMode ? "issue-edit" : "issue-add"}
+              className="w-full sm:w-auto"
             >
               {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
             </Button>
@@ -311,7 +313,7 @@ export function AddIssueDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[480px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
+      <DialogContent className="sm:max-w-lg">
         {mainContent}
       </DialogContent>
     </Dialog>
