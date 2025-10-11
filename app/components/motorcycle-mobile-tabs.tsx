@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { ClipboardList, FileText, Gauge, Info, PlusCircle } from "lucide-react";
+import { ClipboardList, Droplets, FileText, Gauge, Info, PlusCircle } from "lucide-react";
 import MaintenanceLogTable from "./maintenance-log-table";
 import TorqueSpecificationsPanel from "./torque-specifications-panel";
 import DocumentList, { type DocumentListItem } from "./document-list";
@@ -16,6 +16,7 @@ import type {
 import MotorcycleInfo from "./motorcycle-info";
 import { OpenIssuesCard } from "./open-issues-card";
 import { cn } from "~/lib/utils";
+import MaintenanceInsights from "./maintenance-insights";
 
 interface MotorcycleMobileTabsProps {
   motorcycle: Motorcycle;
@@ -38,6 +39,10 @@ export function MotorcycleMobileTabs({
   activeTab,
   onTabChange,
 }: MotorcycleMobileTabsProps) {
+  const hasDocuments = documents.length > 0;
+  const hasInsights = maintenanceEntries.some((entry) =>
+    ["fluid", "inspection", "service"].includes(entry.type),
+  );
   return (
     <Tabs
       value={activeTab}
@@ -48,7 +53,11 @@ export function MotorcycleMobileTabs({
       <TabsList
         className={cn(
           "grid w-full gap-2",
-          documents.length > 0 ? "grid-cols-4" : "grid-cols-3",
+          hasDocuments && hasInsights
+            ? "grid-cols-5"
+            : hasDocuments || hasInsights
+              ? "grid-cols-4"
+              : "grid-cols-3",
         )}
       >
         <TabsTrigger
@@ -72,7 +81,16 @@ export function MotorcycleMobileTabs({
         >
           <Gauge className="h-4 w-4" />
         </TabsTrigger>
-        {documents.length > 0 && (
+        {hasInsights && (
+          <TabsTrigger
+            value="insights"
+            aria-label="Wartungs-Insights"
+            className="flex items-center justify-center px-2 py-2 text-sm font-medium"
+          >
+            <Droplets className="h-4 w-4" />
+          </TabsTrigger>
+        )}
+        {hasDocuments && (
           <TabsTrigger
             value="documents"
             aria-label="Dokumente"
@@ -118,6 +136,12 @@ export function MotorcycleMobileTabs({
         <TorqueSpecificationsPanel
           motorcycleId={motorcycle.id}
           specs={torqueSpecifications}
+        />
+      </TabsContent>
+      <TabsContent value="insights">
+        <MaintenanceInsights
+          maintenanceEntries={maintenanceEntries}
+          currentOdo={currentOdo}
         />
       </TabsContent>
       <TabsContent value="documents">

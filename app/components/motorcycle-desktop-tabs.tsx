@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { ClipboardList, FileText, Gauge, PlusCircle } from "lucide-react";
+import { ClipboardList, Droplets, FileText, Gauge, PlusCircle } from "lucide-react";
 import MaintenanceLogTable from "./maintenance-log-table";
 import TorqueSpecificationsPanel from "./torque-specifications-panel";
 import DocumentList, { type DocumentListItem } from "./document-list";
@@ -13,6 +13,7 @@ import type {
   TorqueSpecification,
 } from "~/db/schema";
 import { cn } from "~/lib/utils";
+import MaintenanceInsights from "./maintenance-insights";
 
 interface MotorcycleDesktopTabsProps {
   motorcycle: Motorcycle;
@@ -33,6 +34,10 @@ export function MotorcycleDesktopTabs({
   activeTab,
   onTabChange,
 }: MotorcycleDesktopTabsProps) {
+  const hasDocuments = documents.length > 0;
+  const hasInsights = maintenanceEntries.some((entry) =>
+    ["fluid", "inspection", "service"].includes(entry.type),
+  );
   return (
     <Tabs
       value={activeTab}
@@ -43,7 +48,11 @@ export function MotorcycleDesktopTabs({
       <TabsList
         className={cn(
           "grid w-full gap-2",
-          documents.length > 0 ? "grid-cols-3" : "grid-cols-2",
+          hasDocuments && hasInsights
+            ? "grid-cols-4"
+            : hasDocuments || hasInsights
+              ? "grid-cols-3"
+              : "grid-cols-2",
         )}
       >
         <TabsTrigger
@@ -62,7 +71,17 @@ export function MotorcycleDesktopTabs({
           <Gauge className="h-4 w-4" />
           <span className="hidden lg:inline">Drehmomentwerte</span>
         </TabsTrigger>
-        {documents.length > 0 && (
+        {hasInsights && (
+          <TabsTrigger
+            value="insights"
+            aria-label="Wartungs-Insights"
+            className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
+          >
+            <Droplets className="h-4 w-4" />
+            <span className="hidden lg:inline">Wartungs-Insights</span>
+          </TabsTrigger>
+        )}
+        {hasDocuments && (
           <TabsTrigger
             value="documents"
             aria-label="Dokumente"
@@ -101,6 +120,12 @@ export function MotorcycleDesktopTabs({
         <TorqueSpecificationsPanel
           motorcycleId={motorcycle.id}
           specs={torqueSpecifications}
+        />
+      </TabsContent>
+      <TabsContent value="insights">
+        <MaintenanceInsights
+          maintenanceEntries={maintenanceEntries}
+          currentOdo={currentOdo}
         />
       </TabsContent>
       <TabsContent value="documents">

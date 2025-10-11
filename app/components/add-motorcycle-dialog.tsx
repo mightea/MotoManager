@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -46,7 +46,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useSettings } from "~/contexts/SettingsProvider";
-import { useNavigation } from "react-router";
+import { useNavigation, UNSAFE_DataRouterContext } from "react-router";
 
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
@@ -93,8 +93,9 @@ export function AddMotorcycleDialog({
   const deleteSubmitRef = useRef<HTMLButtonElement>(null);
   const intentInputRef = useRef<HTMLInputElement | null>(null);
   const { currencies } = useSettings();
-  const navigation = useNavigation();
-  const isSubmitting = navigation.state !== "idle";
+  const dataRouterContext = useContext(UNSAFE_DataRouterContext);
+  const navigation = dataRouterContext ? useNavigation() : undefined;
+  const isSubmitting = navigation ? navigation.state !== "idle" : false;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
