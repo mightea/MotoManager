@@ -58,9 +58,9 @@ const formSchema = z.object({
       "Baujahr kann nicht in der Zukunft liegen.",
     ),
 
-  vin: z.string().min(1, "FIN ist erforderlich."),
-  vehicleIdNr: z.string().min(1, "Stammnummer ist erforderlich."),
-  numberPlate: z.string().min(1, "Kontrollschild ist erforderlich."),
+  vin: z.string().optional(),
+  vehicleIdNr: z.string().optional(),
+  numberPlate: z.string().optional(),
 
   isVeteran: z.boolean(),
   isArchived: z.boolean(),
@@ -72,8 +72,8 @@ const formSchema = z.object({
   initialOdo: z.coerce
     .number()
     .min(0, "Anfänglicher Kilometerstand ist erforderlich."),
-  purchaseDate: z.string().min(1, "Ein Kaufdatum ist erforderlich."),
-  purchasePrice: z.coerce.number().min(0, "Kaufpreis ist erforderlich."),
+  purchaseDate: z.string().optional(),
+  purchasePrice: z.coerce.number().min(0).optional(),
   currencyCode: z.string().min(1, "Währung ist erforderlich."),
 });
 
@@ -90,6 +90,7 @@ export function AddMotorcycleDialog({
   const [open, setOpen] = useState(false);
   const isEditMode = !!motorcycleToEdit;
   const deleteSubmitRef = useRef<HTMLButtonElement>(null);
+  const intentInputRef = useRef<HTMLInputElement | null>(null);
   const { currencies } = useSettings();
 
   const form = useForm<FormValues>({
@@ -143,6 +144,34 @@ export function AddMotorcycleDialog({
     }
   }, [open, isEditMode, motorcycleToEdit, form]);
 
+  const handleSubmitCapture = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    const nativeEvent = event.nativeEvent as SubmitEvent;
+    const submitter = nativeEvent.submitter as
+      | HTMLButtonElement
+      | HTMLInputElement
+      | null;
+    const submitIntent = submitter?.getAttribute("value") ?? "motorcycle-edit";
+
+    if (intentInputRef.current) {
+      intentInputRef.current.value = submitIntent;
+    }
+
+    if (submitIntent === "motorcycle-delete") {
+      return;
+    }
+
+    const isValid = await form.trigger(undefined, {
+      shouldFocus: true,
+    });
+
+    if (!isValid) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
   const mainContent = (
     <>
       <DialogHeader>
@@ -159,11 +188,19 @@ export function AddMotorcycleDialog({
         <form
           method="post"
           className="flex flex-1 flex-col gap-6 overflow-hidden"
+          onSubmitCapture={handleSubmitCapture}
+          noValidate
         >
           <input
             type="hidden"
             name="motorcycleId"
             value={motorcycleToEdit?.id}
+          />
+          <input
+            ref={intentInputRef}
+            type="hidden"
+            name="intent"
+            defaultValue="motorcycle-edit"
           />
           {isEditMode && (
             <button
@@ -462,9 +499,8 @@ export function AddMotorcycleDialog({
                       Motorrad wirklich löschen?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Diese Aktion kann nicht rückgängig gemacht werden.
-                      Dadurch werden alle zugehörigen Daten dauerhaft
-                      entfernt.
+                      Diese Aktion kann nicht rückgängig gemacht werden. Dadurch
+                      werden alle zugehörigen Daten dauerhaft entfernt.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -507,9 +543,7 @@ export function AddMotorcycleDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="lg:max-w-3xl">
-        {mainContent}
-      </DialogContent>
+      <DialogContent className="lg:max-w-3xl">{mainContent}</DialogContent>
     </Dialog>
   );
 }

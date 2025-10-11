@@ -162,9 +162,11 @@ function CurrentLocationInfo({
 
 export default function MotorcycleInfo() {
   let fetcher = useFetcher();
-  const { motorcycle, currentOdo: currentOdometer } = useMotorcycle();
+  const { motorcycle, currentOdo: currentOdometer, setMotorcycle } =
+    useMotorcycle();
 
   const handleImageUpdate = (newImageUrl: string) => {
+    setMotorcycle((prev) => ({ ...prev, image: newImageUrl }));
     fetcher.submit(
       {
         intent: "motorcycle-image",

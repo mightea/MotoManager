@@ -17,6 +17,8 @@ import {
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Input } from "./ui/input";
+import { cn } from "~/utils/tw";
+import { UploadCloud } from "lucide-react";
 
 type ImageUploadDialogProps = {
   children: ReactNode;
@@ -31,20 +33,32 @@ export function ImageUploadDialog({
 }: ImageUploadDialogProps) {
   const [open, setOpen] = useState(false);
   const [imgSrc, setImgSrc] = useState("");
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
 
-  function onSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files.length > 0) {
-      setCrop(undefined); // Makes crop preview update between images.
-      const reader = new FileReader();
-      reader.addEventListener("load", () =>
-        setImgSrc(reader.result?.toString() || ""),
-      );
-      reader.readAsDataURL(e.target.files[0]);
+  function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) {
+      return;
     }
+
+    setIsDragActive(false);
+    setCrop(undefined);
+    const reader = new FileReader();
+    reader.addEventListener("load", () =>
+      setImgSrc(reader.result?.toString() || ""),
+    );
+    reader.readAsDataURL(files[0]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function onSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
+    handleFiles(e.target.files);
   }
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
@@ -110,6 +124,9 @@ export function ImageUploadDialog({
       onCropComplete(reader.result as string);
       setOpen(false);
       setImgSrc(""); // Reset for next time
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     };
   }
 
@@ -118,18 +135,56 @@ export function ImageUploadDialog({
       <DialogHeader>
         <DialogTitle>Bild hochladen und zuschneiden</DialogTitle>
       </DialogHeader>
-      <div className="grid flex-1 gap-4 py-4 overflow-y-auto">
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto py-4">
         {!imgSrc ? (
-          <div className="flex flex-col items-center gap-4 p-8 border-2 border-dashed rounded-md">
-            <p>Wähle eine Bilddatei von deinem Gerät.</p>
+          <>
+            <label
+              htmlFor="picture"
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!isDragActive) {
+                  setIsDragActive(true);
+                }
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setIsDragActive(false);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setIsDragActive(false);
+                handleFiles(event.dataTransfer.files);
+              }}
+              className={cn(
+                "flex flex-1 min-h-[280px] cursor-pointer flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-muted-foreground/40 bg-muted/40 px-6 py-16 text-center transition-colors hover:border-muted-foreground/60 hover:bg-muted/60",
+                isDragActive && "border-primary bg-primary/10",
+              )}
+            >
+              <UploadCloud className="h-12 w-12 text-muted-foreground" />
+              <div className="space-y-1">
+                <p className="text-base font-medium text-foreground">
+                  Bild hierher ziehen oder klicken
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Unterstützt JPG, PNG und GIF bis 10 MB
+                </p>
+              </div>
+              <Button variant="secondary" size="sm">
+                Datei auswählen
+              </Button>
+            </label>
             <Input
+              ref={fileInputRef}
               id="picture"
               type="file"
               accept="image/*"
               onChange={onSelectFile}
-              className="max-w-xs"
+              className="sr-only"
             />
-          </div>
+          </>
         ) : (
           <div className="flex flex-col items-center gap-4">
             <ReactCrop
@@ -177,7 +232,7 @@ export function ImageUploadDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-[625px] md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
+      <DialogContent className="sm:max-w-2xl">
         {mainContent}
       </DialogContent>
     </Dialog>
