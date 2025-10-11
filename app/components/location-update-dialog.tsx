@@ -107,6 +107,7 @@ export function LocationUpdateDialog({
   });
 
   const fetcher = useFetcher();
+  const isSubmitting = fetcher.state !== "idle";
 
   const onSubmit = (values: FormValues) => {
     const parsed = formSchema.parse(values) as FormOutput;
@@ -328,10 +329,15 @@ export function LocationUpdateDialog({
               variant="outline"
               onClick={() => setOpen(false)}
               className="w-full sm:w-auto"
+              disabled={isSubmitting}
             >
               Abbrechen
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={isSubmitting || form.formState.isSubmitting}
+            >
               Speichern
             </Button>
           </DialogFooter>

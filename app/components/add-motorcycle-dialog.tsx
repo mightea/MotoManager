@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useSettings } from "~/contexts/SettingsProvider";
+import { useNavigation } from "react-router";
 
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
@@ -92,6 +93,8 @@ export function AddMotorcycleDialog({
   const deleteSubmitRef = useRef<HTMLButtonElement>(null);
   const intentInputRef = useRef<HTMLInputElement | null>(null);
   const { currencies } = useSettings();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state !== "idle";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -488,6 +491,7 @@ export function AddMotorcycleDialog({
                     type="button"
                     variant="destructive"
                     className="w-full sm:mr-auto sm:w-auto"
+                    disabled={isSubmitting}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Motorrad löschen
@@ -511,6 +515,7 @@ export function AddMotorcycleDialog({
                         deleteSubmitRef.current?.click();
                       }}
                       className="bg-destructive hover:bg-destructive/90"
+                      disabled={isSubmitting}
                     >
                       Löschen
                     </AlertDialogAction>
@@ -523,6 +528,7 @@ export function AddMotorcycleDialog({
               variant="outline"
               onClick={() => setOpen(false)}
               className="w-full sm:w-auto"
+              disabled={isSubmitting}
             >
               Abbrechen
             </Button>
@@ -531,6 +537,7 @@ export function AddMotorcycleDialog({
               name="intent"
               value="motorcycle-edit"
               className="w-full sm:w-auto"
+              disabled={isSubmitting}
             >
               {isEditMode ? "Änderungen speichern" : "Motorrad hinzufügen"}
             </Button>

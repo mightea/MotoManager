@@ -81,6 +81,7 @@ export function AddIssueDialog({
   });
 
   let fetcher = useFetcher();
+  const isSubmitting = fetcher.state !== "idle";
 
   const handleDelete = () => {
     fetcher.submit(
@@ -270,18 +271,19 @@ export function AddIssueDialog({
             </div>
           </div>
           <DialogFooter>
-            {isEditMode && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="w-full sm:mr-auto sm:w-auto"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Löschen
-                  </Button>
-                </AlertDialogTrigger>
+          {isEditMode && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full sm:mr-auto sm:w-auto"
+                  disabled={isSubmitting}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Löschen
+                </Button>
+              </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
@@ -295,32 +297,35 @@ export function AddIssueDialog({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-destructive hover:bg-destructive/90"
-                    >
-                      Löschen
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive hover:bg-destructive/90"
+                    disabled={isSubmitting}
+                  >
+                    Löschen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
               </AlertDialog>
             )}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Abbrechen
-            </Button>
-            <Button
-              type="submit"
-              name="intent"
-              value={isEditMode ? "issue-edit" : "issue-add"}
-              className="w-full sm:w-auto"
-            >
-              {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
-            </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="w-full sm:w-auto"
+            disabled={isSubmitting}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            type="submit"
+            name="intent"
+            value={isEditMode ? "issue-edit" : "issue-add"}
+            className="w-full sm:w-auto"
+            disabled={isSubmitting}
+          >
+            {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
+          </Button>
           </DialogFooter>
         </form>
       </Form>

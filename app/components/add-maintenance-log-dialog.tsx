@@ -287,6 +287,7 @@ export function AddMaintenanceLogDialog({
   }, [open, logToEdit, form]);
 
   let fetcher = useFetcher();
+  const isSubmitting = fetcher.state !== "idle";
 
   const handleDelete = () => {
     fetcher.submit(
@@ -789,6 +790,7 @@ export function AddMaintenanceLogDialog({
                     type="button"
                     variant="destructive"
                     className="w-full sm:mr-auto sm:w-auto"
+                    disabled={isSubmitting}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Löschen
@@ -809,6 +811,7 @@ export function AddMaintenanceLogDialog({
                     <AlertDialogAction
                       onClick={handleDelete}
                       className="bg-destructive hover:bg-destructive/90"
+                      disabled={isSubmitting}
                     >
                       Löschen
                     </AlertDialogAction>
@@ -821,10 +824,15 @@ export function AddMaintenanceLogDialog({
               variant="outline"
               onClick={() => setOpen(false)}
               className="w-full sm:w-auto"
+              disabled={isSubmitting}
             >
               Abbrechen
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={isSubmitting || form.formState.isSubmitting}
+            >
               {isEditMode ? "Änderungen speichern" : "Eintrag speichern"}
             </Button>
           </DialogFooter>

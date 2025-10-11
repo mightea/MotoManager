@@ -77,6 +77,7 @@ export function AddStorageLocationDialog({
   }, [open, isEditMode, locationToEdit, form]);
 
   const fetcher = useFetcher();
+  const isSubmitting = fetcher.state !== "idle";
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     fetcher.submit(
@@ -163,6 +164,7 @@ export function AddStorageLocationDialog({
                     type="button"
                     variant="destructive"
                     className="w-full sm:mr-auto sm:w-auto"
+                    disabled={isSubmitting}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Löschen
@@ -184,6 +186,7 @@ export function AddStorageLocationDialog({
                     <AlertDialogAction
                       onClick={handleDelete}
                       className="bg-destructive hover:bg-destructive/90"
+                      disabled={isSubmitting}
                     >
                       Löschen
                     </AlertDialogAction>
@@ -196,10 +199,15 @@ export function AddStorageLocationDialog({
               variant="outline"
               onClick={() => setOpen(false)}
               className="w-full sm:w-auto"
+              disabled={isSubmitting}
             >
               Abbrechen
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto"
+              disabled={isSubmitting || form.formState.isSubmitting}
+            >
               {isEditMode ? "Speichern" : "Hinzufügen"}
             </Button>
           </DialogFooter>

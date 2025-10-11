@@ -192,6 +192,7 @@ export function DocumentDialog({
                   <AlertDialogAction
                     onClick={handleDelete}
                     className="bg-destructive hover:bg-destructive/90"
+                    disabled={isSubmitting}
                   >
                     Löschen
                   </AlertDialogAction>
