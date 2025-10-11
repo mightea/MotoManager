@@ -16,7 +16,13 @@ import { promisify } from "node:util";
 import { execFile } from "node:child_process";
 import { data, useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { useMemo } from "react";
 import DocumentDialog from "~/components/document-dialog";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
@@ -26,8 +32,8 @@ const DOCUMENTS_BASE_DIR = path.join(process.cwd(), "public", "documents");
 const DOCUMENT_FILES_DIR = path.join(DOCUMENTS_BASE_DIR, "files");
 const DOCUMENT_PREVIEWS_DIR = path.join(DOCUMENTS_BASE_DIR, "previews");
 
-const DOCUMENT_FILES_PUBLIC_BASE = "/documents/files";
-const DOCUMENT_PREVIEWS_PUBLIC_BASE = "/documents/previews";
+const DOCUMENT_FILES_PUBLIC_BASE = "/documents";
+const DOCUMENT_PREVIEWS_PUBLIC_BASE = "/tmp/previews";
 
 function resolvePublicFilePath(relativePath: string) {
   return path.join(process.cwd(), "public", relativePath.replace(/^\/+/, ""));
@@ -77,10 +83,17 @@ const execFileAsync = promisify(execFile);
 
 async function generatePdfPreview(
   pdfPath: string,
-  outputPath: string
+  outputPath: string,
 ): Promise<boolean> {
   try {
-    await execFileAsync("sips", ["-s", "format", "png", pdfPath, "--out", outputPath]);
+    await execFileAsync("sips", [
+      "-s",
+      "format",
+      "png",
+      pdfPath,
+      "--out",
+      outputPath,
+    ]);
     return true;
   } catch (error) {
     console.warn("PDF preview generation failed", error);
@@ -116,14 +129,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .from(documents)
     .leftJoin(
       documentMotorcycles,
-      eq(documentMotorcycles.documentId, documents.id)
+      eq(documentMotorcycles.documentId, documents.id),
     )
     .leftJoin(motorcycles, eq(documentMotorcycles.motorcycleId, motorcycles.id))
     .where(
       or(
         isNull(documentMotorcycles.motorcycleId),
-        eq(motorcycles.userId, user.id)
-      )
+        eq(motorcycles.userId, user.id),
+      ),
     )
     .orderBy(desc(documents.createdAt));
 
@@ -160,7 +173,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   const filteredDocuments = Array.from(docsMap.values()).filter((doc) =>
-    accessibleDocs.has(doc.id)
+    accessibleDocs.has(doc.id),
   );
 
   return data(
@@ -168,7 +181,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       documents: filteredDocuments,
       motorcycles: userMotorcycles,
     },
-    { headers: mergeHeaders(headers ?? {}) }
+    { headers: mergeHeaders(headers ?? {}) },
   );
 }
 
@@ -179,10 +192,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  const respond = (
-    body: unknown,
-    init?: ResponseInit
-  ) =>
+  const respond = (body: unknown, init?: ResponseInit) =>
     data(body, {
       ...init,
       headers: mergeHeaders(sessionHeaders ?? {}),
@@ -194,7 +204,7 @@ export async function action({ request }: ActionFunctionArgs) {
     .where(eq(motorcycles.userId, user.id));
 
   const userMotorcycleIdSet = new Set<number>(
-    userMotorcycleIds.map((row) => row.id)
+    userMotorcycleIds.map((row) => row.id),
   );
 
   if (intent === "document-add") {
@@ -203,13 +213,16 @@ export async function action({ request }: ActionFunctionArgs) {
     const motorcycleIdsRaw = formData.getAll("motorcycleIds") as string[];
 
     if (!title) {
-      return respond({ success: false, message: "Titel ist erforderlich." }, { status: 400 });
+      return respond(
+        { success: false, message: "Titel ist erforderlich." },
+        { status: 400 },
+      );
     }
 
     if (!(file instanceof File) || file.size === 0) {
       return respond(
         { success: false, message: "PDF-Datei ist erforderlich." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -223,7 +236,7 @@ export async function action({ request }: ActionFunctionArgs) {
           success: false,
           message: "Ungültige Motorrad-Auswahl.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -231,9 +244,10 @@ export async function action({ request }: ActionFunctionArgs) {
       return respond(
         {
           success: false,
-          message: "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
+          message:
+            "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -241,7 +255,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (fileExt !== ".pdf") {
       return respond(
         { success: false, message: "Nur PDF-Dateien werden unterstützt." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -254,7 +268,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const previewServerPath = path.join(DOCUMENT_PREVIEWS_DIR, previewFilename);
     const previewPublicPath = path.posix.join(
       DOCUMENT_PREVIEWS_PUBLIC_BASE,
-      previewFilename
+      previewFilename,
     );
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -282,7 +296,7 @@ export async function action({ request }: ActionFunctionArgs) {
         (motorcycleId) => ({
           documentId: inserted.id,
           motorcycleId,
-        })
+        }),
       );
 
       if (values.length > 0) {
@@ -294,7 +308,9 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (intent === "document-edit") {
-    const documentId = Number.parseInt((formData.get("documentId") as string) ?? "");
+    const documentId = Number.parseInt(
+      (formData.get("documentId") as string) ?? "",
+    );
     const title = (formData.get("title") as string)?.trim();
     const file = formData.get("file");
     const motorcycleIdsRaw = formData.getAll("motorcycleIds") as string[];
@@ -302,11 +318,14 @@ export async function action({ request }: ActionFunctionArgs) {
     if (Number.isNaN(documentId)) {
       return respond(
         { success: false, message: "Dokument konnte nicht ermittelt werden." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (!title) {
-      return respond({ success: false, message: "Titel ist erforderlich." }, { status: 400 });
+      return respond(
+        { success: false, message: "Titel ist erforderlich." },
+        { status: 400 },
+      );
     }
 
     const [existing] = await db
@@ -315,7 +334,10 @@ export async function action({ request }: ActionFunctionArgs) {
       .where(eq(documents.id, documentId));
 
     if (!existing) {
-      return respond({ success: false, message: "Dokument wurde nicht gefunden." }, { status: 404 });
+      return respond(
+        { success: false, message: "Dokument wurde nicht gefunden." },
+        { status: 404 },
+      );
     }
 
     let filePath = existing.filePath;
@@ -331,7 +353,7 @@ export async function action({ request }: ActionFunctionArgs) {
           success: false,
           message: "Ungültige Motorrad-Auswahl.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -354,7 +376,7 @@ export async function action({ request }: ActionFunctionArgs) {
           success: false,
           message: "Du kannst dieses Dokument nicht bearbeiten.",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -362,9 +384,10 @@ export async function action({ request }: ActionFunctionArgs) {
       return respond(
         {
           success: false,
-          message: "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
+          message:
+            "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -373,7 +396,7 @@ export async function action({ request }: ActionFunctionArgs) {
       if (fileExt !== ".pdf") {
         return respond(
           { success: false, message: "Nur PDF-Dateien werden unterstützt." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -382,16 +405,16 @@ export async function action({ request }: ActionFunctionArgs) {
       const serverPath = path.join(DOCUMENT_FILES_DIR, uniqueName);
       const publicPath = path.posix.join(
         DOCUMENT_FILES_PUBLIC_BASE,
-        uniqueName
+        uniqueName,
       );
       const previewFilename = `${path.parse(uniqueName).name}-preview.png`;
       const previewServerPath = path.join(
         DOCUMENT_PREVIEWS_DIR,
-        previewFilename
+        previewFilename,
       );
       const previewPublicPath = path.posix.join(
         DOCUMENT_PREVIEWS_PUBLIC_BASE,
-        previewFilename
+        previewFilename,
       );
       const buffer = Buffer.from(await file.arrayBuffer());
       await fs.writeFile(serverPath, buffer);
@@ -403,10 +426,9 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       filePath = publicPath;
-      previewPath =
-        (await generatePdfPreview(serverPath, previewServerPath))
-          ? previewPublicPath
-          : null;
+      previewPath = (await generatePdfPreview(serverPath, previewServerPath))
+        ? previewPublicPath
+        : null;
     }
 
     await db
@@ -428,7 +450,7 @@ export async function action({ request }: ActionFunctionArgs) {
         (motorcycleId) => ({
           documentId,
           motorcycleId,
-        })
+        }),
       );
 
       if (values.length > 0) {
@@ -440,11 +462,13 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (intent === "document-delete") {
-    const documentId = Number.parseInt((formData.get("documentId") as string) ?? "");
+    const documentId = Number.parseInt(
+      (formData.get("documentId") as string) ?? "",
+    );
     if (Number.isNaN(documentId)) {
       return respond(
         { success: false, message: "Dokument konnte nicht ermittelt werden." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -454,7 +478,10 @@ export async function action({ request }: ActionFunctionArgs) {
       .where(eq(documents.id, documentId));
 
     if (!existing) {
-      return respond({ success: true, intent: "document-delete" }, { status: 200 });
+      return respond(
+        { success: true, intent: "document-delete" },
+        { status: 200 },
+      );
     }
 
     const relations = await db
@@ -476,7 +503,7 @@ export async function action({ request }: ActionFunctionArgs) {
           success: false,
           message: "Du kannst dieses Dokument nicht löschen.",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -487,10 +514,16 @@ export async function action({ request }: ActionFunctionArgs) {
 
     await db.delete(documents).where(eq(documents.id, documentId));
 
-    return respond({ success: true, intent: "document-delete" }, { status: 200 });
+    return respond(
+      { success: true, intent: "document-delete" },
+      { status: 200 },
+    );
   }
 
-  return respond({ success: false, message: "Unbekannter Vorgang." }, { status: 400 });
+  return respond(
+    { success: false, message: "Unbekannter Vorgang." },
+    { status: 400 },
+  );
 }
 
 export default function Documents() {
@@ -509,15 +542,15 @@ export default function Documents() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-headline font-semibold">Dokumentenarchiv</h1>
+          <h1 className="text-3xl font-headline font-semibold">
+            Dokumentenarchiv
+          </h1>
           <p className="text-muted-foreground text-sm">
             Lade PDF-Dokumente hoch und ordne sie deinen Motorrädern zu.
           </p>
         </div>
         <DocumentDialog motorcycles={motorcycles}>
-          <Button>
-            Neues Dokument
-          </Button>
+          <Button>Neues Dokument</Button>
         </DocumentDialog>
       </div>
 
@@ -529,7 +562,8 @@ export default function Documents() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Lade dein erstes Dokument hoch, um wichtige Unterlagen zentral abzulegen.
+                Lade dein erstes Dokument hoch, um wichtige Unterlagen zentral
+                abzulegen.
               </p>
             </CardContent>
             <CardFooter>
@@ -554,7 +588,9 @@ export default function Documents() {
                         [
                           moto.make,
                           moto.model,
-                          moto.numberPlate ? `(${moto.numberPlate})` : undefined,
+                          moto.numberPlate
+                            ? `(${moto.numberPlate})`
+                            : undefined,
                         ]
                           .filter(Boolean)
                           .join(" "),

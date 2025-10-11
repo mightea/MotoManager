@@ -20,5 +20,6 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
+VOLUME ["/documents", "/database"]
 EXPOSE 3000
 CMD ["pnpm", "start"]
