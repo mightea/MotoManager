@@ -41,6 +41,7 @@ import { Input } from "./ui/input";
 import { InfoItem } from "./info-item";
 import { useMotorcycle } from "~/contexts/MotorcycleProvider";
 import { getNextInspectionInfo } from "~/utils/inspection";
+import { cn } from "~/utils/tw";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
@@ -164,8 +165,11 @@ function CurrentLocationInfo({
 
 export default function MotorcycleInfo() {
   let fetcher = useFetcher();
-  const { motorcycle, currentOdo: currentOdometer, setMotorcycle } =
-    useMotorcycle();
+  const {
+    motorcycle,
+    currentOdo: currentOdometer,
+    setMotorcycle,
+  } = useMotorcycle();
 
   const nextInspection = useMemo(
     () =>
@@ -260,27 +264,18 @@ export default function MotorcycleInfo() {
             fetcher={fetcher}
           />
           <CurrentLocationInfo motorcycle={motorcycle} />
-          {nextInspection && (
-            <div className="flex items-start justify-between gap-3 rounded-md border border-dashed border-border/60 bg-muted/40 px-3 py-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CalendarClock className="h-4 w-4" />
-                <span>Nächste MFK</span>
-              </div>
-              <div className="text-right">
-                <p
-                  className={
-                    nextInspection.isOverdue
-                      ? "text-sm font-semibold text-destructive"
-                      : "text-sm font-semibold text-foreground"
-                  }
-                >
-                  {nextInspection.relativeLabel}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {nextInspection.dueDateLabel}
-                </p>
-              </div>
-            </div>
+
+          {nextInspection && nextInspection.relativeLabel && (
+            <InfoItem
+              icon={CalendarClock}
+              label="Nächste MFK"
+              value={nextInspection.relativeLabel}
+              valueClassName={cn(
+                nextInspection.isOverdue
+                  ? "text-destructive"
+                  : "text-foreground",
+              )}
+            ></InfoItem>
           )}
         </div>
 
@@ -332,6 +327,7 @@ export default function MotorcycleInfo() {
                     )}
                   />
                 )}
+
                 {motorcycle.purchasePrice !== null && (
                   <InfoItem
                     icon={CircleDollarSign}
@@ -342,13 +338,12 @@ export default function MotorcycleInfo() {
                     }).format(motorcycle.purchasePrice)}
                   />
                 )}
+
                 <InfoItem
                   icon={Milestone}
                   label="KM bei Kauf"
                   value={`${motorcycle.initialOdo.toLocaleString("de-CH")} km`}
                 />
-
-                <Separator className="my-3" />
 
                 <InfoItem
                   icon={Bike}
@@ -357,6 +352,16 @@ export default function MotorcycleInfo() {
                     currentOdometer - motorcycle.initialOdo
                   ).toLocaleString("de-CH")} km`}
                 />
+
+                <Separator className="my-3" />
+
+                {nextInspection?.dueDateLabel && (
+                  <InfoItem
+                    icon={CalendarClock}
+                    label="Nächste MFK"
+                    value={nextInspection.dueDateLabel}
+                  />
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>

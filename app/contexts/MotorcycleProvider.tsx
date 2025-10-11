@@ -1,16 +1,20 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { CurrentLocation, Motorcycle } from "~/db/schema";
 
+export type MotorcycleWithInspection = Motorcycle & {
+  lastInspection: string | null;
+};
+
 export type CurrentLocationWithName = CurrentLocation & {
   locationName: string | null;
 };
 
 interface MotorcycleContextType {
-  motorcycle: Motorcycle;
+  motorcycle: MotorcycleWithInspection;
   currentOdo: number;
   currentLocation: CurrentLocationWithName | null;
   locationHistory: CurrentLocationWithName[];
-  setMotorcycle: React.Dispatch<React.SetStateAction<Motorcycle>>;
+  setMotorcycle: React.Dispatch<React.SetStateAction<MotorcycleWithInspection>>;
   setCurrentOdo: React.Dispatch<React.SetStateAction<number>>;
   setCurrentLocation: React.Dispatch<
     React.SetStateAction<CurrentLocationWithName | null>
@@ -23,7 +27,7 @@ interface MotorcycleContextType {
 const MotorcycleContext = createContext<MotorcycleContextType | null>(null);
 
 interface MotorcycleProviderProps {
-  initialMotorcycle: Motorcycle;
+  initialMotorcycle: MotorcycleWithInspection;
   initialCurrentOdo: number;
   initialCurrentLocation: CurrentLocationWithName | null;
   initialLocationHistory: CurrentLocationWithName[];
@@ -38,7 +42,8 @@ export const MotorcycleProvider = ({
   initialLocationHistory,
 }: MotorcycleProviderProps) => {
   // State hooks are typed for better safety.
-  const [motorcycle, setMotorcycle] = useState<Motorcycle>(initialMotorcycle);
+  const [motorcycle, setMotorcycle] =
+    useState<MotorcycleWithInspection>(initialMotorcycle);
   const [currentOdo, setCurrentOdo] = useState<number>(initialCurrentOdo); // Odometer in kilometers
   const [currentLocation, setCurrentLocation] = useState<
     CurrentLocationWithName | null

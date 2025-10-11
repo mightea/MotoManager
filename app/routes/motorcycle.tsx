@@ -21,7 +21,10 @@ import MotorcycleInfo from "~/components/motorcycle-info";
 import { OpenIssuesCard } from "~/components/open-issues-card";
 import { data, redirect } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
-import { MotorcycleProvider } from "~/contexts/MotorcycleProvider";
+import {
+  MotorcycleProvider,
+  type MotorcycleWithInspection,
+} from "~/contexts/MotorcycleProvider";
 import { type DocumentListItem } from "~/components/document-list";
 import { MotorcycleDesktopTabs } from "~/components/motorcycle-desktop-tabs";
 import { MotorcycleMobileTabs } from "~/components/motorcycle-mobile-tabs";
@@ -155,9 +158,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
     .at(0);
 
-  const enrichedMotorcycle: Motorcycle = {
+  const baseLastInspection = (result as { lastInspection?: string | null })
+    .lastInspection;
+
+  const enrichedMotorcycle: MotorcycleWithInspection = {
     ...result,
-    lastInspection: lastInspectionFromMaintenance ?? result.lastInspection ?? null,
+    lastInspection:
+      lastInspectionFromMaintenance ?? baseLastInspection ?? null,
   };
 
   // Get all odometer readings from all items

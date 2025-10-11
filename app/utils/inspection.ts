@@ -22,23 +22,40 @@ const formatRelative = (diffDays: number) => {
   const isOverdue = diffDays < 0;
   const absDays = Math.abs(diffDays);
 
-  const useDays = absDays < 14;
-  const value = useDays ? absDays : Math.round(absDays / 7);
-  const unit = useDays
-    ? value === 1
-      ? "Tag"
-      : "Tage"
-    : value === 1
-      ? "Woche"
-      : "Wochen";
+  const daysThreshold = 14;
+  const weeksThreshold = 8; // up to ~2 months
+  const monthsThreshold = 24; // up to ~2 years
+
+  let unit:
+    | "Tag"
+    | "Tage"
+    | "Woche"
+    | "Wochen"
+    | "Monat"
+    | "Monaten"
+    | "Jahr"
+    | "Jahren";
+  let value: number;
+
+  if (absDays < daysThreshold) {
+    value = absDays;
+    unit = value === 1 ? "Tag" : "Tage";
+  } else if (absDays < weeksThreshold * 7) {
+    value = Math.round(absDays / 7);
+    unit = value === 1 ? "Woche" : "Wochen";
+  } else if (absDays < monthsThreshold * 30) {
+    value = Math.round(absDays / 30);
+    unit = value === 1 ? "Monat" : "Monaten";
+  } else {
+    value = Math.round(absDays / 365);
+    unit = value === 1 ? "Jahr" : "Jahren";
+  }
 
   if (value === 0) {
     return isOverdue ? "Überfällig" : "Heute fällig";
   }
 
-  return isOverdue
-    ? `seit ${value} ${unit} überfällig`
-    : `in ${value} ${unit}`;
+  return isOverdue ? `seit ${value} ${unit} überfällig` : `in ${value} ${unit}`;
 };
 
 export type NextInspectionInfo = {
@@ -72,6 +89,13 @@ export const getNextInspectionInfo = ({
   if (lastInspectionDate) {
     dueDate = addYears(lastInspectionDate, regularIntervalYears);
   } else if (registrationDate) {
+    const ageInYears =
+      (Date.now() - registrationDate.getTime()) / (MS_PER_DAY * 365);
+    if (ageInYears >= initialIntervalYears) {
+      // No reliable inspection record but vehicle is already beyond initial interval.
+      // Skip displaying misleading reminder.
+      return null;
+    }
     dueDate = addYears(registrationDate, initialIntervalYears);
     while (regularIntervalYears > 0 && dueDate < new Date()) {
       dueDate = addYears(dueDate, regularIntervalYears);

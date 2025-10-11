@@ -106,11 +106,7 @@ export const MotorcycleSummaryCard = ({
             valueClassName={cn(
               nextInspection.isOverdue ? "text-destructive" : "text-foreground",
             )}
-          >
-            <span className="text-[0.65rem] text-muted-foreground">
-              {nextInspection.dueDateLabel}
-            </span>
-          </InfoItem>
+          ></InfoItem>
         )}
       </CardContent>
     </Card>

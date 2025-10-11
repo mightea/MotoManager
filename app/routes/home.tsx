@@ -22,7 +22,7 @@ import {
   type NextInspectionInfo,
 } from "~/utils/inspection";
 
-type MotorcycleData = Motorcycle & {
+type MotorcycleData = (Motorcycle & { lastInspection: string | null }) & {
   numberOfIssues: number;
   odometer: number;
   odometerThisYear: number;
