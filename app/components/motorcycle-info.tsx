@@ -2,6 +2,7 @@ import {
   Award,
   Bike,
   Calendar,
+  CalendarClock,
   CircleDollarSign,
   Edit,
   Fingerprint,
@@ -34,11 +35,12 @@ import { Separator } from "./ui/separator";
 import { ImageUploadDialog } from "./image-upload-dialog";
 import { useFetcher } from "react-router";
 import { LocationUpdateDialog } from "./location-update-dialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { InfoItem } from "./info-item";
 import { useMotorcycle } from "~/contexts/MotorcycleProvider";
+import { getNextInspectionInfo } from "~/utils/inspection";
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
@@ -165,6 +167,20 @@ export default function MotorcycleInfo() {
   const { motorcycle, currentOdo: currentOdometer, setMotorcycle } =
     useMotorcycle();
 
+  const nextInspection = useMemo(
+    () =>
+      getNextInspectionInfo({
+        firstRegistration: motorcycle.firstRegistration,
+        lastInspection: motorcycle.lastInspection,
+        isVeteran: motorcycle.isVeteran,
+      }),
+    [
+      motorcycle.firstRegistration,
+      motorcycle.lastInspection,
+      motorcycle.isVeteran,
+    ],
+  );
+
   const handleImageUpdate = (newImageUrl: string) => {
     setMotorcycle((prev) => ({ ...prev, image: newImageUrl }));
     fetcher.submit(
@@ -244,6 +260,28 @@ export default function MotorcycleInfo() {
             fetcher={fetcher}
           />
           <CurrentLocationInfo motorcycle={motorcycle} />
+          {nextInspection && (
+            <div className="flex items-start justify-between gap-3 rounded-md border border-dashed border-border/60 bg-muted/40 px-3 py-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CalendarClock className="h-4 w-4" />
+                <span>Nächste MFK</span>
+              </div>
+              <div className="text-right">
+                <p
+                  className={
+                    nextInspection.isOverdue
+                      ? "text-sm font-semibold text-destructive"
+                      : "text-sm font-semibold text-foreground"
+                  }
+                >
+                  {nextInspection.relativeLabel}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {nextInspection.dueDateLabel}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <Accordion type="single" collapsible>

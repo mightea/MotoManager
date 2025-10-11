@@ -1,6 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
 
 export type DocumentListItem = {
@@ -9,13 +8,17 @@ export type DocumentListItem = {
   filePath: string;
   previewPath?: string | null;
   createdAt: string;
+  subtitle?: string;
+  motorcycleIds?: number[];
+  uploadedBy?: string | null;
 };
 
 interface DocumentListProps {
   documents: DocumentListItem[];
+  renderActions?: (doc: DocumentListItem) => ReactNode;
 }
 
-export function DocumentList({ documents }: DocumentListProps) {
+export function DocumentList({ documents, renderActions }: DocumentListProps) {
   const sortedDocs = useMemo(
     () =>
       [...documents].sort(
@@ -23,6 +26,16 @@ export function DocumentList({ documents }: DocumentListProps) {
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
     [documents],
+  );
+
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat("de-CH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+    [],
   );
 
   if (sortedDocs.length === 0) {
@@ -41,39 +54,60 @@ export function DocumentList({ documents }: DocumentListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {sortedDocs.map((doc) => (
-        <Card key={doc.id} className="overflow-hidden">
-          <div className="grid gap-4 p-4 md:grid-cols-[160px_1fr]">
-            <div className="flex items-center justify-center bg-muted/40 border rounded-md p-2">
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {sortedDocs.map((doc) => {
+        const extraActions = renderActions?.(doc);
+
+        return (
+          <Card key={doc.id} className="flex flex-col overflow-hidden">
+            <Link
+              to={doc.filePath}
+              target="_blank"
+              rel="noreferrer"
+              className="group relative aspect-[4/3] bg-muted/40 transition hover:bg-muted"
+            >
               <img
                 src={doc.previewPath ?? "/images/pdf-placeholder.svg"}
                 alt={`Vorschau für ${doc.title}`}
-                className="h-36 w-full object-contain rounded"
+                className="absolute inset-0 h-full w-full object-contain p-6"
                 loading="lazy"
               />
-            </div>
-            <div className="flex flex-col gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  {doc.title}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Hinterlegt am{" "}
-                  {new Date(doc.createdAt).toLocaleDateString("de-CH")}
-                </p>
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-fit">
-                <Link to={doc.filePath} target="_blank" rel="noreferrer">
-                  PDF öffnen
-                </Link>
-              </Button>
-            </div>
-          </div>
+              <span className="absolute inset-x-4 bottom-4 rounded-full border border-border/40 bg-background/80 px-3 py-1 text-center text-xs font-medium text-muted-foreground shadow-sm backdrop-blur transition group-hover:bg-background group-hover:text-foreground">
+                PDF öffnen
+              </span>
+            </Link>
+          <CardHeader className="space-y-2">
+            <CardTitle className="text-lg font-semibold leading-tight line-clamp-2">
+              <Link
+                to={doc.filePath}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                {doc.title}
+              </Link>
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Hochgeladen von {doc.uploadedBy ?? "Unbekannt"} •
+              {' '}
+              {dateFormatter.format(new Date(doc.createdAt))}
+            </p>
+            {doc.subtitle ? (
+              <p className="text-xs text-muted-foreground/90 line-clamp-2">
+                {doc.subtitle}
+              </p>
+            ) : null}
+          </CardHeader>
+            {extraActions ? (
+              <CardContent className="mt-auto flex flex-wrap gap-2 pt-0">
+                {extraActions}
+              </CardContent>
+            ) : null}
         </Card>
-      ))}
-    </div>
-  );
+      );
+    })}
+  </div>
+);
 }
 
 export default DocumentList;

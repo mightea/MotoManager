@@ -17,11 +17,16 @@ import { AddMotorcycleDialog } from "~/components/add-motorcycle-dialog";
 import { formatCurrency } from "~/utils/numberUtils";
 import { inArray, eq } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
+import {
+  getNextInspectionInfo,
+  type NextInspectionInfo,
+} from "~/utils/inspection";
 
 type MotorcycleData = Motorcycle & {
   numberOfIssues: number;
   odometer: number;
   odometerThisYear: number;
+  nextInspection: NextInspectionInfo | null;
 };
 
 type DashboardStats = {
@@ -132,11 +137,27 @@ export async function loader({ request }: Route.LoaderArgs) {
     const baselineOdo = previousYearEntries.at(0)?.[1] ?? moto.initialOdo ?? 0;
     const odometerThisYear = Math.max(0, maxOdo - baselineOdo);
 
+    const lastInspectionFromMaintenance = maintenanceItems
+      .filter((record) => record.type === "inspection" && record.date)
+      .map((record) => record.date as string)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+      .at(0);
+
+    const effectiveLastInspection = lastInspectionFromMaintenance ?? null;
+
+    const nextInspection = getNextInspectionInfo({
+      firstRegistration: moto.firstRegistration,
+      lastInspection: effectiveLastInspection,
+      isVeteran: moto.isVeteran ?? false,
+    });
+
     return {
       ...moto,
+      lastInspection: effectiveLastInspection,
       numberOfIssues: issuesCount,
       odometer: maxOdo,
       odometerThisYear,
+      nextInspection,
     };
   });
 
@@ -162,6 +183,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
     return sum + (entry.cost ?? 0);
   }, 0);
+
   const veteranCount = motorcyclesList.filter((moto) => moto.isVeteran).length;
   const topRiderCandidate = items.reduce<MotorcycleData | null>((acc, moto) => {
     if (moto.odometerThisYear <= 0) {
@@ -260,7 +282,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           hint: "Anzahl Motorräder mit Veteranen-Status.",
         },
         {
-          label: "Fleißigstes Bike",
+          label: "Fleissigstes Bike",
           value: stats.topRider
             ? `${
                 [stats.topRider.make, stats.topRider.model]

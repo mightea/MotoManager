@@ -91,6 +91,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       filePath: documents.filePath,
       previewPath: documents.previewPath,
       createdAt: documents.createdAt,
+      uploadedBy: documents.uploadedBy,
       motorcycleId: documentMotorcycles.motorcycleId,
     })
     .from(documents)
@@ -107,6 +108,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       filePath: string;
       previewPath: string | null;
       createdAt: string;
+      uploadedBy: string | null;
       motorcycleIds: number[];
     }
   >();
@@ -120,6 +122,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         filePath: row.filePath,
         previewPath: row.previewPath ?? null,
         createdAt: row.createdAt,
+        uploadedBy: row.uploadedBy ?? null,
         motorcycleIds: [],
       };
       documentsMap.set(row.id, entry);
@@ -143,11 +146,23 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       filePath: doc.filePath,
       previewPath: doc.previewPath,
       createdAt: doc.createdAt,
+      uploadedBy: doc.uploadedBy,
     }));
+
+  const lastInspectionFromMaintenance = maintenanceItems
+    .filter((item) => item.type === "inspection" && item.date)
+    .map((item) => item.date as string)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+    .at(0);
+
+  const enrichedMotorcycle: Motorcycle = {
+    ...result,
+    lastInspection: lastInspectionFromMaintenance ?? result.lastInspection ?? null,
+  };
 
   // Get all odometer readings from all items
   const odos = [
-    result.initialOdo,
+    enrichedMotorcycle.initialOdo,
     ...maintenanceItems.map((m) => m.odo),
     ...issuesItems.map((i) => i.odo),
     ...locationHistory
@@ -160,10 +175,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   return data(
     {
-      motorcycle: result,
+      motorcycle: enrichedMotorcycle,
       maintenance: maintenanceItems,
       issues: issuesItems,
-      currentOdo: currentOdo ?? result.initialOdo,
+      currentOdo: currentOdo ?? enrichedMotorcycle.initialOdo,
       currentLocation: currentLocation ?? null,
       locationHistory,
       torqueSpecifications,

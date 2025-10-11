@@ -14,13 +14,13 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
 import { execFile } from "node:child_process";
-import { data, Link, useLoaderData } from "react-router";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { data, useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { useMemo } from "react";
 import DocumentDialog from "~/components/document-dialog";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
+import { DocumentList } from "~/components/document-list";
 
 const DOCUMENTS_BASE_DIR = path.join(process.cwd(), "public", "documents");
 const DOCUMENT_FILES_DIR = path.join(DOCUMENTS_BASE_DIR, "files");
@@ -40,6 +40,7 @@ interface DocumentSummary {
   previewPath: string | null;
   createdAt: string;
   updatedAt: string;
+  uploadedBy: string | null;
   motorcycles: Array<{
     id: number;
     make: string;
@@ -106,6 +107,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       previewPath: documents.previewPath,
       createdAt: documents.createdAt,
       updatedAt: documents.updatedAt,
+      uploadedBy: documents.uploadedBy,
       motorcycleId: documentMotorcycles.motorcycleId,
       motorcycleMake: motorcycles.make,
       motorcycleModel: motorcycles.model,
@@ -138,6 +140,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         previewPath: row.previewPath,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
+        uploadedBy: row.uploadedBy ?? null,
         motorcycles: [],
       };
       docsMap.set(row.id, summary);
@@ -266,6 +269,7 @@ export async function action({ request }: ActionFunctionArgs) {
       title,
       filePath: publicPath,
       previewPath,
+      uploadedBy: user.username ?? user.name,
     };
 
     const [inserted] = await db
@@ -490,8 +494,16 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Documents() {
-  const { documents: docs, motorcycles } =
-    useLoaderData<LoaderData>();
+  const { documents: docs, motorcycles } = useLoaderData<LoaderData>();
+
+  const sortedDocs = useMemo(
+    () =>
+      [...docs].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
+    [docs],
+  );
 
   return (
     <div className="space-y-6">
@@ -509,8 +521,8 @@ export default function Documents() {
         </DocumentDialog>
       </div>
 
-      <div className="grid gap-4">
-        {docs.length === 0 ? (
+      <div className="grid gap-6">
+        {sortedDocs.length === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>Keine Dokumente vorhanden</CardTitle>
@@ -527,61 +539,47 @@ export default function Documents() {
             </CardFooter>
           </Card>
         ) : (
-          docs.map((doc) => {
-            const appliesToAll = doc.motorcycles.length === 0;
-            const assignedLabel = appliesToAll
-              ? "Alle Motorräder"
-              : doc.motorcycles
-                  .map((moto) => `${moto.make} ${moto.model}${moto.numberPlate ? ` (${moto.numberPlate})` : ""}`)
-                  .join(", ");
-
-            const displayDate = format(new Date(doc.createdAt), "PPP", { locale: de });
-
-            return (
-              <Card key={doc.id} className="overflow-hidden">
-                <div className="grid gap-4 p-4 md:grid-cols-[260px_1fr]">
-                  <div className="rounded-md border bg-muted/40 flex items-center justify-center p-3">
-                    <img
-                      src={doc.previewPath ?? "/images/pdf-placeholder.svg"}
-                      alt={`Vorschau für ${doc.title}`}
-                      className="h-48 w-full object-contain rounded"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <h2 className="text-lg font-semibold text-foreground">{doc.title}</h2>
-                      <p className="text-xs text-muted-foreground">
-                        Hochgeladen am {displayDate}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Zugeordnet zu</p>
-                      <p className="text-sm text-muted-foreground">{assignedLabel}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button asChild variant="outline" size="sm">
-                        <Link to={doc.filePath} target="_blank" rel="noreferrer">
-                          PDF öffnen
-                        </Link>
-                      </Button>
-                      <DocumentDialog
-                        motorcycles={motorcycles}
-                        document={{
-                          ...doc,
-                          motorcycleIds: doc.motorcycles.map((m) => m.id),
-                        }}
-                      >
-                        <Button size="sm" variant="secondary">
-                          Bearbeiten
-                        </Button>
-                      </DocumentDialog>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })
+          <DocumentList
+            documents={sortedDocs.map((doc) => ({
+              id: doc.id,
+              title: doc.title,
+              filePath: doc.filePath,
+              previewPath: doc.previewPath,
+              createdAt: doc.createdAt,
+              subtitle:
+                doc.motorcycles.length === 0
+                  ? "Zugeordnet zu: Alle Motorräder"
+                  : `Zugeordnet zu: ${doc.motorcycles
+                      .map((moto) =>
+                        [
+                          moto.make,
+                          moto.model,
+                          moto.numberPlate ? `(${moto.numberPlate})` : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(" "),
+                      )
+                      .join(", ")}`,
+              motorcycleIds: doc.motorcycles.map((m) => m.id),
+              uploadedBy: doc.uploadedBy ?? null,
+            }))}
+            renderActions={(doc) => (
+              <DocumentDialog
+                motorcycles={motorcycles}
+                document={{
+                  id: doc.id,
+                  title: doc.title,
+                  filePath: doc.filePath,
+                  previewPath: doc.previewPath ?? null,
+                  motorcycleIds: doc.motorcycleIds ?? [],
+                }}
+              >
+                <Button size="sm" variant="secondary" className="flex-1">
+                  Bearbeiten
+                </Button>
+              </DocumentDialog>
+            )}
+          />
         )}
       </div>
     </div>

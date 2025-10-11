@@ -208,6 +208,7 @@ export const documents = sqliteTable("documents", {
   title: text().notNull(),
   filePath: text("file_path").notNull(),
   previewPath: text("preview_path"),
+  uploadedBy: text("uploaded_by"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),

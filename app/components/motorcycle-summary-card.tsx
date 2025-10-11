@@ -6,12 +6,20 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Award, Bike, Gauge, RulerDimensionLine, Wrench } from "lucide-react";
+import {
+  Award,
+  Bike,
+  CalendarClock,
+  Gauge,
+  RulerDimensionLine,
+  Wrench,
+} from "lucide-react";
 import { slug } from "~/utils/slugify";
 import { Badge } from "./ui/badge";
 import { cn } from "~/utils/tw";
 import { InfoItem } from "./info-item";
 import { MIN_KM_PER_YEAR } from "~/constants";
+import type { NextInspectionInfo } from "~/utils/inspection";
 
 interface Props {
   id: number;
@@ -23,6 +31,7 @@ interface Props {
   isVeteran: boolean;
   numberOfIssues: number;
   image?: string | null;
+  nextInspection: NextInspectionInfo | null;
 }
 
 export const MotorcycleSummaryCard = ({
@@ -35,6 +44,7 @@ export const MotorcycleSummaryCard = ({
   isVeteran,
   numberOfIssues,
   image,
+  nextInspection,
 }: Props) => (
   <Link
     to={`/motorcycle/${slug(`${make}-${model}`)}/${id.toString()}/`}
@@ -88,6 +98,20 @@ export const MotorcycleSummaryCard = ({
           label="Mängel"
           value={numberOfIssues > 0 ? numberOfIssues : "Keine"}
         />
+        {nextInspection && nextInspection.relativeLabel && (
+          <InfoItem
+            icon={CalendarClock}
+            label="Nächste MFK"
+            value={nextInspection.relativeLabel}
+            valueClassName={cn(
+              nextInspection.isOverdue ? "text-destructive" : "text-foreground",
+            )}
+          >
+            <span className="text-[0.65rem] text-muted-foreground">
+              {nextInspection.dueDateLabel}
+            </span>
+          </InfoItem>
+        )}
       </CardContent>
     </Card>
   </Link>

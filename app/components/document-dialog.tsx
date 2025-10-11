@@ -14,6 +14,17 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { Motorcycle } from "~/db/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
 
 export interface DocumentDialogData {
   id: number;
@@ -58,10 +69,6 @@ export function DocumentDialog({
 
   const handleDelete = () => {
     if (!document) return;
-    const confirmed = window.confirm(
-      `Dokument "${document.title}" wirklich löschen?`,
-    );
-    if (!confirmed) return;
 
     fetcher.submit(
       {
@@ -158,26 +165,50 @@ export function DocumentDialog({
         </div>
 
         <DialogFooter>
+          {document && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full sm:mr-auto sm:w-auto"
+                  disabled={isSubmitting}
+                >
+                  Löschen
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Dokument wirklich löschen?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Diese Aktion kann nicht rückgängig gemacht werden. Das
+                    Dokument wird dauerhaft entfernt.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Löschen
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Button
             type="button"
             variant="outline"
             onClick={() => setOpen(false)}
             disabled={isSubmitting}
+            className="w-full sm:w-auto"
           >
             Abbrechen
           </Button>
-          {document && (
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-            >
-              Löschen
-            </Button>
-          )}
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {document ? "Speichern" : "Hochladen"}
           </Button>
         </DialogFooter>
