@@ -56,7 +56,7 @@ export function Header() {
             </span>
             <div className="hidden sm:block">
               <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                Motobase
+                MotoManager
               </p>
               <h1 className="text-xl font-semibold font-headline text-foreground">
                 Garage Cockpit

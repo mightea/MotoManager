@@ -1,6 +1,6 @@
-# Motobase
+# MotoManager
 
-Motobase keeps track of your motorcycle fleet: maintenance logs, storage locations, running issues, odometer history, and key registration details. The app is built with React Router, TypeScript, and Tailwind, and persists data in SQLite via Drizzle ORM.
+MotoManager keeps track of your motorcycle fleet: maintenance logs, storage locations, running issues, odometer history, and key registration details. The app is built with React Router, TypeScript, and Tailwind, and persists data in SQLite via Drizzle ORM.
 
 ## Highlights
 
@@ -48,7 +48,7 @@ Visit `http://localhost:5173` to view the app.
 
 ## Database
 
-Motobase ships with a versioned SQLite database (`db.sqlite`). All schema changes must go through Drizzle migrations.
+MotoManager ships with a versioned SQLite database (`db.sqlite`). All schema changes must go through Drizzle migrations.
 
 - Apply migrations locally:
 

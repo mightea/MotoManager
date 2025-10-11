@@ -828,7 +828,7 @@ export default function Settings() {
           </h1>
           <p className="text-sm text-muted-foreground md:max-w-2xl">
             Verwalte Standorte, Währungen und weitere Präferenzen für dein
-            Motobase-Konto.
+            MotoManager-Konto.
           </p>
         </div>
       </header>

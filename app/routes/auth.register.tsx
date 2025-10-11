@@ -143,10 +143,10 @@ export default function Register() {
       <Card className="shadow-xl">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-2xl font-headline">
-            Motobase einrichten
+            MotoManager einrichten
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Lege deinen Administratorzugang an, um mit Motobase zu starten.
+            Lege deinen Administratorzugang an, um mit MotoManager zu starten.
           </p>
         </CardHeader>
         <CardContent>

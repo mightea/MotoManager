@@ -420,7 +420,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
                   Benutzer wirklich entfernen?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Dadurch verliert {user.name} sofort den Zugriff auf Motobase.
+                  Dadurch verliert {user.name} sofort den Zugriff auf MotoManager.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               {deleteError && (

@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Motobase is a React Router + TypeScript app rooted in `app/`. Route modules live in `app/routes` with their loaders, actions, and screens. Shared UI belongs in `app/components`, persistent providers in `app/contexts`, and reusable hooks or helpers in `app/hooks` and `app/utils`. Database access is centralized in `app/db` via Drizzle ORM. Static assets ship from `public/`, while build and tooling configs sit alongside `package.json`, `vite.config.ts`, and `drizzle.config.ts`.
+MotoManager is a React Router + TypeScript app rooted in `app/`. Route modules live in `app/routes` with their loaders, actions, and screens. Shared UI belongs in `app/components`, persistent providers in `app/contexts`, and reusable hooks or helpers in `app/hooks` and `app/utils`. Database access is centralized in `app/db` via Drizzle ORM. Static assets ship from `public/`, while build and tooling configs sit alongside `package.json`, `vite.config.ts`, and `drizzle.config.ts`.
 
 ## Build, Test, and Development Commands
 Use pnpm for every workflow:
