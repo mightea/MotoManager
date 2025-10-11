@@ -35,14 +35,39 @@ export async function generatePdfPreview(
   outputPath: string,
 ): Promise<boolean> {
   try {
-    await execFileAsync("sips", [
-      "-s",
-      "format",
-      "png",
-      pdfPath,
-      "--out",
-      outputPath,
-    ]);
+    const platform = process.platform;
+
+    if (platform === "darwin") {
+      await execFileAsync("sips", [
+        "-s",
+        "format",
+        "png",
+        pdfPath,
+        "--out",
+        outputPath,
+      ]);
+    } else if (platform === "linux") {
+      const { dir, name, ext } = path.parse(outputPath);
+      const outputPrefix = path.join(dir, name);
+
+      await execFileAsync("pdftoppm", [
+        "-singlefile",
+        "-png",
+        pdfPath,
+        outputPrefix,
+      ]);
+
+      const generatedPath = `${outputPrefix}.png`;
+      if (generatedPath !== outputPath) {
+        await deleteFileIfExists(outputPath);
+        await fs.rename(generatedPath, outputPath);
+      }
+    } else {
+      throw new Error(
+        `Unsupported platform '${platform}' for preview generation`,
+      );
+    }
+
     return true;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {

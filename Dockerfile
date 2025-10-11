@@ -15,7 +15,10 @@ FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN mkdir -p $PNPM_HOME && corepack enable && corepack prepare pnpm@10.2.1 --activate
+RUN mkdir -p $PNPM_HOME \
+  && corepack enable \
+  && corepack prepare pnpm@10.2.1 --activate \
+  && apk add --no-cache poppler-utils
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=builder /app/node_modules ./node_modules
