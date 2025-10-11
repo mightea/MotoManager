@@ -32,8 +32,8 @@ const DOCUMENTS_BASE_DIR = path.join(process.cwd(), "public", "documents");
 const DOCUMENT_FILES_DIR = path.join(DOCUMENTS_BASE_DIR, "files");
 const DOCUMENT_PREVIEWS_DIR = path.join(DOCUMENTS_BASE_DIR, "previews");
 
-const DOCUMENT_FILES_PUBLIC_BASE = "/documents";
-const DOCUMENT_PREVIEWS_PUBLIC_BASE = "/tmp/previews";
+const DOCUMENT_FILES_PUBLIC_BASE = "/documents/files";
+const DOCUMENT_PREVIEWS_PUBLIC_BASE = "/documents/previews";
 
 function resolvePublicFilePath(relativePath: string) {
   return path.join(process.cwd(), "public", relativePath.replace(/^\/+/, ""));

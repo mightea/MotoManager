@@ -74,6 +74,7 @@ export function AddIssueDialog({
 }: AddIssueDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!issueToEdit;
+  const intent = isEditMode ? "issue-edit" : "issue-add";
 
   const form = useForm<IssueFormValues>({
     resolver: zodResolver(issueSchema),
@@ -111,6 +112,25 @@ export function AddIssueDialog({
       }
     }
   }, [open, isEditMode, issueToEdit, form, currentOdometer]);
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data && (fetcher.data as any)?.success) {
+      setOpen(false);
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  const handleSubmit = form.handleSubmit((values) => {
+    const formData = new FormData();
+    formData.set("intent", intent);
+    formData.set("motorcycleId", String(motorcycle.id));
+    formData.set("issueId", String(issueToEdit?.id ?? ""));
+    formData.set("description", values.description);
+    formData.set("priority", values.priority);
+    formData.set("status", values.status);
+    formData.set("date", values.date);
+    formData.set("odo", String(values.odo));
+    fetcher.submit(formData, { method: "post" });
+  });
   
   const mainContent = (
     <>
@@ -130,12 +150,9 @@ export function AddIssueDialog({
         <form
           method="post"
           className="flex flex-1 flex-col gap-6 overflow-hidden"
-          onSubmit={(e) => {
-            form.handleSubmit(() => {
-              // No client-side validation needed, handled by server
-            })(e);
-          }}
+          onSubmit={handleSubmit}
         >
+          <input type="hidden" name="intent" value={intent} />
           <input type="hidden" name="motorcycleId" value={motorcycle.id} />
           <input type="hidden" name="issueId" value={issueToEdit?.id ?? ""} />
           <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-0">

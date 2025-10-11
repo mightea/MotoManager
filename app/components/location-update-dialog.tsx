@@ -88,6 +88,7 @@ export function LocationUpdateDialog({
   const currentOdometer = motorcycle.manualOdo || motorcycle.initialOdo;
   const { locations: storageLocations } = useSettings();
   const {
+    currentLocation,
     setCurrentLocation,
     setCurrentOdo,
     locationHistory,
@@ -97,7 +98,9 @@ export function LocationUpdateDialog({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      storageLocationId: "",
+      storageLocationId: currentLocation?.locationId
+        ? String(currentLocation.locationId)
+        : "",
       odometer: currentOdometer,
       date: format(new Date(), "yyyy-MM-dd"),
     },
@@ -114,9 +117,6 @@ export function LocationUpdateDialog({
     if (parsed.storageLocationId) {
       formData.append("storageLocationId", parsed.storageLocationId);
       formData.append("locationId", parsed.storageLocationId);
-    } else {
-      formData.append("storageLocationId", "");
-      formData.append("locationId", "");
     }
 
     formData.append("odometer", String(parsed.odometer));
@@ -124,6 +124,20 @@ export function LocationUpdateDialog({
 
     fetcher.submit(formData, { method: "post" });
   };
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    form.reset({
+      storageLocationId: currentLocation?.locationId
+        ? String(currentLocation.locationId)
+        : "",
+      odometer: currentOdometer,
+      date: format(new Date(), "yyyy-MM-dd"),
+    });
+  }, [open, currentLocation, currentOdometer, form]);
 
   useEffect(() => {
     if (fetcher.state !== "idle" || !fetcher.data) {

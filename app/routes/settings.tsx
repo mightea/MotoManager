@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { data, useLoaderData } from "react-router";
+import { data, useLoaderData, useFetcher } from "react-router";
 import { and, eq } from "drizzle-orm";
+import path from "node:path";
 
 import {
   Card,
@@ -9,11 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
 import { StorageLocationsForm } from "~/components/storage-locations-form";
 import { CurrencySettingsForm } from "~/components/currency-settings-form";
 import { UserManagementPanel } from "~/components/user-management-panel";
 import { getDb } from "~/db";
-import { currencySettings, locations, users } from "~/db/schema";
+import { currencySettings, documents, locations, users } from "~/db/schema";
 import { useSettings } from "~/contexts/SettingsProvider";
 import {
   DEFAULT_CURRENCY_CODE,
@@ -32,6 +34,13 @@ import {
   updateUserRole,
 } from "~/services/auth.server";
 import { USER_ROLES, type PublicUser, type UserRole } from "~/types/auth";
+import {
+  DOCUMENT_PREVIEWS_DIR,
+  DOCUMENT_PREVIEWS_PUBLIC_BASE,
+  ensureDocumentDirs,
+  generatePdfPreview,
+  resolvePublicFilePath,
+} from "~/services/documentPreviews.server";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Settings" }];
@@ -59,12 +68,14 @@ async function fetchConversionRate(code: string) {
     });
   } catch (error) {
     throw new Error(
-      `Kurs für ${code} konnte nicht abgerufen werden: ${(error as Error).message}`
+      `Kurs für ${code} konnte nicht abgerufen werden: ${(error as Error).message}`,
     );
   }
 
   if (!response.ok) {
-    throw new Error(`Frankfurter API antwortete mit Status ${response.status}.`);
+    throw new Error(
+      `Frankfurter API antwortete mit Status ${response.status}.`,
+    );
   }
 
   let payload: FrankfurterResponse;
@@ -104,7 +115,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       canEditCurrencies: isAdmin,
       currentUserId: user.id,
     },
-    { headers: mergeHeaders(headers ?? {}) }
+    { headers: mergeHeaders(headers ?? {}) },
   );
 }
 
@@ -120,7 +131,7 @@ export async function action({ request }: Route.ActionArgs) {
   const headersRecord = sessionHeaders ?? {};
   const respond = (
     body: unknown,
-    init?: ResponseInit & { headers?: HeadersInit }
+    init?: ResponseInit & { headers?: HeadersInit },
   ) => {
     const headerFragments: Record<string, string>[] = [headersRecord];
     if (init?.headers) {
@@ -165,8 +176,8 @@ export async function action({ request }: Route.ActionArgs) {
       .where(
         and(
           eq(locations.id, Number.parseInt(fields.id as string)),
-          eq(locations.userId, user.id)
-        )
+          eq(locations.userId, user.id),
+        ),
       )
       .returning();
 
@@ -183,8 +194,8 @@ export async function action({ request }: Route.ActionArgs) {
       .where(
         and(
           eq(locations.id, Number.parseInt(fields.id as string)),
-          eq(locations.userId, user.id)
-        )
+          eq(locations.userId, user.id),
+        ),
       )
       .returning();
 
@@ -205,8 +216,7 @@ export async function action({ request }: Route.ActionArgs) {
       return respond({
         success: false,
         intent: "currency-add",
-        message:
-          "Der Währungscode muss aus 2 bis 5 Großbuchstaben bestehen.",
+        message: "Der Währungscode muss aus 2 bis 5 Großbuchstaben bestehen.",
       });
     }
 
@@ -264,6 +274,67 @@ export async function action({ request }: Route.ActionArgs) {
     });
   }
 
+  if (intent === "documents-regenerate-previews") {
+    requireAdmin(user);
+
+    const docs = await db
+      .select({
+        id: documents.id,
+        filePath: documents.filePath,
+        previewPath: documents.previewPath,
+      })
+      .from(documents);
+
+    await ensureDocumentDirs();
+
+    let regenerated = 0;
+
+    for (const doc of docs) {
+      const absolutePdf = resolvePublicFilePath(doc.filePath);
+
+      const previewFilename = doc.previewPath
+        ? path.basename(doc.previewPath)
+        : `${path.parse(doc.filePath).name}-preview.png`;
+
+      const previewServerPath = path.join(
+        DOCUMENT_PREVIEWS_DIR,
+        previewFilename,
+      );
+      const previewPublicPath = path.posix.join(
+        DOCUMENT_PREVIEWS_PUBLIC_BASE,
+        previewFilename,
+      );
+
+      const success = await generatePdfPreview(absolutePdf, previewServerPath);
+
+      if (!success) {
+        continue;
+      }
+
+      regenerated += 1;
+
+      if (doc.previewPath !== previewPublicPath) {
+        await db
+          .update(documents)
+          .set({
+            previewPath: previewPublicPath,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(documents.id, doc.id));
+      }
+    }
+
+    return respond(
+      {
+        success: true,
+        intent: "documents-regenerate-previews",
+        regenerated,
+        total: docs.length,
+      },
+      { status: 200 },
+    );
+  }
+
   if (intent === "currency-edit") {
     requireAdmin(user);
     const id = Number.parseInt(String(fields.id ?? ""), 10);
@@ -285,8 +356,7 @@ export async function action({ request }: Route.ActionArgs) {
       return respond({
         success: false,
         intent: "currency-edit",
-        message:
-          "Der Währungscode muss aus 2 bis 5 Großbuchstaben bestehen.",
+        message: "Der Währungscode muss aus 2 bis 5 Großbuchstaben bestehen.",
       });
     }
 
@@ -412,7 +482,7 @@ export async function action({ request }: Route.ActionArgs) {
     requireAdmin(user);
     const currentCurrencies = await db.select().from(currencySettings);
     const refreshable = currentCurrencies.filter(
-      (currency) => currency.code !== DEFAULT_CURRENCY_CODE
+      (currency) => currency.code !== DEFAULT_CURRENCY_CODE,
     );
 
     if (refreshable.length === 0) {
@@ -423,7 +493,11 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
-    const updates: Array<{ id: number; conversionFactor: number; code: string }> = [];
+    const updates: Array<{
+      id: number;
+      conversionFactor: number;
+      code: string;
+    }> = [];
 
     for (const currency of refreshable) {
       try {
@@ -473,7 +547,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-create",
           message: "Der Name muss mindestens 2 Zeichen lang sein.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -484,7 +558,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-create",
           message: "Bitte gib eine gültige E-Mail-Adresse ein.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -496,7 +570,7 @@ export async function action({ request }: Route.ActionArgs) {
           message:
             "Der Benutzername muss 3-32 Zeichen lang sein und darf nur Buchstaben, Zahlen sowie ._- enthalten.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -507,7 +581,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-create",
           message: "Das Passwort muss mindestens 8 Zeichen haben.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -518,7 +592,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-create",
           message: "Die ausgewählte Rolle ist ungültig.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -545,7 +619,7 @@ export async function action({ request }: Route.ActionArgs) {
             (error instanceof Error && error.message) ||
             "Der Benutzer konnte nicht angelegt werden.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
   }
@@ -562,7 +636,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-update-role",
           message: "Der Benutzer konnte nicht ermittelt werden.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -573,7 +647,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-update-role",
           message: "Die ausgewählte Rolle ist ungültig.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -584,7 +658,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-update-role",
           message: "Du kannst deine eigene Rolle nicht entfernen.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -594,7 +668,8 @@ export async function action({ request }: Route.ActionArgs) {
         .from(users)
         .where(eq(users.role, "admin"));
 
-      const lastAdmin = adminCount.length <= 1 && adminCount[0]?.id === targetId;
+      const lastAdmin =
+        adminCount.length <= 1 && adminCount[0]?.id === targetId;
       if (lastAdmin) {
         return respond(
           {
@@ -602,13 +677,17 @@ export async function action({ request }: Route.ActionArgs) {
             intent: "user-update-role",
             message: "Es muss mindestens ein Administrator bestehen bleiben.",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
 
     const updated = await updateUserRole(targetId, roleInput as UserRole);
-    return respond({ success: true, intent: "user-update-role", user: updated });
+    return respond({
+      success: true,
+      intent: "user-update-role",
+      user: updated,
+    });
   }
 
   if (intent === "user-reset-password") {
@@ -622,7 +701,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-reset-password",
           message: "Der Benutzer konnte nicht ermittelt werden.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -633,7 +712,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-reset-password",
           message: "Das Passwort muss mindestens 8 Zeichen haben.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -662,7 +741,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-delete",
           message: "Der Benutzer konnte nicht ermittelt werden.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -673,7 +752,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-delete",
           message: "Du kannst dich nicht selbst entfernen.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -690,7 +769,7 @@ export async function action({ request }: Route.ActionArgs) {
           intent: "user-delete",
           message: "Es muss mindestens ein Administrator bestehen bleiben.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -701,7 +780,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   return respond(
     { success: false, message: `Unhandled intent ${intent}` },
-    { status: 500 }
+    { status: 500 },
   );
 }
 
@@ -715,6 +794,22 @@ export default function Settings() {
     currentUserId,
   } = useLoaderData<typeof loader>();
   const { setLocations, setCurrencies } = useSettings();
+  const regenerateFetcher = useFetcher<
+    | {
+        success: true;
+        intent: "documents-regenerate-previews";
+        regenerated: number;
+        total: number;
+      }
+    | {
+        success: false;
+        intent: "documents-regenerate-previews";
+        message: string;
+      }
+    | undefined
+  >();
+  const isRegenerating = regenerateFetcher.state !== "idle";
+  const regenerateResult = regenerateFetcher.data;
 
   useEffect(() => {
     setLocations(loaderLocations);
@@ -767,6 +862,51 @@ export default function Settings() {
           </CardContent>
         </Card>
       </section>
+
+      {canManageUsers && (
+        <Card className="border-border/60 bg-white/90 shadow-md backdrop-blur dark:border-border/30 dark:bg-slate-900/80">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">
+              Dokument-Vorschauen
+            </CardTitle>
+            <CardDescription>
+              Generiere alle PDF-Vorschauen neu, falls Dateien aktualisiert oder
+              manuell ersetzt wurden.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <regenerateFetcher.Form
+              method="post"
+              className="flex flex-col gap-3 sm:flex-row sm:items-center"
+            >
+              <input
+                type="hidden"
+                name="intent"
+                value="documents-regenerate-previews"
+              />
+              <Button type="submit" disabled={isRegenerating}>
+                {isRegenerating
+                  ? "Vorschauen werden neu erstellt..."
+                  : "Alle Vorschauen neu generieren"}
+              </Button>
+              {regenerateResult &&
+                regenerateResult.intent === "documents-regenerate-previews" &&
+                !regenerateResult.success && (
+                  <p className="text-xs text-destructive">
+                    {regenerateResult.message}
+                  </p>
+                )}
+            </regenerateFetcher.Form>
+            {regenerateResult &&
+              regenerateResult.intent === "documents-regenerate-previews" &&
+              regenerateResult.success && (
+                <p className="text-xs text-muted-foreground">
+                  {`${regenerateResult.regenerated} von ${regenerateResult.total} Vorschauen aktualisiert.`}
+                </p>
+              )}
+          </CardContent>
+        </Card>
+      )}
 
       {canManageUsers && (
         <UserManagementPanel
