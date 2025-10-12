@@ -141,7 +141,8 @@ const tireChangeLogSchema = baseSchema.extend({
   dotCode: z
     .string()
     .min(4, "DOT-Code ist erforderlich.")
-    .max(4, "Der DOT-Code muss 4 Ziffern haben."),
+    .max(4, "Der DOT-Code muss 4 Ziffern haben.")
+    .optional(),
 });
 
 const batteryChangeLogSchema = baseSchema.extend({
@@ -802,8 +803,8 @@ export function AddMaintenanceLogDialog({
                       Eintrag wirklich löschen?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Diese Aktion kann nicht rückgängig gemacht werden.
-                      Dadurch wird der Wartungseintrag dauerhaft gelöscht.
+                      Diese Aktion kann nicht rückgängig gemacht werden. Dadurch
+                      wird der Wartungseintrag dauerhaft gelöscht.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -844,9 +845,7 @@ export function AddMaintenanceLogDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
-        {mainContent}
-      </DialogContent>
+      <DialogContent className="sm:max-w-xl">{mainContent}</DialogContent>
     </Dialog>
   );
 }

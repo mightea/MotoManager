@@ -47,7 +47,7 @@ export async function generatePdfPreview(
         outputPath,
       ]);
     } else if (platform === "linux") {
-      const { dir, name, ext } = path.parse(outputPath);
+      const { dir, name } = path.parse(outputPath);
       const outputPrefix = path.join(dir, name);
 
       await execFileAsync("pdftoppm", [
