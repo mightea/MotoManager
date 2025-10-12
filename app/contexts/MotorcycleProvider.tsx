@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { CurrentLocation, Motorcycle } from "~/db/schema";
 
 export type MotorcycleWithInspection = Motorcycle & {
@@ -51,6 +51,22 @@ export const MotorcycleProvider = ({
   const [locationHistory, setLocationHistory] = useState<
     CurrentLocationWithName[]
   >(initialLocationHistory);
+
+  useEffect(() => {
+    setMotorcycle(initialMotorcycle);
+  }, [initialMotorcycle]);
+
+  useEffect(() => {
+    setCurrentOdo(initialCurrentOdo);
+  }, [initialCurrentOdo]);
+
+  useEffect(() => {
+    setCurrentLocation(initialCurrentLocation);
+  }, [initialCurrentLocation]);
+
+  useEffect(() => {
+    setLocationHistory(initialLocationHistory);
+  }, [initialLocationHistory]);
 
   // The value object matches the MotorcycleContextType interface.
   const value: MotorcycleContextType = {

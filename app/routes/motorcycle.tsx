@@ -68,11 +68,7 @@ const BATTERY_TYPES: readonly BatteryType[] = [
   "other",
 ];
 
-const TIRE_POSITIONS: readonly TirePosition[] = [
-  "front",
-  "rear",
-  "sidecar",
-];
+const TIRE_POSITIONS: readonly TirePosition[] = ["front", "rear", "sidecar"];
 
 const OIL_TYPES: readonly OilType[] = [
   "synthetic",
@@ -176,8 +172,16 @@ const parseMaintenancePayload = (
   return payload;
 };
 
-const ISSUE_PRIORITIES = ["low", "medium", "high"] as const satisfies readonly Issue["priority"][];
-const ISSUE_STATUSES = ["new", "in_progress", "done"] as const satisfies readonly Issue["status"][];
+const ISSUE_PRIORITIES = [
+  "low",
+  "medium",
+  "high",
+] as const satisfies readonly Issue["priority"][];
+const ISSUE_STATUSES = [
+  "new",
+  "in_progress",
+  "done",
+] as const satisfies readonly Issue["status"][];
 
 const parseIssuePayload = (
   fields: Record<string, FormDataEntryValue>,
@@ -221,51 +225,50 @@ const parseIssuePayload = (
 const parseMotorcycleEditPayload = (
   fields: Record<string, FormDataEntryValue>,
 ) => {
-    const make = toOptionalString(fields.make);
-    const model = toOptionalString(fields.model);
-    const vin = toOptionalString(fields.vin);
-    const modelYear = toOptionalInt(fields.modelYear);
-    const initialOdo = toOptionalInt(fields.initialOdo);
-    const firstRegistration = toOptionalString(fields.firstRegistration);
-    const purchaseDate = toOptionalString(fields.purchaseDate);
-    const currencyCode = toOptionalString(fields.currencyCode);
+  const make = toOptionalString(fields.make);
+  const model = toOptionalString(fields.model);
+  const vin = toOptionalString(fields.vin);
+  const modelYear = toOptionalInt(fields.modelYear);
+  const initialOdo = toOptionalInt(fields.initialOdo);
+  const firstRegistration = toOptionalString(fields.firstRegistration);
+  const purchaseDate = toOptionalString(fields.purchaseDate);
+  const currencyCode = toOptionalString(fields.currencyCode);
 
-    if (!make || !model || !vin || modelYear == null || initialOdo == null) {
-      throw new Error("Pflichtfelder wurden nicht ausgefüllt.");
-    }
+  if (!make || !model || initialOdo == null) {
+    throw new Error("Pflichtfelder wurden nicht ausgefüllt.");
+  }
 
-    const payload: EditorMotorcycle = {
-      make,
-      model,
-      vin,
-      modelYear,
-      initialOdo,
-      ...(firstRegistration ? { firstRegistration } : {}),
-      ...(purchaseDate ? { purchaseDate } : {}),
-      ...(currencyCode ? { currencyCode } : {}),
-    };
+  const payload: EditorMotorcycle = {
+    make,
+    model,
+    vin,
+    modelYear,
+    initialOdo,
+    ...(firstRegistration ? { firstRegistration } : {}),
+    ...(purchaseDate ? { purchaseDate } : {}),
+    ...(currencyCode ? { currencyCode } : {}),
+  };
 
-    const numberPlate = toOptionalString(fields.numberPlate);
-    if (numberPlate !== undefined) payload.numberPlate = numberPlate;
+  const numberPlate = toOptionalString(fields.numberPlate);
+  if (numberPlate !== undefined) payload.numberPlate = numberPlate;
 
-    const vehicleIdNr = toOptionalString(fields.vehicleIdNr);
-    if (vehicleIdNr !== undefined) payload.vehicleIdNr = vehicleIdNr;
+  const vehicleIdNr = toOptionalString(fields.vehicleIdNr);
+  if (vehicleIdNr !== undefined) payload.vehicleIdNr = vehicleIdNr;
 
-    const purchasePrice = toOptionalNumber(fields.purchasePrice);
-    if (purchasePrice !== undefined) payload.purchasePrice = purchasePrice;
+  const purchasePrice = toOptionalNumber(fields.purchasePrice);
+  if (purchasePrice !== undefined) payload.purchasePrice = purchasePrice;
 
-    const isVeteranValue = toOptionalString(fields.isVeteran);
-    if (isVeteranValue !== undefined) {
-      payload.isVeteran = isVeteranValue === "true" || isVeteranValue === "1";
-    }
+  const isVeteranValue = toOptionalString(fields.isVeteran);
+  if (isVeteranValue !== undefined) {
+    payload.isVeteran = isVeteranValue === "true" || isVeteranValue === "1";
+  }
 
-    const isArchivedValue = toOptionalString(fields.isArchived);
-    if (isArchivedValue !== undefined) {
-      payload.isArchived =
-        isArchivedValue === "true" || isArchivedValue === "1";
-    }
+  const isArchivedValue = toOptionalString(fields.isArchived);
+  if (isArchivedValue !== undefined) {
+    payload.isArchived = isArchivedValue === "true" || isArchivedValue === "1";
+  }
 
-    return payload;
+  return payload;
 };
 
 const parseTorquePayload = (
@@ -285,7 +288,8 @@ const parseTorquePayload = (
 
   const variation = toOptionalNumber(fields.variation);
   const description =
-    toOptionalString(fields.description) ?? (fields.description === null ? null : undefined);
+    toOptionalString(fields.description) ??
+    (fields.description === null ? null : undefined);
 
   return {
     motorcycleId,
@@ -428,8 +432,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const enrichedMotorcycle: MotorcycleWithInspection = {
     ...result,
-    lastInspection:
-      lastInspectionFromMaintenance ?? baseLastInspection ?? null,
+    lastInspection: lastInspectionFromMaintenance ?? baseLastInspection ?? null,
   };
 
   // Get all odometer readings from all items
@@ -590,8 +593,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "motorcycle-edit") {
     try {
       const payload = parseMotorcycleEditPayload(fields);
-
-      console.log("Editing motorcycle:", payload);
 
       await db
         .update(motorcycles)
