@@ -21,7 +21,7 @@ import {
   locations as locationsTable,
   type User,
 } from "./db/schema";
-import db from "./db";
+import db, { getDb } from "./db";
 import { SettingsProvider } from "./contexts/SettingsProvider";
 import { AuthProvider } from "./contexts/AuthProvider";
 import {
@@ -31,6 +31,7 @@ import {
   requireUser,
 } from "./services/auth.server";
 import { eq } from "drizzle-orm";
+import { createMotorcycle } from "~/db/providers/motorcycles.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
@@ -183,11 +184,14 @@ export async function action({ request }: ActionFunctionArgs) {
     purchasePrice: parseNumber(formData.get("purchasePrice")) ?? 0,
   };
 
-  const motorcycle = await db
-    .insert(motorcycles)
-    .values(newMotorcycle)
-    .returning();
-  const response = redirect(urlMotorcycle({ ...motorcycle[0] }));
+  const dbClient = await getDb();
+  const inserted = await createMotorcycle(dbClient, newMotorcycle);
+  const motorcycle = inserted.at(0);
+  if (!motorcycle) {
+    throw new Error("Motorrad konnte nicht erstellt werden.");
+  }
+
+  const response = redirect(urlMotorcycle({ ...motorcycle }));
   const merged = mergeHeaders(headers ?? {});
   merged.forEach((value, key) => {
     response.headers.set(key, value);

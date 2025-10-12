@@ -9,6 +9,7 @@ import {
   locationRecords,
   type Motorcycle,
 } from "~/db/schema";
+import { createMotorcycle } from "~/db/providers/motorcycles.server";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -226,21 +227,23 @@ export async function action({ request }: Route.ActionArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();
 
-  const motorcycle = await db
-    .insert(motorcycles)
-    .values({
-      model: "",
-      make: "",
-      vin: "",
-      vehicleIdNr: "",
-      firstRegistration: "",
-      isVeteran: false,
-      initialOdo: 0,
-      userId: user.id,
-    })
-    .returning();
+  const inserted = await createMotorcycle(db, {
+    model: "",
+    make: "",
+    vin: "",
+    vehicleIdNr: "",
+    firstRegistration: "",
+    isVeteran: false,
+    initialOdo: 0,
+    userId: user.id,
+  });
 
-  const response = redirect(`/motorcycle/${motorcycle[0].id}/edit`);
+  const motorcycle = inserted.at(0);
+  if (!motorcycle) {
+    throw new Error("Motorrad konnte nicht erstellt werden.");
+  }
+
+  const response = redirect(`/motorcycle/${motorcycle.id}/edit`);
   mergeHeaders(headers ?? {}).forEach((value, key) => {
     response.headers.set(key, value);
   });

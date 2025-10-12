@@ -22,6 +22,20 @@ import {
   locations,
   torqueSpecs,
 } from "~/db/schema";
+import {
+  createIssue,
+  createLocationRecord,
+  createMaintenanceRecord,
+  createTorqueSpecification,
+  updateIssue,
+  deleteIssue,
+  updateMaintenanceRecord,
+  deleteMaintenanceRecord,
+  updateTorqueSpecification,
+  deleteTorqueSpecification,
+  updateMotorcycle,
+  deleteMotorcycleCascade,
+} from "~/db/providers/motorcycles.server";
 import { and, asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { OpenIssuesCard } from "~/components/open-issues-card";
@@ -506,9 +520,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     try {
       const newIssue = parseIssuePayload(fields, motorcycleId);
 
-      console.log("Adding new issue:", newIssue);
-
-      await db.insert(issues).values(newIssue);
+      await createIssue(db, newIssue);
       return respond({ success: true }, { status: 200 });
     } catch (error) {
       return respond(
@@ -541,18 +553,14 @@ export async function action({ request, params }: Route.ActionArgs) {
 
       console.log("Editing issue:", { issueId, updatePayload });
 
-      const result = await db
-        .update(issues)
-        .set(updatePayload as EditorIssue)
-        .where(
-          and(
-            eq(issues.id, issueId),
-            eq(issues.motorcycleId, targetMotorcycle.id),
-          ),
-        )
-        .returning();
+      const updatedIssue = await updateIssue(
+        db,
+        issueId,
+        targetMotorcycle.id,
+        updatePayload as EditorIssue,
+      );
 
-      if (result.length === 0) {
+      if (!updatedIssue) {
         return respond(
           {
             success: false,
@@ -578,14 +586,22 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "issue-delete") {
     console.log("Deleting issue with ID:", fields.issueId);
-    await db
-      .delete(issues)
-      .where(
-        and(
-          eq(issues.id, Number.parseInt(fields.issueId as string)),
-          eq(issues.motorcycleId, targetMotorcycle.id),
-        ),
+    const issueId = Number.parseInt(fields.issueId as string);
+
+    if (Number.isNaN(issueId)) {
+      return respond(
+        { success: false, message: "Mangel konnte nicht ermittelt werden." },
+        { status: 400 },
       );
+    }
+
+    const deleted = await deleteIssue(db, issueId, targetMotorcycle.id);
+    if (!deleted) {
+      return respond(
+        { success: false, message: "Mangel wurde nicht gefunden." },
+        { status: 404 },
+      );
+    }
 
     return respond({ success: true }, { status: 200 });
   }
@@ -594,15 +610,22 @@ export async function action({ request, params }: Route.ActionArgs) {
     try {
       const payload = parseMotorcycleEditPayload(fields);
 
-      await db
-        .update(motorcycles)
-        .set(payload)
-        .where(
-          and(
-            eq(motorcycles.id, targetMotorcycle.id),
-            eq(motorcycles.userId, user.id),
-          ),
+      const updatedMotorcycle = await updateMotorcycle(
+        db,
+        targetMotorcycle.id,
+        user.id,
+        payload,
+      );
+
+      if (!updatedMotorcycle) {
+        return respond(
+          {
+            success: false,
+            message: "Motorrad wurde nicht gefunden.",
+          },
+          { status: 404 },
         );
+      }
 
       return respond({ success: true }, { status: 200 });
     } catch (error) {
@@ -619,20 +642,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "motorcycle-delete") {
-    await db
-      .delete(maintenanceRecords)
-      .where(eq(maintenanceRecords.motorcycleId, targetMotorcycle.id));
-    await db.delete(issues).where(eq(issues.motorcycleId, targetMotorcycle.id));
-    await db
-      .delete(locationRecords)
-      .where(eq(locationRecords.motorcycleId, targetMotorcycle.id));
-    await db
-      .delete(documentMotorcycles)
-      .where(eq(documentMotorcycles.motorcycleId, targetMotorcycle.id));
-    await db
-      .delete(torqueSpecs)
-      .where(eq(torqueSpecs.motorcycleId, targetMotorcycle.id));
-    await db.delete(motorcycles).where(eq(motorcycles.id, targetMotorcycle.id));
+    await deleteMotorcycleCascade(db, targetMotorcycle.id);
 
     return redirect("/");
   }
@@ -642,31 +652,15 @@ export async function action({ request, params }: Route.ActionArgs) {
       image: fields.image as string,
     };
 
-    await db
-      .update(motorcycles)
-      .set(editMotorcycle)
-      .where(
-        and(
-          eq(motorcycles.id, targetMotorcycle.id),
-          eq(motorcycles.userId, user.id),
-        ),
-      );
+    await updateMotorcycle(db, targetMotorcycle.id, user.id, editMotorcycle);
 
     return respond({ success: true }, { status: 200 });
   }
 
   if (intent === "motorcycle-odo") {
-    await db
-      .update(motorcycles)
-      .set({
-        manualOdo: parseIntSafe(fields.manualOdo as string),
-      } satisfies EditorMotorcycle)
-      .where(
-        and(
-          eq(motorcycles.id, targetMotorcycle.id),
-          eq(motorcycles.userId, user.id),
-        ),
-      );
+    await updateMotorcycle(db, targetMotorcycle.id, user.id, {
+      manualOdo: parseIntSafe(fields.manualOdo as string),
+    });
     return respond(
       { success: true, intent: "motorcycle-odo" },
       { status: 200 },
@@ -677,12 +671,17 @@ export async function action({ request, params }: Route.ActionArgs) {
     try {
       const payload = parseMaintenancePayload(fields, motorcycleId);
 
-      const item = await db
-        .insert(maintenanceRecords)
-        .values(payload)
-        .returning();
+      const record = await createMaintenanceRecord(db, payload);
+      if (!record) {
+        return respond(
+          {
+            success: false,
+            message: "Wartungseintrag konnte nicht gespeichert werden.",
+          },
+          { status: 500 },
+        );
+      }
 
-      console.log("Inserted Maintenance Item:", item);
       return respond({ success: true }, { status: 200 });
     } catch (error) {
       return respond(
@@ -717,20 +716,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       const payload = parseMaintenancePayload(fields, motorcycleId);
       const { motorcycleId: _ignore, ...updatePayload } = payload;
 
-      const item = await db
-        .update(maintenanceRecords)
-        .set(updatePayload)
-        .where(
-          and(
-            eq(maintenanceRecords.id, maintenanceId),
-            eq(maintenanceRecords.motorcycleId, motorcycleId),
-          ),
-        )
-        .returning();
+      const item = await updateMaintenanceRecord(
+        db,
+        maintenanceId,
+        motorcycleId,
+        updatePayload,
+      );
 
       console.log("Edited Maintenance Item:", item);
 
-      if (item.length === 0) {
+      if (!item) {
         return respond(
           {
             success: false,
@@ -756,14 +751,33 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "maintenance-delete") {
     console.log("Deleting maintenance item with ID:", fields.logId);
-    await db
-      .delete(maintenanceRecords)
-      .where(
-        and(
-          eq(maintenanceRecords.id, Number.parseInt(fields.logId as string)),
-          eq(maintenanceRecords.motorcycleId, targetMotorcycle.id),
-        ),
+    const maintenanceId = Number.parseInt(fields.logId as string);
+
+    if (Number.isNaN(maintenanceId)) {
+      return respond(
+        {
+          success: false,
+          message: "Wartungseintrag konnte nicht ermittelt werden.",
+        },
+        { status: 400 },
       );
+    }
+
+    const deleted = await deleteMaintenanceRecord(
+      db,
+      maintenanceId,
+      targetMotorcycle.id,
+    );
+
+    if (!deleted) {
+      return respond(
+        {
+          success: false,
+          message: "Wartungseintrag wurde nicht gefunden.",
+        },
+        { status: 404 },
+      );
+    }
 
     return respond({ success: true }, { status: 200 });
   }
@@ -805,10 +819,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       ...(odometer !== null ? { odometer } : {}),
     };
 
-    const [insertedRecord] = await db
-      .insert(locationRecords)
-      .values(newLocationRecord)
-      .returning();
+    const insertedRecord = await createLocationRecord(db, newLocationRecord);
+    if (!insertedRecord) {
+      return respond(
+        {
+          success: false,
+          message: "Standort konnte nicht gespeichert werden.",
+        },
+        { status: 500 },
+      );
+    }
 
     return respond(
       {
@@ -816,7 +836,7 @@ export async function action({ request, params }: Route.ActionArgs) {
         intent: "location-update",
         location: {
           ...insertedRecord,
-          odometer,
+          odometer: insertedRecord.odometer ?? odometer ?? null,
           locationName: selectedLocation.name,
         },
       },
@@ -828,7 +848,16 @@ export async function action({ request, params }: Route.ActionArgs) {
     try {
       const newSpec = parseTorquePayload(fields, motorcycleId);
 
-      await db.insert(torqueSpecs).values(newSpec);
+      const inserted = await createTorqueSpecification(db, newSpec);
+      if (!inserted) {
+        return respond(
+          {
+            success: false,
+            message: "Drehmomentwert konnte nicht gespeichert werden.",
+          },
+          { status: 500 },
+        );
+      }
 
       return respond({ success: true, intent: "torque-add" }, { status: 200 });
     } catch (error) {
@@ -860,18 +889,14 @@ export async function action({ request, params }: Route.ActionArgs) {
       const payload = parseTorquePayload(fields, motorcycleId);
       const { motorcycleId: _ignore, ...updatePayload } = payload;
 
-      const result = await db
-        .update(torqueSpecs)
-        .set(updatePayload)
-        .where(
-          and(
-            eq(torqueSpecs.id, specId),
-            eq(torqueSpecs.motorcycleId, motorcycleId),
-          ),
-        )
-        .returning();
+      const updated = await updateTorqueSpecification(
+        db,
+        specId,
+        motorcycleId,
+        updatePayload,
+      );
 
-      if (result.length === 0) {
+      if (!updated) {
         return respond(
           {
             success: false,
@@ -907,14 +932,21 @@ export async function action({ request, params }: Route.ActionArgs) {
       );
     }
 
-    await db
-      .delete(torqueSpecs)
-      .where(
-        and(
-          eq(torqueSpecs.id, specId),
-          eq(torqueSpecs.motorcycleId, targetMotorcycle.id),
-        ),
+    const deleted = await deleteTorqueSpecification(
+      db,
+      specId,
+      targetMotorcycle.id,
+    );
+
+    if (!deleted) {
+      return respond(
+        {
+          success: false,
+          message: "Drehmomentwert wurde nicht gefunden.",
+        },
+        { status: 404 },
       );
+    }
 
     return respond({ success: true, intent: "torque-delete" }, { status: 200 });
   }

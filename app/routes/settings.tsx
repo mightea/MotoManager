@@ -41,6 +41,15 @@ import {
   generatePdfPreview,
   resolvePublicFilePath,
 } from "~/services/documentPreviews.server";
+import { updateDocument } from "~/db/providers/documents.server";
+import {
+  createCurrencySetting,
+  createLocation,
+  updateLocation,
+  deleteLocation,
+  updateCurrencySetting,
+  deleteCurrencySetting,
+} from "~/db/providers/settings.server";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Settings" }];
@@ -152,57 +161,74 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   if (intent === "location-add") {
-    const item = await db
-      .insert(locations)
-      .values({
-        name: fields.name as string,
-        userId: user.id,
-      })
-      .returning();
+    const inserted = await createLocation(db, {
+      name: fields.name as string,
+      userId: user.id,
+    });
+
+    if (!inserted) {
+      return respond(
+        {
+          success: false,
+          intent: "location-add",
+          message: "Standort konnte nicht erstellt werden.",
+        },
+        { status: 500 },
+      );
+    }
 
     return respond({
       success: true,
-      name: item[0].name,
+      name: inserted.name,
       intent: "location-add",
     });
   }
 
   if (intent === "location-edit") {
-    const item = await db
-      .update(locations)
-      .set({
-        name: fields.name as string,
-      })
-      .where(
-        and(
-          eq(locations.id, Number.parseInt(fields.id as string)),
-          eq(locations.userId, user.id),
-        ),
-      )
-      .returning();
+    const locationId = Number.parseInt(fields.id as string);
+    if (Number.isNaN(locationId)) {
+      return respond({
+        success: false,
+        intent: "location-edit",
+        message: "Standort konnte nicht ermittelt werden.",
+      });
+    }
+
+    const item = await updateLocation(db, locationId, user.id, {
+      name: fields.name as string,
+    });
+
+    if (!item) {
+      return respond({
+        success: false,
+        intent: "location-edit",
+        message: "Standort wurde nicht gefunden.",
+      });
+    }
 
     return respond({
       success: true,
-      name: item[0].name,
+      name: item.name,
       intent: "location-edit",
     });
   }
 
   if (intent === "location-delete") {
-    const removed = await db
-      .delete(locations)
-      .where(
-        and(
-          eq(locations.id, Number.parseInt(fields.id as string)),
-          eq(locations.userId, user.id),
-        ),
-      )
-      .returning();
+    const locationId = Number.parseInt(fields.id as string);
+    if (Number.isNaN(locationId)) {
+      return respond({
+        success: false,
+        intent: "location-delete",
+        message: "Standort konnte nicht ermittelt werden.",
+      });
+    }
+
+    const removed = await deleteLocation(db, locationId, user.id);
 
     return respond({
       success: true,
       intent: "location-delete",
-      name: removed[0]?.name ?? (fields.name ? String(fields.name) : undefined),
+      name: removed?.name ?? (fields.name ? String(fields.name) : undefined),
     });
   }
 
@@ -255,22 +281,30 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
-    const inserted = await db
-      .insert(currencySettings)
-      .values({
-        code,
-        symbol,
-        label,
-        conversionFactor,
-      })
-      .returning();
+    const inserted = await createCurrencySetting(db, {
+      code,
+      symbol,
+      label,
+      conversionFactor,
+    });
+
+    if (!inserted) {
+      return respond(
+        {
+          success: false,
+          intent: "currency-add",
+          message: "Währung konnte nicht gespeichert werden.",
+        },
+        { status: 500 },
+      );
+    }
 
     return respond({
       success: true,
       intent: "currency-add",
-      code: inserted[0].code,
-      label: inserted[0].label,
-      conversionFactor: inserted[0].conversionFactor,
+      code: inserted.code,
+      label: inserted.label,
+      conversionFactor: inserted.conversionFactor,
     });
   }
 
@@ -314,13 +348,10 @@ export async function action({ request }: Route.ActionArgs) {
       regenerated += 1;
 
       if (doc.previewPath !== previewPublicPath) {
-        await db
-          .update(documents)
-          .set({
-            previewPath: previewPublicPath,
-            updatedAt: new Date().toISOString(),
-          })
-          .where(eq(documents.id, doc.id));
+        await updateDocument(db, doc.id, {
+          previewPath: previewPublicPath,
+          updatedAt: new Date().toISOString(),
+        });
       }
     }
 
@@ -425,23 +456,27 @@ export async function action({ request }: Route.ActionArgs) {
     const enforcedConversionFactor =
       target.code === DEFAULT_CURRENCY_CODE ? 1 : conversionFactor;
 
-    const updated = await db
-      .update(currencySettings)
-      .set({
-        code,
-        symbol,
-        label,
-        conversionFactor: enforcedConversionFactor,
-      })
-      .where(eq(currencySettings.id, id))
-      .returning();
+    const updated = await updateCurrencySetting(db, id, {
+      code,
+      symbol,
+      label,
+      conversionFactor: enforcedConversionFactor,
+    });
+
+    if (!updated) {
+      return respond({
+        success: false,
+        intent: "currency-edit",
+        message: "Die Währung wurde nicht gefunden.",
+      });
+    }
 
     return respond({
       success: true,
       intent: "currency-edit",
-      code: updated[0].code,
-      label: updated[0].label,
-      conversionFactor: updated[0].conversionFactor,
+      code: updated.code,
+      label: updated.label,
+      conversionFactor: updated.conversionFactor,
     });
   }
 
@@ -457,12 +492,14 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
-    const removed = await db
-      .delete(currencySettings)
-      .where(eq(currencySettings.code, code))
-      .returning();
+    const currency = await db
+      .select()
+      .from(currencySettings)
+      .where(eq(currencySettings.code, code));
 
-    if (removed.length === 0) {
+    const targetCurrency = currency.at(0);
+
+    if (!targetCurrency) {
       return respond({
         success: false,
         intent: "currency-delete",
@@ -470,11 +507,13 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
+    const removed = await deleteCurrencySetting(db, targetCurrency.id);
+
     return respond({
       success: true,
       intent: "currency-delete",
-      code: removed[0].code,
-      label: removed[0].label,
+      code: targetCurrency.code,
+      label: targetCurrency.label,
     });
   }
 
@@ -519,10 +558,9 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     for (const update of updates) {
-      await db
-        .update(currencySettings)
-        .set({ conversionFactor: update.conversionFactor })
-        .where(eq(currencySettings.id, update.id));
+      await updateCurrencySetting(db, update.id, {
+        conversionFactor: update.conversionFactor,
+      });
     }
 
     return respond({

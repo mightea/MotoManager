@@ -8,6 +8,13 @@ import {
   type NewDocument,
   type NewDocumentMotorcycle,
 } from "~/db/schema";
+import {
+  attachDocumentToMotorcycles,
+  createDocument,
+  updateDocument,
+  detachDocumentMotorcycles,
+  deleteDocument,
+} from "~/db/providers/documents.server";
 import { desc, eq, isNull, or } from "drizzle-orm";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -286,10 +293,16 @@ export async function action({ request }: ActionFunctionArgs) {
       uploadedBy: user.username ?? user.name,
     };
 
-    const [inserted] = await db
-      .insert(documents)
-      .values(newDocument)
-      .returning();
+    const inserted = await createDocument(db, newDocument);
+    if (!inserted) {
+      return respond(
+        {
+          success: false,
+          message: "Dokument konnte nicht gespeichert werden.",
+        },
+        { status: 500 },
+      );
+    }
 
     if (sanitizedMotorcycleIds.length > 0) {
       const values: NewDocumentMotorcycle[] = sanitizedMotorcycleIds.map(
@@ -299,9 +312,7 @@ export async function action({ request }: ActionFunctionArgs) {
         }),
       );
 
-      if (values.length > 0) {
-        await db.insert(documentMotorcycles).values(values);
-      }
+      await attachDocumentToMotorcycles(db, values);
     }
 
     return respond({ success: true, intent: "document-add" }, { status: 200 });
@@ -431,19 +442,14 @@ export async function action({ request }: ActionFunctionArgs) {
         : null;
     }
 
-    await db
-      .update(documents)
-      .set({
-        title,
-        filePath,
-        previewPath,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(documents.id, documentId));
+    await updateDocument(db, documentId, {
+      title,
+      filePath,
+      previewPath,
+      updatedAt: new Date().toISOString(),
+    });
 
-    await db
-      .delete(documentMotorcycles)
-      .where(eq(documentMotorcycles.documentId, documentId));
+    await detachDocumentMotorcycles(db, documentId);
 
     if (sanitizedMotorcycleIds.length > 0) {
       const values: NewDocumentMotorcycle[] = sanitizedMotorcycleIds.map(
@@ -453,9 +459,7 @@ export async function action({ request }: ActionFunctionArgs) {
         }),
       );
 
-      if (values.length > 0) {
-        await db.insert(documentMotorcycles).values(values);
-      }
+      await attachDocumentToMotorcycles(db, values);
     }
 
     return respond({ success: true, intent: "document-edit" }, { status: 200 });
@@ -512,7 +516,9 @@ export async function action({ request }: ActionFunctionArgs) {
       await deleteFileIfExists(resolvePublicFilePath(existing.previewPath));
     }
 
-    await db.delete(documents).where(eq(documents.id, documentId));
+    await detachDocumentMotorcycles(db, documentId);
+
+    await deleteDocument(db, documentId);
 
     return respond(
       { success: true, intent: "document-delete" },
