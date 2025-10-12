@@ -63,15 +63,29 @@ describe("root action", () => {
 
   it("submits motorcycle form and delegates to provider", async () => {
     const { requireUser } = await import("~/services/auth.server");
-    const sessionHeaders = new Headers({ "x-session": "keep-me" });
-    requireUser.mockResolvedValue({
-      user: { id: 5, username: "tester", name: "Test User" },
+    const requireUserMock = vi.mocked(requireUser);
+    const sessionHeaders = { "x-session": "keep-me" } satisfies Record<
+      string,
+      string
+    >;
+    requireUserMock.mockResolvedValue({
+      user: {
+        id: 5,
+        username: "tester",
+        name: "Test User",
+        email: "tester@example.com",
+        passwordHash: "hash",
+        role: "user",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
       headers: sessionHeaders,
     });
 
     const { getDb } = await import("~/db");
+    const getDbMock = vi.mocked(getDb);
     const dbStub = { query: {} } as any;
-    getDb.mockResolvedValue(dbStub);
+    getDbMock.mockResolvedValue(dbStub);
 
     const { createMotorcycle } = await import(
       "~/db/providers/motorcycles.server"

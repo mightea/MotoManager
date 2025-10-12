@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { UNSAFE_DataWithResponseInit } from "react-router";
 
 const mergeHeadersMock = (...sources: Array<HeadersInit | undefined>) => {
   const merged = new Headers();
@@ -63,13 +64,27 @@ describe("motorcycle action", () => {
 
   it("handles issue-add submissions via provider", async () => {
     const { requireUser } = await import("~/services/auth.server");
-    const sessionHeaders = new Headers({ "x-session": "abc" });
-    requireUser.mockResolvedValue({
-      user: { id: 10, username: "demo", name: "Demo" },
+    const requireUserMock = vi.mocked(requireUser);
+    const sessionHeaders = { "x-session": "abc" } satisfies Record<
+      string,
+      string
+    >;
+    requireUserMock.mockResolvedValue({
+      user: {
+        id: 10,
+        username: "demo",
+        name: "Demo",
+        email: "demo@example.com",
+        passwordHash: "hash",
+        role: "user",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
       headers: sessionHeaders,
     });
 
     const { getDb, default: dbModule } = await import("~/db");
+    const getDbMock = vi.mocked(getDb);
     const dbStub = {
       query: {
         motorcycles: {
@@ -80,8 +95,8 @@ describe("motorcycle action", () => {
         },
       },
     } as any;
-    getDb.mockResolvedValue(dbStub);
-    Object.assign(dbModule.query, dbStub.query);
+    getDbMock.mockResolvedValue(dbStub);
+    Object.assign((dbModule as any).query, dbStub.query);
 
     const { createIssue } = await import("~/db/providers/motorcycles.server");
     const createIssueMock = vi.mocked(createIssue);
@@ -122,7 +137,8 @@ describe("motorcycle action", () => {
         odo: 15000,
       }),
     );
-    expect(response.init?.status).toBe(200);
-    expect(response.data).toEqual({ success: true });
+    const dataResponse = response as UNSAFE_DataWithResponseInit<unknown>;
+    expect(dataResponse.init?.status).toBe(200);
+    expect(dataResponse.data).toEqual({ success: true });
   });
 });

@@ -16,6 +16,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: GitTools/actions/gitversion/setup@v4
+        with:
+          versionSpec: '5.x'
+
+      - name: Determine version
+        id: gitversion
+        uses: GitTools/actions/gitversion/execute@v4
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v3
@@ -27,6 +38,12 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+
+      - name: Update package.json version
+        run: |
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json','utf8')); pkg.version = process.env.PACKAGE_VERSION; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
+        env:
+          PACKAGE_VERSION: ${{ steps.gitversion.outputs.semVer }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

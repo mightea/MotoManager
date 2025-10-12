@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { data, useLoaderData, useFetcher } from "react-router";
 import { and, eq } from "drizzle-orm";
 import path from "node:path";
+import { readFile } from "node:fs/promises";
 
 import {
   Card,
@@ -50,7 +51,6 @@ import {
   updateCurrencySetting,
   deleteCurrencySetting,
 } from "~/db/providers/settings.server";
-
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Settings" }];
 }
@@ -106,6 +106,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();
 
+  const packageJsonRaw = await readFile(
+    new URL("../../package.json", import.meta.url),
+    "utf-8",
+  );
+  const packageMetadata = JSON.parse(packageJsonRaw) as { version?: string };
+  const APP_VERSION = packageMetadata.version ?? "0.0.0";
+
   const isAdmin = user.role === "admin";
   const [locationResult, currencyResult, usersList] = await Promise.all([
     db.query.locations.findMany({
@@ -123,6 +130,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       canManageUsers: isAdmin,
       canEditCurrencies: isAdmin,
       currentUserId: user.id,
+      appVersion: APP_VERSION,
     },
     { headers: mergeHeaders(headers ?? {}) },
   );
@@ -830,6 +838,7 @@ export default function Settings() {
     canManageUsers,
     canEditCurrencies,
     currentUserId,
+    appVersion,
   } = useLoaderData<typeof loader>();
   const { setLocations, setCurrencies } = useSettings();
   const regenerateFetcher = useFetcher<
@@ -868,6 +877,7 @@ export default function Settings() {
             Verwalte Standorte, Währungen und weitere Präferenzen für dein
             MotoManager-Konto.
           </p>
+          <p className="text-xs text-muted-foreground">Version {appVersion}</p>
         </div>
       </header>
 
