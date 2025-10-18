@@ -18,7 +18,14 @@ export default [
     route("/settings", "routes/settings.tsx"),
     route("/documents", "routes/documents.tsx"),
 
-    route("/motorcycle/:slug/:motorcycleId", "routes/motorcycle.tsx"),
+    route("/motorcycle/:slug/:motorcycleId", "routes/motorcycle.tsx", [
+      index("routes/motorcycle.index.tsx"),
+      route("info", "routes/motorcycle.info.tsx"),
+      route("maintenance", "routes/motorcycle.maintenance.tsx"),
+      route("torque", "routes/motorcycle.torque.tsx"),
+      route("insights", "routes/motorcycle.insights.tsx"),
+      route("documents", "routes/motorcycle.documents.tsx"),
+    ]),
   ]),
   route(
     "/.well-known/appspecific/com.chrome.devtools.json",

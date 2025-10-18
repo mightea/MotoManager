@@ -6,12 +6,14 @@ import {
   type EditorMotorcycle,
   type FluidType,
   type Issue,
+  type MaintenanceRecord,
   type MaintenanceType,
   type NewIssue,
   type NewMaintenanceRecord,
   type NewTorqueSpecification,
   type NewCurrentLocationRecord,
   type OilType,
+  type TorqueSpecification,
   type TirePosition,
   motorcycles,
   maintenanceRecords,
@@ -39,7 +41,7 @@ import {
 import { and, asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { OpenIssuesCard } from "~/components/open-issues-card";
-import { data, redirect } from "react-router";
+import { data, redirect, Outlet, useMatches, useNavigate } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
 import {
   MotorcycleProvider,
@@ -48,7 +50,8 @@ import {
 import { type DocumentListItem } from "~/components/document-list";
 import { MotorcycleDesktopTabs } from "~/components/motorcycle-desktop-tabs";
 import { MotorcycleMobileTabs } from "~/components/motorcycle-mobile-tabs";
-import { useState } from "react";
+import TorqueSpecificationsPanel from "~/components/torque-specifications-panel";
+import { useMemo } from "react";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
 const MAINTENANCE_TYPES: readonly MaintenanceType[] = [
@@ -89,6 +92,17 @@ const OIL_TYPES: readonly OilType[] = [
   "semi-synthetic",
   "mineral",
 ];
+
+export interface MotorcycleOutletContext {
+  motorcycle: MotorcycleWithInspection;
+  maintenanceEntries: MaintenanceRecord[];
+  issues: Issue[];
+  currentOdo: number;
+  torqueSpecifications: TorqueSpecification[];
+  documents: DocumentListItem[];
+}
+
+type TabKey = "info" | "maintenance" | "torque" | "insights" | "documents";
 
 const toOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
@@ -997,22 +1011,75 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     documents,
   } = loaderData;
   const { make, model } = motorcycle;
-  const validTabs = [
-    "info",
-    "maintenance",
-    "torque",
-    "insights",
-    "documents",
-  ] as const;
-  const [activeTab, setActiveTab] =
-    useState<(typeof validTabs)[number]>("info");
+  const matches = useMatches();
+  const navigate = useNavigate();
+
+  const activeTab = useMemo(() => {
+    const lastMatch = matches[matches.length - 1];
+    switch (lastMatch?.id) {
+      case "routes/motorcycle.info":
+        return "info";
+      case "routes/motorcycle.torque":
+        return "torque";
+      case "routes/motorcycle.insights":
+        return "insights";
+      case "routes/motorcycle.documents":
+        return "documents";
+      case "routes/motorcycle.maintenance":
+      case "routes/motorcycle.index":
+      default:
+        return "maintenance";
+    }
+  }, [matches]);
 
   const handleTabChange = (value: string) => {
-    const nextValue = (validTabs as readonly string[]).includes(value)
-      ? (value as (typeof validTabs)[number])
-      : activeTab;
-    setActiveTab(nextValue);
+    if (value === activeTab) return;
+    switch (value as TabKey) {
+      case "info":
+        navigate("info");
+        break;
+      case "maintenance":
+        navigate("maintenance");
+        break;
+      case "torque":
+        navigate("torque");
+        break;
+      case "insights":
+        navigate("insights");
+        break;
+      case "documents":
+        navigate("documents");
+        break;
+      default:
+        navigate("maintenance");
+        break;
+    }
   };
+
+  const outletContext = useMemo(
+    () => ({
+      motorcycle,
+      maintenanceEntries,
+      issues,
+      currentOdo,
+      torqueSpecifications,
+      documents,
+    }),
+    [
+      motorcycle,
+      maintenanceEntries,
+      issues,
+      currentOdo,
+      torqueSpecifications,
+      documents,
+    ],
+  );
+
+  const printMetaParts = [
+    motorcycle.modelYear ? `Modelljahr ${motorcycle.modelYear}` : null,
+    motorcycle.numberPlate ? `Kennzeichen ${motorcycle.numberPlate}` : null,
+    motorcycle.vin ? `VIN ${motorcycle.vin}` : null,
+  ].filter(Boolean) as string[];
 
   return (
     <MotorcycleProvider
@@ -1031,31 +1098,44 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
             currentOdometer={currentOdo}
           />
         </div>
-        <div className="lg:col-span-3 xl:col-span-3">
+        <div className="lg:col-span-3 xl:col-span-3 space-y-6">
           <div className="lg:hidden">
             <MotorcycleMobileTabs
-              motorcycle={motorcycle}
-              issues={issues}
               maintenanceEntries={maintenanceEntries}
-              torqueSpecifications={torqueSpecifications}
               documents={documents}
-              currentOdo={currentOdo}
               activeTab={activeTab}
               onTabChange={handleTabChange}
             />
           </div>
           <div className="hidden lg:block">
             <MotorcycleDesktopTabs
-              motorcycle={motorcycle}
               maintenanceEntries={maintenanceEntries}
-              torqueSpecifications={torqueSpecifications}
               documents={documents}
-              currentOdo={currentOdo}
               activeTab={activeTab === "info" ? "maintenance" : activeTab}
               onTabChange={handleTabChange}
             />
           </div>
+          <div>
+            <Outlet context={outletContext} />
+          </div>
         </div>
+      </div>
+      <div id="motorcycle-print-root" className="hidden print:block space-y-6">
+        <header className="torque-print-header space-y-1">
+          <h1 className="torque-print-title">
+            {make} {model}
+          </h1>
+          {printMetaParts.length > 0 && (
+            <p className="torque-print-subtitle">
+              {printMetaParts.join(" • ")}
+            </p>
+          )}
+        </header>
+        <TorqueSpecificationsPanel
+          motorcycleId={motorcycle.id}
+          specs={torqueSpecifications}
+          hideInteractions
+        />
       </div>
     </MotorcycleProvider>
   );
