@@ -328,8 +328,8 @@ const parseTorquePayload = (
     } satisfies NewTorqueSpecification;
   }
 
-  if (variation === undefined) {
-    throw new Error("Bitte gib die Toleranz (+/- Nm) an.");
+  if (variation !== undefined && variation < 0) {
+    throw new Error("Die Toleranz darf nicht negativ sein.");
   }
 
   return {
@@ -337,7 +337,7 @@ const parseTorquePayload = (
     category,
     name,
     torque,
-    variation,
+    variation: variation ?? null,
     torqueEnd: null,
     ...(description !== undefined ? { description } : {}),
   } satisfies NewTorqueSpecification;

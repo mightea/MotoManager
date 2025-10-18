@@ -20,7 +20,7 @@ function formatTorqueValue(spec: TorqueSpecification) {
   if (spec.torqueEnd != null) {
     return `${base} - ${formatNumber(spec.torqueEnd)}`;
   }
-  if (spec.variation != null) {
+  if (spec.variation != null && Math.abs(spec.variation) > 0) {
     return `${base} ± ${formatNumber(spec.variation)}`;
   }
   return base;

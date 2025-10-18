@@ -35,7 +35,7 @@ export function TorqueSpecDialog({
   const formRef = useRef<HTMLFormElement>(null);
   const isSubmitting = fetcher.state !== "idle";
   const intent = spec ? "torque-edit" : "torque-add";
-  const formKey = `${spec ? `edit-${spec.id}` : "new"}-${    open ? "open" : "closed"  }`;
+  const formKey = `${spec ? `edit-${spec.id}` : "new"}-${open ? "open" : "closed"}`;
   const defaultVariationMode: VariationMode = useMemo(
     () => (spec?.torqueEnd != null ? "range" : "plusminus"),
     [spec?.torqueEnd],
@@ -189,9 +189,8 @@ export function TorqueSpecDialog({
                   inputMode="numeric"
                   min={0}
                   step={0.5}
-                  required
                   defaultValue={spec?.variation ?? ""}
-                  placeholder="z.B. 3"
+                  placeholder="optional"
                 />
               </div>
             ) : (
