@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useFetcher } from "react-router";
 
 import {
@@ -14,6 +14,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import type { TorqueSpecification } from "~/db/schema";
 
 interface TorqueSpecDialogProps {
@@ -21,6 +22,8 @@ interface TorqueSpecDialogProps {
   spec?: TorqueSpecification;
   children: ReactNode;
 }
+
+type VariationMode = "plusminus" | "range";
 
 export function TorqueSpecDialog({
   motorcycleId,
@@ -33,6 +36,12 @@ export function TorqueSpecDialog({
   const isSubmitting = fetcher.state !== "idle";
   const intent = spec ? "torque-edit" : "torque-add";
   const formKey = `${spec ? `edit-${spec.id}` : "new"}-${    open ? "open" : "closed"  }`;
+  const defaultVariationMode: VariationMode = useMemo(
+    () => (spec?.torqueEnd != null ? "range" : "plusminus"),
+    [spec?.torqueEnd],
+  );
+  const [variationMode, setVariationMode] =
+    useState<VariationMode>(defaultVariationMode);
 
   useEffect(() => {
     if (
@@ -46,6 +55,12 @@ export function TorqueSpecDialog({
       setOpen(false);
     }
   }, [fetcher.state, fetcher.data, spec]);
+
+  useEffect(() => {
+    if (open) {
+      setVariationMode(defaultVariationMode);
+    }
+  }, [open, defaultVariationMode]);
 
   const handleDelete = () => {
     if (!spec) return;
@@ -85,6 +100,7 @@ export function TorqueSpecDialog({
           <input type="hidden" name="intent" value={intent} />
           <input type="hidden" name="motorcycleId" value={motorcycleId} />
           {spec && <input type="hidden" name="torqueId" value={spec.id} />}
+          <input type="hidden" name="variationMode" value={variationMode} />
 
           <div className="space-y-2">
             <Label htmlFor="category">Kategorie</Label>
@@ -109,6 +125,47 @@ export function TorqueSpecDialog({
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-sm font-semibold text-muted-foreground">
+                Toleranzangabe
+              </Label>
+              <RadioGroup
+                className="grid gap-2 sm:grid-cols-2"
+                value={variationMode}
+                onValueChange={(value) =>
+                  setVariationMode(value as VariationMode)
+                }
+              >
+                <div className="flex items-center space-x-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+                  <RadioGroupItem id="mode-plusminus" value="plusminus" />
+                  <Label
+                    htmlFor="mode-plusminus"
+                    className="flex flex-col text-xs leading-tight"
+                  >
+                    <span className="text-sm font-medium text-foreground">
+                      Basiswert ± Toleranz
+                    </span>
+                    <span className="text-muted-foreground">
+                      z.B. 29 ± 3 Nm
+                    </span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+                  <RadioGroupItem id="mode-range" value="range" />
+                  <Label
+                    htmlFor="mode-range"
+                    className="flex flex-col text-xs leading-tight"
+                  >
+                    <span className="text-sm font-medium text-foreground">
+                      Bereich (Start - Ende)
+                    </span>
+                    <span className="text-muted-foreground">
+                      z.B. 29 - 32 Nm
+                    </span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="torque">Drehmoment (Nm)</Label>
               <Input
@@ -122,19 +179,37 @@ export function TorqueSpecDialog({
                 defaultValue={spec?.torque ?? ""}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="variation">Toleranz (+/- Nm)</Label>
-              <Input
-                id="variation"
-                name="variation"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={0.5}
-                defaultValue={spec?.variation ?? ""}
-                placeholder="optional"
-              />
-            </div>
+            {variationMode === "plusminus" ? (
+              <div className="space-y-2">
+                <Label htmlFor="variation">Toleranz (+/- Nm)</Label>
+                <Input
+                  id="variation"
+                  name="variation"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={0.5}
+                  required
+                  defaultValue={spec?.variation ?? ""}
+                  placeholder="z.B. 3"
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="torqueEnd">Bereichsende (Nm)</Label>
+                <Input
+                  id="torqueEnd"
+                  name="torqueEnd"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={0.5}
+                  required
+                  defaultValue={spec?.torqueEnd ?? ""}
+                  placeholder="z.B. 32"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

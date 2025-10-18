@@ -178,6 +178,7 @@ export const torqueSpecs = sqliteTable("torque_specs", {
   category: text().notNull(),
   name: text().notNull(),
   torque: real().notNull(),
+  torqueEnd: real("torque_end"),
   variation: real(),
   description: text(),
   createdAt: text("created_at")

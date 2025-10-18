@@ -301,16 +301,44 @@ const parseTorquePayload = (
   }
 
   const variation = toOptionalNumber(fields.variation);
+  const torqueEnd = toOptionalNumber(fields.torqueEnd);
+  const mode =
+    toOptionalString(fields.variationMode) === "range" ? "range" : "plusminus";
   const description =
     toOptionalString(fields.description) ??
     (fields.description === null ? null : undefined);
+
+  if (mode === "range") {
+    if (torqueEnd === undefined) {
+      throw new Error("Bitte gib das Bereichsende (Nm) an.");
+    }
+    if (torqueEnd < torque) {
+      throw new Error(
+        "Das Bereichsende darf nicht kleiner als der Startwert sein.",
+      );
+    }
+    return {
+      motorcycleId,
+      category,
+      name,
+      torque,
+      variation: null,
+      torqueEnd,
+      ...(description !== undefined ? { description } : {}),
+    } satisfies NewTorqueSpecification;
+  }
+
+  if (variation === undefined) {
+    throw new Error("Bitte gib die Toleranz (+/- Nm) an.");
+  }
 
   return {
     motorcycleId,
     category,
     name,
     torque,
-    ...(variation !== undefined ? { variation } : {}),
+    variation,
+    torqueEnd: null,
     ...(description !== undefined ? { description } : {}),
   } satisfies NewTorqueSpecification;
 };

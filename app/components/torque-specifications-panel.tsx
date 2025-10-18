@@ -10,6 +10,22 @@ interface TorqueSpecificationsPanelProps {
   specs: TorqueSpecification[];
 }
 
+function formatTorqueValue(spec: TorqueSpecification) {
+  const formatNumber = (value: number) =>
+    value.toLocaleString("de-CH", {
+      maximumFractionDigits: 2,
+    });
+
+  const base = formatNumber(spec.torque);
+  if (spec.torqueEnd != null) {
+    return `${base} - ${formatNumber(spec.torqueEnd)}`;
+  }
+  if (spec.variation != null) {
+    return `${base} ± ${formatNumber(spec.variation)}`;
+  }
+  return base;
+}
+
 function groupTorqueSpecifications(specs: TorqueSpecification[]) {
   const groups = new Map<string, TorqueSpecification[]>();
 
@@ -74,26 +90,11 @@ export default function TorqueSpecificationsPanel({
                     </div>
                     <div className="flex items-center gap-1 text-foreground">
                       <span className="font-semibold">
-                        {spec.torque.toLocaleString("de-CH", {
-                          maximumFractionDigits: 2,
-                        })}
+                        {formatTorqueValue(spec)}
                       </span>
                       <span className="text-xs text-muted-foreground tracking-wide">
                         nm
                       </span>
-                      {spec.variation !== null &&
-                        spec.variation !== undefined && (
-                          <>
-                            <span className="font-semibold">
-                              {`±${spec.variation.toLocaleString("de-CH", {
-                                maximumFractionDigits: 2,
-                              })}`}
-                            </span>
-                            <span className="text-xs text-muted-foreground tracking-wide">
-                              nm
-                            </span>
-                          </>
-                        )}
                     </div>
                     <TorqueSpecDialog motorcycleId={motorcycleId} spec={spec}>
                       <Button size="sm" variant="outline" className="h-9">
