@@ -1,20 +1,12 @@
 import type { Route } from "./+types/motorcycle";
 import { getDb } from "~/db";
 import {
-  type BatteryType,
   type EditorIssue,
   type EditorMotorcycle,
-  type FluidType,
   type Issue,
   type MaintenanceRecord,
-  type MaintenanceType,
-  type NewIssue,
-  type NewMaintenanceRecord,
-  type NewTorqueSpecification,
   type NewCurrentLocationRecord,
-  type OilType,
   type TorqueSpecification,
-  type TirePosition,
   motorcycles,
   maintenanceRecords,
   documentMotorcycles,
@@ -27,14 +19,8 @@ import {
 import {
   createIssue,
   createLocationRecord,
-  createMaintenanceRecord,
-  createTorqueSpecification,
   updateIssue,
   deleteIssue,
-  updateMaintenanceRecord,
-  deleteMaintenanceRecord,
-  updateTorqueSpecification,
-  deleteTorqueSpecification,
   updateMotorcycle,
   deleteMotorcycleCascade,
 } from "~/db/providers/motorcycles.server";
@@ -59,45 +45,6 @@ import { MotorcycleMobileTabs } from "~/components/motorcycle-mobile-tabs";
 import { useMemo } from "react";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
-const MAINTENANCE_TYPES: readonly MaintenanceType[] = [
-  "tire",
-  "battery",
-  "brakepad",
-  "chain",
-  "brakerotor",
-  "fluid",
-  "general",
-  "repair",
-  "service",
-  "inspection",
-] as const;
-
-const FLUID_TYPES: readonly FluidType[] = [
-  "engineoil",
-  "gearboxoil",
-  "finaldriveoil",
-  "driveshaftoil",
-  "forkoil",
-  "breakfluid",
-  "coolant",
-];
-
-const BATTERY_TYPES: readonly BatteryType[] = [
-  "lead-acid",
-  "gel",
-  "agm",
-  "lithium-ion",
-  "other",
-];
-
-const TIRE_POSITIONS: readonly TirePosition[] = ["front", "rear", "sidecar"];
-
-const OIL_TYPES: readonly OilType[] = [
-  "synthetic",
-  "semi-synthetic",
-  "mineral",
-];
-
 export interface MotorcycleOutletContext {
   motorcycle: MotorcycleWithInspection;
   maintenanceEntries: MaintenanceRecord[];
@@ -108,6 +55,7 @@ export interface MotorcycleOutletContext {
 }
 
 type TabKey = "info" | "maintenance" | "torque" | "insights" | "documents";
+
 
 const toOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
@@ -127,133 +75,8 @@ const toOptionalInt = (value: unknown): number | undefined => {
   return Number.isNaN(num) ? undefined : num;
 };
 
-const toEnumValue = <T extends string>(
-  value: unknown,
-  allowed: readonly T[],
-): T | undefined => {
-  const str = toOptionalString(value);
-  if (!str) return undefined;
-  return allowed.includes(str as T) ? (str as T) : undefined;
-};
 
-const parseMaintenancePayload = (
-  fields: Record<string, FormDataEntryValue>,
-  motorcycleId: number,
-) => {
-  const date = toOptionalString(fields.date);
-  if (!date) {
-    throw new Error("Datum ist erforderlich.");
-  }
 
-  const type = toEnumValue(fields.type, MAINTENANCE_TYPES);
-  if (!type) {
-    throw new Error("Ungültiger Wartungstyp.");
-  }
-
-  const odo = toOptionalInt(fields.odo);
-  if (odo == null || odo < 0) {
-    throw new Error("Kilometerstand ist erforderlich und muss positiv sein.");
-  }
-
-  const cost = toOptionalNumber(fields.cost);
-  const currency =
-    toOptionalString(fields.currency) ?? toOptionalString(fields.currencyCode);
-
-  const payload: NewMaintenanceRecord = {
-    motorcycleId,
-    date,
-    type,
-    odo,
-    ...(cost !== undefined ? { cost } : {}),
-    ...(currency ? { currency } : {}),
-  };
-
-  const description = toOptionalString(fields.description);
-  if (description !== undefined) payload.description = description;
-
-  const brand = toOptionalString(fields.brand);
-  if (brand !== undefined) payload.brand = brand;
-
-  const model = toOptionalString(fields.model);
-  if (model !== undefined) payload.model = model;
-
-  const tirePosition = toEnumValue(fields.tirePosition, TIRE_POSITIONS);
-  if (tirePosition !== undefined) payload.tirePosition = tirePosition;
-
-  const tireSize = toOptionalString(fields.tireSize);
-  if (tireSize !== undefined) payload.tireSize = tireSize;
-
-  const dotCode = toOptionalString(fields.dotCode);
-  if (dotCode !== undefined) payload.dotCode = dotCode;
-
-  const batteryType = toEnumValue(fields.batteryType, BATTERY_TYPES);
-  if (batteryType !== undefined) payload.batteryType = batteryType;
-
-  const fluidType = toEnumValue(fields.fluidType, FLUID_TYPES);
-  if (fluidType !== undefined) payload.fluidType = fluidType;
-
-  const viscosity = toOptionalString(fields.viscosity);
-  if (viscosity !== undefined) payload.viscosity = viscosity;
-
-  const oilType = toEnumValue(fields.oilType, OIL_TYPES);
-  if (oilType !== undefined) payload.oilType = oilType;
-
-  const inspectionLocation = toOptionalString(fields.inspectionLocation);
-  if (inspectionLocation !== undefined)
-    payload.inspectionLocation = inspectionLocation;
-
-  return payload;
-};
-
-const ISSUE_PRIORITIES = [
-  "low",
-  "medium",
-  "high",
-] as const satisfies readonly Issue["priority"][];
-const ISSUE_STATUSES = [
-  "new",
-  "in_progress",
-  "done",
-] as const satisfies readonly Issue["status"][];
-
-const parseIssuePayload = (
-  fields: Record<string, FormDataEntryValue>,
-  motorcycleId: number,
-) => {
-  const description = toOptionalString(fields.description);
-  if (!description) {
-    throw new Error("Beschreibung ist erforderlich.");
-  }
-
-  const priority = toEnumValue(fields.priority, ISSUE_PRIORITIES);
-  if (!priority) {
-    throw new Error("Priorität ist ungültig.");
-  }
-
-  const status = toEnumValue(fields.status, ISSUE_STATUSES);
-  if (!status) {
-    throw new Error("Status ist ungültig.");
-  }
-
-  const date = toOptionalString(fields.date);
-  if (!date) {
-    throw new Error("Datum ist erforderlich.");
-  }
-
-  const odo = toOptionalInt(fields.odo);
-  if (odo == null || odo < 0) {
-    throw new Error("Kilometerstand ist erforderlich und muss positiv sein.");
-  }
-
-  return {
-    motorcycleId,
-    description,
-    priority,
-    status,
-    date,
-    odo,
-  } satisfies NewIssue;
-};
 
 const parseMotorcycleEditPayload = (
   fields: Record<string, FormDataEntryValue>,
@@ -304,63 +127,6 @@ const parseMotorcycleEditPayload = (
   return payload;
 };
 
-const parseTorquePayload = (
-  fields: Record<string, FormDataEntryValue>,
-  motorcycleId: number,
-) => {
-  const category = toOptionalString(fields.category);
-  const name = toOptionalString(fields.name);
-  if (!category || !name) {
-    throw new Error("Kategorie und Bezeichnung sind erforderlich.");
-  }
-
-  const torque = toOptionalNumber(fields.torque);
-  if (torque == null) {
-    throw new Error("Drehmoment ist ungültig.");
-  }
-
-  const variation = toOptionalNumber(fields.variation);
-  const torqueEnd = toOptionalNumber(fields.torqueEnd);
-  const mode =
-    toOptionalString(fields.variationMode) === "range" ? "range" : "plusminus";
-  const description =
-    toOptionalString(fields.description) ??
-    (fields.description === null ? null : undefined);
-
-  if (mode === "range") {
-    if (torqueEnd === undefined) {
-      throw new Error("Bitte gib das Bereichsende (Nm) an.");
-    }
-    if (torqueEnd < torque) {
-      throw new Error(
-        "Das Bereichsende darf nicht kleiner als der Startwert sein.",
-      );
-    }
-    return {
-      motorcycleId,
-      category,
-      name,
-      torque,
-      variation: null,
-      torqueEnd,
-      ...(description !== undefined ? { description } : {}),
-    } satisfies NewTorqueSpecification;
-  }
-
-  if (variation !== undefined && variation < 0) {
-    throw new Error("Die Toleranz darf nicht negativ sein.");
-  }
-
-  return {
-    motorcycleId,
-    category,
-    name,
-    torque,
-    variation: variation ?? null,
-    torqueEnd: null,
-    ...(description !== undefined ? { description } : {}),
-  } satisfies NewTorqueSpecification;
-};
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();
@@ -385,14 +151,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const maintenanceItems = await db.query.maintenanceRecords.findMany({
     where: eq(maintenanceRecords.motorcycleId, motorcycleId),
     orderBy: [
-      desc(maintenanceRecords.date), // Order by date descending
+      desc(maintenanceRecords.date),
     ],
   });
 
   const issuesItems = await db.query.issues.findMany({
     where: eq(issues.motorcycleId, motorcycleId),
     orderBy: [
-      asc(issues.date), // Order by dateAdded descending
+      asc(issues.date),
     ],
   });
 
@@ -496,7 +262,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     lastInspection: lastInspectionFromMaintenance ?? baseLastInspection ?? null,
   };
 
-  // Get all odometer readings from all items
   const odos = [
     enrichedMotorcycle.initialOdo,
     ...maintenanceItems.map((m) => m.odo),
@@ -506,7 +271,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       .filter((o): o is number => o !== null),
   ];
 
-  // Get the current odometer reading, which is the highest value
   const currentOdo = odos.sort((a, b) => b - a).at(0);
 
   return data(
@@ -524,44 +288,27 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   );
 }
 
+
+
 export async function action({ request, params }: Route.ActionArgs) {
-  const { user, headers: sessionHeaders } = await requireUser(request);
-  const db = await getDb();
+  const {
+    getMotorcycleActionContext,
+    parseIssuePayload,
+  } = await import("./motorcycle.server");
+
+  const context = await getMotorcycleActionContext({ request, params });
+  if ("error" in context) {
+    return context.error;
+  }
+
+  const { user, db, respond, motorcycleId, targetMotorcycle } = context;
 
   const formData = await request.formData();
   const fields = Object.fromEntries(formData);
 
-  const respond = (body: unknown, init?: ResponseInit) =>
-    data(body, {
-      ...init,
-      headers: mergeHeaders(sessionHeaders ?? {}),
-    });
-
   const { intent } = fields;
   console.log("Action called with intent:", intent);
   console.log("Fields:", fields);
-
-  const motorcycleId = Number.parseInt(params.motorcycleId ?? "", 10);
-  if (Number.isNaN(motorcycleId)) {
-    return respond(
-      { success: false, message: "Motorrad konnte nicht ermittelt werden." },
-      { status: 400 },
-    );
-  }
-
-  const targetMotorcycle = await db.query.motorcycles.findFirst({
-    where: and(
-      eq(motorcycles.id, motorcycleId),
-      eq(motorcycles.userId, user.id),
-    ),
-  });
-
-  if (!targetMotorcycle) {
-    return respond(
-      { success: false, message: "Motorrad wurde nicht gefunden." },
-      { status: 404 },
-    );
-  }
 
   if (intent === "issue-add") {
     try {
@@ -718,125 +465,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
   }
 
-  if (intent === "maintenance-add") {
-    try {
-      const payload = parseMaintenancePayload(fields, motorcycleId);
-
-      const record = await createMaintenanceRecord(db, payload);
-      if (!record) {
-        return respond(
-          {
-            success: false,
-            message: "Wartungseintrag konnte nicht gespeichert werden.",
-          },
-          { status: 500 },
-        );
-      }
-
-      return respond({ success: true }, { status: 200 });
-    } catch (error) {
-      return respond(
-        {
-          success: false,
-          message:
-            (error instanceof Error && error.message) ||
-            "Wartungseintrag konnte nicht gespeichert werden.",
-        },
-        { status: 400 },
-      );
-    }
-  }
-
-  if (intent === "maintenance-edit") {
-    const maintenanceId = Number.parseInt(
-      (fields.maintenanceId as string) ?? (fields.logId as string) ?? "",
-      10,
-    );
-
-    if (Number.isNaN(maintenanceId)) {
-      return respond(
-        {
-          success: false,
-          message: "Wartungseintrag konnte nicht ermittelt werden.",
-        },
-        { status: 400 },
-      );
-    }
-
-    try {
-      const payload = parseMaintenancePayload(fields, motorcycleId);
-      const {
-        motorcycleId: ignoredMaintenanceMotorcycleId,
-        ...updatePayload
-      } = payload;
-      void ignoredMaintenanceMotorcycleId;
-
-      const item = await updateMaintenanceRecord(
-        db,
-        maintenanceId,
-        motorcycleId,
-        updatePayload,
-      );
-
-      console.log("Edited Maintenance Item:", item);
-
-      if (!item) {
-        return respond(
-          {
-            success: false,
-            message: "Wartungseintrag wurde nicht gefunden.",
-          },
-          { status: 404 },
-        );
-      }
-
-      return respond({ success: true }, { status: 200 });
-    } catch (error) {
-      return respond(
-        {
-          success: false,
-          message:
-            (error instanceof Error && error.message) ||
-            "Wartungseintrag konnte nicht aktualisiert werden.",
-        },
-        { status: 400 },
-      );
-    }
-  }
-
-  if (intent === "maintenance-delete") {
-    console.log("Deleting maintenance item with ID:", fields.logId);
-    const maintenanceId = Number.parseInt(fields.logId as string);
-
-    if (Number.isNaN(maintenanceId)) {
-      return respond(
-        {
-          success: false,
-          message: "Wartungseintrag konnte nicht ermittelt werden.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const deleted = await deleteMaintenanceRecord(
-      db,
-      maintenanceId,
-      targetMotorcycle.id,
-    );
-
-    if (!deleted) {
-      return respond(
-        {
-          success: false,
-          message: "Wartungseintrag wurde nicht gefunden.",
-        },
-        { status: 404 },
-      );
-    }
-
-    return respond({ success: true }, { status: 200 });
-  }
-
   if (intent === "location-update") {
     console.log("Updating storage location to ID:", fields);
 
@@ -897,117 +525,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       },
       { status: 200 },
     );
-  }
-
-  if (intent === "torque-add") {
-    try {
-      const newSpec = parseTorquePayload(fields, motorcycleId);
-
-      const inserted = await createTorqueSpecification(db, newSpec);
-      if (!inserted) {
-        return respond(
-          {
-            success: false,
-            message: "Drehmomentwert konnte nicht gespeichert werden.",
-          },
-          { status: 500 },
-        );
-      }
-
-      return respond({ success: true, intent: "torque-add" }, { status: 200 });
-    } catch (error) {
-      return respond(
-        {
-          success: false,
-          message:
-            (error instanceof Error && error.message) ||
-            "Drehmomentwert konnte nicht gespeichert werden.",
-        },
-        { status: 400 },
-      );
-    }
-  }
-
-  if (intent === "torque-edit") {
-    const specId = Number.parseInt((fields.torqueId as string) ?? "");
-    if (Number.isNaN(specId)) {
-      return respond(
-        {
-          success: false,
-          message: "Drehmomentwert konnte nicht ermittelt werden.",
-        },
-        { status: 400 },
-      );
-    }
-
-    try {
-      const payload = parseTorquePayload(fields, motorcycleId);
-      const {
-        motorcycleId: ignoredTorqueMotorcycleId,
-        ...updatePayload
-      } = payload;
-      void ignoredTorqueMotorcycleId;
-
-      const updated = await updateTorqueSpecification(
-        db,
-        specId,
-        motorcycleId,
-        updatePayload,
-      );
-
-      if (!updated) {
-        return respond(
-          {
-            success: false,
-            message: "Drehmomentwert wurde nicht gefunden.",
-          },
-          { status: 404 },
-        );
-      }
-
-      return respond({ success: true, intent: "torque-edit" }, { status: 200 });
-    } catch (error) {
-      return respond(
-        {
-          success: false,
-          message:
-            (error instanceof Error && error.message) ||
-            "Drehmomentwert konnte nicht aktualisiert werden.",
-        },
-        { status: 400 },
-      );
-    }
-  }
-
-  if (intent === "torque-delete") {
-    const specId = Number.parseInt((fields.torqueId as string) ?? "");
-    if (Number.isNaN(specId)) {
-      return respond(
-        {
-          success: false,
-          message: "Drehmomentwert konnte nicht ermittelt werden.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const deleted = await deleteTorqueSpecification(
-      db,
-      specId,
-      targetMotorcycle.id,
-    );
-
-    if (!deleted) {
-      return respond(
-        {
-          success: false,
-          message: "Drehmomentwert wurde nicht gefunden.",
-        },
-        { status: 404 },
-      );
-    }
-
-    return respond({ success: true, intent: "torque-delete" }, { status: 200 });
   }
 
   return respond(

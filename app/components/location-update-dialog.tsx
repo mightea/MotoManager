@@ -181,7 +181,6 @@ export function LocationUpdateDialog({
     setCurrentLocation,
     setCurrentOdo,
     setLocationHistory,
-    toast,
   ]);
 
   const historyItems = useMemo(() => {

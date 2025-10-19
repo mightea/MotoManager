@@ -146,11 +146,15 @@ const ChartTooltipContent = React.forwardRef<
     ref,
   ) => {
     const { config } = useChart();
-    const typedPayload = Array.isArray(payload)
-      ? (payload as ReadonlyArray<
-          RechartsTooltipPayload<TooltipValue, TooltipName>
-        >)
-      : [];
+    const typedPayload = React.useMemo(
+      () =>
+        Array.isArray(payload)
+          ? (payload as ReadonlyArray<
+              RechartsTooltipPayload<TooltipValue, TooltipName>
+            >)
+          : [],
+      [payload],
+    );
 
     const tooltipLabel = React.useMemo(() => {
       if (hideLabel || typedPayload.length === 0) {
