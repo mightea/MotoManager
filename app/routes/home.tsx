@@ -398,36 +398,34 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         )}
 
         {hasMotorcycles && (
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl">Jahresstatistiken</CardTitle>
+          <>
+            <div>
+              <h2 className="text-3xl font-headline font-semibold text-foreground">
+                Jahresstatistiken
+              </h2>
               <p className="text-sm text-muted-foreground">
                 Aggregierte Kennzahlen deiner Flotte {stats.year}.
               </p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {statsCards.map((card) => (
-                  <Card
-                    key={card.label}
-                    className="rounded-xl border-border/40 bg-white/70 dark:bg-slate-900/60"
-                  >
-                    <CardContent className="space-y-2 p-4">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {card.label}
-                      </p>
-                      <p className="text-xl font-semibold text-foreground">
-                        {card.value}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {card.hint}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {statsCards.map((card) => (
+                <Card
+                  key={card.label}
+                  className="rounded-xl border-border/40 bg-white/70 dark:bg-slate-900/60"
+                >
+                  <CardHeader className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {card.label}
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <p className="text-xl font-semibold text-foreground">
+                      {card.value}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{card.hint}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </>
