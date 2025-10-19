@@ -26,7 +26,7 @@ export function MotorcycleDesktopTabs({
     <Tabs
       value={activeTab}
       onValueChange={onTabChange}
-      className="w-full"
+      className="w-full print:hidden"
       defaultValue="maintenance"
     >
       <TabsList

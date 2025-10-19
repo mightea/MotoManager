@@ -41,7 +41,13 @@ import {
 import { and, asc, desc, eq } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { OpenIssuesCard } from "~/components/open-issues-card";
-import { data, redirect, Outlet, useMatches, useNavigate } from "react-router";
+import {
+  data,
+  redirect,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
 import {
   MotorcycleProvider,
@@ -1011,26 +1017,20 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     documents,
   } = loaderData;
   const { make, model } = motorcycle;
-  const matches = useMatches();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const activeTab = useMemo(() => {
-    const lastMatch = matches[matches.length - 1];
-    switch (lastMatch?.id) {
-      case "routes/motorcycle.info":
-        return "info";
-      case "routes/motorcycle.torque":
-        return "torque";
-      case "routes/motorcycle.insights":
-        return "insights";
-      case "routes/motorcycle.documents":
-        return "documents";
-      case "routes/motorcycle.maintenance":
-      case "routes/motorcycle.index":
-      default:
-        return "maintenance";
-    }
-  }, [matches]);
+    const cleanPath = location.pathname.replace(/\/+$/, "");
+    const segments = cleanPath.split("/");
+    const lastSegment = segments.at(-1);
+    const tabKey = (lastSegment ?? "").toLowerCase() as TabKey;
+    return ["info", "maintenance", "torque", "insights", "documents"].includes(
+      tabKey,
+    )
+      ? tabKey
+      : "maintenance";
+  }, [location.pathname]);
 
   const handleTabChange = (value: string) => {
     if (value === activeTab) return;
@@ -1075,12 +1075,6 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     ],
   );
 
-  const printMetaParts = [
-    motorcycle.modelYear ? `Modelljahr ${motorcycle.modelYear}` : null,
-    motorcycle.numberPlate ? `Kennzeichen ${motorcycle.numberPlate}` : null,
-    motorcycle.vin ? `VIN ${motorcycle.vin}` : null,
-  ].filter(Boolean) as string[];
-
   return (
     <MotorcycleProvider
       initialMotorcycle={motorcycle}
@@ -1119,23 +1113,6 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
             <Outlet context={outletContext} />
           </div>
         </div>
-      </div>
-      <div id="motorcycle-print-root" className="hidden print:block space-y-6">
-        <header className="torque-print-header space-y-1">
-          <h1 className="torque-print-title">
-            {make} {model}
-          </h1>
-          {printMetaParts.length > 0 && (
-            <p className="torque-print-subtitle">
-              {printMetaParts.join(" • ")}
-            </p>
-          )}
-        </header>
-        <TorqueSpecificationsPanel
-          motorcycleId={motorcycle.id}
-          specs={torqueSpecifications}
-          hideInteractions
-        />
       </div>
     </MotorcycleProvider>
   );

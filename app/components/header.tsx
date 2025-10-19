@@ -43,7 +43,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full">
+    <header className="sticky top-0 z-40 w-full print:hidden">
       <div
         className="absolute inset-0 h-[140px] bg-gradient-to-b from-background/80 via-background/60 to-transparent blur-xl"
         aria-hidden="true"

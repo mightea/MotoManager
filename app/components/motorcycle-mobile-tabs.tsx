@@ -26,7 +26,7 @@ export function MotorcycleMobileTabs({
     <Tabs
       value={activeTab}
       onValueChange={onTabChange}
-      className="w-full"
+      className="w-full print:hidden"
       defaultValue="info"
     >
       <TabsList
