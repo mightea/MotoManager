@@ -100,5 +100,6 @@
       "better-sqlite3",
       "esbuild"
     ]
-  }
+  },
+  "version": "2025.10.9"
 }
