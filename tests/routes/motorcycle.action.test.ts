@@ -137,7 +137,8 @@ describe("motorcycle action", () => {
         odo: 15000,
       }),
     );
-    const dataResponse = response as UNSAFE_DataWithResponseInit<unknown>;
+    const dataResponse =
+      response as unknown as UNSAFE_DataWithResponseInit<unknown>;
     expect(dataResponse.init?.status).toBe(200);
     expect(dataResponse.data).toEqual({ success: true });
   });

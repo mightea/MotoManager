@@ -11,6 +11,7 @@ import {
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import type { Route } from "./+types/motorcycle";
 import { data } from "react-router";
+import type { UNSAFE_DataWithResponseInit } from "react-router";
 
 const MAINTENANCE_TYPES: readonly MaintenanceType[] = [
   "tire",
@@ -239,25 +240,29 @@ export const parseTorquePayload = (
 
 type MotorcycleRecord = typeof motorcycles.$inferSelect;
 
+type ActionResponse = UNSAFE_DataWithResponseInit<unknown>;
+
 export type MotorcycleActionSuccessContext = {
   user: Awaited<ReturnType<typeof requireUser>>["user"];
   db: Awaited<ReturnType<typeof getDb>>;
-  respond: (body: unknown, init?: ResponseInit) => Response;
+  respond: (body: unknown, init?: ResponseInit) => ActionResponse;
   motorcycleId: number;
   targetMotorcycle: MotorcycleRecord;
 };
 
 export type MotorcycleActionContext =
   | {
-      error: Response;
-      respond: (body: unknown, init?: ResponseInit) => Response;
+      error: ActionResponse;
+      respond: (body: unknown, init?: ResponseInit) => ActionResponse;
     }
   | MotorcycleActionSuccessContext;
+
+type SimpleActionArgs = Pick<Route.ActionArgs, "request" | "params">;
 
 export async function getMotorcycleActionContext({
   request,
   params,
-}: Route.ActionArgs): Promise<MotorcycleActionContext> {
+}: SimpleActionArgs): Promise<MotorcycleActionContext> {
   const { user, headers: sessionHeaders } = await requireUser(request);
   const db = await getDb();
 
