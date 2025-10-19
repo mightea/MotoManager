@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
-import { Skeleton } from "~/components/ui/skeleton";
 import { Edit, PlusCircle, RotateCcw, Trash2 } from "lucide-react";
 import { useToast } from "~/hooks/use-toast";
 import { useSettings } from "~/contexts/SettingsProvider";
@@ -17,15 +16,10 @@ interface CurrencySettingsFormProps {
 }
 
 export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
-  const [isMounted, setIsMounted] = useState(false);
   const { currencies } = useSettings();
   const { toast } = useToast();
   const fetcher = useFetcher();
   const refreshFetcher = useFetcher();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const conversionFormatter = useMemo(
     () =>
@@ -172,16 +166,6 @@ export function CurrencySettingsForm({ canEdit }: CurrencySettingsFormProps) {
   const hasRefreshableCurrencies = currencies.some(
     (currency) => currency.code !== DEFAULT_CURRENCY_CODE,
   );
-
-  if (!isMounted) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-10 w-48" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">

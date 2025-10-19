@@ -16,7 +16,6 @@ import { ThemeProvider, useTheme } from "./contexts/ThemeProvider";
 import { getTheme } from "./services/theme.server";
 import { urlMotorcycle } from "./utils/urlUtils";
 import {
-  motorcycles,
   type NewMotorcycle,
   locations as locationsTable,
   type User,
@@ -139,13 +138,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const parseString = (value: FormDataEntryValue | null | undefined) =>
     typeof value === "string" ? value : "";
-
-  const parseOptionalString = (
-    value: FormDataEntryValue | null | undefined,
-  ) => {
-    const str = parseString(value).trim();
-    return str.length > 0 ? str : undefined;
-  };
 
   const parseNumber = (
     value: FormDataEntryValue | null | undefined,

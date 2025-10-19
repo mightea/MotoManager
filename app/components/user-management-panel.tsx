@@ -235,7 +235,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
   const [passwordValue, setPasswordValue] = useState("");
 
   useEffect(() => {
-    setRole(user.role as UserRole);
+    queueMicrotask(() => setRole(user.role as UserRole));
   }, [user.role]);
 
   useEffect(() => {
@@ -244,7 +244,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
       roleFetcher.data?.intent === "user-update-role" &&
       !roleFetcher.data.success
     ) {
-      setRole(user.role as UserRole);
+      queueMicrotask(() => setRole(user.role as UserRole));
     }
   }, [roleFetcher.state, roleFetcher.data, user.role]);
 
@@ -254,8 +254,10 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
       passwordFetcher.data?.intent === "user-reset-password" &&
       passwordFetcher.data.success
     ) {
-      setPasswordValue("");
-      setPasswordOpen(false);
+      queueMicrotask(() => {
+        setPasswordValue("");
+        setPasswordOpen(false);
+      });
     }
   }, [passwordFetcher.state, passwordFetcher.data]);
 
@@ -265,7 +267,7 @@ function UserRow({ user, roles, currentUserId, dateFormatter }: UserRowProps) {
       deleteFetcher.data?.intent === "user-delete" &&
       deleteFetcher.data.success
     ) {
-      setDeleteOpen(false);
+      queueMicrotask(() => setDeleteOpen(false));
     }
   }, [deleteFetcher.state, deleteFetcher.data]);
 

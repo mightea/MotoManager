@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FetcherWithComponents } from "react-router";
 import { PlusCircle, PencilLine } from "lucide-react";
@@ -112,8 +112,11 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
     defaultValues: initialValues,
   });
 
-  const selectedCode = form.watch("code");
-  const watchedConversionFactor = form.watch("conversionFactor");
+  const selectedCode = useWatch({ control: form.control, name: "code" });
+  const watchedConversionFactor = useWatch({
+    control: form.control,
+    name: "conversionFactor",
+  });
   const conversionFormatter = useMemo(
     () =>
       new Intl.NumberFormat("de-CH", {
@@ -133,12 +136,8 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
   const [rateError, setRateError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      form.reset(initialValues);
-    } else {
-      form.reset(initialValues);
-    }
-  }, [open, initialValues]);
+    form.reset(initialValues);
+  }, [open, initialValues, form]);
 
   useEffect(() => {
     if (!open) {
@@ -156,7 +155,7 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
         : result.intent === "currency-add";
 
       if (isSuccessIntent && result.success) {
-        setOpen(false);
+        queueMicrotask(() => setOpen(false));
       }
     }
   }, [fetcher.state, fetcher.data, open, isEdit]);
@@ -172,17 +171,25 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
       (isEdit ? "currency-edit" : "currency-add");
 
   useEffect(() => {
+    const updateRateState = (
+      status: typeof rateStatus,
+      error: string | null,
+    ) => {
+      queueMicrotask(() => {
+        setRateStatus(status);
+        setRateError(error);
+      });
+    };
+
     if (!open || isEdit) {
-      setRateStatus("idle");
-      setRateError(null);
+      updateRateState("idle", null);
       return;
     }
 
     const code = (selectedCode ?? "").toUpperCase();
 
     if (!code) {
-      setRateStatus("idle");
-      setRateError(null);
+      updateRateState("idle", null);
       form.setValue("conversionFactor", 1, {
         shouldValidate: true,
         shouldDirty: false,
@@ -195,20 +202,17 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
         shouldValidate: true,
         shouldDirty: false,
       });
-      setRateStatus("success");
-      setRateError(null);
+      updateRateState("success", null);
       return;
     }
 
     if (code.length < 2) {
-      setRateStatus("idle");
-      setRateError(null);
+      updateRateState("idle", null);
       return;
     }
 
     const controller = new AbortController();
-    setRateStatus("loading");
-    setRateError(null);
+    updateRateState("loading", null);
 
     fetch(`${FRANKFURTER_API_URL}?from=${code}&to=${DEFAULT_CURRENCY_CODE}`, {
       signal: controller.signal,
@@ -229,16 +233,17 @@ export function CurrencyDialog(props: CurrencyDialogProps) {
           shouldValidate: true,
           shouldDirty: false,
         });
-        setRateStatus("success");
-        setRateError(null);
+        updateRateState("success", null);
       })
       .catch((error) => {
         if (controller.signal.aborted) {
           return;
         }
         console.error("Frankfurter Fetch", error);
-        setRateStatus("error");
-        setRateError("Kurs konnte nicht geladen werden.");
+        updateRateState(
+          "error",
+          "Kurs konnte nicht geladen werden.",
+        );
       });
 
     return () => controller.abort();

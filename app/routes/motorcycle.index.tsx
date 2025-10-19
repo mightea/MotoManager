@@ -1,10 +1,9 @@
 import { redirect } from "react-router";
-import type { Route } from "./+types/motorcycle.index";
 
-export function loader(_: Route.LoaderArgs) {
+export function loader() {
   return redirect("maintenance");
 }
 
-export default function MotorcycleIndex(_props: Route.ComponentProps) {
+export default function MotorcycleIndex() {
   return null;
 }

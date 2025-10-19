@@ -1,11 +1,8 @@
 import { useOutletContext } from "react-router";
 import MaintenanceInsights from "~/components/maintenance-insights";
-import type { Route } from "./+types/motorcycle.insights";
 import type { MotorcycleOutletContext } from "./motorcycle";
 
-export default function MotorcycleInsightsRoute(
-  _props: Route.ComponentProps,
-) {
+export default function MotorcycleInsightsRoute() {
   const { maintenanceEntries, currentOdo } =
     useOutletContext<MotorcycleOutletContext>();
 

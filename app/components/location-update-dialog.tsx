@@ -151,29 +151,38 @@ export function LocationUpdateDialog({
     };
 
     if (intent === "location-update") {
-      if (location) {
-        setCurrentLocation(location);
-        if (typeof location.odometer === "number") {
-          setCurrentOdo(location.odometer);
+      queueMicrotask(() => {
+        if (location) {
+          setCurrentLocation(location);
+          if (typeof location.odometer === "number") {
+            setCurrentOdo(location.odometer);
+          }
+          setLocationHistory((prev) => {
+            const withoutInserted = prev.filter(
+              (entry) => entry.id !== location.id,
+            );
+            return [location, ...withoutInserted];
+          });
         }
-        setLocationHistory((prev) => {
-          const withoutInserted = prev.filter(
-            (entry) => entry.id !== location.id,
-          );
-          return [location, ...withoutInserted];
+
+        toast({
+          title: "Standort aktualisiert",
+          description: location?.locationName
+            ? `Der Standort "${location.locationName}" wurde gespeichert.`
+            : "Der Standort wurde gespeichert.",
         });
-      }
 
-      toast({
-        title: "Standort aktualisiert",
-        description: location?.locationName
-          ? `Der Standort "${location.locationName}" wurde gespeichert.`
-          : "Der Standort wurde gespeichert.",
+        setOpen(false);
       });
-
-      setOpen(false);
     }
-  }, [fetcher.data, fetcher.state, setCurrentLocation, setLocationHistory]);
+  }, [
+    fetcher.data,
+    fetcher.state,
+    setCurrentLocation,
+    setCurrentOdo,
+    setLocationHistory,
+    toast,
+  ]);
 
   const historyItems = useMemo(() => {
     return locationHistory.map((entry, index) => {

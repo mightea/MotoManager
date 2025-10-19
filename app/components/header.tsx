@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "./ui/avatar";
-import { useMemo } from "react";
 
 const navLinks = [
   { href: "/", label: "Übersicht" },
@@ -24,19 +23,18 @@ export function Header() {
   const submit = useSubmit();
   const { user } = useAuth();
 
-  const initials = useMemo(() => {
-    if (!user?.name) {
-      return "MB";
-    }
+  const initials = (() => {
+    const name = user?.name ?? "";
+    if (!name) return "MB";
 
-    const letters = user.name
+    const letters = name
       .split(" ")
       .map((part) => part.trim().charAt(0).toUpperCase())
       .filter(Boolean)
       .slice(0, 2);
 
     return letters.length > 0 ? letters.join("") : "MB";
-  }, [user?.name]);
+  })();
 
   const handleLogout = () => {
     submit(null, { method: "post", action: "/auth/logout" });
@@ -69,7 +67,7 @@ export function Header() {
               <NavLink
                 key={link.href}
                 to={link.href}
-                className={({ isActive }) =>
+                className={({ isActive }: { isActive: boolean }) =>
                   `rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow"

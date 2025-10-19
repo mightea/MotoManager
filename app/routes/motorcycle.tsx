@@ -56,7 +56,6 @@ import {
 import { type DocumentListItem } from "~/components/document-list";
 import { MotorcycleDesktopTabs } from "~/components/motorcycle-desktop-tabs";
 import { MotorcycleMobileTabs } from "~/components/motorcycle-mobile-tabs";
-import TorqueSpecificationsPanel from "~/components/torque-specifications-panel";
 import { useMemo } from "react";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 
@@ -597,7 +596,11 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     try {
       const issuePayload = parseIssuePayload(fields, motorcycleId);
-      const { motorcycleId: _ignore, ...updatePayload } = issuePayload;
+      const {
+        motorcycleId: ignoredIssueMotorcycleId,
+        ...updatePayload
+      } = issuePayload;
+      void ignoredIssueMotorcycleId;
 
       console.log("Editing issue:", { issueId, updatePayload });
 
@@ -762,7 +765,11 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     try {
       const payload = parseMaintenancePayload(fields, motorcycleId);
-      const { motorcycleId: _ignore, ...updatePayload } = payload;
+      const {
+        motorcycleId: ignoredMaintenanceMotorcycleId,
+        ...updatePayload
+      } = payload;
+      void ignoredMaintenanceMotorcycleId;
 
       const item = await updateMaintenanceRecord(
         db,
@@ -935,7 +942,11 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     try {
       const payload = parseTorquePayload(fields, motorcycleId);
-      const { motorcycleId: _ignore, ...updatePayload } = payload;
+      const {
+        motorcycleId: ignoredTorqueMotorcycleId,
+        ...updatePayload
+      } = payload;
+      void ignoredTorqueMotorcycleId;
 
       const updated = await updateTorqueSpecification(
         db,

@@ -1,27 +1,10 @@
-import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Skeleton } from "./ui/skeleton";
 import { Edit, PlusCircle } from "lucide-react";
 import { useSettings } from "~/contexts/SettingsProvider";
 import { AddStorageLocationDialog } from "./add-storage-location-dialog";
 
 export function StorageLocationsForm() {
-  const [isMounted, setIsMounted] = useState(false);
   const { locations: storageLocations } = useSettings();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-10 w-48" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">

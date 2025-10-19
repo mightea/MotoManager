@@ -98,31 +98,31 @@ export function AddStorageLocationDialog({
   };
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data) {
-      const { intent, name } = fetcher.data as {
-        intent: string;
-        name: string;
-      };
+    if (fetcher.state !== "idle" || !fetcher.data) return;
 
-      switch (intent) {
-        case "location-edit":
-          toast({
-            title: "Standort aktualisiert",
-            description: `Der Standort "${name}" wurde gespeichert.`,
-          });
-          break;
-        case "location-delete":
-          toast({
-            title: "Standort gelöscht",
-            description: `Der Standort "${name}" wurde erfolgreich entfernt.`,
-            variant: "destructive",
-          });
-          break;
-      }
+    const { intent, name } = fetcher.data as {
+      intent: string;
+      name: string;
+    };
 
-      setOpen(false);
+    switch (intent) {
+      case "location-edit":
+        toast({
+          title: "Standort aktualisiert",
+          description: `Der Standort "${name}" wurde gespeichert.`,
+        });
+        break;
+      case "location-delete":
+        toast({
+          title: "Standort gelöscht",
+          description: `Der Standort "${name}" wurde erfolgreich entfernt.`,
+          variant: "destructive",
+        });
+        break;
     }
-  }, [fetcher]);
+
+    queueMicrotask(() => setOpen(false));
+  }, [fetcher.state, fetcher.data, toast]);
 
   const mainContent = (
     <>

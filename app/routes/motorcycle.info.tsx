@@ -1,12 +1,9 @@
 import { useOutletContext } from "react-router";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { OpenIssuesCard } from "~/components/open-issues-card";
-import type { Route } from "./+types/motorcycle.info";
 import type { MotorcycleOutletContext } from "./motorcycle";
 
-export default function MotorcycleInfoRoute(
-  _props: Route.ComponentProps,
-) {
+export default function MotorcycleInfoRoute() {
   const { motorcycle, issues, currentOdo } =
     useOutletContext<MotorcycleOutletContext>();
 

@@ -63,7 +63,7 @@ export function DocumentDialog({
       if (!document) {
         formRef.current?.reset();
       }
-      setOpen(false);
+      queueMicrotask(() => setOpen(false));
     }
   }, [fetcher.state, fetcher.data, document]);
 

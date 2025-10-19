@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { data, useLoaderData, useFetcher } from "react-router";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 
@@ -515,7 +515,7 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
-    const removed = await deleteCurrencySetting(db, targetCurrency.id);
+    await deleteCurrencySetting(db, targetCurrency.id);
 
     return respond({
       success: true,

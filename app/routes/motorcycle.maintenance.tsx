@@ -9,12 +9,9 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import type { Route } from "./+types/motorcycle.maintenance";
 import type { MotorcycleOutletContext } from "./motorcycle";
 
-export default function MotorcycleMaintenanceRoute(
-  _props: Route.ComponentProps,
-) {
+export default function MotorcycleMaintenanceRoute() {
   const { motorcycle, maintenanceEntries, currentOdo } =
     useOutletContext<MotorcycleOutletContext>();
 

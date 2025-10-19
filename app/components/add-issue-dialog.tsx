@@ -114,11 +114,15 @@ export function AddIssueDialog({
     }
   }, [open, isEditMode, issueToEdit, form, currentOdometer]);
 
-  useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data && (fetcher.data as any)?.success) {
-      setOpen(false);
-    }
-  }, [fetcher.state, fetcher.data]);
+useEffect(() => {
+  if (
+    fetcher.state === "idle" &&
+    fetcher.data &&
+    (fetcher.data as any)?.success
+  ) {
+    queueMicrotask(() => setOpen(false));
+  }
+}, [fetcher.state, fetcher.data]);
 
   const handleSubmit = form.handleSubmit((values) => {
     const formData = new FormData();

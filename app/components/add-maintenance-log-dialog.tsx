@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
 import { Trash2 } from "lucide-react";
@@ -216,7 +216,7 @@ export function AddMaintenanceLogDialog({
   const isEditMode = !!logToEdit;
   const { currencies } = useSettings();
 
-  const getInitialFormValues = (): FormValues => {
+  const getInitialFormValues = useCallback((): FormValues => {
     if (isEditMode && logToEdit) {
       const baseValues = {
         type: logToEdit.type,
@@ -274,7 +274,7 @@ export function AddMaintenanceLogDialog({
       description: "",
       currencyCode: motorcycle.currencyCode ?? "CHF",
     } as FormValues;
-  };
+  }, [currentOdometer, isEditMode, logToEdit, motorcycle.currencyCode]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -285,9 +285,9 @@ export function AddMaintenanceLogDialog({
     if (open) {
       form.reset(getInitialFormValues());
     }
-  }, [open, logToEdit, form]);
+  }, [open, getInitialFormValues, form]);
 
-  let fetcher = useFetcher();
+  const fetcher = useFetcher();
   const isSubmitting = fetcher.state !== "idle";
 
   const handleDelete = () => {
@@ -339,14 +339,19 @@ export function AddMaintenanceLogDialog({
   };
 
   useEffect(() => {
-    // Check if the submission is complete and was successful.
     if (fetcher.state === "idle" && fetcher.data?.success) {
-      setOpen(false); // Close the dialog
+      queueMicrotask(() => setOpen(false));
     }
-  }, [fetcher]);
+  }, [fetcher.state, fetcher.data]);
 
-  const logType = form.watch("type");
-  const fluidType = form.watch("fluidType");
+  const logType = useWatch({
+    control: form.control,
+    name: "type",
+  });
+  const fluidType = useWatch({
+    control: form.control,
+    name: "fluidType",
+  });
 
   const mainContent = (
     <>

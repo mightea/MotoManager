@@ -52,14 +52,13 @@ export function TorqueSpecDialog({
       if (!spec) {
         formRef.current?.reset();
       }
-      setOpen(false);
+      queueMicrotask(() => setOpen(false));
     }
   }, [fetcher.state, fetcher.data, spec]);
 
   useEffect(() => {
-    if (open) {
-      setVariationMode(defaultVariationMode);
-    }
+    if (!open) return;
+    queueMicrotask(() => setVariationMode(defaultVariationMode));
   }, [open, defaultVariationMode]);
 
   const handleDelete = () => {

@@ -1,6 +1,6 @@
-import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Trash2 } from "lucide-react";
 
@@ -46,7 +46,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useSettings } from "~/contexts/SettingsProvider";
-import { useNavigation, UNSAFE_DataRouterContext } from "react-router";
+import { useNavigation } from "react-router";
 
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
@@ -93,9 +93,8 @@ export function AddMotorcycleDialog({
   const deleteSubmitRef = useRef<HTMLButtonElement>(null);
   const intentInputRef = useRef<HTMLInputElement | null>(null);
   const { currencies } = useSettings();
-  const dataRouterContext = useContext(UNSAFE_DataRouterContext);
-  const navigation = dataRouterContext ? useNavigation() : undefined;
-  const isSubmitting = navigation ? navigation.state !== "idle" : false;
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state !== "idle";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -103,6 +102,11 @@ export function AddMotorcycleDialog({
       isVeteran: false,
       isArchived: false,
     },
+  });
+
+  const currencyCodeValue = useWatch({
+    control: form.control,
+    name: "currencyCode",
   });
 
   useEffect(() => {
@@ -221,7 +225,7 @@ export function AddMotorcycleDialog({
             <input
               type="hidden"
               name="currencyCode"
-              value={form.watch("currencyCode")}
+              value={currencyCodeValue}
             />
             <div className="space-y-4">
               <h4 className="text-sm font-medium text-muted-foreground pt-4">
