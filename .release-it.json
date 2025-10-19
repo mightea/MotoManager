@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/release-it@19/schema/release-it.json",
+  "git": {
+    "commitMessage": "chore: release v${version}"
+  },
+  "github": {
+    "release": true
+  },
+  "plugins": {
+    "@csmith/release-it-calver-plugin": {
+      "format": "yyyy.mm.minor",
+      "increment": "calendar.minor"
+    },
+    "@release-it/conventional-changelog": {
+      "preset": "@favoloso/emoji",
+      "infile": "CHANGELOG.md"
+    }
+  }
+}
