@@ -94,7 +94,7 @@ export function AddMotorcycleDialog({
   const intentInputRef = useRef<HTMLInputElement | null>(null);
   const { currencies } = useSettings();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state !== "idle";
+  const isSubmitting = navigation ? navigation.state !== "idle" : false;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

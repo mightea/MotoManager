@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import Home from "~/routes/home";
 import { SettingsProvider } from "~/contexts/SettingsProvider";
@@ -7,43 +7,51 @@ import type { CurrencySetting } from "~/db/schema";
 
 describe("Home route", () => {
   it("shows the empty state when no motorcycles are available", () => {
-    render(
-      <MemoryRouter>
-        <SettingsProvider
-          initialCurrencies={[
-            {
-              id: 1,
-              code: "USD",
-              symbol: "US$",
-              label: "US Dollar",
-              conversionFactor: 1,
-              createdAt: new Date().toISOString(),
-            } satisfies CurrencySetting,
-          ]}
-          initialLocations={[]}
-        >
-          <Home
-            {...({
-              loaderData: {
-                motorcycles: [],
-                items: [],
-                stats: {
-                  year: new Date().getFullYear(),
-                  totalKmThisYear: 0,
-                  totalKmOverall: 0,
-                  totalActiveIssues: 0,
-                  totalMaintenanceCostThisYear: 0,
-                  veteranCount: 0,
-                  topRider: null,
-                },
-              },
-              matches: [],
-              params: {},
-            } as any)}
-          />
-        </SettingsProvider>
-      </MemoryRouter>
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <SettingsProvider
+              initialCurrencies={[
+                {
+                  id: 1,
+                  code: "USD",
+                  symbol: "US$",
+                  label: "US Dollar",
+                  conversionFactor: 1,
+                  createdAt: new Date().toISOString(),
+                } satisfies CurrencySetting,
+              ]}
+              initialLocations={[]}
+            >
+              <Home
+                {...({
+                  loaderData: {
+                    motorcycles: [],
+                    items: [],
+                    stats: {
+                      year: new Date().getFullYear(),
+                      totalKmThisYear: 0,
+                      totalKmOverall: 0,
+                      totalActiveIssues: 0,
+                      totalMaintenanceCostThisYear: 0,
+                      veteranCount: 0,
+                      topRider: null,
+                    },
+                  },
+                  matches: [],
+                  params: {},
+                } as any)}
+              />
+            </SettingsProvider>
+          ),
+        },
+      ],
+      { initialEntries: ["/"] }
     );
+
+    render(<RouterProvider router={router} />);
 
     expect(
       screen.getByRole("heading", { name: /noch keine motorräder/i })
