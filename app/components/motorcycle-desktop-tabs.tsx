@@ -27,7 +27,6 @@ export function MotorcycleDesktopTabs({
       value={activeTab}
       onValueChange={onTabChange}
       className="w-full print:hidden"
-      defaultValue="maintenance"
     >
       <TabsList
         className={cn(
@@ -44,16 +43,20 @@ export function MotorcycleDesktopTabs({
           aria-label="Wartungsprotokoll"
           className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
         >
-          <ClipboardList className="h-4 w-4" />
-          <span className="hidden lg:inline">Wartungsprotokoll</span>
+          <ClipboardList className="h-4 w-4 pointer-events-none" />
+          <span className="hidden lg:inline pointer-events-none">
+            Wartungsprotokoll
+          </span>
         </TabsTrigger>
         <TabsTrigger
           value="torque"
           aria-label="Drehmomentwerte"
           className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
         >
-          <Gauge className="h-4 w-4" />
-          <span className="hidden lg:inline">Drehmomentwerte</span>
+          <Gauge className="h-4 w-4 pointer-events-none" />
+          <span className="hidden lg:inline pointer-events-none">
+            Drehmomentwerte
+          </span>
         </TabsTrigger>
         {hasInsights && (
           <TabsTrigger
@@ -61,8 +64,10 @@ export function MotorcycleDesktopTabs({
             aria-label="Wartungs-Insights"
             className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
           >
-            <Droplets className="h-4 w-4" />
-            <span className="hidden lg:inline">Wartungs-Insights</span>
+            <Droplets className="h-4 w-4 pointer-events-none" />
+            <span className="hidden lg:inline pointer-events-none">
+              Wartungs-Insights
+            </span>
           </TabsTrigger>
         )}
         {hasDocuments && (
@@ -71,8 +76,10 @@ export function MotorcycleDesktopTabs({
             aria-label="Dokumente"
             className="flex items-center justify-center px-2 py-2 text-sm font-medium sm:text-xs lg:flex-row lg:gap-2 lg:text-sm"
           >
-            <FileText className="h-4 w-4" />
-            <span className="hidden lg:inline">Dokumente</span>
+            <FileText className="h-4 w-4 pointer-events-none" />
+            <span className="hidden lg:inline pointer-events-none">
+              Dokumente
+            </span>
           </TabsTrigger>
         )}
       </TabsList>

@@ -27,7 +27,6 @@ export function MotorcycleMobileTabs({
       value={activeTab}
       onValueChange={onTabChange}
       className="w-full print:hidden"
-      defaultValue="info"
     >
       <TabsList
         className={cn(
@@ -44,21 +43,21 @@ export function MotorcycleMobileTabs({
           aria-label="Übersicht"
           className="flex items-center justify-center px-2 py-2 text-sm font-medium"
         >
-          <Info className="h-4 w-4" />
+          <Info className="h-4 w-4 pointer-events-none" />
         </TabsTrigger>
         <TabsTrigger
           value="maintenance"
           aria-label="Wartungsprotokoll"
           className="flex items-center justify-center px-2 py-2 text-sm font-medium"
         >
-          <ClipboardList className="h-4 w-4" />
+          <ClipboardList className="h-4 w-4 pointer-events-none" />
         </TabsTrigger>
         <TabsTrigger
           value="torque"
           aria-label="Drehmomentwerte"
           className="flex items-center justify-center px-2 py-2 text-sm font-medium"
         >
-          <Gauge className="h-4 w-4" />
+          <Gauge className="h-4 w-4 pointer-events-none" />
         </TabsTrigger>
         {hasInsights && (
           <TabsTrigger
@@ -66,7 +65,7 @@ export function MotorcycleMobileTabs({
             aria-label="Wartungs-Insights"
             className="flex items-center justify-center px-2 py-2 text-sm font-medium"
           >
-            <Droplets className="h-4 w-4" />
+            <Droplets className="h-4 w-4 pointer-events-none" />
           </TabsTrigger>
         )}
         {hasDocuments && (
@@ -75,7 +74,7 @@ export function MotorcycleMobileTabs({
             aria-label="Dokumente"
             className="flex items-center justify-center px-2 py-2 text-sm font-medium"
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-4 w-4 pointer-events-none" />
           </TabsTrigger>
         )}
       </TabsList>
