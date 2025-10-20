@@ -1,5 +1,12 @@
 # Changelog
 
+## [2025.10.12](https://github.com/mightea/motobase/compare/2025.10.11...2025.10.12) (2025-10-20)
+
+### Bug Fixes
+
+* fixes migration issue ([315067f](https://github.com/mightea/motobase/commit/315067f78f54949d508a46f9c389d3b1aa1e4034))
+* show cross-owner document assignments and fix dialog overflow ([b879389](https://github.com/mightea/motobase/commit/b8793892595dc16f00037c0f7145617842bd3098))
+
 ## [2025.11.0](https://github.com/mightea/motobase/compare/2025.10.10...2025.11.0) (2025-10-20)
 
 ### Features
