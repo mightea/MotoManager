@@ -53,6 +53,8 @@ interface DocumentSummary {
   title: string;
   filePath: string;
   previewPath: string | null;
+  isPrivate: boolean;
+  ownerId: number | null;
   createdAt: string;
   updatedAt: string;
   uploadedBy: string | null;
@@ -165,6 +167,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       title: documents.title,
       filePath: documents.filePath,
       previewPath: documents.previewPath,
+      isPrivate: documents.isPrivate,
+      ownerId: documents.ownerId,
       createdAt: documents.createdAt,
       updatedAt: documents.updatedAt,
       uploadedBy: documents.uploadedBy,
@@ -195,17 +199,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   docsRaw.forEach((row) => {
     let summary = docsMap.get(row.id);
-    if (!summary) {
-      summary = {
-        id: row.id,
-        title: row.title,
-        filePath: row.filePath,
-        previewPath: row.previewPath,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        uploadedBy: row.uploadedBy ?? null,
-        motorcycles: [],
-      };
+      if (!summary) {
+        summary = {
+          id: row.id,
+          title: row.title,
+          filePath: row.filePath,
+          previewPath: row.previewPath,
+          isPrivate: row.isPrivate,
+          ownerId: row.ownerId ?? null,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          uploadedBy: row.uploadedBy ?? null,
+          motorcycles: [],
+        };
       docsMap.set(row.id, summary);
     }
 
@@ -227,7 +233,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   const filteredDocuments = Array.from(docsMap.values()).filter((doc) =>
-    accessibleDocs.has(doc.id),
+    accessibleDocs.has(doc.id) &&
+    (!doc.isPrivate || doc.ownerId === user.id),
   );
 
   return data(
@@ -313,6 +320,10 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
+    const isPrivateRaw = formData.get("isPrivate");
+    const isPrivate =
+      isPrivateRaw === "on" || isPrivateRaw === "true" || isPrivateRaw === "1";
+
     const fileExt = path.extname(file.name).toLowerCase();
     if (fileExt !== ".pdf") {
       return respond(
@@ -346,6 +357,8 @@ export async function action({ request }: ActionFunctionArgs) {
       filePath: publicPath,
       previewPath,
       uploadedBy: user.username ?? user.name,
+      ownerId: user.id,
+      isPrivate,
     };
 
     const inserted = await createDocument(db, newDocument);
@@ -423,6 +436,10 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
+    const isPrivateRaw = formData.get("isPrivate");
+    const isPrivate =
+      isPrivateRaw === "on" || isPrivateRaw === "true" || isPrivateRaw === "1";
+
     const existingRelations = await db
       .select({ motorcycleId: documentMotorcycles.motorcycleId })
       .from(documentMotorcycles)
@@ -432,9 +449,20 @@ export async function action({ request }: ActionFunctionArgs) {
       .map((relation) => relation.motorcycleId)
       .filter((id): id is number => id !== null);
 
-    const canEdit =
-      existingMotorcycleIds.length === 0 ||
-      existingMotorcycleIds.some((id) => userMotorcycleIdSet.has(id));
+    if (existing.isPrivate && existing.ownerId !== user.id) {
+      return respond(
+        {
+          success: false,
+          message: "Dieses private Dokument kann nur vom Besitzer bearbeitet werden.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const canEdit = existing.isPrivate
+      ? existing.ownerId === user.id
+      : existingMotorcycleIds.length === 0 ||
+        existingMotorcycleIds.some((id) => userMotorcycleIdSet.has(id));
 
     if (!canEdit) {
       return respond(
@@ -500,6 +528,10 @@ export async function action({ request }: ActionFunctionArgs) {
       title,
       filePath,
       previewPath,
+      isPrivate,
+      ownerId: isPrivate
+        ? user.id
+        : existing.ownerId ?? user.id,
       updatedAt: new Date().toISOString(),
     });
 
@@ -551,9 +583,20 @@ export async function action({ request }: ActionFunctionArgs) {
       .map((relation) => relation.motorcycleId)
       .filter((id): id is number => id !== null);
 
-    const canDelete =
-      relationIds.length === 0 ||
-      relationIds.every((id) => userMotorcycleIdSet.has(id));
+    if (existing.isPrivate && existing.ownerId !== user.id) {
+      return respond(
+        {
+          success: false,
+          message: "Dieses private Dokument kann nur vom Besitzer gelöscht werden.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const canDelete = existing.isPrivate
+      ? existing.ownerId === user.id
+      : relationIds.length === 0 ||
+        relationIds.every((id) => userMotorcycleIdSet.has(id));
 
     if (!canDelete) {
       return respond(
@@ -639,20 +682,23 @@ export default function Documents() {
               title: doc.title,
               filePath: doc.filePath,
               previewPath: doc.previewPath,
+              isPrivate: doc.isPrivate,
               createdAt: doc.createdAt,
               subtitle:
-                doc.motorcycles.length === 0
-                  ? "Zugeordnet zu: Alle Motorräder"
-                  : `Zugeordnet zu: ${doc.motorcycles
-                      .map((moto) => {
-                        const base = [
-                          `${moto.make} ${moto.model}`.trim(),
-                          moto.numberPlate ? `(${moto.numberPlate})` : null,
-                          moto.ownerUsername ? `• ${moto.ownerUsername}` : null,
-                        ].filter(Boolean);
-                        return base.join(" ");
-                      })
-                      .join(", ")}`,
+                doc.isPrivate
+                  ? "Privates Dokument (nur für dich)"
+                  : doc.motorcycles.length === 0
+                    ? "Zugeordnet zu: Alle Motorräder"
+                    : `Zugeordnet zu: ${doc.motorcycles
+                        .map((moto) => {
+                          const base = [
+                            `${moto.make} ${moto.model}`.trim(),
+                            moto.numberPlate ? `(${moto.numberPlate})` : null,
+                            moto.ownerUsername ? `• ${moto.ownerUsername}` : null,
+                          ].filter(Boolean);
+                          return base.join(" ");
+                        })
+                        .join(", ")}`,
               motorcycleIds: doc.motorcycles.map((m) => m.id),
               uploadedBy: doc.uploadedBy ?? null,
             }))}
@@ -665,6 +711,7 @@ export default function Documents() {
                   filePath: doc.filePath,
                   previewPath: doc.previewPath ?? null,
                   motorcycleIds: doc.motorcycleIds ?? [],
+                  isPrivate: doc.isPrivate ?? false,
                 }}
               >
                 <Button size="sm" variant="secondary" className="flex-1">

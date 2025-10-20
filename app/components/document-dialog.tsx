@@ -32,6 +32,7 @@ export interface DocumentDialogData {
   filePath: string;
   previewPath?: string | null;
   motorcycleIds: number[];
+  isPrivate: boolean;
 }
 
 export interface DocumentSelectableMotorcycle {
@@ -171,6 +172,25 @@ export function DocumentDialog({
                 );
               })}
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                id="isPrivate"
+                name="isPrivate"
+                defaultChecked={document?.isPrivate ?? false}
+                className="h-4 w-4 rounded border-muted-foreground"
+              />
+              <span className="font-medium text-foreground">
+                Dokument privat halten
+              </span>
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Private Dokumente sind ausschließlich für dich sichtbar, auch
+              wenn sie Motorrädern zugeordnet sind.
+            </p>
           </div>
         </div>
 
