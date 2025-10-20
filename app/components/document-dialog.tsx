@@ -13,7 +13,6 @@ import {
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import type { Motorcycle } from "~/db/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
+import { MotorcycleSelectLabel } from "~/components/motorcycle-select-label";
 
 export interface DocumentDialogData {
   id: number;
@@ -34,8 +34,16 @@ export interface DocumentDialogData {
   motorcycleIds: number[];
 }
 
+export interface DocumentSelectableMotorcycle {
+  id: number;
+  make: string;
+  model: string;
+  numberPlate: string | null;
+  ownerUsername: string | null;
+}
+
 interface DocumentDialogProps {
-  motorcycles: Motorcycle[];
+  motorcycles: DocumentSelectableMotorcycle[];
   document?: DocumentDialogData;
   children: ReactNode;
 }
@@ -153,10 +161,12 @@ export function DocumentDialog({
                       defaultChecked={checked}
                       className="h-4 w-4 rounded border-muted-foreground"
                     />
-                    <span className="truncate">
-                      {moto.make} {moto.model}
-                      {moto.numberPlate && ` (${moto.numberPlate})`}
-                    </span>
+                    <MotorcycleSelectLabel
+                      make={moto.make}
+                      model={moto.model}
+                      ownerUsername={moto.ownerUsername}
+                      className="flex-1"
+                    />
                   </label>
                 );
               })}

@@ -4,7 +4,7 @@ import {
   documents,
   documentMotorcycles,
   motorcycles,
-  type Motorcycle,
+  users,
   type NewDocument,
   type NewDocumentMotorcycle,
 } from "~/db/schema";
@@ -15,7 +15,7 @@ import {
   detachDocumentMotorcycles,
   deleteDocument,
 } from "~/db/providers/documents.server";
-import { desc, eq, isNull, or } from "drizzle-orm";
+import { asc, desc, eq, isNull, or } from "drizzle-orm";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -46,6 +46,8 @@ function resolvePublicFilePath(relativePath: string) {
   return path.join(process.cwd(), "public", relativePath.replace(/^\/+/, ""));
 }
 
+import type { DocumentSelectableMotorcycle } from "~/components/document-dialog";
+
 interface DocumentSummary {
   id: number;
   title: string;
@@ -59,12 +61,13 @@ interface DocumentSummary {
     make: string;
     model: string;
     numberPlate: string | null;
+    ownerUsername: string | null;
   }>;
 }
 
 type LoaderData = {
   documents: DocumentSummary[];
-  motorcycles: Motorcycle[];
+  motorcycles: DocumentSelectableMotorcycle[];
 };
 
 async function ensureDocumentDirs() {
@@ -113,11 +116,48 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();
 
-  const userMotorcycles = await db.query.motorcycles.findMany({
-    where: eq(motorcycles.userId, user.id),
-  });
+  const currentIdentifiers = new Set(
+    [user.username, user.name, user.email]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value)),
+  );
 
-  const userMotorcycleIdSet = new Set(userMotorcycles.map((moto) => moto.id));
+  const resolveOwnerLabel = (
+    username?: string | null,
+    name?: string | null,
+  ) => {
+    const trimmedUsername = username?.trim();
+    if (trimmedUsername && !currentIdentifiers.has(trimmedUsername)) {
+      return trimmedUsername;
+    }
+
+    const trimmedName = name?.trim();
+    if (trimmedName && !currentIdentifiers.has(trimmedName)) {
+      return trimmedName;
+    }
+
+    return null;
+  };
+
+  const allMotorcyclesRaw = await db
+    .select({
+      id: motorcycles.id,
+      make: motorcycles.make,
+      model: motorcycles.model,
+      numberPlate: motorcycles.numberPlate,
+      userId: motorcycles.userId,
+      ownerUsername: users.username,
+      ownerName: users.name,
+    })
+    .from(motorcycles)
+    .leftJoin(users, eq(users.id, motorcycles.userId))
+    .orderBy(asc(motorcycles.make), asc(motorcycles.model));
+
+  const userMotorcycleIdSet = new Set(
+    allMotorcyclesRaw
+      .filter((moto) => moto.userId === user.id)
+      .map((moto) => moto.id),
+  );
 
   const docsRaw = await db
     .select({
@@ -132,6 +172,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       motorcycleMake: motorcycles.make,
       motorcycleModel: motorcycles.model,
       motorcycleNumberPlate: motorcycles.numberPlate,
+      motorcycleOwnerUsername: users.username,
+      motorcycleOwnerName: users.name,
     })
     .from(documents)
     .leftJoin(
@@ -139,6 +181,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       eq(documentMotorcycles.documentId, documents.id),
     )
     .leftJoin(motorcycles, eq(documentMotorcycles.motorcycleId, motorcycles.id))
+    .leftJoin(users, eq(motorcycles.userId, users.id))
     .where(
       or(
         isNull(documentMotorcycles.motorcycleId),
@@ -175,6 +218,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
         make: row.motorcycleMake ?? "",
         model: row.motorcycleModel ?? "",
         numberPlate: row.motorcycleNumberPlate ?? null,
+        ownerUsername: resolveOwnerLabel(
+          row.motorcycleOwnerUsername,
+          row.motorcycleOwnerName,
+        ),
       });
     }
   });
@@ -186,7 +233,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return data(
     {
       documents: filteredDocuments,
-      motorcycles: userMotorcycles,
+      motorcycles: allMotorcyclesRaw.map((moto) => ({
+        id: moto.id,
+        make: moto.make,
+        model: moto.model,
+        numberPlate: moto.numberPlate ?? null,
+        ownerUsername: resolveOwnerLabel(moto.ownerUsername, moto.ownerName),
+      })),
     },
     { headers: mergeHeaders(headers ?? {}) },
   );
@@ -205,13 +258,16 @@ export async function action({ request }: ActionFunctionArgs) {
       headers: mergeHeaders(sessionHeaders ?? {}),
     });
 
-  const userMotorcycleIds = await db
-    .select({ id: motorcycles.id })
-    .from(motorcycles)
-    .where(eq(motorcycles.userId, user.id));
+  const motorcycleRows = await db
+    .select({ id: motorcycles.id, userId: motorcycles.userId })
+    .from(motorcycles);
+
+  const validMotorcycleIdSet = new Set<number>(
+    motorcycleRows.map((row) => row.id),
+  );
 
   const userMotorcycleIdSet = new Set<number>(
-    userMotorcycleIds.map((row) => row.id),
+    motorcycleRows.filter((row) => row.userId === user.id).map((row) => row.id),
   );
 
   if (intent === "document-add") {
@@ -247,12 +303,11 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
-    if (!sanitizedMotorcycleIds.every((id) => userMotorcycleIdSet.has(id))) {
+    if (!sanitizedMotorcycleIds.every((id) => validMotorcycleIdSet.has(id))) {
       return respond(
         {
           success: false,
-          message:
-            "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
+          message: "Ungültige Motorrad-Auswahl.",
         },
         { status: 400 },
       );
@@ -391,12 +446,11 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
-    if (!sanitizedMotorcycleIds.every((id) => userMotorcycleIdSet.has(id))) {
+    if (!sanitizedMotorcycleIds.every((id) => validMotorcycleIdSet.has(id))) {
       return respond(
         {
           success: false,
-          message:
-            "Du kannst Dokumente nur deinen eigenen Motorrädern zuordnen.",
+          message: "Ungültige Motorrad-Auswahl.",
         },
         { status: 400 },
       );
@@ -590,17 +644,14 @@ export default function Documents() {
                 doc.motorcycles.length === 0
                   ? "Zugeordnet zu: Alle Motorräder"
                   : `Zugeordnet zu: ${doc.motorcycles
-                      .map((moto) =>
-                        [
-                          moto.make,
-                          moto.model,
-                          moto.numberPlate
-                            ? `(${moto.numberPlate})`
-                            : undefined,
-                        ]
-                          .filter(Boolean)
-                          .join(" "),
-                      )
+                      .map((moto) => {
+                        const base = [
+                          `${moto.make} ${moto.model}`.trim(),
+                          moto.numberPlate ? `(${moto.numberPlate})` : null,
+                          moto.ownerUsername ? `• ${moto.ownerUsername}` : null,
+                        ].filter(Boolean);
+                        return base.join(" ");
+                      })
                       .join(", ")}`,
               motorcycleIds: doc.motorcycles.map((m) => m.id),
               uploadedBy: doc.uploadedBy ?? null,
