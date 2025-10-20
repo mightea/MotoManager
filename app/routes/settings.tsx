@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { data, useLoaderData, useFetcher } from "react-router";
+import { data, useLoaderData, useFetcher, Link } from "react-router";
 import { eq } from "drizzle-orm";
 import path from "node:path";
 
@@ -903,6 +903,29 @@ export default function Settings() {
             <CurrencySettingsForm canEdit={canEditCurrencies} />
           </CardContent>
         </Card>
+
+        {canManageUsers && (
+          <Card className="h-full border-border/60 bg-white/90 shadow-md backdrop-blur dark:border-border/30 dark:bg-slate-900/80">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Serverstatistiken
+              </CardTitle>
+              <CardDescription>
+                Übersicht über Nutzer, Motorräder und Dokumente der gesamten
+                Installation.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">
+                Zeigt aggregierte Kennzahlen für Administratoren an, um die
+                Serverlast und Nutzung zu beobachten.
+              </p>
+              <Button asChild>
+                <Link to="/admin/stats">Statistiken öffnen</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {canManageUsers && (
