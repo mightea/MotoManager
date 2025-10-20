@@ -43,6 +43,7 @@ import {
 } from "~/contexts/MotorcycleProvider";
 import { toast } from "~/hooks/use-toast";
 import { Separator } from "./ui/separator";
+import { urlMotorcycle } from "~/utils/urlUtils";
 
 const UNKNOWN_LOCATION_LABEL = "Unbekannter Standort";
 
@@ -123,7 +124,10 @@ export function LocationUpdateDialog({
     formData.append("odometer", String(parsed.odometer));
     formData.append("date", parsed.date);
 
-    fetcher.submit(formData, { method: "post" });
+    fetcher.submit(formData, {
+      method: "post",
+      action: urlMotorcycle({ ...motorcycle }),
+    });
   };
 
   useEffect(() => {
@@ -198,7 +202,7 @@ export function LocationUpdateDialog({
 
       const previousEntry = index === 0 ? null : locationHistory[index - 1];
       const endDate = previousEntry
-        ? safeParseDate(previousEntry.date) ?? startDate
+        ? (safeParseDate(previousEntry.date) ?? startDate)
         : new Date();
 
       const dateLabel = format(startDate, "d. MMM yyyy", { locale: de });
@@ -357,9 +361,7 @@ export function LocationUpdateDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        {mainContent}
-      </DialogContent>
+      <DialogContent className="sm:max-w-md">{mainContent}</DialogContent>
     </Dialog>
   );
 }

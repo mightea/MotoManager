@@ -47,6 +47,7 @@ import {
 } from "./ui/select";
 import { useSettings } from "~/contexts/SettingsProvider";
 import { useNavigation } from "react-router";
+import { urlMotorcycle } from "~/utils/urlUtils";
 
 const formSchema = z.object({
   make: z.string().min(2, "Die Marke muss mindestens 2 Zeichen lang sein."),
@@ -92,6 +93,8 @@ export function AddMotorcycleDialog({
   const isEditMode = !!motorcycleToEdit;
   const deleteSubmitRef = useRef<HTMLButtonElement>(null);
   const intentInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingIntentRef = useRef<string | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
   const { currencies } = useSettings();
   const navigation = useNavigation();
   const isSubmitting = navigation ? navigation.state !== "idle" : false;
@@ -160,7 +163,12 @@ export function AddMotorcycleDialog({
       | HTMLButtonElement
       | HTMLInputElement
       | null;
-    const submitIntent = submitter?.getAttribute("value") ?? "motorcycle-edit";
+    const submitIntent =
+      submitter?.getAttribute("value") ??
+      pendingIntentRef.current ??
+      "motorcycle-edit";
+
+    pendingIntentRef.current = null;
 
     if (intentInputRef.current) {
       intentInputRef.current.value = submitIntent;
@@ -195,6 +203,12 @@ export function AddMotorcycleDialog({
       <Form {...form}>
         <form
           method="post"
+          action={urlMotorcycle({
+            id: motorcycleToEdit?.id ?? -1,
+            make: motorcycleToEdit?.make ?? "",
+            model: motorcycleToEdit?.model ?? "",
+          })}
+          ref={formRef}
           className="flex flex-1 flex-col gap-6 overflow-hidden"
           onSubmitCapture={handleSubmitCapture}
           noValidate
@@ -516,8 +530,15 @@ export function AddMotorcycleDialog({
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
+                        pendingIntentRef.current = "motorcycle-delete";
+                        if (intentInputRef.current) {
+                          intentInputRef.current.value = "motorcycle-delete";
+                        }
+                        const formElement = formRef.current;
+                        const submitButton =
+                          deleteSubmitRef.current ?? undefined;
+                        formElement?.requestSubmit(submitButton);
                         setOpen(false);
-                        deleteSubmitRef.current?.click();
                       }}
                       className="bg-destructive hover:bg-destructive/90"
                       disabled={isSubmitting}
