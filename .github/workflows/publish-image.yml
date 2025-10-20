@@ -39,17 +39,13 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Update package.json version
-        run: |
-          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json','utf8')); pkg.version = process.env.PACKAGE_VERSION; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
-        env:
-          PACKAGE_VERSION: ${{ steps.gitversion.outputs.semVer }}
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build application
         run: pnpm build
+        env:
+          APP_VERSION: ${{ steps.gitversion.outputs.semVer }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -74,3 +70,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.gitversion.outputs.semVer }}

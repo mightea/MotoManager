@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { data, useLoaderData, useFetcher } from "react-router";
 import { eq } from "drizzle-orm";
 import path from "node:path";
-import { readFile } from "node:fs/promises";
 
 import {
   Card,
@@ -106,12 +105,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();
 
-  const packageJsonRaw = await readFile(
-    new URL("../../package.json", import.meta.url),
-    "utf-8",
-  );
-  const packageMetadata = JSON.parse(packageJsonRaw) as { version?: string };
-  const APP_VERSION = packageMetadata.version ?? "0.0.0";
+  const APP_VERSION = process.env.APP_VERSION ?? "0.0.0";
 
   const isAdmin = user.role === "admin";
   const [locationResult, currencyResult, usersList] = await Promise.all([
