@@ -57,7 +57,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const context = await getMotorcycleActionContext({ request, params });
   if ("error" in context) return context.error;
 
-  const { user, db, respond, motorcycleId, targetMotorcycle } = context;
+  const { db, respond, motorcycleId, targetMotorcycle } = context;
 
   const formData = await request.formData();
   const fields = Object.fromEntries(formData);
@@ -113,10 +113,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     ]);
 
     const sourceMotorcycle = await db.query.motorcycles.findFirst({
-      where: and(
-        eq(motorcycles.id, sourceMotorcycleId),
-        eq(motorcycles.userId, user.id),
-      ),
+      where: eq(motorcycles.id, sourceMotorcycleId),
     });
 
     if (!sourceMotorcycle) {

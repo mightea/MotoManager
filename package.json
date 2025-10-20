@@ -88,6 +88,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.0",
     "jsdom": "^27.0.1",
+    "prettier-plugin-tailwindcss": "^0.7.1",
     "release-it": "^19.0.5",
     "typescript": "^5.9.3",
     "vite": "^7.1.11",
@@ -101,5 +102,5 @@
       "esbuild"
     ]
   },
-  "version": "2025.10.10"
+  "version": "2025.10.12"
 }

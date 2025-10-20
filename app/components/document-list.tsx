@@ -11,6 +11,7 @@ export type DocumentListItem = {
   subtitle?: string;
   motorcycleIds?: number[];
   uploadedBy?: string | null;
+  isPrivate?: boolean;
 };
 
 interface DocumentListProps {
@@ -76,28 +77,34 @@ export function DocumentList({ documents, renderActions }: DocumentListProps) {
                 PDF öffnen
               </span>
             </Link>
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-lg font-semibold leading-tight line-clamp-2">
-              <Link
-                to={doc.filePath}
-                target="_blank"
-                rel="noreferrer"
-                className="hover:underline"
-              >
-                {doc.title}
-              </Link>
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Hochgeladen von {doc.uploadedBy ?? "Unbekannt"} •
-              {' '}
-              {dateFormatter.format(new Date(doc.createdAt))}
-            </p>
-            {doc.subtitle ? (
-              <p className="text-xs text-muted-foreground/90 line-clamp-2">
-                {doc.subtitle}
+            <CardHeader className="space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-lg font-semibold leading-tight line-clamp-2">
+                  <Link
+                    to={doc.filePath}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:underline"
+                  >
+                    {doc.title}
+                  </Link>
+                </CardTitle>
+                {doc.isPrivate ? (
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                    Privat
+                  </span>
+                ) : null}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Hochgeladen von {doc.uploadedBy ?? "Unbekannt"} •{" "}
+                {dateFormatter.format(new Date(doc.createdAt))}
               </p>
-            ) : null}
-          </CardHeader>
+              {doc.subtitle ? (
+                <p className="text-xs text-muted-foreground/90 line-clamp-2">
+                  {doc.subtitle}
+                </p>
+              ) : null}
+            </CardHeader>
             {extraActions ? (
               <CardContent className="mt-auto flex flex-wrap gap-2 pt-0">
                 {extraActions}
