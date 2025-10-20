@@ -24,16 +24,10 @@ import {
   updateMotorcycle,
   deleteMotorcycleCascade,
 } from "~/db/providers/motorcycles.server";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import MotorcycleInfo from "~/components/motorcycle-info";
 import { OpenIssuesCard } from "~/components/open-issues-card";
-import {
-  data,
-  redirect,
-  Outlet,
-  useLocation,
-  useNavigate,
-} from "react-router";
+import { data, redirect, Outlet, useLocation, useNavigate } from "react-router";
 import { parseIntSafe } from "~/utils/numberUtils";
 import {
   MotorcycleProvider,
@@ -44,6 +38,7 @@ import { MotorcycleDesktopTabs } from "~/components/motorcycle-desktop-tabs";
 import { MotorcycleMobileTabs } from "~/components/motorcycle-mobile-tabs";
 import { useMemo } from "react";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
+import type { TorqueImportCandidate } from "~/types/torque";
 
 export interface MotorcycleOutletContext {
   motorcycle: MotorcycleWithInspection;
@@ -52,6 +47,7 @@ export interface MotorcycleOutletContext {
   currentOdo: number;
   torqueSpecifications: TorqueSpecification[];
   documents: DocumentListItem[];
+  torqueImportCandidates: TorqueImportCandidate[];
 }
 
 type TabKey = "info" | "maintenance" | "torque" | "insights" | "documents";
@@ -183,6 +179,44 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     orderBy: [asc(torqueSpecs.category), asc(torqueSpecs.name)],
   });
 
+  const otherMotorcycles = (
+    await db.query.motorcycles.findMany({
+      where: eq(motorcycles.userId, user.id),
+      orderBy: [asc(motorcycles.make), asc(motorcycles.model)],
+    })
+  ).filter((bike) => bike.id !== motorcycleId);
+
+  let torqueImportCandidates: TorqueImportCandidate[] = [];
+
+  if (otherMotorcycles.length > 0) {
+    const candidateIds = otherMotorcycles.map((bike) => bike.id);
+    const importSpecs = await db.query.torqueSpecs.findMany({
+      where: inArray(torqueSpecs.motorcycleId, candidateIds),
+      orderBy: [asc(torqueSpecs.category), asc(torqueSpecs.name)],
+    });
+
+    const specsByMotorcycle = new Map<number, TorqueSpecification[]>();
+    importSpecs.forEach((spec) => {
+      const bucket = specsByMotorcycle.get(spec.motorcycleId) ?? [];
+      bucket.push(spec);
+      specsByMotorcycle.set(spec.motorcycleId, bucket);
+    });
+
+    torqueImportCandidates = otherMotorcycles.map((bike) => {
+      const specsForBike = specsByMotorcycle.get(bike.id) ?? [];
+      return {
+        id: bike.id,
+        make: bike.make,
+        model: bike.model,
+        modelYear: bike.modelYear ?? null,
+        numberPlate: bike.numberPlate ?? null,
+        torqueSpecifications: [...specsForBike].sort((a, b) =>
+          a.name.localeCompare(b.name, "de-CH"),
+        ),
+      };
+    });
+  }
+
   const documentRows = await db
     .select({
       id: documents.id,
@@ -282,6 +316,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       currentLocation: currentLocation ?? null,
       locationHistory,
       torqueSpecifications,
+      torqueImportCandidates,
       documents: documentSummaries,
     },
     { headers: mergeHeaders(headers ?? {}) },
@@ -542,6 +577,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
     currentLocation,
     locationHistory,
     torqueSpecifications,
+    torqueImportCandidates,
     documents,
   } = loaderData;
   const { make, model } = motorcycle;
@@ -591,6 +627,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
       issues,
       currentOdo,
       torqueSpecifications,
+      torqueImportCandidates,
       documents,
     }),
     [
@@ -599,6 +636,7 @@ export default function Motorcycle({ loaderData }: Route.ComponentProps) {
       issues,
       currentOdo,
       torqueSpecifications,
+      torqueImportCandidates,
       documents,
     ],
   );

@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { Download, PlusCircle } from "lucide-react";
 import TorqueSpecDialog from "~/components/torque-spec-dialog";
+import TorqueImportDialog from "~/components/torque-import-dialog";
 import type { TorqueSpecification } from "~/db/schema";
 import { cn } from "~/utils/tw";
+import type { TorqueImportCandidate } from "~/types/torque";
 
 interface TorqueSpecificationsPanelProps {
   motorcycleId: number;
@@ -12,6 +14,7 @@ interface TorqueSpecificationsPanelProps {
   className?: string;
   hideInteractions?: boolean;
   title?: string;
+  importCandidates?: TorqueImportCandidate[];
 }
 
 function formatTorqueValue(spec: TorqueSpecification) {
@@ -52,6 +55,7 @@ export default function TorqueSpecificationsPanel({
   className,
   hideInteractions = false,
   title = "Drehmomentwerte",
+  importCandidates = [],
 }: TorqueSpecificationsPanelProps) {
   const grouped = useMemo(() => groupTorqueSpecifications(specs), [specs]);
 
@@ -68,12 +72,24 @@ export default function TorqueSpecificationsPanel({
             {title}
           </CardTitle>
           {!hideInteractions && (
-            <TorqueSpecDialog motorcycleId={motorcycleId}>
-              <Button variant="outline" className="print:hidden">
-                <PlusCircle className="h-4 w-4" />
-                Eintrag hinzufügen
-              </Button>
-            </TorqueSpecDialog>
+            <div className="flex flex-wrap gap-2">
+              <TorqueImportDialog
+                motorcycleId={motorcycleId}
+                existingSpecs={specs}
+                candidates={importCandidates}
+              >
+                <Button variant="outline" className="print:hidden">
+                  <Download className="h-4 w-4" />
+                  Werte importieren
+                </Button>
+              </TorqueImportDialog>
+              <TorqueSpecDialog motorcycleId={motorcycleId}>
+                <Button variant="outline" className="print:hidden">
+                  <PlusCircle className="h-4 w-4" />
+                  Eintrag hinzufügen
+                </Button>
+              </TorqueSpecDialog>
+            </div>
           )}
         </div>
       </CardHeader>
