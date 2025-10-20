@@ -15,6 +15,13 @@
       "when": 1760199498662,
       "tag": "0001_add_torque_end_to_torque_specs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "8",
+      "when": 1760962227554,
+      "tag": "0002_add_privacy_columns_to_documents",
+      "breakpoints": true
     }
   ]
 }
