@@ -1,5 +1,17 @@
 # Changelog
 
+## [2025.11.0](https://github.com/mightea/motobase/compare/2025.10.10...2025.11.0) (2025-10-20)
+
+### Features
+
+* enable importing torque specs between motorcycles ([b119352](https://github.com/mightea/motobase/commit/b119352630d219600e2058f42b3a02b05e654ec2))
+* enables importing torque data from all users ([80fbbdd](https://github.com/mightea/motobase/commit/80fbbdd21f96d0147713a9ba69dcf027c0b55ee1))
+* enables setting documents to private ([d3414c0](https://github.com/mightea/motobase/commit/d3414c0117901c05c6e6938c5a81c375d5fe6929))
+
+### Bug Fixes
+
+* fixes dialog height on tablet and above ([49ae799](https://github.com/mightea/motobase/commit/49ae799cc35e6364692a605096f110c1c6feb867))
+
 ## [2025.10.10](https://github.com/mightea/motobase/compare/2025.10.9...2025.10.10) (2025-10-20)
 
 ### Bug Fixes
