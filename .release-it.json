@@ -5,7 +5,8 @@
     "commitMessage": "chore: release ${version}"
   },
   "github": {
-    "release": true
+    "release": true,
+    "releaseName": "${version}"
   },
   "plugins": {
     "@csmith/release-it-calver-plugin": {
