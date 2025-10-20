@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Bike } from "lucide-react";
 import {
   Form,
   Link,
@@ -48,7 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       redirectTo,
       showRegister,
     },
-    { headers: mergeHeaders(headers ?? {}) }
+    { headers: mergeHeaders(headers ?? {}) },
   );
 }
 
@@ -68,7 +69,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
   } else if (!USERNAME_REGEX.test(identifier)) {
     errors.push(
-      "Der Benutzername muss 3-32 Zeichen lang sein und darf nur Buchstaben, Zahlen sowie ._- enthalten."
+      "Der Benutzername muss 3-32 Zeichen lang sein und darf nur Buchstaben, Zahlen sowie ._- enthalten.",
     );
   }
 
@@ -85,7 +86,7 @@ export async function action({ request }: Route.ActionArgs) {
   if (!user) {
     return data(
       { success: false, message: "E-Mail oder Passwort ist falsch." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -113,12 +114,24 @@ export default function Login() {
   }, [actionData]);
 
   return (
-    <div className="w-full max-w-sm">
+    <div className="w-full max-w-sm space-y-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
+          <Bike className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            MotoManager
+          </p>
+          <h1 className="text-2xl font-headline font-semibold text-foreground">
+            Garage Cockpit
+          </h1>
+        </div>
+      </div>
+
       <Card className="shadow-xl">
         <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-headline">
-            Willkommen zurück
-          </CardTitle>
+          <CardTitle className="text-2xl font-headline">Anmelden</CardTitle>
           <p className="text-sm text-muted-foreground">
             Melde dich mit deinen Zugangsdaten an, um deine Garage zu verwalten.
           </p>
