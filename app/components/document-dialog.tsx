@@ -107,7 +107,7 @@ export function DocumentDialog({
         ref={formRef}
         key={formKey}
       >
-        <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
+        <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2 sm:max-h-[calc(100vh-18rem)]">
           <input type="hidden" name="intent" value={intent} />
           {document && (
             <input type="hidden" name="documentId" value={document.id} />
@@ -250,7 +250,7 @@ export function DocumentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh]">
         {mainContent}
       </DialogContent>
     </Dialog>

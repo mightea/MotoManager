@@ -190,6 +190,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       or(
         isNull(documentMotorcycles.motorcycleId),
         eq(motorcycles.userId, user.id),
+        eq(documents.ownerId, user.id),
       ),
     )
     .orderBy(desc(documents.createdAt));
@@ -199,26 +200,38 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   docsRaw.forEach((row) => {
     let summary = docsMap.get(row.id);
-      if (!summary) {
-        summary = {
-          id: row.id,
-          title: row.title,
-          filePath: row.filePath,
-          previewPath: row.previewPath,
-          isPrivate: row.isPrivate,
-          ownerId: row.ownerId ?? null,
-          createdAt: row.createdAt,
-          updatedAt: row.updatedAt,
-          uploadedBy: row.uploadedBy ?? null,
-          motorcycles: [],
-        };
+    if (!summary) {
+      summary = {
+        id: row.id,
+        title: row.title,
+        filePath: row.filePath,
+        previewPath: row.previewPath,
+        isPrivate: Boolean(row.isPrivate),
+        ownerId: row.ownerId ?? null,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        uploadedBy: row.uploadedBy ?? null,
+        motorcycles: [],
+      };
       docsMap.set(row.id, summary);
     }
 
-    if (row.motorcycleId === null || row.motorcycleId === undefined) {
+    const isOwner = summary.ownerId === user.id;
+
+    if (
+      row.motorcycleId === null ||
+      row.motorcycleId === undefined ||
+      userMotorcycleIdSet.has(row.motorcycleId) ||
+      isOwner
+    ) {
       accessibleDocs.add(row.id);
-    } else if (userMotorcycleIdSet.has(row.motorcycleId)) {
-      accessibleDocs.add(row.id);
+    }
+
+    if (
+      row.motorcycleId !== null &&
+      row.motorcycleId !== undefined &&
+      (isOwner || userMotorcycleIdSet.has(row.motorcycleId))
+    ) {
       summary.motorcycles.push({
         id: row.motorcycleId,
         make: row.motorcycleMake ?? "",
@@ -684,12 +697,11 @@ export default function Documents() {
               previewPath: doc.previewPath,
               isPrivate: doc.isPrivate,
               createdAt: doc.createdAt,
-              subtitle:
-                doc.isPrivate
-                  ? "Privates Dokument (nur für dich)"
-                  : doc.motorcycles.length === 0
-                    ? "Zugeordnet zu: Alle Motorräder"
-                    : `Zugeordnet zu: ${doc.motorcycles
+              subtitle: (() => {
+                const assignmentLabel =
+                  doc.motorcycles.length === 0
+                    ? "Alle Motorräder"
+                    : doc.motorcycles
                         .map((moto) => {
                           const base = [
                             `${moto.make} ${moto.model}`.trim(),
@@ -698,7 +710,14 @@ export default function Documents() {
                           ].filter(Boolean);
                           return base.join(" ");
                         })
-                        .join(", ")}`,
+                        .join(", ");
+
+                if (doc.isPrivate) {
+                  return `Privat • Zugeordnet zu: ${assignmentLabel}`;
+                }
+
+                return `Zugeordnet zu: ${assignmentLabel}`;
+              })(),
               motorcycleIds: doc.motorcycles.map((m) => m.id),
               uploadedBy: doc.uploadedBy ?? null,
             }))}
