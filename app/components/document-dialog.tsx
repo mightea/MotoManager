@@ -103,11 +103,11 @@ export function DocumentDialog({
       <fetcher.Form
         method="post"
         encType="multipart/form-data"
-        className="flex h-full flex-col gap-4"
+        className="flex flex-1 flex-col gap-6 overflow-hidden"
         ref={formRef}
         key={formKey}
       >
-        <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2 sm:max-h-[calc(100vh-18rem)]">
+        <div className="flex-1 space-y-6 overflow-y-auto pb-4 pr-1 sm:pr-0">
           <input type="hidden" name="intent" value={intent} />
           {document && (
             <input type="hidden" name="documentId" value={document.id} />
@@ -146,7 +146,7 @@ export function DocumentDialog({
             <p className="text-xs text-muted-foreground">
               Keine Auswahl = Dokument gilt für alle Motorräder.
             </p>
-            <div className="grid gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
+            <div className="grid gap-2 overflow-y-auto border rounded-md p-3">
               {motorcycles.map((moto) => {
                 const checked =
                   document?.motorcycleIds?.includes(moto.id) ?? false;
@@ -188,8 +188,8 @@ export function DocumentDialog({
               </span>
             </label>
             <p className="text-xs text-muted-foreground">
-              Private Dokumente sind ausschließlich für dich sichtbar, auch
-              wenn sie Motorrädern zugeordnet sind.
+              Private Dokumente sind ausschließlich für dich sichtbar, auch wenn
+              sie Motorrädern zugeordnet sind.
             </p>
           </div>
         </div>
@@ -239,7 +239,11 @@ export function DocumentDialog({
           >
             Abbrechen
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
             {document ? "Speichern" : "Hochladen"}
           </Button>
         </DialogFooter>
@@ -250,9 +254,7 @@ export function DocumentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh]">
-        {mainContent}
-      </DialogContent>
+      <DialogContent className="sm:max-w-xl">{mainContent}</DialogContent>
     </Dialog>
   );
 }
