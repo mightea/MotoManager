@@ -36,7 +36,7 @@ const DialogContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed inset-0 z-50 flex h-svh w-full flex-col overflow-y-auto bg-background px-4 py-5 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:px-6 sm:py-6 sm:shadow-xl sm:backdrop-blur supports-[backdrop-filter]:sm:backdrop-blur-xl md:max-w-xl lg:max-w-2xl",
+        "sm:left-1/2 sm:top-1/2 sm:h-fit sm:max-h-[calc(100vh-4rem)] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:border sm:px-6 sm:py-6 sm:shadow-xl sm:backdrop-blur supports-[backdrop-filter]:sm:backdrop-blur-xl sm:overflow-y-auto md:max-w-xl lg:max-w-2xl",
         "gap-5 sm:gap-6",
         className,
       )}

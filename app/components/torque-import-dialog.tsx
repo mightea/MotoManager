@@ -28,6 +28,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import type { TorqueSpecification } from "~/db/schema";
 import type { TorqueImportCandidate } from "~/types/torque";
+import { MotorcycleSelectLabel } from "~/components/motorcycle-select-label";
 
 interface TorqueImportDialogProps {
   motorcycleId: number;
@@ -49,17 +50,6 @@ type FetcherResult =
     };
 
 const normalizeName = (value: string) => value.trim().toLowerCase();
-
-const formatMotorcycleLabel = (candidate: TorqueImportCandidate) => {
-  const parts = [candidate.make, candidate.model];
-  if (candidate.modelYear) {
-    parts.push(`(${candidate.modelYear})`);
-  }
-  if (candidate.numberPlate) {
-    parts.push(`• ${candidate.numberPlate}`);
-  }
-  return parts.join(" ");
-};
 
 const formatTorqueValue = (spec: TorqueSpecification) => {
   const formatNumber = (value: number) =>
@@ -90,6 +80,14 @@ export default function TorqueImportDialog({
   const isSubmitting = fetcher.state !== "idle";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const availableCandidates = useMemo(
+    () =>
+      candidates.filter(
+        (candidate) => candidate.torqueSpecifications.length > 0,
+      ),
+    [candidates],
+  );
+
   const existingNames = useMemo(() => {
     const set = new Set<string>();
     existingSpecs.forEach((spec) =>
@@ -101,8 +99,10 @@ export default function TorqueImportDialog({
   const currentCandidate = useMemo(() => {
     if (!selectedMotorcycleId) return null;
     const id = Number.parseInt(selectedMotorcycleId, 10);
-    return candidates.find((candidate) => candidate.id === id) ?? null;
-  }, [selectedMotorcycleId, candidates]);
+    return (
+      availableCandidates.find((candidate) => candidate.id === id) ?? null
+    );
+  }, [selectedMotorcycleId, availableCandidates]);
 
   const groupedSpecs = useMemo(() => {
     if (!currentCandidate) return [];
@@ -121,43 +121,31 @@ export default function TorqueImportDialog({
   }, [currentCandidate]);
 
   useEffect(() => {
-    if (open && candidates.length > 0 && !selectedMotorcycleId) {
-      setSelectedMotorcycleId(String(candidates[0]!.id));
-    }
-  }, [open, candidates, selectedMotorcycleId]);
-
-  useEffect(() => {
-    if (!open) {
-      setSelectedMotorcycleId("");
-      setSelectedSpecIds([]);
-      setErrorMessage(null);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    setSelectedSpecIds([]);
-  }, [selectedMotorcycleId]);
-
-  useEffect(() => {
     if (
       open &&
       fetcher.state === "idle" &&
       fetcher.data &&
       fetcher.data.success
     ) {
-      setOpen(false);
+      queueMicrotask(() => {
+        setOpen(false);
+        setSelectedMotorcycleId("");
+        setSelectedSpecIds([]);
+        setErrorMessage(null);
+      });
     }
   }, [open, fetcher.state, fetcher.data]);
 
   useEffect(() => {
     if (fetcher.state !== "idle") return;
-    if (!fetcher.data) return;
-    if (fetcher.data.success) {
-      setErrorMessage(null);
+    const result = fetcher.data;
+    if (!result) return;
+    if (result.success) {
+      queueMicrotask(() => setErrorMessage(null));
       return;
     }
-    setErrorMessage(
-      fetcher.data.message ?? "Import konnte nicht ausgeführt werden.",
+    queueMicrotask(() =>
+      setErrorMessage(result.message ?? "Import konnte nicht ausgeführt werden."),
     );
   }, [fetcher.state, fetcher.data]);
 
@@ -180,15 +168,48 @@ export default function TorqueImportDialog({
     fetcher.submit(formData, { method: "post" });
   };
 
-  const noCandidates = candidates.length === 0;
+  useEffect(() => {
+    if (!selectedMotorcycleId) return;
+    const exists = availableCandidates.some(
+      (candidate) => candidate.id === Number.parseInt(selectedMotorcycleId, 10),
+    );
+    if (!exists) {
+      queueMicrotask(() => {
+        setSelectedMotorcycleId("");
+        setSelectedSpecIds([]);
+      });
+    }
+  }, [availableCandidates, selectedMotorcycleId]);
+
+  const noCandidates = availableCandidates.length === 0;
   const noSpecsAvailable =
     currentCandidate != null &&
     currentCandidate.torqueSpecifications.length === 0;
   const submitDisabled =
     !currentCandidate || selectedSpecIds.length === 0 || isSubmitting;
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) {
+      if (!selectedMotorcycleId && availableCandidates.length > 0) {
+        const defaultId = String(availableCandidates[0]!.id);
+        setSelectedMotorcycleId(defaultId);
+        setSelectedSpecIds([]);
+      }
+      return;
+    }
+    setSelectedMotorcycleId("");
+    setSelectedSpecIds([]);
+    setErrorMessage(null);
+  };
+
+  const handleMotorcycleSelect = (value: string) => {
+    setSelectedMotorcycleId(value);
+    setSelectedSpecIds([]);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="flex h-[600px] max-h-[90vh] w-full max-w-3xl flex-col">
         <DialogHeader>
@@ -211,18 +232,23 @@ export default function TorqueImportDialog({
               </Label>
               <Select
                 value={selectedMotorcycleId}
-                onValueChange={setSelectedMotorcycleId}
+                onValueChange={handleMotorcycleSelect}
               >
                 <SelectTrigger id="torque-import-motorcycle">
                   <SelectValue placeholder="Motorrad auswählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  {candidates.map((candidate) => (
+                  {availableCandidates.map((candidate) => (
                     <SelectItem
                       key={candidate.id}
                       value={String(candidate.id)}
                     >
-                      {formatMotorcycleLabel(candidate)}
+                      <MotorcycleSelectLabel
+                        make={candidate.make}
+                        model={candidate.model}
+                        modelYear={candidate.modelYear}
+                        ownerUsername={candidate.ownerUsername}
+                      />
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -6,5 +6,6 @@ export type TorqueImportCandidate = {
   model: string;
   modelYear: number | null;
   numberPlate: string | null;
+  ownerUsername: string | null;
   torqueSpecifications: TorqueSpecification[];
 };

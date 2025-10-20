@@ -14,6 +14,7 @@ import {
   issues,
   locationRecords,
   locations,
+  users,
   torqueSpecs,
 } from "~/db/schema";
 import {
@@ -179,12 +180,46 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     orderBy: [asc(torqueSpecs.category), asc(torqueSpecs.name)],
   });
 
-  const otherMotorcycles = (
-    await db.query.motorcycles.findMany({
-      where: eq(motorcycles.userId, user.id),
-      orderBy: [asc(motorcycles.make), asc(motorcycles.model)],
+  const currentUserIdentifiers = new Set(
+    [user.username, user.name, user.email]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  const resolveOwnerLabel = (
+    username?: string | null,
+    name?: string | null,
+  ) => {
+    const trimmedUsername = username?.trim();
+    if (trimmedUsername && !currentUserIdentifiers.has(trimmedUsername)) {
+      return trimmedUsername;
+    }
+
+    const trimmedName = name?.trim();
+    if (trimmedName && !currentUserIdentifiers.has(trimmedName)) {
+      return trimmedName;
+    }
+
+    return null;
+  };
+
+  const allMotorcyclesRaw = await db
+    .select({
+      id: motorcycles.id,
+      make: motorcycles.make,
+      model: motorcycles.model,
+      modelYear: motorcycles.modelYear,
+      numberPlate: motorcycles.numberPlate,
+      ownerUsername: users.username,
+      ownerName: users.name,
     })
-  ).filter((bike) => bike.id !== motorcycleId);
+    .from(motorcycles)
+    .leftJoin(users, eq(users.id, motorcycles.userId))
+    .orderBy(asc(motorcycles.make), asc(motorcycles.model));
+
+  const otherMotorcycles = allMotorcyclesRaw.filter(
+    (bike) => bike.id !== motorcycleId,
+  );
 
   let torqueImportCandidates: TorqueImportCandidate[] = [];
 
@@ -204,12 +239,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
     torqueImportCandidates = otherMotorcycles.map((bike) => {
       const specsForBike = specsByMotorcycle.get(bike.id) ?? [];
+      const ownerLabel = resolveOwnerLabel(bike.ownerUsername, bike.ownerName);
       return {
         id: bike.id,
         make: bike.make,
         model: bike.model,
         modelYear: bike.modelYear ?? null,
         numberPlate: bike.numberPlate ?? null,
+        ownerUsername: ownerLabel,
         torqueSpecifications: [...specsForBike].sort((a, b) =>
           a.name.localeCompare(b.name, "de-CH"),
         ),

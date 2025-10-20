@@ -13,7 +13,6 @@ import {
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import type { Motorcycle } from "~/db/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
+import { MotorcycleSelectLabel } from "~/components/motorcycle-select-label";
 
 export interface DocumentDialogData {
   id: number;
@@ -32,10 +32,19 @@ export interface DocumentDialogData {
   filePath: string;
   previewPath?: string | null;
   motorcycleIds: number[];
+  isPrivate: boolean;
+}
+
+export interface DocumentSelectableMotorcycle {
+  id: number;
+  make: string;
+  model: string;
+  numberPlate: string | null;
+  ownerUsername: string | null;
 }
 
 interface DocumentDialogProps {
-  motorcycles: Motorcycle[];
+  motorcycles: DocumentSelectableMotorcycle[];
   document?: DocumentDialogData;
   children: ReactNode;
 }
@@ -98,7 +107,7 @@ export function DocumentDialog({
         ref={formRef}
         key={formKey}
       >
-        <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2">
+        <div className="flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-2 sm:max-h-[calc(100vh-18rem)]">
           <input type="hidden" name="intent" value={intent} />
           {document && (
             <input type="hidden" name="documentId" value={document.id} />
@@ -153,14 +162,35 @@ export function DocumentDialog({
                       defaultChecked={checked}
                       className="h-4 w-4 rounded border-muted-foreground"
                     />
-                    <span className="truncate">
-                      {moto.make} {moto.model}
-                      {moto.numberPlate && ` (${moto.numberPlate})`}
-                    </span>
+                    <MotorcycleSelectLabel
+                      make={moto.make}
+                      model={moto.model}
+                      ownerUsername={moto.ownerUsername}
+                      className="flex-1"
+                    />
                   </label>
                 );
               })}
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="flex items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                id="isPrivate"
+                name="isPrivate"
+                defaultChecked={document?.isPrivate ?? false}
+                className="h-4 w-4 rounded border-muted-foreground"
+              />
+              <span className="font-medium text-foreground">
+                Dokument privat halten
+              </span>
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Private Dokumente sind ausschließlich für dich sichtbar, auch
+              wenn sie Motorrädern zugeordnet sind.
+            </p>
           </div>
         </div>
 
@@ -220,7 +250,7 @@ export function DocumentDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh] md:flex-none md:overflow-y-visible">
+      <DialogContent className="flex h-full max-h-screen flex-col overflow-y-auto sm:max-w-md md:h-auto md:max-h-[90vh]">
         {mainContent}
       </DialogContent>
     </Dialog>
