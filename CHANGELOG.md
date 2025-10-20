@@ -1,5 +1,11 @@
 # Changelog
 
+## [2025.10.10](https://github.com/mightea/motobase/compare/2025.10.9...2025.10.10) (2025-10-20)
+
+### Bug Fixes
+
+* The App version is now defined as an env variable ([0ec46b6](https://github.com/mightea/motobase/commit/0ec46b6f861a3b07ef8141d877a7e1433bf98674))
+
 ## [2025.10.9](https://github.com/mightea/motobase/compare/2025.10.8...2025.10.9) (2025-10-19)
 
 ### Features
