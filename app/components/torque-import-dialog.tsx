@@ -121,31 +121,18 @@ export default function TorqueImportDialog({
   }, [currentCandidate]);
 
   useEffect(() => {
-    if (open && candidates.length > 0 && !selectedMotorcycleId) {
-      setSelectedMotorcycleId(String(candidates[0]!.id));
-    }
-  }, [open, candidates, selectedMotorcycleId]);
-
-  useEffect(() => {
-    if (!open) {
-      setSelectedMotorcycleId("");
-      setSelectedSpecIds([]);
-      setErrorMessage(null);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    setSelectedSpecIds([]);
-  }, [selectedMotorcycleId]);
-
-  useEffect(() => {
     if (
       open &&
       fetcher.state === "idle" &&
       fetcher.data &&
       fetcher.data.success
     ) {
-      setOpen(false);
+      queueMicrotask(() => {
+        setOpen(false);
+        setSelectedMotorcycleId("");
+        setSelectedSpecIds([]);
+        setErrorMessage(null);
+      });
     }
   }, [open, fetcher.state, fetcher.data]);
 
@@ -153,11 +140,13 @@ export default function TorqueImportDialog({
     if (fetcher.state !== "idle") return;
     if (!fetcher.data) return;
     if (fetcher.data.success) {
-      setErrorMessage(null);
+      queueMicrotask(() => setErrorMessage(null));
       return;
     }
-    setErrorMessage(
-      fetcher.data.message ?? "Import konnte nicht ausgeführt werden.",
+    queueMicrotask(() =>
+      setErrorMessage(
+        fetcher.data.message ?? "Import konnte nicht ausgeführt werden.",
+      ),
     );
   }, [fetcher.state, fetcher.data]);
 
@@ -187,8 +176,28 @@ export default function TorqueImportDialog({
   const submitDisabled =
     !currentCandidate || selectedSpecIds.length === 0 || isSubmitting;
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) {
+      if (!selectedMotorcycleId && candidates.length > 0) {
+        const defaultId = String(candidates[0]!.id);
+        setSelectedMotorcycleId(defaultId);
+        setSelectedSpecIds([]);
+      }
+      return;
+    }
+    setSelectedMotorcycleId("");
+    setSelectedSpecIds([]);
+    setErrorMessage(null);
+  };
+
+  const handleMotorcycleSelect = (value: string) => {
+    setSelectedMotorcycleId(value);
+    setSelectedSpecIds([]);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="flex h-[600px] max-h-[90vh] w-full max-w-3xl flex-col">
         <DialogHeader>
@@ -211,7 +220,7 @@ export default function TorqueImportDialog({
               </Label>
               <Select
                 value={selectedMotorcycleId}
-                onValueChange={setSelectedMotorcycleId}
+                onValueChange={handleMotorcycleSelect}
               >
                 <SelectTrigger id="torque-import-motorcycle">
                   <SelectValue placeholder="Motorrad auswählen" />
