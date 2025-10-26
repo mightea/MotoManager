@@ -7,8 +7,54 @@ import {
   type NewLocation,
 } from "~/db/schema";
 import type * as schema from "~/db/schema";
+import {
+  AVAILABLE_CURRENCY_PRESETS,
+  DEFAULT_CURRENCY_CODE,
+} from "~/constants";
 
 type Database = LibSQLDatabase<typeof schema>;
+
+const defaultCurrencyPreset = AVAILABLE_CURRENCY_PRESETS.find(
+  (currency) => currency.code === DEFAULT_CURRENCY_CODE,
+);
+
+if (!defaultCurrencyPreset) {
+  throw new Error(
+    `Default currency preset "${DEFAULT_CURRENCY_CODE}" is not configured.`,
+  );
+}
+
+let ensureDefaultCurrencyPromise: Promise<void> | null = null;
+
+async function upsertDefaultCurrency(db: Database) {
+  const [existing] = await db
+    .select({ id: currencySettings.id })
+    .from(currencySettings)
+    .where(eq(currencySettings.code, DEFAULT_CURRENCY_CODE))
+    .limit(1);
+
+  if (existing) {
+    return;
+  }
+
+  await db.insert(currencySettings).values({
+    code: defaultCurrencyPreset.code,
+    symbol: defaultCurrencyPreset.symbol,
+    label: defaultCurrencyPreset.label,
+    conversionFactor: defaultCurrencyPreset.conversionFactor,
+  });
+}
+
+export async function ensureDefaultCurrency(db: Database) {
+  if (!ensureDefaultCurrencyPromise) {
+    ensureDefaultCurrencyPromise = upsertDefaultCurrency(db).catch((error) => {
+      ensureDefaultCurrencyPromise = null;
+      throw error;
+    });
+  }
+
+  await ensureDefaultCurrencyPromise;
+}
 
 export async function createLocation(db: Database, values: NewLocation) {
   const [record] = await db.insert(locations).values(values).returning();

@@ -31,6 +31,7 @@ import {
 } from "./services/auth.server";
 import { eq } from "drizzle-orm";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
+import { ensureDefaultCurrency } from "~/db/providers/settings.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
@@ -38,6 +39,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const { user, headers: sessionHeaders } = await getCurrentSession(request);
   const publicPath = isPublicPath(url.pathname);
+
+  await ensureDefaultCurrency(db);
 
   if (!user && !publicPath) {
     const redirectTo = encodeURIComponent(
