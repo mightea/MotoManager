@@ -125,3 +125,21 @@
     background-color: var(--color-background);
   }
 }
+
+@layer utilities {
+  @keyframes global-loading-bar {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(-35%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-global-loading {
+    animation: global-loading-bar 1.1s ease-in-out infinite;
+  }
+}

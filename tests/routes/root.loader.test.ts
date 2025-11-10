@@ -72,7 +72,8 @@ describe("root loader", () => {
     );
     vi.mocked(getCurrentSession).mockResolvedValue({
       user: null,
-      headers: undefined,
+      session: null,
+      headers: {},
     });
     vi.mocked(isPublicPath).mockReturnValue(true);
 
