@@ -66,14 +66,15 @@ MotoManager ships with a versioned SQLite database (`db.sqlite`). All schema cha
 
 ## Common Commands
 
-| Task                   | Command            |
-| ---------------------- | ------------------ |
-| Start dev server       | `pnpm dev`         |
-| Run unit tests         | `pnpm test`        |
-| Watch tests            | `pnpm test:watch`  |
-| Type checks + route gen| `pnpm typecheck`   |
-| Build for production   | `pnpm build`       |
-| Preview SSR build      | `pnpm start`       |
+| Task                        | Command            |
+| --------------------------- | ------------------ |
+| Start dev server            | `pnpm dev`         |
+| Run unit tests              | `pnpm test`        |
+| Watch tests                 | `pnpm test:watch`  |
+| Type checks + route gen     | `pnpm typecheck`   |
+| Build for production        | `pnpm build`       |
+| Preview SSR build           | `pnpm start`       |
+| Generate repo bundle (AI)   | `pnpm repomix`     |
 
 ## Project Structure
 
@@ -118,6 +119,16 @@ pnpm test:watch  # during development
    ```
 
 3. Deploy the generated `build/` folder plus `package.json`, the lockfile, and `db.sqlite` (or configure an external database). The bundled app runs on any platform that supports Node.js, including Render, Fly.io, Railway, traditional VPS, or container hosts.
+
+## Repomix
+
+Use the bundled Repomix configuration (`repomix.config.ts`) to produce an AI-friendly snapshot of the codebase. The command below writes a Markdown bundle to `tmp/repomix-output.md`, automatically ignoring build artifacts, binaries, and database files:
+
+```bash
+pnpm repomix
+```
+
+This is useful when sharing context with AI assistants or collaborators who need an at-a-glance view of the repository.
 
 ---
 
