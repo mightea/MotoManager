@@ -21,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { AddMotorcycleDialog } from "./add-motorcycle-dialog";
 import { Button } from "./ui/button";
 import { format } from "date-fns/format";
 import { differenceInDays } from "date-fns/differenceInDays";
@@ -32,16 +31,71 @@ import { Badge } from "./ui/badge";
 import { Accordion, AccordionContent, AccordionTrigger } from "./ui/accordion";
 import { AccordionItem } from "@radix-ui/react-accordion";
 import { Separator } from "./ui/separator";
-import { ImageUploadDialog } from "./image-upload-dialog";
 import { useFetcher } from "react-router";
-import { LocationUpdateDialog } from "./location-update-dialog";
-import { useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { InfoItem } from "./info-item";
 import { useMotorcycle } from "~/contexts/MotorcycleProvider";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { cn } from "~/utils/tw";
+
+type AddMotorcycleDialogModule = typeof import("./add-motorcycle-dialog");
+type LocationUpdateDialogModule = typeof import("./location-update-dialog");
+type ImageUploadDialogModule = typeof import("./image-upload-dialog");
+
+let addMotorcycleDialogImport:
+  | Promise<{ default: AddMotorcycleDialogModule["AddMotorcycleDialog"] }>
+  | undefined;
+let locationUpdateDialogImport:
+  | Promise<{ default: LocationUpdateDialogModule["LocationUpdateDialog"] }>
+  | undefined;
+let imageUploadDialogImport:
+  | Promise<{ default: ImageUploadDialogModule["ImageUploadDialog"] }>
+  | undefined;
+
+const loadAddMotorcycleDialog = () => {
+  if (!addMotorcycleDialogImport) {
+    addMotorcycleDialogImport = import("./add-motorcycle-dialog").then(
+      (module) => ({ default: module.AddMotorcycleDialog }),
+    );
+  }
+  return addMotorcycleDialogImport;
+};
+
+const loadLocationUpdateDialog = () => {
+  if (!locationUpdateDialogImport) {
+    locationUpdateDialogImport = import("./location-update-dialog").then(
+      (module) => ({ default: module.LocationUpdateDialog }),
+    );
+  }
+  return locationUpdateDialogImport;
+};
+
+const loadImageUploadDialog = () => {
+  if (!imageUploadDialogImport) {
+    imageUploadDialogImport = import("./image-upload-dialog").then(
+      (module) => ({ default: module.ImageUploadDialog }),
+    );
+  }
+  return imageUploadDialogImport;
+};
+
+const AddMotorcycleDialog = lazy(loadAddMotorcycleDialog);
+const LocationUpdateDialog = lazy(loadLocationUpdateDialog);
+const ImageUploadDialog = lazy(loadImageUploadDialog);
+
+const preloadAddMotorcycleDialog = () => {
+  void loadAddMotorcycleDialog();
+};
+
+const preloadLocationUpdateDialog = () => {
+  void loadLocationUpdateDialog();
+};
+
+const preloadImageUploadDialog = () => {
+  void loadImageUploadDialog();
+};
 
 interface MotorcycleInfoProps {
   motorcycle: Motorcycle;
@@ -152,12 +206,27 @@ function CurrentLocationInfo({
             </div>
           )}
         </div>
-        <LocationUpdateDialog motorcycle={motorcycle}>
-          <Button size="sm" variant="outline" className="h-9">
-            <Edit className="mr-2 h-4 w-4" />
-            Bearbeiten
-          </Button>
-        </LocationUpdateDialog>
+        <Suspense
+          fallback={
+            <Button size="sm" variant="outline" className="h-9" disabled>
+              <Edit className="mr-2 h-4 w-4" />
+              Bearbeiten
+            </Button>
+          }
+        >
+          <LocationUpdateDialog motorcycle={motorcycle}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9"
+              onMouseEnter={preloadLocationUpdateDialog}
+              onFocus={preloadLocationUpdateDialog}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Bearbeiten
+            </Button>
+          </LocationUpdateDialog>
+        </Suspense>
       </div>
     </div>
   );
@@ -212,12 +281,26 @@ export default function MotorcycleInfo() {
           </div>
         )}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <ImageUploadDialog onCropComplete={handleImageUpdate}>
-            <Button variant="secondary" size="sm">
-              <Edit className="mr-2 h-4 w-4" />
-              Bild bearbeiten
-            </Button>
-          </ImageUploadDialog>
+          <Suspense
+            fallback={
+              <Button variant="secondary" size="sm" disabled>
+                <Edit className="mr-2 h-4 w-4" />
+                Bild bearbeiten
+              </Button>
+            }
+          >
+            <ImageUploadDialog onCropComplete={handleImageUpdate}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onMouseEnter={preloadImageUploadDialog}
+                onFocus={preloadImageUploadDialog}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Bild bearbeiten
+              </Button>
+            </ImageUploadDialog>
+          </Suspense>
         </div>
       </div>
 
@@ -247,12 +330,27 @@ export default function MotorcycleInfo() {
               </div>
             </div>
           </div>
-          <AddMotorcycleDialog motorcycleToEdit={motorcycle}>
-            <Button variant="outline" size="icon" className="shrink-0">
-              <Pencil className="h-4 w-4" />
-              <span className="sr-only">Motorrad bearbeiten</span>
-            </Button>
-          </AddMotorcycleDialog>
+          <Suspense
+            fallback={
+              <Button variant="outline" size="icon" className="shrink-0" disabled>
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Motorrad bearbeiten</span>
+              </Button>
+            }
+          >
+            <AddMotorcycleDialog motorcycleToEdit={motorcycle}>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                onMouseEnter={preloadAddMotorcycleDialog}
+                onFocus={preloadAddMotorcycleDialog}
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Motorrad bearbeiten</span>
+              </Button>
+            </AddMotorcycleDialog>
+          </Suspense>
         </div>
       </CardHeader>
 
