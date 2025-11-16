@@ -1,5 +1,20 @@
 # Changelog
 
+## [2025.11.0](https://github.com/mightea/motobase/compare/2025.10.12...2025.11.0) (2025-11-16)
+
+### Features
+
+* adds loading indicator ([ef461c9](https://github.com/mightea/motobase/commit/ef461c9b0085293ac426f3c4074d8f708964067d))
+* adds server side caching ([d40f3d9](https://github.com/mightea/motobase/commit/d40f3d9c56c939b25fbd6e84873893cbd1a70707))
+* adds server statistics page ([0e15834](https://github.com/mightea/motobase/commit/0e158341ff0c141e38737b7f87a5f6475a382c9d))
+* ensures that at least one currency is available ([cbc4b1f](https://github.com/mightea/motobase/commit/cbc4b1ff9c969f0cbc4c72347d75dc9c05b03c39))
+* improves rendering performance ([0e22235](https://github.com/mightea/motobase/commit/0e22235a76e04abd87ddf46eef7f36b1bcf105ae))
+
+### Bug Fixes
+
+* corrects post actions on the motorcycle page ([19afae7](https://github.com/mightea/motobase/commit/19afae7548717a008240157e4773263d9e4e8af3))
+* fixes dialog sizing issues ([a806bc5](https://github.com/mightea/motobase/commit/a806bc54ab9714f4a4bf47b63fdb861f3f2692c3))
+
 ## [2025.10.12](https://github.com/mightea/motobase/compare/2025.10.11...2025.10.12) (2025-10-20)
 
 ### Bug Fixes
