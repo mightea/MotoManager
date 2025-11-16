@@ -45,6 +45,7 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 import { dateInputString } from "~/utils/dateUtils";
+import { urlMotorcycle } from "~/utils/urlUtils";
 
 const issueSchema = z.object({
   date: z.string().min(1, "Ein Datum ist erforderlich."),
@@ -86,7 +87,7 @@ export function AddIssueDialog({
   const handleDelete = () => {
     fetcher.submit(
       { intent: "issue-delete", issueId: issueToEdit?.id ?? "" },
-      { method: "post" },
+      { method: "post", action: urlMotorcycle({ ...motorcycle }) },
     );
 
     setOpen(false);
@@ -114,15 +115,15 @@ export function AddIssueDialog({
     }
   }, [open, isEditMode, issueToEdit, form, currentOdometer]);
 
-useEffect(() => {
-  if (
-    fetcher.state === "idle" &&
-    fetcher.data &&
-    (fetcher.data as any)?.success
-  ) {
-    queueMicrotask(() => setOpen(false));
-  }
-}, [fetcher.state, fetcher.data]);
+  useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      (fetcher.data as any)?.success
+    ) {
+      queueMicrotask(() => setOpen(false));
+    }
+  }, [fetcher.state, fetcher.data]);
 
   const handleSubmit = form.handleSubmit((values) => {
     const formData = new FormData();
@@ -134,9 +135,13 @@ useEffect(() => {
     formData.set("status", values.status);
     formData.set("date", values.date);
     formData.set("odo", String(values.odo));
-    fetcher.submit(formData, { method: "post" });
+
+    fetcher.submit(formData, {
+      method: "post",
+      action: urlMotorcycle({ ...motorcycle }),
+    });
   });
-  
+
   const mainContent = (
     <>
       <DialogHeader>
@@ -275,61 +280,61 @@ useEffect(() => {
             </div>
           </div>
           <DialogFooter>
-          {isEditMode && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="w-full sm:mr-auto sm:w-auto"
-                  disabled={isSubmitting}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Löschen
-                </Button>
-              </AlertDialogTrigger>
+            {isEditMode && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="w-full sm:mr-auto sm:w-auto"
+                    disabled={isSubmitting}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Löschen
+                  </Button>
+                </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
                       Mangel wirklich löschen?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Diese Aktion kann nicht rückgängig gemacht werden.
-                      Dadurch wird der Mangel dauerhaft aus deinen
-                      Aufzeichnungen entfernt.
+                      Diese Aktion kann nicht rückgängig gemacht werden. Dadurch
+                      wird der Mangel dauerhaft aus deinen Aufzeichnungen
+                      entfernt.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive hover:bg-destructive/90"
-                    disabled={isSubmitting}
-                  >
-                    Löschen
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive hover:bg-destructive/90"
+                      disabled={isSubmitting}
+                    >
+                      Löschen
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
               </AlertDialog>
             )}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setOpen(false)}
-            className="w-full sm:w-auto"
-            disabled={isSubmitting}
-          >
-            Abbrechen
-          </Button>
-          <Button
-            type="submit"
-            name="intent"
-            value={isEditMode ? "issue-edit" : "issue-add"}
-            className="w-full sm:w-auto"
-            disabled={isSubmitting}
-          >
-            {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="w-full sm:w-auto"
+              disabled={isSubmitting}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="submit"
+              name="intent"
+              value={isEditMode ? "issue-edit" : "issue-add"}
+              className="w-full sm:w-auto"
+              disabled={isSubmitting}
+            >
+              {isEditMode ? "Änderungen speichern" : "Mangel hinzufügen"}
+            </Button>
           </DialogFooter>
         </form>
       </Form>
@@ -339,9 +344,7 @@ useEffect(() => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        {mainContent}
-      </DialogContent>
+      <DialogContent className="sm:max-w-lg">{mainContent}</DialogContent>
     </Dialog>
   );
 }

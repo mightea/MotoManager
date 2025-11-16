@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { Suspense, lazy, useEffect, useMemo } from "react";
 import { Link, data, redirect } from "react-router";
 import type { Route } from "./+types/home";
 import { getDb } from "~/db";
@@ -7,43 +7,45 @@ import {
   issues as issuesTable,
   maintenanceRecords,
   locationRecords,
-  type Motorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Bike, PlusCircle, FileText } from "lucide-react";
-import { AddMotorcycleDialog } from "~/components/add-motorcycle-dialog";
 import { formatCurrency } from "~/utils/numberUtils";
 import { inArray, eq } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import {
-  getNextInspectionInfo,
-  type NextInspectionInfo,
-} from "~/utils/inspection";
+  buildDashboardData,
+  type DashboardStats,
+  type DashboardMotorcycleSummary,
+} from "~/utils/home-stats";
 
-type MotorcycleData = (Motorcycle & { lastInspection: string | null }) & {
-  numberOfIssues: number;
-  odometer: number;
-  odometerThisYear: number;
-  nextInspection: NextInspectionInfo | null;
+type AddMotorcycleDialogModule = typeof import("~/components/add-motorcycle-dialog");
+
+let addMotorcycleDialogImport:
+  | Promise<{ default: AddMotorcycleDialogModule["AddMotorcycleDialog"] }>
+  | undefined;
+
+const loadAddMotorcycleDialog = () => {
+  if (!addMotorcycleDialogImport) {
+    addMotorcycleDialogImport = import("~/components/add-motorcycle-dialog").then(
+      (module) => ({ default: module.AddMotorcycleDialog }),
+    );
+  }
+  return addMotorcycleDialogImport;
 };
 
-type DashboardStats = {
-  year: number;
-  totalMotorcycles: number;
-  totalKmThisYear: number;
-  totalKmOverall: number;
-  totalActiveIssues: number;
-  totalMaintenanceCostThisYear: number;
-  veteranCount: number;
-  topRider: null | {
-    id: number;
-    make: string;
-    model: string;
-    odometerThisYear: number;
-  };
+const AddMotorcycleDialog = lazy(loadAddMotorcycleDialog);
+
+const preloadAddMotorcycleDialog = () => {
+  void loadAddMotorcycleDialog();
+};
+
+type LoaderData = {
+  items: DashboardMotorcycleSummary[];
+  stats: DashboardStats;
 };
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -52,175 +54,47 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const motorcyclesList = await db.query.motorcycles.findMany({
     where: eq(motorcycles.userId, user.id),
+    columns: {
+      id: true,
+      make: true,
+      model: true,
+      modelYear: true,
+      firstRegistration: true,
+      initialOdo: true,
+      manualOdo: true,
+      isVeteran: true,
+      image: true,
+    },
   });
 
   const motorcycleIds = motorcyclesList.map((moto) => moto.id);
 
-  const issues =
+  const [issues, maintenance, locationHistory] =
     motorcycleIds.length > 0
-      ? await db.query.issues.findMany({
-          where: inArray(issuesTable.motorcycleId, motorcycleIds),
-        })
-      : [];
-
-  const maintenance =
-    motorcycleIds.length > 0
-      ? await db.query.maintenanceRecords.findMany({
-          where: inArray(maintenanceRecords.motorcycleId, motorcycleIds),
-        })
-      : [];
-
-  const locationHistory =
-    motorcycleIds.length > 0
-      ? await db.query.locationRecords.findMany({
-          where: inArray(locationRecords.motorcycleId, motorcycleIds),
-        })
-      : [];
+      ? await Promise.all([
+          db.query.issues.findMany({
+            where: inArray(issuesTable.motorcycleId, motorcycleIds),
+          }),
+          db.query.maintenanceRecords.findMany({
+            where: inArray(maintenanceRecords.motorcycleId, motorcycleIds),
+          }),
+          db.query.locationRecords.findMany({
+            where: inArray(locationRecords.motorcycleId, motorcycleIds),
+          }),
+        ])
+      : [[], [], []];
 
   const year = new Date().getFullYear();
 
-  const items: MotorcycleData[] = motorcyclesList.map((moto) => {
-    const mIssues = issues.filter((i) => i.motorcycleId === moto.id);
-    const maintenanceItems = maintenance.filter(
-      (m) => m.motorcycleId === moto.id,
-    );
-    const locationItems = locationHistory.filter(
-      (record) => record.motorcycleId === moto.id && record.odometer !== null,
-    );
-
-    const issuesCount = mIssues.filter((i) => i.status !== "done").length;
-
-    const odometerValues = [
-      moto.initialOdo,
-      moto.manualOdo ?? undefined,
-      ...maintenanceItems.map((m) => m.odo),
-      ...mIssues.map((i) => i.odo),
-      ...locationItems.map((record) => record.odometer ?? undefined),
-    ].filter(
-      (value): value is number =>
-        typeof value === "number" && Number.isFinite(value),
-    );
-
-    const maxOdo = odometerValues.reduce(
-      (max, value) => (value > max ? value : max),
-      moto.initialOdo,
-    );
-
-    const odometerByYear = new Map<number, number>();
-
-    const registerOdoForYear = (date: string, odo: number) => {
-      const entryYear = new Date(date).getFullYear();
-      if (!Number.isFinite(entryYear)) {
-        return;
-      }
-      const currentValue = odometerByYear.get(entryYear);
-      if (currentValue === undefined || odo > currentValue) {
-        odometerByYear.set(entryYear, odo);
-      }
-    };
-
-    mIssues.forEach((issue) => {
-      if (issue.date) {
-        registerOdoForYear(issue.date, issue.odo);
-      }
-    });
-    maintenanceItems.forEach((item) => registerOdoForYear(item.date, item.odo));
-    locationItems.forEach((item) => {
-      if (item.date && item.odometer !== null) {
-        registerOdoForYear(item.date, item.odometer);
-      }
-    });
-
-    const previousYearEntries = Array.from(odometerByYear.entries())
-      .filter(([entryYear]) => entryYear < year)
-      .sort((a, b) => b[0] - a[0]);
-
-    const baselineOdo = Math.max(
-      previousYearEntries.at(0)?.[1] ?? moto.initialOdo ?? 0,
-      moto.initialOdo,
-    );
-    const odometerThisYear = Math.max(0, maxOdo - baselineOdo);
-
-    const lastInspectionFromMaintenance = maintenanceItems
-      .filter((record) => record.type === "inspection" && record.date)
-      .map((record) => record.date as string)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-      .at(0);
-
-    const effectiveLastInspection = lastInspectionFromMaintenance ?? null;
-
-    const nextInspection = getNextInspectionInfo({
-      firstRegistration: moto.firstRegistration,
-      lastInspection: effectiveLastInspection,
-      isVeteran: moto.isVeteran ?? false,
-    });
-
-    return {
-      ...moto,
-      lastInspection: effectiveLastInspection,
-      numberOfIssues: issuesCount,
-      odometer: maxOdo,
-      odometerThisYear,
-      nextInspection,
-    };
+  const { items, stats } = buildDashboardData({
+    motorcycles: motorcyclesList,
+    issues,
+    maintenance,
+    locationHistory,
+    year,
   });
 
-  const totalKmThisYear = items.reduce(
-    (sum, moto) => sum + (moto.odometerThisYear ?? 0),
-    0,
-  );
-  const totalKmOverall = items.reduce((sum, moto) => {
-    const distance = Math.max(0, (moto.odometer ?? 0) - (moto.initialOdo ?? 0));
-    return sum + distance;
-  }, 0);
-  const totalActiveIssues = items.reduce(
-    (sum, moto) => sum + (moto.numberOfIssues ?? 0),
-    0,
-  );
-  const totalMaintenanceCostThisYear = maintenance.reduce((sum, entry) => {
-    if (!entry.date || entry.cost == null) {
-      return sum;
-    }
-    const entryYear = new Date(entry.date).getFullYear();
-    if (entryYear !== year) {
-      return sum;
-    }
-    return sum + (entry.cost ?? 0);
-  }, 0);
-
-  const veteranCount = motorcyclesList.filter((moto) => moto.isVeteran).length;
-  const topRiderCandidate = items.reduce<MotorcycleData | null>((acc, moto) => {
-    if (moto.odometerThisYear <= 0) {
-      return acc;
-    }
-    if (acc === null || moto.odometerThisYear > acc.odometerThisYear) {
-      return moto;
-    }
-    return acc;
-  }, null);
-
-  const stats: DashboardStats = {
-    year,
-    totalMotorcycles: motorcyclesList.length,
-    totalKmThisYear,
-    totalKmOverall,
-    totalActiveIssues,
-    totalMaintenanceCostThisYear,
-    veteranCount,
-    topRider: topRiderCandidate
-      ? {
-          id: topRiderCandidate.id,
-          make: topRiderCandidate.make,
-          model: topRiderCandidate.model,
-          odometerThisYear: topRiderCandidate.odometerThisYear,
-        }
-      : null,
-  };
-
-  return data(
-    { motorcycles: motorcyclesList, items, stats },
-    { headers: mergeHeaders(headers ?? {}) },
-  );
+  return data<LoaderData>({ items, stats }, { headers: mergeHeaders(headers ?? {}) });
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -305,6 +179,35 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       ]
     : [];
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const globalWindow = window as typeof window & {
+      requestIdleCallback?: (callback: IdleRequestCallback) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (typeof globalWindow.requestIdleCallback === "function") {
+      const idleHandle = globalWindow.requestIdleCallback(() => {
+        preloadAddMotorcycleDialog();
+      });
+
+      return () => {
+        globalWindow.cancelIdleCallback?.(idleHandle);
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      preloadAddMotorcycleDialog();
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
   return (
     <>
       <title>MotoManager</title>
@@ -322,11 +225,24 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <AddMotorcycleDialog>
-                  <Button variant="outline" className="gap-2">
-                    <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
-                  </Button>
-                </AddMotorcycleDialog>
+                <Suspense
+                  fallback={
+                    <Button variant="outline" className="gap-2" disabled>
+                      <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
+                    </Button>
+                  }
+                >
+                  <AddMotorcycleDialog>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onMouseEnter={preloadAddMotorcycleDialog}
+                      onFocus={preloadAddMotorcycleDialog}
+                    >
+                      <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
+                    </Button>
+                  </AddMotorcycleDialog>
+                </Suspense>
                 <Button asChild variant="secondary" className="gap-2">
                   <Link to="/documents">
                     <FileText className="h-4 w-4" /> Dokumente

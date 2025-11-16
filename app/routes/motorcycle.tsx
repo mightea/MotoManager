@@ -53,7 +53,6 @@ export interface MotorcycleOutletContext {
 
 type TabKey = "info" | "maintenance" | "torque" | "insights" | "documents";
 
-
 const toOptionalString = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
@@ -71,9 +70,6 @@ const toOptionalInt = (value: unknown): number | undefined => {
   const num = Number.parseInt(String(value), 10);
   return Number.isNaN(num) ? undefined : num;
 };
-
-
-
 
 const parseMotorcycleEditPayload = (
   fields: Record<string, FormDataEntryValue>,
@@ -147,16 +143,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const maintenanceItems = await db.query.maintenanceRecords.findMany({
     where: eq(maintenanceRecords.motorcycleId, motorcycleId),
-    orderBy: [
-      desc(maintenanceRecords.date),
-    ],
+    orderBy: [desc(maintenanceRecords.date)],
   });
 
   const issuesItems = await db.query.issues.findMany({
     where: eq(issues.motorcycleId, motorcycleId),
-    orderBy: [
-      asc(issues.date),
-    ],
+    orderBy: [asc(issues.date)],
   });
 
   const locationHistory = await db
@@ -360,13 +352,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   );
 }
 
-
-
 export async function action({ request, params }: Route.ActionArgs) {
-  const {
-    getMotorcycleActionContext,
-    parseIssuePayload,
-  } = await import("./motorcycle.server");
+  const { getMotorcycleActionContext, parseIssuePayload } = await import(
+    "./motorcycle.server"
+  );
 
   const context = await getMotorcycleActionContext({ request, params });
   if ("error" in context) {
@@ -415,10 +404,8 @@ export async function action({ request, params }: Route.ActionArgs) {
 
     try {
       const issuePayload = parseIssuePayload(fields, motorcycleId);
-      const {
-        motorcycleId: ignoredIssueMotorcycleId,
-        ...updatePayload
-      } = issuePayload;
+      const { motorcycleId: ignoredIssueMotorcycleId, ...updatePayload } =
+        issuePayload;
       void ignoredIssueMotorcycleId;
 
       console.log("Editing issue:", { issueId, updatePayload });
@@ -512,6 +499,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "motorcycle-delete") {
+    console.log("Deleting motorcycle with ID:", targetMotorcycle.id);
     await deleteMotorcycleCascade(db, targetMotorcycle.id);
 
     return redirect("/");

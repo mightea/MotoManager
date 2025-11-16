@@ -1,12 +1,46 @@
-import { useMemo } from "react";
+import { Suspense, lazy, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Download, PlusCircle } from "lucide-react";
-import TorqueSpecDialog from "~/components/torque-spec-dialog";
-import TorqueImportDialog from "~/components/torque-import-dialog";
 import type { TorqueSpecification } from "~/db/schema";
 import { cn } from "~/utils/tw";
 import type { TorqueImportCandidate } from "~/types/torque";
+
+type TorqueSpecDialogModule = typeof import("~/components/torque-spec-dialog");
+type TorqueImportDialogModule =
+  typeof import("~/components/torque-import-dialog");
+
+let torqueSpecDialogImport:
+  | Promise<{ default: TorqueSpecDialogModule["default"] }>
+  | undefined;
+let torqueImportDialogImport:
+  | Promise<{ default: TorqueImportDialogModule["default"] }>
+  | undefined;
+
+const loadTorqueSpecDialog = () => {
+  if (!torqueSpecDialogImport) {
+    torqueSpecDialogImport = import("~/components/torque-spec-dialog");
+  }
+  return torqueSpecDialogImport;
+};
+
+const loadTorqueImportDialog = () => {
+  if (!torqueImportDialogImport) {
+    torqueImportDialogImport = import("~/components/torque-import-dialog");
+  }
+  return torqueImportDialogImport;
+};
+
+const TorqueSpecDialog = lazy(loadTorqueSpecDialog);
+const TorqueImportDialog = lazy(loadTorqueImportDialog);
+
+const preloadTorqueSpecDialog = () => {
+  void loadTorqueSpecDialog();
+};
+
+const preloadTorqueImportDialog = () => {
+  void loadTorqueImportDialog();
+};
 
 interface TorqueSpecificationsPanelProps {
   motorcycleId: number;
@@ -73,22 +107,50 @@ export default function TorqueSpecificationsPanel({
           </CardTitle>
           {!hideInteractions && (
             <div className="flex flex-wrap gap-2">
-              <TorqueImportDialog
-                motorcycleId={motorcycleId}
-                existingSpecs={specs}
-                candidates={importCandidates}
+              <Suspense
+                fallback={
+                  <Button variant="outline" className="print:hidden" disabled>
+                    <Download className="h-4 w-4" />
+                    Werte importieren
+                  </Button>
+                }
               >
-                <Button variant="outline" className="print:hidden">
-                  <Download className="h-4 w-4" />
-                  Werte importieren
-                </Button>
-              </TorqueImportDialog>
-              <TorqueSpecDialog motorcycleId={motorcycleId}>
-                <Button variant="outline" className="print:hidden">
-                  <PlusCircle className="h-4 w-4" />
-                  Eintrag hinzufügen
-                </Button>
-              </TorqueSpecDialog>
+                <TorqueImportDialog
+                  motorcycleId={motorcycleId}
+                  existingSpecs={specs}
+                  candidates={importCandidates}
+                >
+                  <Button
+                    variant="outline"
+                    className="print:hidden"
+                    onMouseEnter={preloadTorqueImportDialog}
+                    onFocus={preloadTorqueImportDialog}
+                  >
+                    <Download className="h-4 w-4" />
+                    Werte importieren
+                  </Button>
+                </TorqueImportDialog>
+              </Suspense>
+              <Suspense
+                fallback={
+                  <Button variant="outline" className="print:hidden" disabled>
+                    <PlusCircle className="h-4 w-4" />
+                    Eintrag hinzufügen
+                  </Button>
+                }
+              >
+                <TorqueSpecDialog motorcycleId={motorcycleId}>
+                  <Button
+                    variant="outline"
+                    className="print:hidden"
+                    onMouseEnter={preloadTorqueSpecDialog}
+                    onFocus={preloadTorqueSpecDialog}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Eintrag hinzufügen
+                  </Button>
+                </TorqueSpecDialog>
+              </Suspense>
             </div>
           )}
         </div>
@@ -129,15 +191,33 @@ export default function TorqueSpecificationsPanel({
                       </span>
                     </div>
                     {!hideInteractions && (
-                      <TorqueSpecDialog motorcycleId={motorcycleId} spec={spec}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-9 print:hidden"
+                      <Suspense
+                        fallback={
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-9 print:hidden"
+                            disabled
+                          >
+                            Bearbeiten
+                          </Button>
+                        }
+                      >
+                        <TorqueSpecDialog
+                          motorcycleId={motorcycleId}
+                          spec={spec}
                         >
-                          Bearbeiten
-                        </Button>
-                      </TorqueSpecDialog>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-9 print:hidden"
+                            onMouseEnter={preloadTorqueSpecDialog}
+                            onFocus={preloadTorqueSpecDialog}
+                          >
+                            Bearbeiten
+                          </Button>
+                        </TorqueSpecDialog>
+                      </Suspense>
                     )}
                   </div>
                 ))}

@@ -14,7 +14,8 @@
     "lint": "eslint . --ext .ts,.tsx",
     "db:migrate": "ts-node ./scripts/migrate.ts",
     "approve-builds": "pnpm approve-builds",
-    "release-it": "release-it"
+    "release-it": "release-it",
+    "repomix": "repomix --config repomix.config.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -90,6 +91,7 @@
     "jsdom": "^27.0.1",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "release-it": "^19.0.5",
+    "repomix": "^1.9.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.11",
     "vite-tsconfig-paths": "^5.1.4",
@@ -102,5 +104,5 @@
       "esbuild"
     ]
   },
-  "version": "2025.10.12"
+  "version": "2025.11.0"
 }

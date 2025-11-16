@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useFetcher } from "react-router";
 import {
   Dialog,
@@ -90,18 +85,14 @@ export default function TorqueImportDialog({
 
   const existingNames = useMemo(() => {
     const set = new Set<string>();
-    existingSpecs.forEach((spec) =>
-      set.add(normalizeName(spec.name ?? "")),
-    );
+    existingSpecs.forEach((spec) => set.add(normalizeName(spec.name ?? "")));
     return set;
   }, [existingSpecs]);
 
   const currentCandidate = useMemo(() => {
     if (!selectedMotorcycleId) return null;
     const id = Number.parseInt(selectedMotorcycleId, 10);
-    return (
-      availableCandidates.find((candidate) => candidate.id === id) ?? null
-    );
+    return availableCandidates.find((candidate) => candidate.id === id) ?? null;
   }, [selectedMotorcycleId, availableCandidates]);
 
   const groupedSpecs = useMemo(() => {
@@ -145,7 +136,9 @@ export default function TorqueImportDialog({
       return;
     }
     queueMicrotask(() =>
-      setErrorMessage(result.message ?? "Import konnte nicht ausgeführt werden."),
+      setErrorMessage(
+        result.message ?? "Import konnte nicht ausgeführt werden.",
+      ),
     );
   }, [fetcher.state, fetcher.data]);
 
@@ -215,21 +208,20 @@ export default function TorqueImportDialog({
         <DialogHeader>
           <DialogTitle>Drehmomentwerte importieren</DialogTitle>
           <DialogDescription>
-            Übernimm vorhandene Drehmomentwerte eines anderen Motorrads in diese
-            Karte.
+            Übernimm vorhandene Drehmomentwerte eines anderen Motorrads in der
+            Datenbank.
           </DialogDescription>
         </DialogHeader>
 
         {noCandidates ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-            Es stehen keine weiteren Motorräder für den Import zur Verfügung.
+          <div className="flex flex-1 items-center justify-center text-sm text-warning">
+            Es sind keine Motorräder mit hinterlegten Drehmomentwerten
+            vorhanden.
           </div>
         ) : (
           <div className="flex flex-1 flex-col gap-4 overflow-hidden">
             <div className="space-y-2">
-              <Label htmlFor="torque-import-motorcycle">
-                Quelle auswählen
-              </Label>
+              <Label htmlFor="torque-import-motorcycle">Quelle auswählen</Label>
               <Select
                 value={selectedMotorcycleId}
                 onValueChange={handleMotorcycleSelect}
@@ -239,10 +231,7 @@ export default function TorqueImportDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {availableCandidates.map((candidate) => (
-                    <SelectItem
-                      key={candidate.id}
-                      value={String(candidate.id)}
-                    >
+                    <SelectItem key={candidate.id} value={String(candidate.id)}>
                       <MotorcycleSelectLabel
                         make={candidate.make}
                         model={candidate.model}
@@ -282,10 +271,7 @@ export default function TorqueImportDialog({
                               <Checkbox
                                 checked={checked}
                                 onCheckedChange={(value) =>
-                                  handleToggleSpec(
-                                    spec.id,
-                                    value === true,
-                                  )
+                                  handleToggleSpec(spec.id, value === true)
                                 }
                                 className="mt-1"
                               />
