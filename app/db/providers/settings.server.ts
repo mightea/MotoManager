@@ -11,10 +11,6 @@ import {
   AVAILABLE_CURRENCY_PRESETS,
   DEFAULT_CURRENCY_CODE,
 } from "~/constants";
-import {
-  invalidateCurrenciesCache,
-  invalidateLocationsCache,
-} from "~/services/settings-cache.server";
 
 type Database = LibSQLDatabase<typeof schema>;
 
@@ -47,8 +43,6 @@ async function upsertDefaultCurrency(db: Database) {
     label: defaultCurrencyPreset.label,
     conversionFactor: defaultCurrencyPreset.conversionFactor,
   });
-
-  invalidateCurrenciesCache();
 }
 
 export async function ensureDefaultCurrency(db: Database) {
@@ -64,7 +58,6 @@ export async function ensureDefaultCurrency(db: Database) {
 
 export async function createLocation(db: Database, values: NewLocation) {
   const [record] = await db.insert(locations).values(values).returning();
-  invalidateLocationsCache(values.userId);
   return record ?? null;
 }
 
@@ -76,7 +69,6 @@ export async function createCurrencySetting(
     .insert(currencySettings)
     .values(values)
     .returning();
-  invalidateCurrenciesCache();
   return record ?? null;
 }
 
@@ -91,7 +83,6 @@ export async function updateLocation(
     .set(values)
     .where(and(eq(locations.id, locationId), eq(locations.userId, userId)))
     .returning();
-  invalidateLocationsCache(userId);
   return record ?? null;
 }
 
@@ -104,7 +95,6 @@ export async function deleteLocation(
     .delete(locations)
     .where(and(eq(locations.id, locationId), eq(locations.userId, userId)))
     .returning();
-  invalidateLocationsCache(userId);
   return deleted.at(0) ?? null;
 }
 
@@ -118,7 +108,6 @@ export async function updateCurrencySetting(
     .set(values)
     .where(eq(currencySettings.id, currencyId))
     .returning();
-  invalidateCurrenciesCache();
   return record ?? null;
 }
 
@@ -130,6 +119,5 @@ export async function deleteCurrencySetting(
     .delete(currencySettings)
     .where(eq(currencySettings.id, currencyId))
     .returning();
-  invalidateCurrenciesCache();
   return deleted.at(0) ?? null;
 }

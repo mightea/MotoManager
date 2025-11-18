@@ -61,21 +61,9 @@ vi.mock("~/db/providers/settings.server", () => ({
   ensureDefaultCurrency: ensureDefaultCurrencyMock,
 }));
 
-const getCachedLocationsMock = vi.fn().mockResolvedValue([]);
-const getCachedCurrenciesMock = vi.fn().mockResolvedValue([]);
-
-vi.mock("~/services/settings-cache.server", () => ({
-  getCachedLocations: getCachedLocationsMock,
-  getCachedCurrencies: getCachedCurrenciesMock,
-  invalidateLocationsCache: vi.fn(),
-  invalidateCurrenciesCache: vi.fn(),
-}));
-
 describe("root loader", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getCachedLocationsMock.mockResolvedValue([]);
-    getCachedCurrenciesMock.mockResolvedValue([]);
   });
 
   it("checks that CHF exists as a currency during startup", async () => {

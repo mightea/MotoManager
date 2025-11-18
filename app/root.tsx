@@ -17,6 +17,7 @@ import { getTheme } from "./services/theme.server";
 import { urlMotorcycle } from "./utils/urlUtils";
 import {
   type NewMotorcycle,
+  locations as locationsTable,
   type User,
 } from "./db/schema";
 import db, { getDb } from "./db";
@@ -28,26 +29,20 @@ import {
   mergeHeaders,
   requireUser,
 } from "./services/auth.server";
+import { eq } from "drizzle-orm";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
 import { ensureDefaultCurrency } from "~/db/providers/settings.server";
-import {
-  getCachedCurrencies,
-  getCachedLocations,
-} from "~/services/settings-cache.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const theme = await getTheme(request);
   const url = new URL(request.url);
-  const ensureDefaultCurrencyPromise = ensureDefaultCurrency(db);
-  const [theme, session] = await Promise.all([
-    getTheme(request),
-    getCurrentSession(request),
-  ]);
 
-  const { user, headers: sessionHeaders } = session;
+  const { user, headers: sessionHeaders } = await getCurrentSession(request);
   const publicPath = isPublicPath(url.pathname);
 
+  await ensureDefaultCurrency(db);
+
   if (!user && !publicPath) {
-    await ensureDefaultCurrencyPromise;
     const redirectTo = encodeURIComponent(
       `${url.pathname}${url.search}${url.hash}`,
     );
@@ -59,19 +54,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw response;
   }
 
-  let locationResult: Awaited<ReturnType<typeof getCachedLocations>> = [];
-  let currencyResult: Awaited<ReturnType<typeof getCachedCurrencies>> = [];
-
-  if (user) {
-    const [locations, currencies] = await Promise.all([
-      getCachedLocations(db, user.id),
-      ensureDefaultCurrencyPromise.then(() => getCachedCurrencies(db)),
-    ]);
-    locationResult = locations;
-    currencyResult = currencies;
-  } else {
-    await ensureDefaultCurrencyPromise;
-  }
+  const [locationResult, currencyResult] = user
+    ? await Promise.all([
+        db.query.locations.findMany({
+          where: eq(locationsTable.userId, user.id),
+        }),
+        db.query.currencySettings.findMany(),
+      ])
+    : [[], []];
 
   const payload = {
     theme,
