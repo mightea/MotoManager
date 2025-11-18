@@ -1,5 +1,3 @@
-import { Suspense, lazy } from "react";
-
 import {
   Card,
   CardContent,
@@ -17,32 +15,12 @@ import {
   CircleCheck,
   Wrench,
 } from "lucide-react";
+import { AddIssueDialog } from "./add-issue-dialog";
 import { format } from "date-fns";
 import { parseISO } from "date-fns/parseISO";
 import { de } from "date-fns/locale";
 import { Badge } from "~/components/ui/badge";
 import type { Issue, Motorcycle } from "~/db/schema";
-
-type AddIssueDialogModule = typeof import("./add-issue-dialog");
-
-let addIssueDialogImport:
-  | Promise<{ default: AddIssueDialogModule["AddIssueDialog"] }>
-  | undefined;
-
-const loadAddIssueDialog = () => {
-  if (!addIssueDialogImport) {
-    addIssueDialogImport = import("./add-issue-dialog").then((module) => ({
-      default: module.AddIssueDialog,
-    }));
-  }
-  return addIssueDialogImport;
-};
-
-const AddIssueDialog = lazy(loadAddIssueDialog);
-
-const preloadAddIssueDialog = () => {
-  void loadAddIssueDialog();
-};
 
 const priorityConfig = {
   high: {
@@ -91,29 +69,15 @@ export function OpenIssuesCard({
       <CardHeader>
         <div className="flex justify-between items-center gap-2">
           <CardTitle>Offene Mängel</CardTitle>
-          <Suspense
-            fallback={
-              <Button className="self-end" variant="outline" disabled>
-                <PlusCircle className="h-4 w-4" />
-                Mangel hinzufügen
-              </Button>
-            }
+          <AddIssueDialog
+            motorcycle={motorcycle}
+            currentOdometer={currentOdometer}
           >
-            <AddIssueDialog
-              motorcycle={motorcycle}
-              currentOdometer={currentOdometer}
-            >
-              <Button
-                className="self-end"
-                variant="outline"
-                onMouseEnter={preloadAddIssueDialog}
-                onFocus={preloadAddIssueDialog}
-              >
-                <PlusCircle className="h-4 w-4" />
-                Mangel hinzufügen
-              </Button>
-            </AddIssueDialog>
-          </Suspense>
+            <Button className="self-end" variant="outline">
+              <PlusCircle className="h-4 w-4" />
+              Mangel hinzufügen
+            </Button>
+          </AddIssueDialog>
         </div>
         {issues.length > 0 && (
           <CardDescription>
@@ -143,34 +107,19 @@ export function OpenIssuesCard({
                         {issue.description}
                       </p>
                       <div className="flex items-center gap-1 shrink-0">
-                        <Suspense
-                          fallback={
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              disabled
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          }
+                        <AddIssueDialog
+                          motorcycle={motorcycle}
+                          issueToEdit={issue}
+                          currentOdometer={currentOdometer}
                         >
-                          <AddIssueDialog
-                            motorcycle={motorcycle}
-                            issueToEdit={issue}
-                            currentOdometer={currentOdometer}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
                           >
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onMouseEnter={preloadAddIssueDialog}
-                              onFocus={preloadAddIssueDialog}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </AddIssueDialog>
-                        </Suspense>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </AddIssueDialog>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1 flex-wrap">

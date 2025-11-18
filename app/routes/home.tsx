@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Link, data, redirect } from "react-router";
 import type { Route } from "./+types/home";
 import { getDb } from "~/db";
@@ -7,44 +7,26 @@ import {
   issues as issuesTable,
   maintenanceRecords,
   locationRecords,
+  type Motorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
 import { MotorcycleSummaryCard } from "~/components/motorcycle-summary-card";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Bike, PlusCircle, FileText } from "lucide-react";
+import { AddMotorcycleDialog } from "~/components/add-motorcycle-dialog";
 import { formatCurrency } from "~/utils/numberUtils";
 import { inArray, eq } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import {
   buildDashboardData,
   type DashboardStats,
-  type DashboardMotorcycleSummary,
+  type MotorcycleDashboardItem,
 } from "~/utils/home-stats";
 
-type AddMotorcycleDialogModule = typeof import("~/components/add-motorcycle-dialog");
-
-let addMotorcycleDialogImport:
-  | Promise<{ default: AddMotorcycleDialogModule["AddMotorcycleDialog"] }>
-  | undefined;
-
-const loadAddMotorcycleDialog = () => {
-  if (!addMotorcycleDialogImport) {
-    addMotorcycleDialogImport = import("~/components/add-motorcycle-dialog").then(
-      (module) => ({ default: module.AddMotorcycleDialog }),
-    );
-  }
-  return addMotorcycleDialogImport;
-};
-
-const AddMotorcycleDialog = lazy(loadAddMotorcycleDialog);
-
-const preloadAddMotorcycleDialog = () => {
-  void loadAddMotorcycleDialog();
-};
-
 type LoaderData = {
-  items: DashboardMotorcycleSummary[];
+  motorcycles: Motorcycle[];
+  items: MotorcycleDashboardItem[];
   stats: DashboardStats;
 };
 
@@ -54,35 +36,30 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const motorcyclesList = await db.query.motorcycles.findMany({
     where: eq(motorcycles.userId, user.id),
-    columns: {
-      id: true,
-      make: true,
-      model: true,
-      modelYear: true,
-      firstRegistration: true,
-      initialOdo: true,
-      manualOdo: true,
-      isVeteran: true,
-      image: true,
-    },
   });
 
   const motorcycleIds = motorcyclesList.map((moto) => moto.id);
 
-  const [issues, maintenance, locationHistory] =
+  const issues =
     motorcycleIds.length > 0
-      ? await Promise.all([
-          db.query.issues.findMany({
-            where: inArray(issuesTable.motorcycleId, motorcycleIds),
-          }),
-          db.query.maintenanceRecords.findMany({
-            where: inArray(maintenanceRecords.motorcycleId, motorcycleIds),
-          }),
-          db.query.locationRecords.findMany({
-            where: inArray(locationRecords.motorcycleId, motorcycleIds),
-          }),
-        ])
-      : [[], [], []];
+      ? await db.query.issues.findMany({
+          where: inArray(issuesTable.motorcycleId, motorcycleIds),
+        })
+      : [];
+
+  const maintenance =
+    motorcycleIds.length > 0
+      ? await db.query.maintenanceRecords.findMany({
+          where: inArray(maintenanceRecords.motorcycleId, motorcycleIds),
+        })
+      : [];
+
+  const locationHistory =
+    motorcycleIds.length > 0
+      ? await db.query.locationRecords.findMany({
+          where: inArray(locationRecords.motorcycleId, motorcycleIds),
+        })
+      : [];
 
   const year = new Date().getFullYear();
 
@@ -94,7 +71,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     year,
   });
 
-  return data<LoaderData>({ items, stats }, { headers: mergeHeaders(headers ?? {}) });
+  return data<LoaderData>(
+    { motorcycles: motorcyclesList, items, stats },
+    { headers: mergeHeaders(headers ?? {}) },
+  );
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -179,35 +159,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       ]
     : [];
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const globalWindow = window as typeof window & {
-      requestIdleCallback?: (callback: IdleRequestCallback) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
-
-    if (typeof globalWindow.requestIdleCallback === "function") {
-      const idleHandle = globalWindow.requestIdleCallback(() => {
-        preloadAddMotorcycleDialog();
-      });
-
-      return () => {
-        globalWindow.cancelIdleCallback?.(idleHandle);
-      };
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      preloadAddMotorcycleDialog();
-    }, 1200);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, []);
-
   return (
     <>
       <title>MotoManager</title>
@@ -225,24 +176,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <Suspense
-                  fallback={
-                    <Button variant="outline" className="gap-2" disabled>
-                      <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
-                    </Button>
-                  }
-                >
-                  <AddMotorcycleDialog>
-                    <Button
-                      variant="outline"
-                      className="gap-2"
-                      onMouseEnter={preloadAddMotorcycleDialog}
-                      onFocus={preloadAddMotorcycleDialog}
-                    >
-                      <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
-                    </Button>
-                  </AddMotorcycleDialog>
-                </Suspense>
+                <AddMotorcycleDialog>
+                  <Button variant="outline" className="gap-2">
+                    <PlusCircle className="h-4 w-4" /> Motorrad hinzufügen
+                  </Button>
+                </AddMotorcycleDialog>
                 <Button asChild variant="secondary" className="gap-2">
                   <Link to="/documents">
                     <FileText className="h-4 w-4" /> Dokumente

@@ -53,13 +53,7 @@ export const MotorcycleSummaryCard = ({
     <Card className="overflow-hidden h-full transition-all group-hover:shadow-lg group-hover:border-primary/50">
       {image ? (
         <div className="relative aspect-video bg-secondary">
-          <img
-            src={image}
-            alt={`${make} ${model}`}
-            className="object-cover"
-            loading="lazy"
-            decoding="async"
-          />
+          <img src={image} alt={`${make} ${model}`} className="object-cover" />
         </div>
       ) : (
         <div className="aspect-video bg-secondary flex items-center justify-center">

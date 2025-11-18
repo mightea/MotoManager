@@ -1,6 +1,6 @@
-import { Suspense, lazy } from "react";
 import { PlusCircle } from "lucide-react";
 import { useOutletContext } from "react-router";
+import { AddMaintenanceLogDialog } from "~/components/add-maintenance-log-dialog";
 import MaintenanceLogTable from "~/components/maintenance-log-table";
 import {
   Card,
@@ -12,27 +12,6 @@ import { Button } from "~/components/ui/button";
 import type { Route } from "./+types/motorcycle.maintenance";
 import type { MotorcycleOutletContext } from "./motorcycle";
 
-type AddMaintenanceLogDialogModule = typeof import("~/components/add-maintenance-log-dialog");
-
-let addMaintenanceLogDialogImport:
-  | Promise<{ default: AddMaintenanceLogDialogModule["AddMaintenanceLogDialog"] }>
-  | undefined;
-
-const loadAddMaintenanceLogDialog = () => {
-  if (!addMaintenanceLogDialogImport) {
-    addMaintenanceLogDialogImport = import(
-      "~/components/add-maintenance-log-dialog"
-    ).then((module) => ({ default: module.AddMaintenanceLogDialog }));
-  }
-  return addMaintenanceLogDialogImport;
-};
-
-const AddMaintenanceLogDialog = lazy(loadAddMaintenanceLogDialog);
-
-const preloadAddMaintenanceLogDialog = () => {
-  void loadAddMaintenanceLogDialog();
-};
-
 export default function MotorcycleMaintenanceRoute() {
   const { motorcycle, maintenanceEntries, currentOdo } =
     useOutletContext<MotorcycleOutletContext>();
@@ -42,27 +21,15 @@ export default function MotorcycleMaintenanceRoute() {
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <CardTitle className="text-2xl">Wartungsprotokoll</CardTitle>
-          <Suspense
-            fallback={
-              <Button disabled>
-                <PlusCircle className="h-4 w-4" />
-                Eintrag hinzufügen
-              </Button>
-            }
+          <AddMaintenanceLogDialog
+            motorcycle={motorcycle}
+            currentOdometer={currentOdo}
           >
-            <AddMaintenanceLogDialog
-              motorcycle={motorcycle}
-              currentOdometer={currentOdo}
-            >
-              <Button
-                onMouseEnter={preloadAddMaintenanceLogDialog}
-                onFocus={preloadAddMaintenanceLogDialog}
-              >
-                <PlusCircle className="h-4 w-4" />
-                Eintrag hinzufügen
-              </Button>
-            </AddMaintenanceLogDialog>
-          </Suspense>
+            <Button>
+              <PlusCircle className="h-4 w-4" />
+              Eintrag hinzufügen
+            </Button>
+          </AddMaintenanceLogDialog>
         </div>
       </CardHeader>
       <CardContent>

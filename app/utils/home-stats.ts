@@ -9,21 +9,9 @@ import {
   type NextInspectionInfo,
 } from "~/utils/inspection";
 
-type DashboardComputationMotorcycle = DashboardMotorcycleSource & {
+export type MotorcycleDashboardItem = (Motorcycle & {
   lastInspection: string | null;
-  numberOfIssues: number;
-  odometer: number;
-  odometerThisYear: number;
-  nextInspection: NextInspectionInfo | null;
-};
-
-export type DashboardMotorcycleSummary = {
-  id: number;
-  make: string;
-  model: string;
-  modelYear: number | null;
-  image: string | null;
-  isVeteran: boolean;
+}) & {
   numberOfIssues: number;
   odometer: number;
   odometerThisYear: number;
@@ -46,21 +34,8 @@ export type DashboardStats = {
   };
 };
 
-type DashboardMotorcycleSource = Pick<
-  Motorcycle,
-  | "id"
-  | "make"
-  | "model"
-  | "modelYear"
-  | "initialOdo"
-  | "manualOdo"
-  | "firstRegistration"
-  | "isVeteran"
-  | "image"
->;
-
 export type BuildDashboardItemsArgs = {
-  motorcycles: DashboardMotorcycleSource[];
+  motorcycles: Motorcycle[];
   issues: Issue[];
   maintenance: MaintenanceRecord[];
   locationHistory: CurrentLocation[];
@@ -93,7 +68,7 @@ export function buildDashboardItems({
   maintenance,
   locationHistory,
   year,
-}: BuildDashboardItemsArgs): DashboardComputationMotorcycle[] {
+}: BuildDashboardItemsArgs): MotorcycleDashboardItem[] {
   return motorcycles.map((moto) => {
     const relatedIssues = issues.filter((issue) => issue.motorcycleId === moto.id);
     const relatedMaintenance = maintenance.filter(
@@ -178,9 +153,9 @@ export function buildDashboardStats({
   motorcycles,
   year,
 }: {
-  items: DashboardComputationMotorcycle[];
+  items: MotorcycleDashboardItem[];
   maintenance: MaintenanceRecord[];
-  motorcycles: DashboardMotorcycleSource[];
+  motorcycles: Motorcycle[];
   year: number;
 }): DashboardStats {
   const totalKmThisYear = items.reduce(
@@ -245,28 +220,15 @@ export function buildDashboardStats({
 }
 
 export function buildDashboardData(args: BuildDashboardItemsArgs): {
-  items: DashboardMotorcycleSummary[];
+  items: MotorcycleDashboardItem[];
   stats: DashboardStats;
 } {
-  const computedItems = buildDashboardItems(args);
+  const items = buildDashboardItems(args);
   const stats = buildDashboardStats({
-    items: computedItems,
+    items,
     maintenance: args.maintenance,
     motorcycles: args.motorcycles,
     year: args.year,
   });
-  const items = computedItems.map<DashboardMotorcycleSummary>((item) => ({
-    id: item.id,
-    make: item.make,
-    model: item.model,
-    modelYear: item.modelYear ?? null,
-    image: item.image ?? null,
-    isVeteran: Boolean(item.isVeteran),
-    numberOfIssues: item.numberOfIssues,
-    odometer: item.odometer,
-    odometerThisYear: item.odometerThisYear,
-    nextInspection: item.nextInspection,
-  }));
-
   return { items, stats };
 }

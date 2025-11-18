@@ -1,4 +1,3 @@
-import { Suspense, lazy } from "react";
 import {
   type FluidType,
   type MaintenanceRecord,
@@ -27,32 +26,12 @@ import {
   Car,
 } from "lucide-react";
 
+import { AddMaintenanceLogDialog } from "./add-maintenance-log-dialog";
 import { Button } from "./ui/button";
 import { getMaintenanceIcon, getTireInfo } from "~/utils/motorcycleUtils";
 import { Separator } from "./ui/separator";
 import { formatCurrency } from "~/utils/numberUtils";
 import { isFalsy, isTruthy } from "~/utils/falsyUtils";
-
-type AddMaintenanceLogDialogModule = typeof import("./add-maintenance-log-dialog");
-
-let addMaintenanceLogDialogImport:
-  | Promise<{ default: AddMaintenanceLogDialogModule["AddMaintenanceLogDialog"] }>
-  | undefined;
-
-const loadAddMaintenanceLogDialog = () => {
-  if (!addMaintenanceLogDialogImport) {
-    addMaintenanceLogDialogImport = import("./add-maintenance-log-dialog").then(
-      (module) => ({ default: module.AddMaintenanceLogDialog }),
-    );
-  }
-  return addMaintenanceLogDialogImport;
-};
-
-const AddMaintenanceLogDialog = lazy(loadAddMaintenanceLogDialog);
-
-const preloadAddMaintenanceLogDialog = () => {
-  void loadAddMaintenanceLogDialog();
-};
 
 interface MaintenanceLogTableProps {
   motorcycle: Motorcycle;
@@ -349,29 +328,15 @@ export default function MaintenanceLogTable({
               )}
               {renderLogDetails(log)}
               <div className="flex justify-end pt-2">
-                <Suspense
-                  fallback={
-                    <Button variant="outline" size="sm" disabled>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Bearbeiten
-                    </Button>
-                  }
+                <AddMaintenanceLogDialog
+                  motorcycle={motorcycle}
+                  logToEdit={log}
                 >
-                  <AddMaintenanceLogDialog
-                    motorcycle={motorcycle}
-                    logToEdit={log}
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onMouseEnter={preloadAddMaintenanceLogDialog}
-                      onFocus={preloadAddMaintenanceLogDialog}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Bearbeiten
-                    </Button>
-                  </AddMaintenanceLogDialog>
-                </Suspense>
+                  <Button variant="outline" size="sm">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Bearbeiten
+                  </Button>
+                </AddMaintenanceLogDialog>
               </div>
             </div>{" "}
           </AccordionContent>
