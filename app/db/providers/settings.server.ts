@@ -18,17 +18,15 @@ import {
 
 type Database = LibSQLDatabase<typeof schema>;
 
-const foundDefaultCurrencyPreset = AVAILABLE_CURRENCY_PRESETS.find(
+const defaultCurrencyPreset = AVAILABLE_CURRENCY_PRESETS.find(
   (currency) => currency.code === DEFAULT_CURRENCY_CODE,
 );
 
-if (!foundDefaultCurrencyPreset) {
+if (!defaultCurrencyPreset) {
   throw new Error(
     `Default currency preset "${DEFAULT_CURRENCY_CODE}" is not configured.`,
   );
 }
-
-const defaultCurrencyPreset = foundDefaultCurrencyPreset;
 
 let ensureDefaultCurrencyPromise: Promise<void> | null = null;
 
