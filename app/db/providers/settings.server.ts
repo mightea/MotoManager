@@ -38,10 +38,10 @@ async function upsertDefaultCurrency(db: Database) {
   }
 
   await db.insert(currencySettings).values({
-    code: defaultCurrencyPreset.code,
-    symbol: defaultCurrencyPreset.symbol,
-    label: defaultCurrencyPreset.label,
-    conversionFactor: defaultCurrencyPreset.conversionFactor,
+    code: defaultCurrencyPreset!.code,
+    symbol: defaultCurrencyPreset!.symbol,
+    label: defaultCurrencyPreset!.label,
+    conversionFactor: defaultCurrencyPreset!.conversionFactor,
   });
 }
 
