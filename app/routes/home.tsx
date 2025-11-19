@@ -90,7 +90,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       ) : (
         <ul className="space-y-4">
           {motorcycles.map((moto) => (
-            <li key={moto.id} className="border p-4 rounded-md shadow-sm bg-background dark:bg-darkblue-800 border-gray-200 dark:border-darkblue-700">
+            <li key={moto.id} className="border p-4 rounded-md shadow-sm bg-white dark:bg-navy-800 border-gray-200 dark:border-navy-700">
               <strong className="text-xl">{moto.make} {moto.model}</strong> (<span className="text-secondary dark:text-gray-400">{moto.modelYear || "N/A"}</span>)
               <br />
               <span className="text-secondary dark:text-gray-400">VIN: {moto.vin}</span>
@@ -100,33 +100,33 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       )}
 
       <h2 className="text-2xl font-semibold mt-8 mb-4 text-foreground dark:text-gray-50">Add Motorcycle</h2>
-      <Form method="post" className="space-y-4 p-6 border rounded-lg shadow-md max-w-lg bg-background dark:bg-darkblue-800 border-gray-200 dark:border-darkblue-700">
+      <Form method="post" className="space-y-4 p-6 border rounded-lg shadow-md max-w-lg bg-white dark:bg-navy-800 border-gray-200 dark:border-navy-700">
         <div>
           <label htmlFor="make" className="block text-sm font-medium text-foreground dark:text-gray-200">Make:</label>
           <input type="text" name="make" id="make" required 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
           <label htmlFor="model" className="block text-sm font-medium text-foreground dark:text-gray-200">Model:</label>
           <input type="text" name="model" id="model" required 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
           <label htmlFor="modelYear" className="block text-sm font-medium text-foreground dark:text-gray-200">Year:</label>
           <input type="number" name="modelYear" id="modelYear" 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
           <label htmlFor="vin" className="block text-sm font-medium text-foreground dark:text-gray-200">VIN:</label>
           <input type="text" name="vin" id="vin" required 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
           <label htmlFor="initialOdo" className="block text-sm font-medium text-foreground dark:text-gray-200">Initial Odometer:</label>
           <input type="number" name="initialOdo" id="initialOdo" defaultValue={0} 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-700 dark:text-gray-50 sm:text-sm"/>
         </div>
-        <button type="submit" className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded dark:bg-darkblue-500 dark:hover:bg-darkblue-600">
+        <button type="submit" className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded dark:bg-primary dark:hover:bg-primary-light">
           Add Motorcycle
         </button>
       </Form>

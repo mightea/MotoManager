@@ -103,70 +103,138 @@ export default function Login() {
 
   const errorMessage = actionData && !actionData.success && actionData.message ? actionData.message : null;
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 dark:bg-darkblue-950">
-      <div className="w-full max-w-sm space-y-6 rounded-lg bg-white p-6 shadow-lg dark:bg-darkblue-900">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-100 text-primary dark:bg-darkblue-700 dark:text-darkblue-200">
-            <Bike className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-secondary dark:text-gray-400">
-              MotoManager
-            </p>
-            <h1 className="text-2xl font-semibold text-foreground dark:text-gray-50">
-              Garage Cockpit
-            </h1>
-          </div>
-        </div>
+    return (
 
-        <Form method="post" className="space-y-6">
-          <input type="hidden" name="redirectTo" value={redirectTo} />
-          
-          <div>
-            <label htmlFor="identifier" className="block text-sm font-medium text-foreground dark:text-gray-200">E-Mail / Username</label>
-            <input
-              id="identifier"
-              name="identifier"
-              autoComplete="username"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-800 dark:text-gray-50 sm:text-sm"
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-foreground dark:text-gray-200">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-800 dark:text-gray-50 sm:text-sm"
-            />
-          </div>
+      <div className="flex min-h-screen items-center justify-center bg-background p-4 dark:bg-navy-950">
 
-          {errorMessage && (
-            <div className="rounded-md bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900 dark:text-red-200">
-              {errorMessage}
+        <div className="w-full max-w-sm space-y-6 rounded-lg bg-white p-6 shadow-lg dark:bg-navy-900">
+
+          <div className="flex flex-col items-center gap-3 text-center">
+
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-100 text-primary dark:bg-navy-700 dark:text-blue-400">
+
+              <Bike className="h-5 w-5" />
+
+            </span>
+
+            <div>
+
+              <p className="text-xs font-medium uppercase tracking-wide text-secondary dark:text-gray-400">
+
+                MotoManager
+
+              </p>
+
+              <h1 className="text-2xl font-semibold text-foreground dark:text-gray-50">
+
+                Garage Cockpit
+
+              </h1>
+
             </div>
+
+          </div>
+
+  
+
+          <Form method="post" className="space-y-6">
+
+            <input type="hidden" name="redirectTo" value={redirectTo} />
+
+            
+
+            <div>
+
+              <label htmlFor="identifier" className="block text-sm font-medium text-foreground dark:text-gray-200">E-Mail / Username</label>
+
+              <input
+
+                id="identifier"
+
+                name="identifier"
+
+                autoComplete="username"
+
+                required
+
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
+
+              />
+
+            </div>
+
+            
+
+            <div>
+
+              <label htmlFor="password" className="block text-sm font-medium text-foreground dark:text-gray-200">Password</label>
+
+              <input
+
+                id="password"
+
+                name="password"
+
+                type="password"
+
+                autoComplete="current-password"
+
+                required
+
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
+
+              />
+
+            </div>
+
+  
+
+            {errorMessage && (
+
+              <div className="rounded-md bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">
+
+                {errorMessage}
+
+              </div>
+
+            )}
+
+  
+
+            <button 
+
+              type="submit" 
+
+              disabled={isSubmitting}
+
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-primary dark:hover:bg-primary-light dark:text-white"
+
+            >
+
+              {isSubmitting ? "Logging in..." : "Login"}
+
+            </button>
+
+          </Form>
+
+  
+
+          {showRegister && (
+
+            <p className="mt-6 text-center text-sm text-secondary dark:text-gray-400">
+
+               No account? No registration link available (removed per request).
+
+            </p>
+
           )}
 
-          <button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-darkblue-500 dark:hover:bg-darkblue-600"
-          >
-            {isSubmitting ? "Logging in..." : "Login"}
-          </button>
-        </Form>
+        </div>
 
-        {showRegister && (
-          <p className="mt-6 text-center text-sm text-secondary dark:text-gray-400">
-             No account? No registration link available (removed per request).
-          </p>
-        )}
       </div>
-    </div>
-  );
-}
+
+    );
+
+  }
+
+  

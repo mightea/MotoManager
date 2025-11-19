@@ -12,9 +12,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function Layout({ loaderData }: Route.ComponentProps) {
   const { user } = loaderData;
   return (
-    <div className="min-h-screen bg-background font-sans antialiased dark:bg-darkblue-950">
+    <div className="min-h-screen bg-background font-sans antialiased dark:bg-navy-950">
       <Header user={user} />
-      <main className="flex-1">
+      <main className="flex-1 pt-24">
         <Outlet />
       </main>
     </div>
