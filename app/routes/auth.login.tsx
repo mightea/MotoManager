@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-import { Bike } from "lucide-react";
 import {
   Form,
   Link,
@@ -18,10 +16,6 @@ import {
   verifyLogin,
 } from "~/services/auth.server";
 import { isRegistrationEnabled } from "~/config.server";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Button } from "~/components/ui/button";
 
 const EMAIL_REGEX = /.+@.+\..+/i;
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
@@ -106,77 +100,60 @@ export default function Login() {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
-  const errorMessage = useMemo(() => {
-    if (actionData && !actionData.success && actionData.message) {
-      return actionData.message;
-    }
-    return null;
-  }, [actionData]);
+  const errorMessage = actionData && !actionData.success && actionData.message ? actionData.message : null;
 
   return (
-    <div className="w-full max-w-sm space-y-6">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
-          <Bike className="h-5 w-5" />
-        </span>
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            MotoManager
-          </p>
-          <h1 className="text-2xl font-headline font-semibold text-foreground">
-            Garage Cockpit
-          </h1>
-        </div>
+    <div style={{ padding: "20px", fontFamily: "sans-serif", maxWidth: "300px", margin: "auto" }}>
+      <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        <h1>MotoManager Login</h1>
       </div>
 
-      <Card className="shadow-xl">
-        <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-headline">Anmelden</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Melde dich mit deinen Zugangsdaten an, um deine Garage zu verwalten.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <Form method="post" className="space-y-6">
-            <input type="hidden" name="redirectTo" value={redirectTo} />
-            <div className="space-y-2">
-              <Label htmlFor="identifier">E-Mail oder Benutzername</Label>
-              <Input
-                id="identifier"
-                name="identifier"
-                autoComplete="username"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Passwort</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-              />
-            </div>
-            {errorMessage && (
-              <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {errorMessage}
-              </div>
-            )}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Anmeldung läuft..." : "Anmelden"}
-            </Button>
-          </Form>
-          {showRegister && (
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Noch kein Konto?{" "}
-              <Link className="text-primary underline" to="/auth/register">
-                Jetzt registrieren
-              </Link>
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <Form method="post" style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+        <input type="hidden" name="redirectTo" value={redirectTo} />
+        
+        <div>
+          <label htmlFor="identifier" style={{ display: "block", marginBottom: "5px" }}>E-Mail / Username</label>
+          <input
+            id="identifier"
+            name="identifier"
+            autoComplete="username"
+            required
+            style={{ width: "100%", padding: "8px" }}
+          />
+        </div>
+        
+        <div>
+          <label htmlFor="password" style={{ display: "block", marginBottom: "5px" }}>Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            style={{ width: "100%", padding: "8px" }}
+          />
+        </div>
+
+        {errorMessage && (
+          <div style={{ color: "red", marginBottom: "10px" }}>
+            {errorMessage}
+          </div>
+        )}
+
+        <button 
+          type="submit" 
+          disabled={isSubmitting}
+          style={{ padding: "10px", cursor: "pointer" }}
+        >
+          {isSubmitting ? "Logging in..." : "Login"}
+        </button>
+      </Form>
+
+      {showRegister && (
+        <p style={{ marginTop: "20px", textAlign: "center" }}>
+           No account? No registration link available (removed per request).
+        </p>
+      )}
     </div>
   );
 }
