@@ -74,59 +74,59 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { motorcycles, user } = loaderData;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">MotoManager</h1>
-      <p className="text-lg mb-6">Welcome, {user.username || user.email}</p>
+    <div className="container mx-auto p-4 text-foreground dark:text-gray-50">
+      <h1 className="text-3xl font-bold mb-4 text-foreground dark:text-gray-50">MotoManager</h1>
+      <p className="text-lg mb-6 text-foreground dark:text-gray-200">Welcome, {user.username || user.email}</p>
       
       <Form action="/auth/logout" method="post" className="mb-8">
-        <button type="submit" className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+        <button type="submit" className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
           Logout
         </button>
       </Form>
 
-      <h2 className="text-2xl font-semibold mb-4">Your Motorcycles</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-foreground dark:text-gray-50">Your Motorcycles</h2>
       {motorcycles.length === 0 ? (
-        <p className="text-gray-600">No motorcycles found.</p>
+        <p className="text-secondary dark:text-gray-400">No motorcycles found.</p>
       ) : (
         <ul className="space-y-4">
           {motorcycles.map((moto) => (
-            <li key={moto.id} className="border p-4 rounded-md shadow-sm">
-              <strong className="text-xl">{moto.make} {moto.model}</strong> (<span className="text-gray-600">{moto.modelYear || "N/A"}</span>)
+            <li key={moto.id} className="border p-4 rounded-md shadow-sm bg-background dark:bg-darkblue-800 border-gray-200 dark:border-darkblue-700">
+              <strong className="text-xl">{moto.make} {moto.model}</strong> (<span className="text-secondary dark:text-gray-400">{moto.modelYear || "N/A"}</span>)
               <br />
-              <span className="text-gray-500">VIN: {moto.vin}</span>
+              <span className="text-secondary dark:text-gray-400">VIN: {moto.vin}</span>
             </li>
           ))}
         </ul>
       )}
 
-      <h2 className="text-2xl font-semibold mt-8 mb-4">Add Motorcycle</h2>
-      <Form method="post" className="space-y-4 p-6 border rounded-lg shadow-md max-w-lg bg-gray-50">
+      <h2 className="text-2xl font-semibold mt-8 mb-4 text-foreground dark:text-gray-50">Add Motorcycle</h2>
+      <Form method="post" className="space-y-4 p-6 border rounded-lg shadow-md max-w-lg bg-background dark:bg-darkblue-800 border-gray-200 dark:border-darkblue-700">
         <div>
-          <label htmlFor="make" className="block text-sm font-medium text-gray-700">Make:</label>
+          <label htmlFor="make" className="block text-sm font-medium text-foreground dark:text-gray-200">Make:</label>
           <input type="text" name="make" id="make" required 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="model" className="block text-sm font-medium text-gray-700">Model:</label>
+          <label htmlFor="model" className="block text-sm font-medium text-foreground dark:text-gray-200">Model:</label>
           <input type="text" name="model" id="model" required 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="modelYear" className="block text-sm font-medium text-gray-700">Year:</label>
+          <label htmlFor="modelYear" className="block text-sm font-medium text-foreground dark:text-gray-200">Year:</label>
           <input type="number" name="modelYear" id="modelYear" 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="vin" className="block text-sm font-medium text-gray-700">VIN:</label>
+          <label htmlFor="vin" className="block text-sm font-medium text-foreground dark:text-gray-200">VIN:</label>
           <input type="text" name="vin" id="vin" required 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="initialOdo" className="block text-sm font-medium text-gray-700">Initial Odometer:</label>
+          <label htmlFor="initialOdo" className="block text-sm font-medium text-foreground dark:text-gray-200">Initial Odometer:</label>
           <input type="number" name="initialOdo" id="initialOdo" defaultValue={0} 
-                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-700 dark:text-gray-50 sm:text-sm"/>
         </div>
-        <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <button type="submit" className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded dark:bg-darkblue-500 dark:hover:bg-darkblue-600">
           Add Motorcycle
         </button>
       </Form>
