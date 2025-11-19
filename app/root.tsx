@@ -10,6 +10,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/root";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
+import { LoadingIndicator } from "~/components/loading-indicator";
 import { getTheme } from "~/utils/theme.server";
 import clsx from "clsx";
 
@@ -34,6 +35,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans antialiased text-foreground dark:bg-navy-950 dark:text-gray-50">
+        <LoadingIndicator />
         {children}
         <ScrollRestoration />
         <Scripts />
