@@ -104,17 +104,17 @@ export default function Login() {
   const errorMessage = actionData && !actionData.success && actionData.message ? actionData.message : null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-sm space-y-6 rounded-lg bg-white p-6 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 dark:bg-darkblue-950">
+      <div className="w-full max-w-sm space-y-6 rounded-lg bg-white p-6 shadow-lg dark:bg-darkblue-900">
         <div className="flex flex-col items-center gap-3 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-100 text-blue-600">
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-100 text-primary dark:bg-darkblue-700 dark:text-darkblue-200">
             <Bike className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-secondary dark:text-gray-400">
               MotoManager
             </p>
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <h1 className="text-2xl font-semibold text-foreground dark:text-gray-50">
               Garage Cockpit
             </h1>
           </div>
@@ -124,30 +124,30 @@ export default function Login() {
           <input type="hidden" name="redirectTo" value={redirectTo} />
           
           <div>
-            <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">E-Mail / Username</label>
+            <label htmlFor="identifier" className="block text-sm font-medium text-foreground dark:text-gray-200">E-Mail / Username</label>
             <input
               id="identifier"
               name="identifier"
               autoComplete="username"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-800 dark:text-gray-50 sm:text-sm"
             />
           </div>
           
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-foreground dark:text-gray-200">Password</label>
             <input
               id="password"
               name="password"
               type="password"
               autoComplete="current-password"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-darkblue-700 dark:bg-darkblue-800 dark:text-gray-50 sm:text-sm"
             />
           </div>
 
           {errorMessage && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+            <div className="rounded-md bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900 dark:text-red-200">
               {errorMessage}
             </div>
           )}
@@ -155,14 +155,14 @@ export default function Login() {
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:bg-darkblue-500 dark:hover:bg-darkblue-600"
           >
             {isSubmitting ? "Logging in..." : "Login"}
           </button>
         </Form>
 
         {showRegister && (
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-secondary dark:text-gray-400">
              No account? No registration link available (removed per request).
           </p>
         )}

@@ -5,25 +5,62 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  data,
+  useLoaderData,
 } from "react-router";
+import type { Route } from "./+types/root";
+import { ThemeProvider, useTheme } from "~/components/theme-provider";
+import { getTheme } from "~/utils/theme.server";
+import clsx from "clsx";
 
 import "./app.css";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export async function loader({ request }: Route.LoaderArgs) {
+  const theme = await getTheme(request);
+  return data({ theme });
+}
+
+function AppContent({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
   return (
-    <html lang="en">
+    <html lang="en" className={clsx(theme)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body className="font-sans antialiased text-gray-800">
+      <body className="font-sans antialiased text-foreground dark:bg-darkblue-950 dark:text-gray-50">
         {children}
         <ScrollRestoration />
         <Scripts />
       </body>
     </html>
+  );
+}
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  // We need to access the loader data here, but Layout doesn't receive it directly as props in React Router 7 same way.
+  // However, we can use useLoaderData() inside a component.
+  // But Layout wraps everything.
+  // The issue is that `Layout` is used by `root.tsx`'s default export which is `App`.
+  // Wait, in RR7, root.tsx exports Layout.
+  
+  // We can't use useLoaderData inside Layout if it's the root layout wrapper for the whole document structure
+  // unless we move the html/body inside a component that is a child of ThemeProvider.
+  // But ThemeProvider needs to wrap the content.
+  
+  return (
+      <AppWrapper>{children}</AppWrapper>
+  );
+}
+
+function AppWrapper({ children }: { children: React.ReactNode }) {
+  const data = useLoaderData<typeof loader>();
+  return (
+    <ThemeProvider specifiedTheme={data?.theme ?? null}>
+      <AppContent>{children}</AppContent>
+    </ThemeProvider>
   );
 }
 
@@ -48,12 +85,12 @@ export function ErrorBoundary({ error }: { error: unknown }) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
+    <main className="pt-16 p-4 container mx-auto text-foreground dark:text-gray-50">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
+        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-darkblue-800 rounded-md mt-4">
+          <code className="text-sm text-gray-700 dark:text-gray-200">{stack}</code>
         </pre>
       )}
     </main>
