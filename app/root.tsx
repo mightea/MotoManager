@@ -7,6 +7,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import "./app.css";
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -16,7 +18,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="font-sans antialiased text-gray-800">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -46,11 +48,11 @@ export function ErrorBoundary({ error }: { error: unknown }) {
   }
 
   return (
-    <main>
+    <main className="pt-16 p-4 container mx-auto">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre>
+        <pre className="w-full p-4 overflow-x-auto">
           <code>{stack}</code>
         </pre>
       )}

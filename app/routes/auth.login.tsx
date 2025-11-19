@@ -1,3 +1,4 @@
+import { Bike } from "lucide-react";
 import {
   Form,
   Link,
@@ -103,57 +104,69 @@ export default function Login() {
   const errorMessage = actionData && !actionData.success && actionData.message ? actionData.message : null;
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif", maxWidth: "300px", margin: "auto" }}>
-      <div style={{ textAlign: "center", marginBottom: "20px" }}>
-        <h1>MotoManager Login</h1>
-      </div>
-
-      <Form method="post" style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-        <input type="hidden" name="redirectTo" value={redirectTo} />
-        
-        <div>
-          <label htmlFor="identifier" style={{ display: "block", marginBottom: "5px" }}>E-Mail / Username</label>
-          <input
-            id="identifier"
-            name="identifier"
-            autoComplete="username"
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-        
-        <div>
-          <label htmlFor="password" style={{ display: "block", marginBottom: "5px" }}>Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        {errorMessage && (
-          <div style={{ color: "red", marginBottom: "10px" }}>
-            {errorMessage}
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+      <div className="w-full max-w-sm space-y-6 rounded-lg bg-white p-6 shadow-lg">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-100 text-blue-600">
+            <Bike className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              MotoManager
+            </p>
+            <h1 className="text-2xl font-semibold text-gray-900">
+              Garage Cockpit
+            </h1>
           </div>
+        </div>
+
+        <Form method="post" className="space-y-6">
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+          
+          <div>
+            <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">E-Mail / Username</label>
+            <input
+              id="identifier"
+              name="identifier"
+              autoComplete="username"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+
+          {errorMessage && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            {isSubmitting ? "Logging in..." : "Login"}
+          </button>
+        </Form>
+
+        {showRegister && (
+          <p className="mt-6 text-center text-sm text-gray-500">
+             No account? No registration link available (removed per request).
+          </p>
         )}
-
-        <button 
-          type="submit" 
-          disabled={isSubmitting}
-          style={{ padding: "10px", cursor: "pointer" }}
-        >
-          {isSubmitting ? "Logging in..." : "Login"}
-        </button>
-      </Form>
-
-      {showRegister && (
-        <p style={{ marginTop: "20px", textAlign: "center" }}>
-           No account? No registration link available (removed per request).
-        </p>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Form, Link, data, redirect } from "react-router";
+import { Form, data, redirect } from "react-router";
 import type { Route } from "./+types/home";
 import { getDb } from "~/db";
 import { motorcycles, type NewMotorcycle } from "~/db/schema";
@@ -74,63 +74,62 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { motorcycles, user } = loaderData;
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h1>MotoManager</h1>
-      <p>Welcome, {user.username || user.email}</p>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">MotoManager</h1>
+      <p className="text-lg mb-6">Welcome, {user.username || user.email}</p>
       
-      <Form action="/auth/logout" method="post">
-        <button type="submit">Logout</button>
+      <Form action="/auth/logout" method="post" className="mb-8">
+        <button type="submit" className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+          Logout
+        </button>
       </Form>
 
-      <hr />
-
-      <h2>Your Motorcycles</h2>
+      <h2 className="text-2xl font-semibold mb-4">Your Motorcycles</h2>
       {motorcycles.length === 0 ? (
-        <p>No motorcycles found.</p>
+        <p className="text-gray-600">No motorcycles found.</p>
       ) : (
-        <ul>
+        <ul className="space-y-4">
           {motorcycles.map((moto) => (
-            <li key={moto.id}>
-              <strong>{moto.make} {moto.model}</strong> ({moto.modelYear || "N/A"})
+            <li key={moto.id} className="border p-4 rounded-md shadow-sm">
+              <strong className="text-xl">{moto.make} {moto.model}</strong> (<span className="text-gray-600">{moto.modelYear || "N/A"}</span>)
               <br />
-              VIN: {moto.vin}
+              <span className="text-gray-500">VIN: {moto.vin}</span>
             </li>
           ))}
         </ul>
       )}
 
-      <hr />
-
-      <h2>Add Motorcycle</h2>
-      <Form method="post" style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px" }}>
+      <h2 className="text-2xl font-semibold mt-8 mb-4">Add Motorcycle</h2>
+      <Form method="post" className="space-y-4 p-6 border rounded-lg shadow-md max-w-lg bg-gray-50">
         <div>
-          <label htmlFor="make">Make:</label>
-          <br />
-          <input type="text" name="make" id="make" required />
+          <label htmlFor="make" className="block text-sm font-medium text-gray-700">Make:</label>
+          <input type="text" name="make" id="make" required 
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="model">Model:</label>
-          <br />
-          <input type="text" name="model" id="model" required />
+          <label htmlFor="model" className="block text-sm font-medium text-gray-700">Model:</label>
+          <input type="text" name="model" id="model" required 
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="modelYear">Year:</label>
-          <br />
-          <input type="number" name="modelYear" id="modelYear" />
+          <label htmlFor="modelYear" className="block text-sm font-medium text-gray-700">Year:</label>
+          <input type="number" name="modelYear" id="modelYear" 
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="vin">VIN:</label>
-          <br />
-          <input type="text" name="vin" id="vin" required />
+          <label htmlFor="vin" className="block text-sm font-medium text-gray-700">VIN:</label>
+          <input type="text" name="vin" id="vin" required 
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
         </div>
         <div>
-          <label htmlFor="initialOdo">Initial Odometer:</label>
-          <br />
-          <input type="number" name="initialOdo" id="initialOdo" defaultValue={0} />
+          <label htmlFor="initialOdo" className="block text-sm font-medium text-gray-700">Initial Odometer:</label>
+          <input type="number" name="initialOdo" id="initialOdo" defaultValue={0} 
+                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"/>
         </div>
-        <button type="submit">Add Motorcycle</button>
+        <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Add Motorcycle
+        </button>
       </Form>
     </div>
   );
 }
-
