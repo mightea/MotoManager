@@ -23,5 +23,3 @@ export async function getTheme(request: Request): Promise<Theme | null> {
 export async function setTheme(theme: Theme) {
   return await themeCookie.serialize(theme);
 }
-
-export { Theme, isTheme };
