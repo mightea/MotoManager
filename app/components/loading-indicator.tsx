@@ -3,7 +3,14 @@ import { useEffect, useState } from "react";
 
 export function LoadingIndicator() {
   const navigation = useNavigation();
-  const active = navigation.state !== "idle";
+  const [isHydrating, setIsHydrating] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsHydrating(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const active = navigation.state !== "idle" || isHydrating;
 
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
