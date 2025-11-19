@@ -9,9 +9,9 @@ import {
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
-import { eq, desc, and, lt, gte, ne, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { getNextInspectionInfo } from "~/utils/inspection";
+import { buildDashboardData, type MotorcycleDashboardItem } from "~/utils/home-stats";
 import {
   CalendarDays,
   Gauge,
@@ -19,21 +19,6 @@ import {
   Wrench,
 } from "lucide-react";
 import clsx from "clsx";
-
-type MotorcycleCardData = {
-  id: number;
-  make: string;
-  model: string;
-  year: number | null;
-  isVeteran: boolean;
-  currentOdo: number;
-  kmThisYear: number;
-  openIssuesCount: number;
-  nextInspection: {
-    label: string;
-    isOverdue: boolean;
-  } | null;
-};
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -43,118 +28,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     where: eq(motorcycles.userId, user.id),
   });
 
-  const cards: MotorcycleCardData[] = [];
-  const currentYear = new Date().getFullYear();
-  const startOfYear = `${currentYear}-01-01`;
+  // Fetch all related data for calculations
+  // Note: Ideally we should filter these by motorcycle IDs, but for now we fetch all and filter in memory
+  // via the buildDashboardData utility which ensures only relevant data is used.
+  const allIssues = await db.query.issues.findMany();
+  const allMaintenance = await db.query.maintenanceRecords.findMany();
+  const allLocations = await db.query.locationRecords.findMany();
 
-  for (const moto of motorcyclesList) {
-    // 1. Calculate Current Odometer (Max of all records)
-    const [maxMaint] = await db
-      .select({ odo: sql<number>`max(${maintenanceRecords.odo})` })
-      .from(maintenanceRecords)
-      .where(eq(maintenanceRecords.motorcycleId, moto.id));
-
-    const [maxIssue] = await db
-      .select({ odo: sql<number>`max(${issues.odo})` })
-      .from(issues)
-      .where(eq(issues.motorcycleId, moto.id));
-
-    const [maxLoc] = await db
-      .select({ odo: sql<number>`max(${locationRecords.odometer})` })
-      .from(locationRecords)
-      .where(eq(locationRecords.motorcycleId, moto.id));
-
-    const currentOdo = Math.max(
-      moto.initialOdo ?? 0,
-      moto.manualOdo ?? 0,
-      maxMaint?.odo ?? 0,
-      maxIssue?.odo ?? 0,
-      maxLoc?.odo ?? 0
-    );
-
-    // 2. Calculate KM this year
-    // Max odo recorded this year
-    // We need to check dates.
-    // Helper to get max odo with date constraint
-    // Since SQLite stores dates as strings YYYY-MM-DD, we can compare strings.
-
-    const [lastOdoPrevYearResult] = await db
-      .select({ odo: sql<number>`max(${maintenanceRecords.odo})` }) // Simplified: checking main records. Ideally check all.
-      .from(maintenanceRecords)
-      .where(
-        and(
-          eq(maintenanceRecords.motorcycleId, moto.id),
-          lt(maintenanceRecords.date, startOfYear)
-        )
-      );
-     // We should really check all sources for the "start of year" value, but usually maintenance/log is enough.
-     // Fallback to initialOdo if purchaseDate is this year?
-     // For simplicity and performance, let's assume maintenance records are the primary source of truth for history, 
-     // or utilize the calculated currentOdo if no records exist.
-     
-    const startOdo = lastOdoPrevYearResult?.odo ?? moto.initialOdo ?? 0;
-    
-    // Use currentOdo as the "end" of this year (assuming currentOdo is up to date)
-    // Only if currentOdo comes from a record this year? 
-    // If the bike hasn't moved this year, currentOdo might be from last year.
-    // Let's verify if we have ANY record this year.
-    
-    const hasRecordThisYear = 
-      (maxMaint?.odo && maxMaint.odo > startOdo) || 
-      (maxIssue?.odo && maxIssue.odo > startOdo) ||
-      (maxLoc?.odo && maxLoc.odo > startOdo); // Rough heuristic
-
-    const kmThisYear = hasRecordThisYear ? Math.max(0, currentOdo - startOdo) : 0;
-
-
-    // 3. Open Issues
-    const [issuesCountResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(issues)
-      .where(
-        and(
-          eq(issues.motorcycleId, moto.id),
-          ne(issues.status, "done")
-        )
-      );
-    const openIssuesCount = issuesCountResult?.count ?? 0;
-
-    // 4. Next Inspection
-    const [lastInspectionRecord] = await db
-      .select()
-      .from(maintenanceRecords)
-      .where(
-        and(
-          eq(maintenanceRecords.motorcycleId, moto.id),
-          eq(maintenanceRecords.type, "inspection")
-        )
-      )
-      .orderBy(desc(maintenanceRecords.date))
-      .limit(1);
-
-    const inspectionInfo = getNextInspectionInfo({
-      firstRegistration: moto.firstRegistration,
-      lastInspection: lastInspectionRecord?.date,
-      isVeteran: moto.isVeteran,
-    });
-
-    cards.push({
-      id: moto.id,
-      make: moto.make,
-      model: moto.model,
-      year: moto.modelYear,
-      isVeteran: moto.isVeteran,
-      currentOdo,
-      kmThisYear,
-      openIssuesCount,
-      nextInspection: inspectionInfo
-        ? {
-            label: inspectionInfo.relativeLabel,
-            isOverdue: inspectionInfo.isOverdue,
-          }
-        : null,
-    });
-  }
+  const { items: cards } = buildDashboardData({
+    motorcycles: motorcyclesList,
+    issues: allIssues,
+    maintenance: allMaintenance,
+    locationHistory: allLocations,
+    year: new Date().getFullYear(),
+  });
 
   return data(
     { cards, user },
@@ -213,9 +100,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div className="container mx-auto p-4 space-y-8">
       
-      {/* Header/Welcome removed or simplified as we have the sticky header now. 
-          We can just show the grid. */}
-      
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {cards.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
@@ -239,7 +123,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 </h3>
                 <div className="mt-2 flex items-center gap-3">
                   <span className="text-sm font-medium text-secondary dark:text-navy-300">
-                    {moto.year || "N/A"}
+                    {moto.modelYear || "N/A"}
                   </span>
                   {moto.isVeteran && (
                     <span className="inline-flex items-center rounded-full border border-orange-500/30 bg-orange-50 px-2.5 py-0.5 text-xs font-medium text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
@@ -260,7 +144,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                       <span className="text-sm">Akt. Kilometerstand</span>
                     </div>
                     <span className="font-semibold text-foreground dark:text-gray-100">
-                      {numberFormatter.format(moto.currentOdo)} km
+                      {numberFormatter.format(moto.odometer)} km
                     </span>
                   </div>
 
@@ -272,9 +156,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                     </div>
                     <span className={clsx(
                       "font-semibold",
-                      moto.kmThisYear > 0 ? "text-foreground dark:text-gray-100" : "text-orange-500"
+                      moto.odometerThisYear > 0 ? "text-foreground dark:text-gray-100" : "text-orange-500"
                     )}>
-                      {numberFormatter.format(moto.kmThisYear)} km
+                      {numberFormatter.format(moto.odometerThisYear)} km
                     </span>
                   </div>
 
@@ -285,7 +169,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                       <span className="text-sm">Mängel</span>
                     </div>
                     <span className="font-semibold text-foreground dark:text-gray-100">
-                      {moto.openIssuesCount > 0 ? moto.openIssuesCount : "Keine"}
+                      {moto.numberOfIssues > 0 ? moto.numberOfIssues : "Keine"}
                     </span>
                   </div>
 
@@ -299,7 +183,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                       "font-semibold",
                       moto.nextInspection?.isOverdue ? "text-red-600 dark:text-red-400" : "text-foreground dark:text-gray-100"
                     )}>
-                      {moto.nextInspection?.label || "Unbekannt"}
+                      {moto.nextInspection?.relativeLabel || "Unbekannt"}
                     </span>
                   </div>
 
