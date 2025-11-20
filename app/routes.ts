@@ -12,5 +12,6 @@ export default [
   
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
+    route("motorcycle/:slug/:id", "routes/motorcycle.detail.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -16,6 +16,7 @@ export type MotorcycleDashboardItem = (Motorcycle & {
   odometer: number;
   odometerThisYear: number;
   nextInspection: NextInspectionInfo | null;
+  lastActivity: string | null;
 };
 
 export type DashboardStats = {
@@ -78,6 +79,16 @@ export function buildDashboardItems({
       (entry) =>
         entry.motorcycleId === moto.id && entry.odometer !== null,
     );
+
+    // Calculate last activity
+    const allDates = [
+      moto.purchaseDate,
+      ...relatedIssues.map((i) => i.date),
+      ...relatedMaintenance.map((m) => m.date),
+      ...relatedLocations.map((l) => l.date),
+    ].filter((d): d is string => typeof d === "string" && d.length > 0);
+    
+    const lastActivity = allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).at(0) ?? null;
 
     const openIssuesCount = relatedIssues.filter(
       (issue) => issue.status !== "done",
@@ -143,6 +154,7 @@ export function buildDashboardItems({
       odometer: maxOdometer,
       odometerThisYear,
       nextInspection,
+      lastActivity,
     };
   });
 }

@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -e
-if [[ ! -d "/Users/tobias/Developer/Private/Motobase" ]]; then
+if [[ ! -d "/Users/tobias/Developer/Private/MotoManager" ]]; then
   echo "Cannot find source directory; Did you move it?"
-  echo "(Looking for "/Users/tobias/Developer/Private/Motobase")"
+  echo "(Looking for "/Users/tobias/Developer/Private/MotoManager")"
   echo 'Cannot force reload with this script - use "direnv reload" manually and then try again'
   exit 1
 fi
 
 # rebuild the cache forcefully
-_nix_direnv_force_reload=1 direnv exec "/Users/tobias/Developer/Private/Motobase" true
+_nix_direnv_force_reload=1 direnv exec "/Users/tobias/Developer/Private/MotoManager" true
 
 # Update the mtime for .envrc.
 # This will cause direnv to reload again - but without re-building.
-touch "/Users/tobias/Developer/Private/Motobase/.envrc"
+touch "/Users/tobias/Developer/Private/MotoManager/.envrc"
 
 # Also update the timestamp of whatever profile_rc we have.
 # This makes sure that we know we are up to date.
-touch -r "/Users/tobias/Developer/Private/Motobase/.envrc" "/Users/tobias/Developer/Private/Motobase/.direnv"/*.rc
+touch -r "/Users/tobias/Developer/Private/MotoManager/.envrc" "/Users/tobias/Developer/Private/MotoManager/.direnv"/*.rc
