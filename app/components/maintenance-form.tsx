@@ -47,28 +47,22 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, onSub
         <input type="hidden" name="motorcycleId" value={motorcycleId} />
         
         {/* Type Selection */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {maintenanceTypes.map((t) => {
-                const Icon = t.icon;
-                const isSelected = type === t.value;
-                return (
-                    <button
-                        key={t.value}
-                        type="button"
-                        onClick={() => setType(t.value)}
-                        className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2 text-xs font-medium transition-all ${
-                            isSelected 
-                                ? "border-primary bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light" 
-                                : "border-gray-200 bg-white text-secondary hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700"
-                        }`}
-                    >
-                        <Icon className={`h-5 w-5 ${isSelected ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400"}`} />
+        <div className="space-y-1.5">
+            <label htmlFor="type" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Wartungstyp</label>
+            <select
+                name="type"
+                id="type"
+                value={type}
+                onChange={(e) => setType(e.target.value as MaintenanceType)}
+                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+            >
+                {maintenanceTypes.map((t) => (
+                    <option key={t.value} value={t.value}>
                         {t.label}
-                    </button>
-                )
-            })}
+                    </option>
+                ))}
+            </select>
         </div>
-        <input type="hidden" name="type" value={type} />
 
         <div className="grid gap-5 sm:grid-cols-2">
             {/* Common Fields */}
@@ -131,8 +125,8 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, onSub
 
             {/* Conditional Fields based on Type */}
             
-            {/* Generic Brand/Model (Tire, Battery, Fluid, Chain, Brakes) */}
-            {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
+            {/* Generic Brand/Model */}
+            {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor", "general", "repair"].includes(type)) && (
                 <>
                     <div className="space-y-1.5">
                         <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
@@ -214,9 +208,24 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, onSub
                             <option value="engineoil">Motoröl</option>
                             <option value="gearboxoil">Getriebeöl</option>
                             <option value="finaldriveoil">Kardanöl</option>
+                            <option value="driveshaftoil">Kardanwellenöl</option>
                             <option value="forkoil">Gabelöl</option>
                             <option value="breakfluid">Bremsflüssigkeit</option>
                             <option value="coolant">Kühlflüssigkeit</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label htmlFor="oilType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Öl-Typ</label>
+                         <select 
+                            name="oilType" 
+                            id="oilType"
+                            defaultValue={initialData?.oilType || ""}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        >
+                            <option value="">Keine Angabe</option>
+                            <option value="synthetic">Synthetisch</option>
+                            <option value="semi-synthetic">Teilsynthetisch</option>
+                            <option value="mineral">Mineralisch</option>
                         </select>
                     </div>
                     <div className="space-y-1.5">
