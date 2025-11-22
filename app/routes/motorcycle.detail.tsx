@@ -105,7 +105,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   );
 
   return (
-    <div className="container mx-auto max-w-5xl p-4 space-y-6 pb-24">
+    <div className="container mx-auto max-w-5xl p-6 space-y-8 pb-24">
       <div className="flex items-center gap-4">
         <Link
           to="/"
@@ -123,13 +123,13 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-3">
         {/* Basic Info Card */}
-        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
           <button
             type="button"
             onClick={() => setDetailsExpanded((prev) => !prev)}
-            className="mb-2 flex w-full items-center justify-between text-left font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
+            className="mb-1 flex w-full items-center justify-between text-left text-base font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
             aria-expanded={detailsExpanded}
             aria-controls={detailsPanelId}
           >
@@ -142,7 +142,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           </button>
           <div id={detailsPanelId} hidden={!detailsExpanded}>
             {visibleDetails.length > 0 ? (
-              <dl className="mt-4 space-y-3 text-sm">
+              <dl className="mt-3 space-y-2 text-sm">
                 {visibleDetails.map((entry) => (
                   <div key={entry.label} className="flex justify-between">
                     <dt className="text-secondary dark:text-navy-400">{entry.label}</dt>
@@ -166,12 +166,14 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       </div>
       
       {/* Maintenance History Card */}
-      <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-          <h2 className="mb-4 font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
+          </div>
           {maintenanceHistory.length === 0 ? (
-              <p className="text-secondary dark:text-navy-400">Keine Wartungseinträge vorhanden.</p>
+              <p className="text-sm text-secondary dark:text-navy-400">Keine Wartungseinträge vorhanden.</p>
           ) : (
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                   {maintenanceHistory.map((maintenance) => (
                       <li key={maintenance.id} className="flex items-center gap-3">
                           <Wrench className="h-5 w-5 text-blue-500" />
@@ -182,7 +184,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                                 {maintenance.cost && ` • ${currencyFormatter.format(maintenance.cost)}`}
                               </p>
                           </div>
-                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                             {maintenance.type}
                           </span>
                       </li>

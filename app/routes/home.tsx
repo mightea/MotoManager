@@ -19,7 +19,6 @@ import {
   Route as RouteIcon,
   Wrench,
   Plus,
-  ChevronUp,
   Clock,
   Tag,
   Calendar,
@@ -28,6 +27,8 @@ import {
 import clsx from "clsx";
 import { useState } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Modal } from "~/components/modal";
+import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 
 export async function loader({ request }: Route.LoaderArgs) {
   // ... existing loader logic ...
@@ -122,6 +123,7 @@ export async function action({ request }: Route.ActionArgs) {
     initialOdo: parseInteger(formData.get("initialOdo")) ?? 0,
     purchaseDate: parseString(formData.get("purchaseDate")),
     purchasePrice: parseNumber(formData.get("purchasePrice")) ?? 0,
+    currencyCode: parseString(formData.get("currencyCode")),
   };
 
   const dbClient = await getDb();
@@ -150,10 +152,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div className="container mx-auto p-4 space-y-6 pb-24">
       
-      {/* Sort Dropdown */}
-      <div className="flex justify-start">
+      {/* Header Actions */}
+      <div className="flex items-center justify-between">
+        {/* Sort Dropdown */}
         <Menu as="div" className="relative inline-block text-left">
-            <MenuButton className="inline-flex w-full items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus:outline-none dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
+            <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus:outline-none dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
                 {activeSortLabel}
                 <ChevronDown className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />
             </MenuButton>
@@ -184,6 +187,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 })}
             </MenuItems>
         </Menu>
+
+        <button
+            onClick={() => setIsAddOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+        >
+            <Plus className="h-5 w-5" />
+            <span className="hidden sm:inline">Neues Motorrad</span>
+        </button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -302,60 +313,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         )}
       </div>
 
-      {/* Collapsible Add Form */}
-      <div className="rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800">
-        <button 
-            onClick={() => setIsAddOpen(!isAddOpen)}
-            className="flex w-full items-center justify-between p-6 text-left focus:outline-none"
-        >
-            <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary dark:bg-navy-700 dark:text-blue-400">
-                    {isAddOpen ? <ChevronUp className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                </div>
-                <div>
-                    <h2 className="text-lg font-bold text-foreground dark:text-white">Motorrad hinzufügen</h2>
-                    <p className="text-sm text-secondary dark:text-navy-400">Ein neues Fahrzeug in die Garage aufnehmen</p>
-                </div>
-            </div>
-        </button>
-        
-        {isAddOpen && (
-            <div className="border-t border-gray-100 px-6 pb-8 pt-2 dark:border-navy-700">
-                <Form method="post" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="space-y-1.5">
-                    <label htmlFor="make" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke</label>
-                    <input type="text" name="make" id="make" required placeholder="z.B. Yamaha"
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"/>
-                </div>
-                <div className="space-y-1.5">
-                    <label htmlFor="model" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Modell</label>
-                    <input type="text" name="model" id="model" required placeholder="z.B. MT-07"
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"/>
-                </div>
-                <div className="space-y-1.5">
-                    <label htmlFor="modelYear" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Jahrgang</label>
-                    <input type="number" name="modelYear" id="modelYear" placeholder="z.B. 2021"
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"/>
-                </div>
-                <div className="space-y-1.5">
-                    <label htmlFor="vin" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Fahrgestellnummer (VIN)</label>
-                    <input type="text" name="vin" id="vin" required 
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"/>
-                </div>
-                <div className="space-y-1.5">
-                    <label htmlFor="initialOdo" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Anfangs-KM</label>
-                    <input type="number" name="initialOdo" id="initialOdo" defaultValue={0} 
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"/>
-                </div>
-                <div className="flex items-end sm:col-span-2 lg:col-span-1">
-                    <button type="submit" className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]">
-                    Fahrzeug Speichern
-                    </button>
-                </div>
-                </Form>
-            </div>
-        )}
-      </div>
+      <Modal
+        isOpen={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        title="Motorrad hinzufügen"
+        description="Füge ein neues Fahrzeug zu deiner Garage hinzu."
+      >
+        <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} />
+      </Modal>
     </div>
   );
 }

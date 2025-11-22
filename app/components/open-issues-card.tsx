@@ -23,36 +23,26 @@ export default function OpenIssuesCard({
   return (
     <div
       className={clsx(
-        "rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800",
+        "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800",
         className
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-2xl font-semibold leading-tight text-foreground dark:text-white">
-          Offene Mängel
-        </h2>
-        <Button
-          type="button"
-          onClick={handleAddIssue}
-          variant="secondary"
-          size="sm"
-          className="rounded-2xl"
-        >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-foreground dark:text-white">Offene Mängel</h2>
+        <Button type="button" onClick={handleAddIssue} variant="secondary" size="sm" className="rounded-lg">
           <Plus className="h-4 w-4" />
           Mangel hinzufügen
         </Button>
-
-        <div className="text-sm text-muted-foreground">Verfolge und verwalte offene Probleme mit deinem Motorrad.</div>
       </div>
 
       {issues.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-gray-200 bg-gradient-to-b from-white to-gray-50 p-6 text-center text-secondary dark:border-navy-600 dark:from-navy-800 dark:to-navy-900 dark:text-navy-300">
-          <p className="text-base font-medium">
+        <div className="mt-5 rounded-lg border border-dashed border-gray-200 px-4 py-6 text-center text-secondary dark:border-navy-600 dark:text-navy-300">
+          <p className="text-sm font-medium">
             Super! Es sind keine Mängel für dieses Motorrad erfasst.
           </p>
         </div>
       ) : (
-        <ul className="mt-6 space-y-3">
+        <ul className="mt-4 space-y-2">
           {issues.map((issue) => (
             <li key={issue.id} className="flex items-center gap-3">
               <AlertCircle
@@ -74,13 +64,13 @@ export default function OpenIssuesCard({
               </div>
               <span
                 className={clsx(
-                  "rounded-full px-2 py-0.5 text-xs font-semibold",
+                  "rounded-md px-2 py-0.5 text-xs font-semibold",
                   {
-                    "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400":
+                    "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300":
                       issue.priority === "high",
-                    "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400":
+                    "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300":
                       issue.priority === "medium",
-                    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400":
+                    "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300":
                       issue.priority === "low",
                   }
                 )}
