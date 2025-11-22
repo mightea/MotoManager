@@ -94,7 +94,7 @@ export function ErrorBoundary({ error }: { error: unknown }) {
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-darkblue-800 rounded-md mt-4">
+        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-navy-800 rounded-md mt-4">
           <code className="text-sm text-gray-700 dark:text-gray-200">{stack}</code>
         </pre>
       )}

@@ -175,11 +175,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                                 className={clsx(
                                     "group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
                                     isActive 
-                                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-400" 
+                                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light" 
                                         : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
                                 )}
                             >
-                                <Icon className={clsx("h-4 w-4", isActive ? "text-primary dark:text-blue-400" : "text-secondary/70 dark:text-navy-400")} />
+                                <Icon className={clsx("h-4 w-4", isActive ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400")} />
                                 {option.label}
                             </Link>
                         </MenuItem>
@@ -254,7 +254,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                   {/* Odometer */}
                   <div className="flex items-center justify-between rounded-xl bg-gray-50/50 p-2 dark:bg-navy-900/30">
                     <div className="flex items-center gap-2 text-secondary dark:text-navy-400">
-                      <div className="grid h-7 w-7 place-items-center rounded-lg bg-white text-primary shadow-sm dark:bg-navy-800 dark:text-blue-400">
+                      <div className="grid h-7 w-7 place-items-center rounded-lg bg-white text-primary shadow-sm dark:bg-navy-800 dark:text-primary-light">
                           <Gauge className="h-4 w-4" />
                       </div>
                       <span className="text-sm font-medium">Aktuell</span>

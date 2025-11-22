@@ -176,7 +176,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               <ul className="space-y-2">
                   {maintenanceHistory.map((maintenance) => (
                       <li key={maintenance.id} className="flex items-center gap-3">
-                          <Wrench className="h-5 w-5 text-blue-500" />
+                          <Wrench className="h-5 w-5 text-primary" />
                           <div className="flex-1">
                               <p className="font-medium text-foreground dark:text-gray-200">{maintenance.description || maintenance.type}</p>
                               <p className="text-xs text-secondary dark:text-navy-400">
@@ -184,7 +184,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                                 {maintenance.cost && ` • ${currencyFormatter.format(maintenance.cost)}`}
                               </p>
                           </div>
-                          <span className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
                             {maintenance.type}
                           </span>
                       </li>
