@@ -19,12 +19,15 @@ export function Header({ user }: { user: User | null }) {
 
   return (
     <div className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4">
-      <header className="w-full max-w-7xl rounded-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90">
-        <div className="flex items-center justify-between p-3">
+      <header className="relative w-full max-w-7xl overflow-hidden rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90">
+        {/* Motorsport Stripe Accent */}
+        <div className="absolute left-0 right-0 top-0 h-2.5 bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]" />
+        
+        <div className="flex items-center justify-between p-3 pt-5">
           {/* Logo Section */}
           <div className="flex items-center gap-3 pl-2">
             <Link to="/" className="group flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 dark:bg-navy-700 dark:text-blue-400">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light">
                 <Bike className="h-6 w-6" />
               </div>
               <div className="flex flex-col">
@@ -69,7 +72,7 @@ export function Header({ user }: { user: User | null }) {
             {user ? (
               <>
                 <div className="hidden items-center gap-3 rounded-full bg-gray-50 py-1.5 pl-1.5 pr-4 dark:bg-navy-900/50 md:flex">
-                  <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary dark:bg-navy-700 dark:text-blue-400">
+                  <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary dark:bg-navy-700 dark:text-primary-light">
                     {user.username.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-foreground dark:text-gray-200">
@@ -122,7 +125,7 @@ export function Header({ user }: { user: User | null }) {
                     className={clsx(
                       "block rounded-lg px-4 py-3 text-base font-medium transition-colors",
                       isActive
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-blue-400"
+                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
                         : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
                     )}
                   >
@@ -134,7 +137,7 @@ export function Header({ user }: { user: User | null }) {
               {user && (
                  <div className="mt-4 border-t border-gray-100 pt-4 dark:border-navy-700">
                     <div className="mb-4 flex items-center gap-3 px-2">
-                        <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-base font-bold text-primary dark:bg-navy-700 dark:text-blue-400">
+                        <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-base font-bold text-primary dark:bg-navy-700 dark:text-primary-light">
                           {user.username.charAt(0).toUpperCase()}
                         </div>
                         <span className="font-medium text-foreground dark:text-gray-200">

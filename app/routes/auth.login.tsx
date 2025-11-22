@@ -111,7 +111,7 @@ export default function Login() {
 
           <div className="flex flex-col items-center gap-3 text-center">
 
-            <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-100 text-primary dark:bg-navy-700 dark:text-blue-400">
+            <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/20 text-primary dark:bg-navy-700 dark:text-primary-light">
 
               <Bike className="h-5 w-5" />
 
