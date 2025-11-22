@@ -21,7 +21,7 @@ export function Modal({ isOpen, onClose, title, children, description }: ModalPr
         />
 
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4">
+            <div className="flex min-h-full items-center justify-center p-0 sm:p-4">
                 <DialogPanel
                     transition
                     className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-gray-900/5 transition-all duration-300 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:bg-navy-800 dark:ring-white/10"
