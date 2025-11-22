@@ -12,7 +12,7 @@ import OpenIssuesCard from "~/components/open-issues-card";
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();
-  
+
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
   }
@@ -94,9 +94,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     },
     {
       label: "Status",
-      value: `${motorcycle.isArchived ? "Archiviert" : "Aktiv"}${
-        motorcycle.isVeteran ? " • Veteran" : ""
-      }`,
+      value: `${motorcycle.isArchived ? "Archiviert" : "Aktiv"}${motorcycle.isVeteran ? " • Veteran" : ""
+        }`,
     },
   ];
 
@@ -157,40 +156,40 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             )}
           </div>
         </div>
-        
+
         <OpenIssuesCard
           issues={openIssues}
           dateFormatter={dateFormatter}
           className="md:col-span-2"
         />
       </div>
-      
+
       {/* Maintenance History Card */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
-          </div>
-          {maintenanceHistory.length === 0 ? (
-              <p className="text-sm text-secondary dark:text-navy-400">Keine Wartungseinträge vorhanden.</p>
-          ) : (
-              <ul className="space-y-2">
-                  {maintenanceHistory.map((maintenance) => (
-                      <li key={maintenance.id} className="flex items-center gap-3">
-                          <Wrench className="h-5 w-5 text-primary" />
-                          <div className="flex-1">
-                              <p className="font-medium text-foreground dark:text-gray-200">{maintenance.description || maintenance.type}</p>
-                              <p className="text-xs text-secondary dark:text-navy-400">
-                                {maintenance.date ? dateFormatter.format(new Date(maintenance.date)) : "Datum unbekannt"} • {maintenance.odo} km
-                                {maintenance.cost && ` • ${currencyFormatter.format(maintenance.cost)}`}
-                              </p>
-                          </div>
-                          <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
-                            {maintenance.type}
-                          </span>
-                      </li>
-                  ))}
-              </ul>
-          )}
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
+        </div>
+        {maintenanceHistory.length === 0 ? (
+          <p className="text-sm text-secondary dark:text-navy-400">Keine Wartungseinträge vorhanden.</p>
+        ) : (
+          <ul className="space-y-2">
+            {maintenanceHistory.map((maintenance) => (
+              <li key={maintenance.id} className="flex items-center gap-3">
+                <Wrench className="h-5 w-5 text-primary" />
+                <div className="flex-1">
+                  <p className="font-medium text-foreground dark:text-gray-200">{maintenance.description || maintenance.type}</p>
+                  <p className="text-xs text-secondary dark:text-navy-400">
+                    {maintenance.date ? dateFormatter.format(new Date(maintenance.date)) : "Datum unbekannt"} • {maintenance.odo} km
+                    {maintenance.cost && ` • ${currencyFormatter.format(maintenance.cost)}`}
+                  </p>
+                </div>
+                <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
+                  {maintenance.type}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
