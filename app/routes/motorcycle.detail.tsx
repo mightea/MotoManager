@@ -2,14 +2,16 @@ import { useId, useState } from "react";
 import { data, Link } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { ArrowLeft, ChevronDown, CalendarDays } from "lucide-react";
+import { ArrowLeft, ChevronDown, CalendarDays, Plus } from "lucide-react";
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { MaintenanceList } from "~/components/maintenance-list";
+import { MaintenanceDialog } from "~/components/maintenance-dialog";
+import { createMaintenanceRecord, updateMaintenanceRecord } from "~/db/providers/motorcycles.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -64,9 +66,62 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   );
 }
 
+export async function action({ request }: Route.ActionArgs) {
+  const { user, headers } = await requireUser(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  
+  const parseString = (value: FormDataEntryValue | null | undefined) =>
+    typeof value === "string" && value.length > 0 ? value : undefined;
+  
+  const parseNumber = (value: FormDataEntryValue | null | undefined) => {
+    const parsed = Number.parseFloat(typeof value === "string" ? value : "");
+    return Number.isNaN(parsed) ? undefined : parsed;
+  };
+    
+  const dbClient = await getDb();
+
+  if (intent === "createMaintenance" || intent === "updateMaintenance") {
+      const motorcycleId = Number(formData.get("motorcycleId"));
+      
+      const recordData: any = {
+          motorcycleId,
+          type: formData.get("type") as MaintenanceType,
+          date: String(formData.get("date")),
+          odo: Number(formData.get("odo")),
+          cost: parseNumber(formData.get("cost")),
+          currency: parseString(formData.get("currency")),
+          description: parseString(formData.get("description")),
+          brand: parseString(formData.get("brand")),
+          model: parseString(formData.get("model")),
+          tirePosition: parseString(formData.get("tirePosition")) as TirePosition | undefined,
+          tireSize: parseString(formData.get("tireSize")),
+          dotCode: parseString(formData.get("dotCode")),
+          batteryType: parseString(formData.get("batteryType")) as BatteryType | undefined,
+          fluidType: parseString(formData.get("fluidType")) as FluidType | undefined,
+          viscosity: parseString(formData.get("viscosity")),
+          inspectionLocation: parseString(formData.get("inspectionLocation")),
+      };
+
+      if (intent === "createMaintenance") {
+           await createMaintenanceRecord(dbClient, recordData as NewMaintenanceRecord);
+      } else {
+           const maintenanceId = Number(formData.get("maintenanceId"));
+           await updateMaintenanceRecord(dbClient, maintenanceId, motorcycleId, recordData);
+      }
+
+      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
+
+  return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
+}
+
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const { motorcycle, openIssues, maintenanceHistory, nextInspection } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
+  const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
+
   const detailsPanelId = useId();
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
@@ -207,12 +262,34 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
+          <button
+            onClick={() => {
+                setSelectedMaintenance(null);
+                setMaintenanceDialogOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Eintrag
+          </button>
         </div>
         <MaintenanceList 
             records={maintenanceHistory} 
             currencyCode={motorcycle.currencyCode} 
+            onEdit={(record) => {
+                setSelectedMaintenance(record);
+                setMaintenanceDialogOpen(true);
+            }}
         />
       </div>
+
+      <MaintenanceDialog
+        isOpen={maintenanceDialogOpen}
+        onClose={() => setMaintenanceDialogOpen(false)}
+        motorcycleId={motorcycle.id}
+        initialData={selectedMaintenance}
+        currencyCode={motorcycle.currencyCode}
+      />
     </div>
   );
 }

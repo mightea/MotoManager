@@ -1,0 +1,269 @@
+import { useState } from "react";
+import { Form } from "react-router";
+import type { MaintenanceRecord, MaintenanceType } from "~/db/schema";
+import { 
+  Wrench, 
+  Battery, 
+  Disc, 
+  Droplet, 
+  Link, 
+  ClipboardCheck, 
+  Hammer, 
+  Layers, 
+  CircleDashed, 
+  ClipboardList 
+} from "lucide-react";
+
+interface MaintenanceFormProps {
+  motorcycleId: number;
+  initialData?: MaintenanceRecord | null;
+  currencyCode?: string | null;
+  onSubmit: () => void;
+  onCancel: () => void;
+}
+
+const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] = [
+  { value: "tire", label: "Reifenwechsel", icon: CircleDashed },
+  { value: "service", label: "Service", icon: ClipboardList },
+  { value: "repair", label: "Reparatur", icon: Hammer },
+  { value: "inspection", label: "MFK", icon: ClipboardCheck },
+  { value: "fluid", label: "Flüssigkeit", icon: Droplet },
+  { value: "chain", label: "Kette", icon: Link },
+  { value: "brakepad", label: "Bremsbeläge", icon: Layers },
+  { value: "brakerotor", label: "Bremsscheibe", icon: Disc },
+  { value: "battery", label: "Batterie", icon: Battery },
+  { value: "general", label: "Allgemein", icon: Wrench },
+];
+
+export function MaintenanceForm({ motorcycleId, initialData, currencyCode, onSubmit, onCancel }: MaintenanceFormProps) {
+  const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
+
+  const today = new Date().toISOString().split('T')[0];
+
+  return (
+    <Form method="post" className="space-y-6" onSubmit={onSubmit}>
+        <input type="hidden" name="intent" value={initialData ? "updateMaintenance" : "createMaintenance"} />
+        {initialData && <input type="hidden" name="maintenanceId" value={initialData.id} />}
+        <input type="hidden" name="motorcycleId" value={motorcycleId} />
+        
+        {/* Type Selection */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {maintenanceTypes.map((t) => {
+                const Icon = t.icon;
+                const isSelected = type === t.value;
+                return (
+                    <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setType(t.value)}
+                        className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2 text-xs font-medium transition-all ${
+                            isSelected 
+                                ? "border-primary bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light" 
+                                : "border-gray-200 bg-white text-secondary hover:bg-gray-50 dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700"
+                        }`}
+                    >
+                        <Icon className={`h-5 w-5 ${isSelected ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400"}`} />
+                        {t.label}
+                    </button>
+                )
+            })}
+        </div>
+        <input type="hidden" name="type" value={type} />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+            {/* Common Fields */}
+            <div className="space-y-1.5">
+                <label htmlFor="date" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Datum</label>
+                <input 
+                    type="date" 
+                    name="date" 
+                    id="date" 
+                    required 
+                    defaultValue={initialData?.date || today}
+                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]"
+                />
+            </div>
+            <div className="space-y-1.5">
+                <label htmlFor="odo" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kilometerstand</label>
+                <input 
+                    type="number" 
+                    name="odo" 
+                    id="odo" 
+                    required 
+                    defaultValue={initialData?.odo}
+                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                />
+            </div>
+             <div className="space-y-1.5">
+                <label htmlFor="cost" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kosten</label>
+                <div className="flex rounded-xl shadow-sm">
+                    <input 
+                        type="number" 
+                        name="cost" 
+                        id="cost" 
+                        step="0.05" 
+                        placeholder="0.00"
+                        defaultValue={initialData?.cost || ""}
+                        className="block w-full rounded-l-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                    />
+                    <select
+                        name="currency"
+                        className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
+                        defaultValue={initialData?.currency || currencyCode || "CHF"}
+                    >
+                        <option value="CHF">CHF</option>
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+            </div>
+             <div className="space-y-1.5">
+                <label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Beschreibung</label>
+                <input 
+                    type="text" 
+                    name="description" 
+                    id="description" 
+                    placeholder="Optionale Notizen..."
+                    defaultValue={initialData?.description || ""}
+                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                />
+            </div>
+
+            {/* Conditional Fields based on Type */}
+            
+            {/* Generic Brand/Model (Tire, Battery, Fluid, Chain, Brakes) */}
+            {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
+                <>
+                    <div className="space-y-1.5">
+                        <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
+                        <input 
+                            type="text" 
+                            name="brand" 
+                            id="brand" 
+                            placeholder={type === "tire" ? "z.B. Michelin" : "Hersteller..."}
+                            defaultValue={initialData?.brand || ""}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label htmlFor="model" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Modell / Typ</label>
+                        <input 
+                            type="text" 
+                            name="model" 
+                            id="model" 
+                            placeholder={type === "tire" ? "z.B. Road 6" : "Modellbezeichnung..."}
+                            defaultValue={initialData?.model || ""}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        />
+                    </div>
+                </>
+            )}
+
+            {/* Tire Specifics */}
+            {type === "tire" && (
+                <>
+                    <div className="space-y-1.5">
+                        <label htmlFor="tirePosition" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Position</label>
+                        <select 
+                            name="tirePosition" 
+                            id="tirePosition"
+                            defaultValue={initialData?.tirePosition || "rear"}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        >
+                            <option value="front">Vorne</option>
+                            <option value="rear">Hinten</option>
+                            <option value="sidecar">Beiwagen</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label htmlFor="tireSize" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Grösse</label>
+                        <input 
+                            type="text" 
+                            name="tireSize" 
+                            id="tireSize" 
+                            placeholder="z.B. 180/55 ZR 17"
+                            defaultValue={initialData?.tireSize || ""}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        />
+                    </div>
+                     <div className="space-y-1.5">
+                        <label htmlFor="dotCode" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">DOT Code</label>
+                        <input 
+                            type="text" 
+                            name="dotCode" 
+                            id="dotCode" 
+                            placeholder="z.B. 4223"
+                            defaultValue={initialData?.dotCode || ""}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        />
+                    </div>
+                </>
+            )}
+
+            {/* Fluid Specifics */}
+            {type === "fluid" && (
+                 <>
+                    <div className="space-y-1.5">
+                        <label htmlFor="fluidType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Art</label>
+                         <select 
+                            name="fluidType" 
+                            id="fluidType"
+                            defaultValue={initialData?.fluidType || "engineoil"}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        >
+                            <option value="engineoil">Motoröl</option>
+                            <option value="gearboxoil">Getriebeöl</option>
+                            <option value="finaldriveoil">Kardanöl</option>
+                            <option value="forkoil">Gabelöl</option>
+                            <option value="breakfluid">Bremsflüssigkeit</option>
+                            <option value="coolant">Kühlflüssigkeit</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label htmlFor="viscosity" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Viskosität</label>
+                        <input 
+                            type="text" 
+                            name="viscosity" 
+                            id="viscosity" 
+                            placeholder="z.B. 10W-40"
+                            defaultValue={initialData?.viscosity || ""}
+                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        />
+                    </div>
+                </>
+            )}
+            
+            {/* Inspection Specifics */}
+            {type === "inspection" && (
+                <div className="space-y-1.5 sm:col-span-2">
+                    <label htmlFor="inspectionLocation" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Prüfstelle</label>
+                    <input 
+                        type="text" 
+                        name="inspectionLocation" 
+                        id="inspectionLocation" 
+                        placeholder="z.B. STVA Zürich"
+                        defaultValue={initialData?.inspectionLocation || ""}
+                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                    />
+                </div>
+            )}
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
+            >
+                Abbrechen
+            </button>
+            <button 
+                type="submit" 
+                className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
+            >
+                {initialData ? "Aktualisieren" : "Erstellen"}
+            </button>
+        </div>
+    </Form>
+  );
+}
