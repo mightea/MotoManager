@@ -5,10 +5,11 @@ import { getDb } from "~/db";
 import { issues, maintenanceRecords, motorcycles } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { ArrowLeft, ChevronDown, Wrench, CalendarDays } from "lucide-react";
+import { ArrowLeft, ChevronDown, CalendarDays } from "lucide-react";
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo } from "~/utils/inspection";
+import { MaintenanceList } from "~/components/maintenance-list";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -207,27 +208,10 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
         </div>
-        {maintenanceHistory.length === 0 ? (
-          <p className="text-sm text-secondary dark:text-navy-400">Keine Wartungseinträge vorhanden.</p>
-        ) : (
-          <ul className="space-y-2">
-            {maintenanceHistory.map((maintenance) => (
-              <li key={maintenance.id} className="flex items-center gap-3">
-                <Wrench className="h-5 w-5 text-primary" />
-                <div className="flex-1">
-                  <p className="font-medium text-foreground dark:text-gray-200">{maintenance.description || maintenance.type}</p>
-                  <p className="text-xs text-secondary dark:text-navy-400">
-                    {maintenance.date ? dateFormatter.format(new Date(maintenance.date)) : "Datum unbekannt"} • {maintenance.odo} km
-                    {maintenance.cost && ` • ${currencyFormatter.format(maintenance.cost)}`}
-                  </p>
-                </div>
-                <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
-                  {maintenance.type}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <MaintenanceList 
+            records={maintenanceHistory} 
+            currencyCode={motorcycle.currencyCode} 
+        />
       </div>
     </div>
   );
