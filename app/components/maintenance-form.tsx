@@ -232,6 +232,25 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, onSub
                     </div>
                 </>
             )}
+
+            {/* Battery Specifics */}
+            {type === "battery" && (
+                <div className="space-y-1.5">
+                    <label htmlFor="batteryType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Batterietyp</label>
+                    <select 
+                        name="batteryType" 
+                        id="batteryType"
+                        defaultValue={initialData?.batteryType || "lead-acid"}
+                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                    >
+                        <option value="lead-acid">Blei-Säure</option>
+                        <option value="gel">Gel</option>
+                        <option value="agm">AGM</option>
+                        <option value="lithium-ion">Lithium-Ionen</option>
+                        <option value="other">Andere</option>
+                    </select>
+                </div>
+            )}
             
             {/* Inspection Specifics */}
             {type === "inspection" && (
