@@ -5,9 +5,10 @@ import { getDb } from "~/db";
 import { issues, maintenanceRecords, motorcycles } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { ArrowLeft, ChevronDown, Wrench } from "lucide-react";
+import { ArrowLeft, ChevronDown, Wrench, CalendarDays } from "lucide-react";
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
+import { getNextInspectionInfo } from "~/utils/inspection";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -44,14 +45,26 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     orderBy: [desc(maintenanceRecords.date)],
   });
 
+  const lastInspection = maintenanceHistory
+    .filter((entry) => entry.type === "inspection" && entry.date)
+    .map((entry) => entry.date as string)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+    .at(0) ?? null;
+
+  const nextInspection = getNextInspectionInfo({
+    firstRegistration: motorcycle.firstRegistration,
+    lastInspection,
+    isVeteran: motorcycle.isVeteran ?? false,
+  });
+
   return data(
-    { motorcycle, user, openIssues, maintenanceHistory },
+    { motorcycle, user, openIssues, maintenanceHistory, nextInspection },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, openIssues, maintenanceHistory } = loaderData;
+  const { motorcycle, openIssues, maintenanceHistory, nextInspection } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const detailsPanelId = useId();
 
@@ -104,21 +117,46 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   );
 
   return (
-    <div className="container mx-auto max-w-5xl p-6 space-y-8 pb-24">
-      <div className="flex items-center gap-4">
-        <Link
-          to="/"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-gray-50 dark:bg-navy-800 dark:hover:bg-navy-700"
-        >
-          <ArrowLeft className="h-5 w-5 text-secondary dark:text-navy-400" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground dark:text-white">
-            {motorcycle.make} {motorcycle.model}
-          </h1>
-          <p className="text-sm text-secondary dark:text-navy-400">
-            {motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"} • {motorcycle.vin}
-          </p>
+    <div className="container mx-auto max-w-5xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
+      <div className="sticky top-0 z-10 -mx-4 bg-gray-50/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none dark:md:bg-transparent">
+        <div className="flex items-start gap-4">
+          <Link
+            to="/"
+            className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm transition-all hover:bg-primary hover:text-white dark:bg-navy-800 dark:hover:bg-primary-dark"
+          >
+            <ArrowLeft className="h-5 w-5 text-secondary group-hover:text-white dark:text-navy-400" />
+          </Link>
+          <div className="flex-1 space-y-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="text-2xl font-bold text-foreground dark:text-white">
+                {motorcycle.make} {motorcycle.model}
+              </h1>
+              {motorcycle.isVeteran && (
+                <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400">
+                  Veteran
+                </span>
+              )}
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-secondary dark:text-navy-400">
+              <span>{motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"}</span>
+              <span className="hidden sm:inline">•</span>
+              <span>{motorcycle.vin}</span>
+              
+              {nextInspection && (
+                <>
+                  <span className="hidden sm:inline">•</span>
+                  <div className={clsx(
+                    "flex items-center gap-1.5 font-medium",
+                    nextInspection.isOverdue ? "text-red-600 dark:text-red-400" : "text-secondary dark:text-navy-400"
+                  )}>
+                    <CalendarDays className="h-4 w-4" />
+                    <span>MFK: {nextInspection.relativeLabel}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
