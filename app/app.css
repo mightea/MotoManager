@@ -40,3 +40,13 @@
   --color-navy-900: #120e1d;
   --color-navy-950: #0a0711;
 }
+
+/* Prevent iOS Safari from zooming in on form fields */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+  font-size: 16px;
+}
