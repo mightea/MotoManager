@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 import { data, Link, useRevalidator } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { ArrowLeft, ChevronDown, CalendarDays, Plus } from "lucide-react";
@@ -12,7 +12,7 @@ import { getNextInspectionInfo } from "~/utils/inspection";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
-import { createIssue, createMaintenanceRecord, deleteIssue, updateIssue, updateMaintenanceRecord } from "~/db/providers/motorcycles.server";
+import { createIssue, createMaintenanceRecord, deleteIssue, updateIssue, updateMaintenanceRecord, createLocation } from "~/db/providers/motorcycles.server";
 import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 
@@ -80,8 +80,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const insights = getMaintenanceInsights(maintenanceHistory, lastKnownOdo ?? 0);
 
+  const userLocations = await db.query.locations.findMany({
+      where: eq(locations.userId, user.id),
+  });
+
+  const currentLocationId = maintenanceHistory
+      .filter(r => r.type === "location")
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId;
+
+  const currentLocationName = userLocations.find(l => l.id === currentLocationId)?.name ?? null;
+
   return data(
-    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights },
+    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
@@ -178,9 +188,24 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "createMaintenance" || intent === "updateMaintenance") {
       const motorcycleId = Number(formData.get("motorcycleId"));
       
+      const type = formData.get("type") as MaintenanceType;
+      let locationId: number | undefined = Number(formData.get("locationId"));
+      if (Number.isNaN(locationId)) locationId = undefined;
+      const newLocationName = parseString(formData.get("newLocationName"));
+
+      if (type === "location" && newLocationName) {
+          const newLoc = await createLocation(dbClient, {
+              name: newLocationName,
+              userId: user.id
+          });
+          if (newLoc) {
+              locationId = newLoc.id;
+          }
+      }
+
       const recordData: any = {
           motorcycleId,
-          type: formData.get("type") as MaintenanceType,
+          type,
           date: String(formData.get("date")),
           odo: Number(formData.get("odo")),
           cost: parseNumber(formData.get("cost")),
@@ -195,6 +220,7 @@ export async function action({ request }: Route.ActionArgs) {
           fluidType: parseString(formData.get("fluidType")) as FluidType | undefined,
           viscosity: parseString(formData.get("viscosity")),
           inspectionLocation: parseString(formData.get("inspectionLocation")),
+          locationId: locationId,
       };
 
       if (intent === "createMaintenance") {
@@ -211,7 +237,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights } = loaderData;
+  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
@@ -318,6 +344,13 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   </div>
                 </>
               )}
+
+              {currentLocationName && (
+                <>
+                    <span className="hidden sm:inline">•</span>
+                    <span>{currentLocationName}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -391,6 +424,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         <MaintenanceList 
             records={maintenanceHistory} 
             currencyCode={motorcycle.currencyCode} 
+            userLocations={userLocations}
             onEdit={(record) => {
                 setSelectedMaintenance(record);
                 setMaintenanceDialogOpen(true);
@@ -409,6 +443,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         initialData={selectedMaintenance}
         currencyCode={motorcycle.currencyCode}
         defaultOdo={lastKnownOdo}
+        userLocations={userLocations}
       />
       <IssueDialog
         isOpen={issueDialogOpen}

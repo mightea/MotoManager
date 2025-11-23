@@ -73,7 +73,8 @@ export type MaintenanceType =
   | "general"
   | "repair"
   | "service"
-  | "inspection";
+  | "inspection"
+  | "location";
 
 export type FluidType =
   | "engineoil"
@@ -119,6 +120,9 @@ export const maintenanceRecords = sqliteTable("maintenance_records", {
 
   // Inspection-specific fields
   inspectionLocation: text("inspection_location"), // optional, e.g. "TCS Zürich"
+
+  // Location-specific fields
+  locationId: int("location_id").references(() => locations.id),
 });
 
 export const issues = sqliteTable("issues", {

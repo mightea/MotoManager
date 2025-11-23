@@ -1,19 +1,16 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/libsql/node";
+import { migrate } from "drizzle-orm/libsql/migrator";
 import "dotenv/config";
 
 async function main() {
-  const sqlite = new Database(process.env.DB_FILE_NAME!);
-  const db = drizzle(sqlite);
+  const databaseUrl = process.env.DB_FILE_NAME ?? "file:db.sqlite";
+  const db = drizzle(databaseUrl);
 
   console.log("Running migrations...");
 
-  migrate(db, { migrationsFolder: "app/db/migrations" });
+  await migrate(db, { migrationsFolder: "app/db/migrations" });
 
   console.log("Migrations finished!");
-
-  sqlite.close();
 }
 
 main().catch((e) => {

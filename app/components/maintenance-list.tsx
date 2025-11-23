@@ -10,15 +10,17 @@ import {
   CircleDashed,
   ClipboardList,
   ChevronDown,
-  Edit2
+  Edit2,
+  MapPin
 } from "lucide-react";
 import { useState } from "react";
-import type { MaintenanceRecord, MaintenanceType } from "~/db/schema";
+import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
 import clsx from "clsx";
 
 interface MaintenanceListProps {
   records: MaintenanceRecord[];
   currencyCode?: string | null;
+  userLocations?: Location[];
   onEdit: (record: MaintenanceRecord) => void;
 }
 
@@ -45,6 +47,7 @@ const maintenanceTypeLabels: Record<MaintenanceType, string> = {
   repair: "Reparatur",
   service: "Service",
   inspection: "MFK",
+  location: "Standort",
 };
 
 const getIconForType = (type: MaintenanceType) => {
@@ -58,6 +61,7 @@ const getIconForType = (type: MaintenanceType) => {
     case "repair": return Hammer;
     case "service": return ClipboardList;
     case "inspection": return ClipboardCheck;
+    case "location": return MapPin;
     case "general": default: return Wrench;
   }
 };
@@ -78,11 +82,17 @@ const tirePositionLabels: Record<string, string> = {
   sidecar: "Beiwagen",
 };
 
-function generateDescription(record: MaintenanceRecord): string | null {
+function generateDescription(record: MaintenanceRecord, userLocations?: Location[]): string | null {
   const parts: string[] = [];
 
+  // Location
+  if (record.type === "location" && record.locationId && userLocations) {
+    const loc = userLocations.find(l => l.id === record.locationId);
+    if (loc) parts.push(loc.name);
+  }
+
   // Tires
-  if (record.type === "tire") {
+  else if (record.type === "tire") {
     const brandModel = [record.brand, record.model].filter(Boolean).join(" ");
     if (brandModel) parts.push(brandModel);
 
@@ -121,7 +131,7 @@ function generateDescription(record: MaintenanceRecord): string | null {
   return parts.length > 0 ? parts.join(" ") : null;
 }
 
-function groupMaintenanceRecords(records: MaintenanceRecord[]): GroupedMaintenanceRecord[] {
+function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: Location[]): GroupedMaintenanceRecord[] {
   const groups = new Map<string, GroupedMaintenanceRecord>();
 
   for (const record of records) {
@@ -149,9 +159,12 @@ function groupMaintenanceRecords(records: MaintenanceRecord[]): GroupedMaintenan
       group.currency = record.currency;
     }
 
-    if (record.description) {
-      if (!group.descriptions.includes(record.description)) {
-        group.descriptions.push(record.description);
+    const desc = generateDescription(record, userLocations);
+    const description = record.description || desc; // Use explicit description or generated
+
+    if (description) {
+      if (!group.descriptions.includes(description)) {
+        group.descriptions.push(description);
       }
     }
 
@@ -163,7 +176,7 @@ function groupMaintenanceRecords(records: MaintenanceRecord[]): GroupedMaintenan
   });
 }
 
-export function MaintenanceList({ records, currencyCode, onEdit }: MaintenanceListProps) {
+export function MaintenanceList({ records, currencyCode, userLocations, onEdit }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
@@ -174,7 +187,7 @@ export function MaintenanceList({ records, currencyCode, onEdit }: MaintenanceLi
     maximumFractionDigits: 0,
   });
 
-  const groupedRecords = groupMaintenanceRecords(records);
+  const groupedRecords = groupMaintenanceRecords(records, userLocations);
 
   const toggleExpand = (id: string) => {
     setExpandedGroupId(expandedGroupId === id ? null : id);
@@ -205,15 +218,7 @@ export function MaintenanceList({ records, currencyCode, onEdit }: MaintenanceLi
         if (group.descriptions.length > 0) {
           description = group.descriptions.join(", ");
         } else {
-          const generatedParts = group.originalRecords
-            .map(generateDescription)
-            .filter((s): s is string => s !== null);
-
-          if (generatedParts.length > 0) {
-            description = generatedParts.join(", ");
-          } else {
-            description = maintenanceTypeLabels[group.type] || group.type;
-          }
+           description = maintenanceTypeLabels[group.type] || group.type;
         }
 
         return (
@@ -285,6 +290,9 @@ export function MaintenanceList({ records, currencyCode, onEdit }: MaintenanceLi
                     ] : []),
                     ...(record.type === "inspection" ? [
                       { label: "Prüfstelle", value: record.inspectionLocation },
+                    ] : []),
+                    ...(record.type === "location" ? [
+                      { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name },
                     ] : []),
 
                     { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? recordCurrencyFormatter.format(record.cost) : null },
