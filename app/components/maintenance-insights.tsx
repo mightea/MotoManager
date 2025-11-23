@@ -1,0 +1,101 @@
+import clsx from "clsx";
+import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
+import type { MaintenanceInsight } from "~/utils/maintenance-intervals";
+
+type MaintenanceInsightsCardProps = {
+  insights: MaintenanceInsight[];
+  className?: string;
+};
+
+export function MaintenanceInsightsCard({
+  insights,
+  className,
+}: MaintenanceInsightsCardProps) {
+  const dateFormatter = new Intl.DateTimeFormat("de-CH", {
+    dateStyle: "medium",
+  });
+
+  const getStatusIcon = (status: MaintenanceInsight["status"]) => {
+    switch (status) {
+      case "ok":
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      case "due":
+        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+      case "overdue":
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      default:
+        return <Info className="h-5 w-5 text-gray-400" />;
+    }
+  };
+
+  const getStatusText = (insight: MaintenanceInsight) => {
+    if (!insight.nextDate) return "";
+
+    const dateStr = dateFormatter.format(new Date(insight.nextDate));
+
+    if (insight.status === "ok") {
+      return `Fällig am ${dateStr}`;
+    }
+    if (insight.status === "due") {
+      return `Bald fällig (${dateStr})`;
+    }
+    if (insight.status === "overdue") {
+      return `Überfällig seit ${dateStr}`;
+    }
+    return "";
+  };
+
+  // Sort: overdue first, then due, then ok
+  const sortedInsights = [...insights].sort((a, b) => {
+    const priority = { overdue: 0, due: 1, ok: 2, unknown: 3 };
+    return priority[a.status] - priority[b.status];
+  });
+
+  return (
+    <div
+      className={clsx(
+        "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800",
+        className,
+      )}
+    >
+      <h2 className="mb-4 text-base font-semibold text-foreground dark:text-white">
+        Wartungsintervalle
+      </h2>
+
+      {sortedInsights.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-gray-200 px-4 py-6 text-center text-secondary dark:border-navy-600 dark:text-navy-300">
+          <p className="text-sm font-medium">
+            Keine wartungsrelevanten Daten gefunden.
+          </p>
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {sortedInsights.map((insight) => (
+            <li key={insight.key} className="flex items-start gap-3">
+              <div className="mt-0.5 shrink-0">
+                {getStatusIcon(insight.status)}
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-foreground dark:text-white">
+                  {insight.label}
+                </p>
+                <p
+                  className={clsx("text-sm", {
+                    "text-red-600 dark:text-red-400":
+                      insight.status === "overdue",
+                    "text-amber-600 dark:text-amber-400":
+                      insight.status === "due",
+                    "text-secondary dark:text-navy-400":
+                      insight.status === "ok",
+                  })}
+                >
+                  {getStatusText(insight)}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
