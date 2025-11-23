@@ -13,6 +13,8 @@ import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
 import { createIssue, createMaintenanceRecord, deleteIssue, updateIssue, updateMaintenanceRecord } from "~/db/providers/motorcycles.server";
+import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
+import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -76,8 +78,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     isVeteran: motorcycle.isVeteran ?? false,
   });
 
+  const insights = getMaintenanceInsights(maintenanceHistory);
+
   return data(
-    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo },
+    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
@@ -207,7 +211,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo } = loaderData;
+  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
@@ -319,7 +323,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-3 items-start">
+        <div className="space-y-5">
         {/* Basic Info Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
           <button
@@ -352,6 +357,9 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               </p>
             )}
           </div>
+        </div>
+
+        <MaintenanceInsightsCard insights={insights} />
         </div>
 
         <OpenIssuesCard
