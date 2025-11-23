@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
-import type { MaintenanceInsight } from "~/utils/maintenance-intervals";
+import type { MaintenanceInsight, InsightCategory } from "~/utils/maintenance-intervals";
 
 type MaintenanceInsightsCardProps = {
   insights: MaintenanceInsight[];
@@ -18,13 +18,13 @@ export function MaintenanceInsightsCard({
   const getStatusIcon = (status: MaintenanceInsight["status"]) => {
     switch (status) {
       case "ok":
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case "due":
-        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       case "overdue":
-        return <XCircle className="h-5 w-5 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Info className="h-5 w-5 text-gray-400" />;
+        return <Info className="h-4 w-4 text-gray-400" />;
     }
   };
 
@@ -45,11 +45,23 @@ export function MaintenanceInsightsCard({
     return "";
   };
 
-  // Sort: overdue first, then due, then ok
-  const sortedInsights = [...insights].sort((a, b) => {
-    const priority = { overdue: 0, due: 1, ok: 2, unknown: 3 };
-    return priority[a.status] - priority[b.status];
-  });
+  // Sort within groups: overdue first, then due, then ok
+  const sortInsights = (items: MaintenanceInsight[]) => {
+      const priority = { overdue: 0, due: 1, ok: 2, unknown: 3 };
+      return [...items].sort((a, b) => priority[a.status] - priority[b.status]);
+  };
+
+  // Group by category
+  const groupedInsights = insights.reduce<Record<InsightCategory, MaintenanceInsight[]>>((acc, insight) => {
+      if (!acc[insight.category]) {
+          acc[insight.category] = [];
+      }
+      acc[insight.category].push(insight);
+      return acc;
+  }, {} as Record<InsightCategory, MaintenanceInsight[]>);
+
+  // Define display order for categories
+  const categoryOrder: InsightCategory[] = ["Reifen", "Batterie", "Flüssigkeiten"];
 
   return (
     <div
@@ -62,39 +74,55 @@ export function MaintenanceInsightsCard({
         Wartungsintervalle
       </h2>
 
-      {sortedInsights.length === 0 ? (
+      {Object.keys(groupedInsights).length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-200 px-4 py-6 text-center text-secondary dark:border-navy-600 dark:text-navy-300">
           <p className="text-sm font-medium">
             Keine wartungsrelevanten Daten gefunden.
           </p>
         </div>
       ) : (
-        <ul className="space-y-3">
-          {sortedInsights.map((insight) => (
-            <li key={insight.key} className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0">
-                {getStatusIcon(insight.status)}
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-foreground dark:text-white">
-                  {insight.label}
-                </p>
-                <p
-                  className={clsx("text-sm", {
-                    "text-red-600 dark:text-red-400":
-                      insight.status === "overdue",
-                    "text-amber-600 dark:text-amber-400":
-                      insight.status === "due",
-                    "text-secondary dark:text-navy-400":
-                      insight.status === "ok",
-                  })}
-                >
-                  {getStatusText(insight)}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-5">
+            {categoryOrder.map(category => {
+                const items = groupedInsights[category];
+                if (!items || items.length === 0) return null;
+
+                const sortedItems = sortInsights(items);
+
+                return (
+                    <div key={category}>
+                        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-300/70">
+                            {category}
+                        </h3>
+                        <ul className="space-y-3">
+                            {sortedItems.map((insight) => (
+                                <li key={insight.key} className="flex items-start gap-3">
+                                    <div className="mt-0.5 shrink-0">
+                                        {getStatusIcon(insight.status)}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-medium text-sm text-foreground dark:text-white">
+                                            {insight.label}
+                                        </p>
+                                        <p
+                                            className={clsx("text-xs", {
+                                                "text-red-600 dark:text-red-400":
+                                                    insight.status === "overdue",
+                                                "text-amber-600 dark:text-amber-400":
+                                                    insight.status === "due",
+                                                "text-secondary dark:text-navy-400":
+                                                    insight.status === "ok",
+                                            })}
+                                        >
+                                            {getStatusText(insight)}
+                                        </p>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                );
+            })}
+        </div>
       )}
     </div>
   );
