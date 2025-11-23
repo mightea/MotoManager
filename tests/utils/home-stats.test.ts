@@ -70,7 +70,8 @@ describe("buildDashboardData", () => {
         fluidType: null,
         viscosity: null,
         oilType: null,
-        inspectionLocation: null
+        inspectionLocation: null,
+        locationId: null
       }
     ];
 
@@ -111,7 +112,8 @@ describe("buildDashboardData", () => {
         fluidType: null,
         viscosity: null,
         oilType: null,
-        inspectionLocation: null
+        inspectionLocation: null,
+        locationId: null
       },
       {
         id: 2,
@@ -131,7 +133,8 @@ describe("buildDashboardData", () => {
         fluidType: null,
         viscosity: null,
         oilType: null,
-        inspectionLocation: null
+        inspectionLocation: null,
+        locationId: null
       }
     ];
 

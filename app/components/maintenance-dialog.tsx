@@ -1,6 +1,6 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm } from "~/components/maintenance-form";
-import type { MaintenanceRecord } from "~/db/schema";
+import type { MaintenanceRecord, Location } from "~/db/schema";
 
 interface MaintenanceDialogProps {
   isOpen: boolean;
@@ -9,9 +9,10 @@ interface MaintenanceDialogProps {
   initialData?: MaintenanceRecord | null;
   currencyCode?: string | null;
   defaultOdo?: number | null;
+  userLocations?: Location[];
 }
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo, userLocations }: MaintenanceDialogProps) {
   return (
     <Modal
       isOpen={isOpen}
@@ -24,6 +25,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         initialData={initialData} 
         currencyCode={currencyCode}
         defaultOdo={defaultOdo}
+        userLocations={userLocations}
         onSubmit={onClose} 
         onCancel={onClose} 
       />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Form } from "react-router";
-import type { MaintenanceRecord, MaintenanceType } from "~/db/schema";
+import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
 import { 
   Wrench, 
   Battery, 
@@ -11,7 +11,8 @@ import {
   Hammer, 
   Layers, 
   CircleDashed, 
-  ClipboardList 
+  ClipboardList,
+  MapPin
 } from "lucide-react";
 
 interface MaintenanceFormProps {
@@ -19,6 +20,7 @@ interface MaintenanceFormProps {
   initialData?: MaintenanceRecord | null;
   currencyCode?: string | null;
   defaultOdo?: number | null;
+  userLocations?: Location[];
   onSubmit: () => void;
   onCancel: () => void;
 }
@@ -33,11 +35,13 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
   { value: "brakepad", label: "Bremsbeläge", icon: Layers },
   { value: "brakerotor", label: "Bremsscheibe", icon: Disc },
   { value: "battery", label: "Batterie", icon: Battery },
+  { value: "location", label: "Standort", icon: MapPin },
   { value: "general", label: "Allgemein", icon: Wrench },
 ];
 
-export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, onSubmit, onCancel }: MaintenanceFormProps) {
+export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, onSubmit, onCancel }: MaintenanceFormProps) {
   const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
+  const [isNewLocation, setIsNewLocation] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -89,6 +93,8 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
             </div>
+            
+            {type !== "location" && (
              <div className="space-y-1.5">
                 <label htmlFor="cost" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kosten</label>
                 <div className="flex rounded-xl shadow-sm">
@@ -112,6 +118,8 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                     </select>
                 </div>
             </div>
+            )}
+
              <div className="space-y-1.5">
                 <label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Beschreibung</label>
                 <input 
@@ -125,6 +133,57 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
             </div>
 
             {/* Conditional Fields based on Type */}
+
+            {/* Location Specifics */}
+            {type === "location" && (
+                <div className="space-y-1.5 sm:col-span-2">
+                    <label htmlFor="location" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Standort</label>
+                    <div className="space-y-2">
+                        {!isNewLocation && userLocations && userLocations.length > 0 ? (
+                            <div className="flex gap-2">
+                                <select
+                                    name="locationId"
+                                    id="locationId"
+                                    defaultValue={initialData?.locationId || ""}
+                                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                >
+                                    <option value="" disabled>Wähle einen Standort...</option>
+                                    {userLocations.map(loc => (
+                                        <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                    ))}
+                                </select>
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsNewLocation(true)}
+                                    className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
+                                >
+                                    Neu
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    name="newLocationName" 
+                                    id="newLocationName" 
+                                    placeholder="Neuer Standort Name (z.B. Garage)"
+                                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                    autoFocus
+                                />
+                                {(userLocations && userLocations.length > 0) && (
+                                    <button 
+                                        type="button"
+                                        onClick={() => setIsNewLocation(false)}
+                                        className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
+                                    >
+                                        Abbrechen
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
             
             {/* Generic Brand/Model */}
             {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor", "general", "repair"].includes(type)) && (

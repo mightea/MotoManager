@@ -3,6 +3,7 @@ import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import {
   issues,
   locationRecords,
+  locations,
   maintenanceRecords,
   motorcycles,
   torqueSpecs,
@@ -11,6 +12,7 @@ import {
   type EditorMotorcycle,
   type NewCurrentLocationRecord,
   type NewIssue,
+  type NewLocation,
   type NewMaintenanceRecord,
   type NewMotorcycle,
   type NewTorqueSpecification,
@@ -49,6 +51,11 @@ export async function createLocationRecord(
     .insert(locationRecords)
     .values(values)
     .returning();
+  return record ?? null;
+}
+
+export async function createLocation(db: Database, values: NewLocation) {
+  const [record] = await db.insert(locations).values(values).returning();
   return record ?? null;
 }
 
