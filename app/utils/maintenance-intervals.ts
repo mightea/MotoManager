@@ -13,8 +13,11 @@ export const MAINTENANCE_INTERVALS = {
   },
 } as const;
 
+export type InsightCategory = "Reifen" | "Batterie" | "Flüssigkeiten";
+
 export type MaintenanceInsight = {
   key: string;
+  category: InsightCategory;
   label: string;
   status: "ok" | "due" | "overdue" | "unknown";
   lastDate?: string;
@@ -59,6 +62,7 @@ export const getMaintenanceInsights = (
   // Helper to create insight
   const createInsight = (
     key: string,
+    category: InsightCategory,
     label: string,
     lastRecord?: MaintenanceRecord,
     intervalYears?: number
@@ -77,6 +81,7 @@ export const getMaintenanceInsights = (
 
     insights.push({
       key,
+      category,
       label,
       status: getStatus(nextDate),
       lastDate: lastRecord.date,
@@ -87,10 +92,10 @@ export const getMaintenanceInsights = (
 
   // 1. Tires
   const latestFrontTire = findLatest(r => r.type === 'tire' && r.tirePosition === 'front');
-  createInsight("tire-front", "Vorderreifen", latestFrontTire, MAINTENANCE_INTERVALS.tire);
+  createInsight("tire-front", "Reifen", "Vorderreifen", latestFrontTire, MAINTENANCE_INTERVALS.tire);
 
   const latestRearTire = findLatest(r => r.type === 'tire' && r.tirePosition === 'rear');
-  createInsight("tire-rear", "Hinterreifen", latestRearTire, MAINTENANCE_INTERVALS.tire);
+  createInsight("tire-rear", "Reifen", "Hinterreifen", latestRearTire, MAINTENANCE_INTERVALS.tire);
 
   // 2. Battery
   const latestBattery = findLatest(r => r.type === 'battery');
@@ -98,7 +103,7 @@ export const getMaintenanceInsights = (
       const interval = latestBattery.batteryType === 'lithium-ion' 
         ? MAINTENANCE_INTERVALS.battery["lithium-ion"] 
         : MAINTENANCE_INTERVALS.battery.default;
-      createInsight("battery", "Batterie", latestBattery, interval);
+      createInsight("battery", "Batterie", "Batterie", latestBattery, interval);
   }
 
   // 3. Fluids
@@ -110,7 +115,7 @@ export const getMaintenanceInsights = (
 
   fluidsToCheck.forEach(fluid => {
       const record = findLatest(r => r.type === 'fluid' && r.fluidType === fluid.type);
-      createInsight(`fluid-${fluid.type}`, fluid.label, record, MAINTENANCE_INTERVALS.fluid[fluid.type]);
+      createInsight(`fluid-${fluid.type}`, "Flüssigkeiten", fluid.label, record, MAINTENANCE_INTERVALS.fluid[fluid.type]);
   });
 
   return insights;
