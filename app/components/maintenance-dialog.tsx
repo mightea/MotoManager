@@ -8,9 +8,10 @@ interface MaintenanceDialogProps {
   motorcycleId: number;
   initialData?: MaintenanceRecord | null;
   currencyCode?: string | null;
+  defaultOdo?: number | null;
 }
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo }: MaintenanceDialogProps) {
   return (
     <Modal
       isOpen={isOpen}
@@ -22,6 +23,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         motorcycleId={motorcycleId} 
         initialData={initialData} 
         currencyCode={currencyCode}
+        defaultOdo={defaultOdo}
         onSubmit={onClose} 
         onCancel={onClose} 
       />

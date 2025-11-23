@@ -1,8 +1,8 @@
 import { useId, useState } from "react";
-import { data, Link } from "react-router";
+import { data, Link, useRevalidator } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { ArrowLeft, ChevronDown, CalendarDays, Plus } from "lucide-react";
@@ -11,7 +11,8 @@ import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
-import { createMaintenanceRecord, updateMaintenanceRecord } from "~/db/providers/motorcycles.server";
+import { IssueDialog } from "~/components/issue-dialog";
+import { createIssue, createMaintenanceRecord, deleteIssue, updateIssue, updateMaintenanceRecord } from "~/db/providers/motorcycles.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -48,6 +49,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     orderBy: [desc(maintenanceRecords.date)],
   });
 
+  const lastKnownOdo = [
+    motorcycle.manualOdo ?? undefined,
+    motorcycle.initialOdo ?? undefined,
+    ...maintenanceHistory.map((record) => record.odo),
+    ...openIssues.map((issue) => issue.odo),
+  ].reduce<number | null>((max, value) => {
+    if (typeof value !== "number" || Number.isNaN(value)) {
+      return max;
+    }
+    if (max === null) {
+      return value;
+    }
+    return value > max ? value : max;
+  }, null);
+
   const lastInspection = maintenanceHistory
     .filter((entry) => entry.type === "inspection" && entry.date)
     .map((entry) => entry.date as string)
@@ -61,7 +77,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   });
 
   return data(
-    { motorcycle, user, openIssues, maintenanceHistory, nextInspection },
+    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
@@ -78,8 +94,82 @@ export async function action({ request }: Route.ActionArgs) {
     const parsed = Number.parseFloat(typeof value === "string" ? value : "");
     return Number.isNaN(parsed) ? undefined : parsed;
   };
-    
+  const isValidPriority = (value: FormDataEntryValue | null): NewIssue["priority"] => {
+    if (value === "high" || value === "medium" || value === "low") {
+      return value;
+    }
+    return "medium";
+  };
+  const isValidStatus = (value: FormDataEntryValue | null): Issue["status"] => {
+    if (value === "new" || value === "in_progress" || value === "done") {
+      return value;
+    }
+    return "new";
+  };
+
   const dbClient = await getDb();
+
+  if (intent === "createIssue") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const odo = Number(formData.get("odo"));
+    const description = parseString(formData.get("description"));
+
+    if (!Number.isFinite(motorcycleId) || !Number.isFinite(odo) || !description) {
+      throw new Response("Ungültige Eingabe für den Mangel", { status: 400 });
+    }
+
+    const issueData: NewIssue = {
+      motorcycleId,
+      odo,
+      description,
+      priority: isValidPriority(formData.get("priority")),
+      status: isValidStatus(formData.get("status")),
+      date: parseString(formData.get("date")),
+    };
+
+    await createIssue(dbClient, issueData);
+
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
+  
+  if (intent === "updateIssue") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const issueId = Number(formData.get("issueId"));
+    const odo = Number(formData.get("odo"));
+    const description = parseString(formData.get("description"));
+
+    if (
+      !Number.isFinite(motorcycleId) ||
+      !Number.isFinite(issueId) ||
+      !Number.isFinite(odo) ||
+      !description
+    ) {
+      throw new Response("Ungültige Eingabe für den Mangel", { status: 400 });
+    }
+
+    await updateIssue(dbClient, issueId, motorcycleId, {
+      odo,
+      description,
+      priority: isValidPriority(formData.get("priority")),
+      status: isValidStatus(formData.get("status")),
+      date: parseString(formData.get("date")),
+    });
+
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
+
+  if (intent === "deleteIssue") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const issueId = Number(formData.get("issueId"));
+
+    if (!Number.isFinite(motorcycleId) || !Number.isFinite(issueId)) {
+      throw new Response("Ungültige Eingabe für den Mangel", { status: 400 });
+    }
+
+    await deleteIssue(dbClient, issueId, motorcycleId);
+
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
 
   if (intent === "createMaintenance" || intent === "updateMaintenance") {
       const motorcycleId = Number(formData.get("motorcycleId"));
@@ -117,10 +207,23 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, openIssues, maintenanceHistory, nextInspection } = loaderData;
+  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
+  const [issueDialogOpen, setIssueDialogOpen] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const revalidator = useRevalidator();
+
+  const openIssueDialog = (issue: Issue | null) => {
+    setSelectedIssue(issue);
+    setIssueDialogOpen(true);
+  };
+
+  const closeIssueDialog = () => {
+    setIssueDialogOpen(false);
+    setSelectedIssue(null);
+  };
 
   const detailsPanelId = useId();
 
@@ -254,6 +357,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         <OpenIssuesCard
           issues={openIssues}
           dateFormatter={dateFormatter}
+          onAddIssue={() => openIssueDialog(null)}
+          onIssueSelect={(issue) => openIssueDialog(issue)}
           className="md:col-span-2"
         />
       </div>
@@ -289,6 +394,18 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         motorcycleId={motorcycle.id}
         initialData={selectedMaintenance}
         currencyCode={motorcycle.currencyCode}
+        defaultOdo={lastKnownOdo}
+      />
+      <IssueDialog
+        isOpen={issueDialogOpen}
+        onClose={closeIssueDialog}
+        motorcycleId={motorcycle.id}
+        defaultOdo={lastKnownOdo}
+        initialIssue={selectedIssue}
+        onIssueSaved={() => {
+          revalidator.revalidate();
+          setSelectedIssue(null);
+        }}
       />
     </div>
   );

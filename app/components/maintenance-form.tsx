@@ -18,6 +18,7 @@ interface MaintenanceFormProps {
   motorcycleId: number;
   initialData?: MaintenanceRecord | null;
   currencyCode?: string | null;
+  defaultOdo?: number | null;
   onSubmit: () => void;
   onCancel: () => void;
 }
@@ -35,7 +36,7 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
   { value: "general", label: "Allgemein", icon: Wrench },
 ];
 
-export function MaintenanceForm({ motorcycleId, initialData, currencyCode, onSubmit, onCancel }: MaintenanceFormProps) {
+export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, onSubmit, onCancel }: MaintenanceFormProps) {
   const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
 
   const today = new Date().toISOString().split('T')[0];
@@ -84,7 +85,7 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, onSub
                     name="odo" 
                     id="odo" 
                     required 
-                    defaultValue={initialData?.odo}
+                    defaultValue={initialData?.odo ?? defaultOdo ?? ""}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
             </div>

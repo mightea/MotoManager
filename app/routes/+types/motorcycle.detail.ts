@@ -11,6 +11,7 @@ export namespace Route {
     openIssues: Issue[];
     maintenanceHistory: MaintenanceRecord[];
     nextInspection: NextInspectionInfo | null;
+    lastKnownOdo: number | null;
   };
   export type ComponentProps = { loaderData: LoaderData };
 }
