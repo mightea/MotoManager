@@ -23,6 +23,8 @@ export type MaintenanceInsight = {
   lastDate?: string;
   nextDate?: string;
   yearsRemaining?: number;
+  lastOdo?: number;
+  kmsSinceLast?: number;
 };
 
 const addYears = (date: Date, years: number) => {
@@ -48,7 +50,8 @@ const getStatus = (dueDate: Date): MaintenanceInsight["status"] => {
 };
 
 export const getMaintenanceInsights = (
-  history: MaintenanceRecord[]
+  history: MaintenanceRecord[],
+  currentOdo: number
 ): MaintenanceInsight[] => {
   const insights: MaintenanceInsight[] = [];
 
@@ -79,6 +82,8 @@ export const getMaintenanceInsights = (
     // Calculate remaining years (can be negative)
     const yearsRemaining = (nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 365);
 
+    const kmsSinceLast = (currentOdo && lastRecord.odo) ? (currentOdo - lastRecord.odo) : undefined;
+
     insights.push({
       key,
       category,
@@ -87,6 +92,8 @@ export const getMaintenanceInsights = (
       lastDate: lastRecord.date,
       nextDate: nextDate.toISOString().split('T')[0], // simplistic ISO date
       yearsRemaining: Number(yearsRemaining.toFixed(1)),
+      lastOdo: lastRecord.odo,
+      kmsSinceLast: kmsSinceLast !== undefined && kmsSinceLast > 0 ? kmsSinceLast : undefined,
     });
   };
 

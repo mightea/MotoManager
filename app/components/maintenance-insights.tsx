@@ -28,21 +28,26 @@ export function MaintenanceInsightsCard({
     }
   };
 
-  const getStatusText = (insight: MaintenanceInsight) => {
-    if (!insight.nextDate) return "";
+  const formatRelativeDuration = (dateStr: string) => {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    const dateStr = dateFormatter.format(new Date(insight.nextDate));
+    if (diffDays < 0) return "In der Zukunft";
+    if (diffDays === 0) return "Heute";
 
-    if (insight.status === "ok") {
-      return `Fällig am ${dateStr}`;
+    const years = Math.floor(diffDays / 365);
+    const remainingDaysAfterYears = diffDays % 365;
+    const months = Math.floor(remainingDaysAfterYears / 30);
+
+    if (years > 0) {
+        return `vor ${years} Jahr${years > 1 ? 'en' : ''}`;
     }
-    if (insight.status === "due") {
-      return `Bald fällig (${dateStr})`;
+    if (months > 0) {
+        return `vor ${months} Monat${months > 1 ? 'en' : ''}`;
     }
-    if (insight.status === "overdue") {
-      return `Überfällig seit ${dateStr}`;
-    }
-    return "";
+    return `vor ${diffDays} Tag${diffDays > 1 ? 'en' : ''}`;
   };
 
   // Sort within groups: overdue first, then due, then ok
@@ -94,7 +99,18 @@ export function MaintenanceInsightsCard({
                             {category}
                         </h3>
                         <ul className="space-y-3">
-                            {sortedItems.map((insight) => (
+                            {sortedItems.map((insight) => {
+                                const formattedDate = insight.lastDate ? dateFormatter.format(new Date(insight.lastDate)) : "";
+                                const relativeDuration = insight.lastDate ? formatRelativeDuration(insight.lastDate) : "";
+                                const kmsSince = insight.kmsSinceLast ? `${insight.kmsSinceLast.toLocaleString('de-CH')} km` : "";
+
+                                const parts = [
+                                    formattedDate,
+                                    relativeDuration ? `(${relativeDuration})` : null,
+                                    kmsSince ? `• ${kmsSince}` : null
+                                ].filter(Boolean).join(" ");
+
+                                return (
                                 <li key={insight.key} className="flex items-start gap-3">
                                     <div className="mt-0.5 shrink-0">
                                         {getStatusIcon(insight.status)}
@@ -103,21 +119,13 @@ export function MaintenanceInsightsCard({
                                         <p className="font-medium text-sm text-foreground dark:text-white">
                                             {insight.label}
                                         </p>
-                                        <p
-                                            className={clsx("text-xs", {
-                                                "text-red-600 dark:text-red-400":
-                                                    insight.status === "overdue",
-                                                "text-amber-600 dark:text-amber-400":
-                                                    insight.status === "due",
-                                                "text-secondary dark:text-navy-400":
-                                                    insight.status === "ok",
-                                            })}
-                                        >
-                                            {getStatusText(insight)}
+                                        <p className="text-xs text-secondary dark:text-navy-400">
+                                            {parts || "Keine Daten"}
                                         </p>
                                     </div>
                                 </li>
-                            ))}
+                                );
+                            })}
                         </ul>
                     </div>
                 );

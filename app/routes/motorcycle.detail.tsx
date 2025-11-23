@@ -78,7 +78,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     isVeteran: motorcycle.isVeteran ?? false,
   });
 
-  const insights = getMaintenanceInsights(maintenanceHistory);
+  const insights = getMaintenanceInsights(maintenanceHistory, lastKnownOdo ?? 0);
 
   return data(
     { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights },
@@ -359,7 +359,9 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
 
-        <MaintenanceInsightsCard insights={insights} />
+        <div className="hidden md:block">
+          <MaintenanceInsightsCard insights={insights} />
+        </div>
         </div>
 
         <OpenIssuesCard
@@ -394,6 +396,10 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                 setMaintenanceDialogOpen(true);
             }}
         />
+      </div>
+
+      <div className="md:hidden">
+        <MaintenanceInsightsCard insights={insights} />
       </div>
 
       <MaintenanceDialog
