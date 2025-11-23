@@ -277,8 +277,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
-      <div className="sticky top-0 z-10 -mx-4 bg-gray-50/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none dark:md:bg-transparent">
-        <div className="flex items-start gap-4">
+      <div className="sticky top-0 z-10 -mx-4 bg-gray-50/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none dark:md:bg-transparent pointer-events-none">
+        <div className="flex items-start gap-4 pointer-events-auto">
           <Link
             to="/"
             className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm transition-all hover:bg-primary hover:text-white dark:bg-navy-800 dark:hover:bg-primary-dark"

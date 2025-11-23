@@ -181,31 +181,33 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
           </Button>
         </div>
       </div>
-      <Modal
-        isOpen={confirmDeleteOpen}
-        onClose={() => setConfirmDeleteOpen(false)}
-        title="Mangel löschen"
-        description="Dieser Mangel wird dauerhaft entfernt. Möchtest du fortfahren?"
-      >
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setConfirmDeleteOpen(false)}
-            disabled={isSubmitting}
-          >
-            Abbrechen
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isSubmitting}
-          >
-            Löschen
-          </Button>
-        </div>
-      </Modal>
+      {confirmDeleteOpen && (
+        <Modal
+          isOpen={confirmDeleteOpen}
+          onClose={() => setConfirmDeleteOpen(false)}
+          title="Mangel löschen"
+          description="Dieser Mangel wird dauerhaft entfernt. Möchtest du fortfahren?"
+        >
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setConfirmDeleteOpen(false)}
+              disabled={isSubmitting}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+            >
+              Löschen
+            </Button>
+          </div>
+        </Modal>
+      )}
     </fetcher.Form>
   );
 }

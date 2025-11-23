@@ -1,4 +1,4 @@
-import { AlertCircle } from "lucide-react";
+import { AlertTriangle, CircleAlert, Info } from "lucide-react";
 import clsx from "clsx";
 import type { Issue } from "~/db/schema";
 
@@ -13,6 +13,12 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
     onSelect?.(issue);
   };
 
+  const PriorityIcon = issue.priority === "high"
+    ? CircleAlert
+    : issue.priority === "medium"
+      ? AlertTriangle
+      : Info;
+
   return (
     <button
       type="button"
@@ -20,11 +26,11 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
       className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700/50"
       aria-label="Mangel bearbeiten"
     >
-      <AlertCircle
+      <PriorityIcon
         className={clsx("h-5 w-5", {
           "text-red-500": issue.priority === "high",
           "text-orange-500": issue.priority === "medium",
-          "text-yellow-500": issue.priority === "low",
+          "text-blue-500": issue.priority === "low",
         })}
       />
       <div className="flex-1">
