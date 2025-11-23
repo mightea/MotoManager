@@ -1,7 +1,6 @@
-import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { X } from "lucide-react";
-import { Fragment, type ReactNode } from "react";
-import clsx from "clsx";
+import type { ReactNode } from "react";
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,6 +11,10 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, description }: ModalProps) {
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} as="div" className="relative z-50 focus:outline-none" onClose={onClose}>
         {/* Backdrop */}
