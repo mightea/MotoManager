@@ -256,15 +256,14 @@ export function MaintenanceList({ records, currencyCode, onEdit }: MaintenanceLi
               </div>
             </div>
 
-            {/* Expanded Details */}
-            {isExpanded && (
-              <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600 pl-12">
-                {group.originalRecords.map((record) => {
-                  const recordCurrencyFormatter = new Intl.NumberFormat("de-CH", {
-                    style: "currency",
-                    currency: record.currency || currencyCode || "CHF",
-                  });
-
+                        {/* Expanded Details */}
+                        {isExpanded && (
+                            <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
+                                {group.originalRecords.map((record) => {
+                                    const recordCurrencyFormatter = new Intl.NumberFormat("de-CH", {
+                                        style: "currency",
+                                        currency: record.currency || currencyCode || "CHF",
+                                    });
                   const metadataItems = [
                     { label: "Beschreibung", value: record.description },
                     { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type },
