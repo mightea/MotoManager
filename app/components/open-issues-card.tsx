@@ -1,12 +1,14 @@
-import { AlertCircle, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import clsx from "clsx";
 import type { Issue } from "~/db/schema";
 import { Button } from "~/components/button";
+import { IssueItem } from "~/components/issue-item";
 
 type OpenIssuesCardProps = {
   issues: Issue[];
   dateFormatter: Intl.DateTimeFormat;
   onAddIssue?: () => void;
+  onIssueSelect?: (issue: Issue) => void;
   className?: string;
 };
 
@@ -14,6 +16,7 @@ export default function OpenIssuesCard({
   issues,
   dateFormatter,
   onAddIssue,
+  onIssueSelect,
   className,
 }: OpenIssuesCardProps) {
   const handleAddIssue = () => {
@@ -44,43 +47,12 @@ export default function OpenIssuesCard({
       ) : (
         <ul className="mt-4 space-y-2">
           {issues.map((issue) => (
-            <li key={issue.id} className="flex items-center gap-3">
-              <AlertCircle
-                className={clsx("h-5 w-5", {
-                  "text-red-500": issue.priority === "high",
-                  "text-orange-500": issue.priority === "medium",
-                  "text-yellow-500": issue.priority === "low",
-                })}
+            <li key={issue.id}>
+              <IssueItem
+                issue={issue}
+                dateFormatter={dateFormatter}
+                onSelect={onIssueSelect}
               />
-              <div className="flex-1">
-                <p className="font-medium text-foreground dark:text-gray-200">
-                  {issue.description || "Beschreibung fehlt"}
-                </p>
-                <p className="text-xs text-secondary dark:text-navy-400">
-                  {issue.date
-                    ? dateFormatter.format(new Date(issue.date))
-                    : "Datum unbekannt"}
-                </p>
-              </div>
-              <span
-                className={clsx(
-                  "rounded-md px-2 py-0.5 text-xs font-semibold",
-                  {
-                    "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300":
-                      issue.priority === "high",
-                    "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300":
-                      issue.priority === "medium",
-                    "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300":
-                      issue.priority === "low",
-                  }
-                )}
-              >
-                {issue.priority === "high"
-                  ? "Hoch"
-                  : issue.priority === "medium"
-                    ? "Mittel"
-                    : "Niedrig"}
-              </span>
             </li>
           ))}
         </ul>
