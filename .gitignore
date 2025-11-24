@@ -5,6 +5,9 @@
 /.react-router/
 /build/
 /tmp/
+test-results/
+playwright-report/
+blob-report/
 
 .direnv/
 .env

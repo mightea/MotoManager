@@ -1,8 +1,8 @@
 import { useId, useState } from "react";
-import { data, Link, useRevalidator } from "react-router";
+import { data, Form, Link, redirect, useRevalidator } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { ArrowLeft, ChevronDown, CalendarDays, Plus } from "lucide-react";
@@ -12,9 +12,11 @@ import { getNextInspectionInfo } from "~/utils/inspection";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
-import { createIssue, createMaintenanceRecord, deleteIssue, updateIssue, updateMaintenanceRecord, createLocation } from "~/db/providers/motorcycles.server";
+import { createIssue, createMaintenanceRecord, deleteIssue, updateIssue, updateMaintenanceRecord, createLocation, updateMotorcycle, deleteMotorcycleCascade } from "~/db/providers/motorcycles.server";
 import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
+import { Modal } from "~/components/modal";
+import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -108,6 +110,12 @@ export async function action({ request }: Route.ActionArgs) {
     const parsed = Number.parseFloat(typeof value === "string" ? value : "");
     return Number.isNaN(parsed) ? undefined : parsed;
   };
+  const parseInteger = (value: FormDataEntryValue | null | undefined) => {
+    const parsed = Number.parseInt(typeof value === "string" ? value : "", 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  };
+  const parseBoolean = (value: FormDataEntryValue | null | undefined) =>
+    value === "true" || value === "on" || value === "1";
   const isValidPriority = (value: FormDataEntryValue | null): NewIssue["priority"] => {
     if (value === "high" || value === "medium" || value === "low") {
       return value;
@@ -122,6 +130,76 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   const dbClient = await getDb();
+
+  if (intent === "updateMotorcycle") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const make = parseString(formData.get("make"));
+    const model = parseString(formData.get("model"));
+    const vin = parseString(formData.get("vin"));
+
+    if (
+      !Number.isFinite(motorcycleId) ||
+      !make ||
+      !model ||
+      !vin
+    ) {
+      throw new Response("Ungültige Fahrzeugdaten", { status: 400 });
+    }
+
+    const modelYear = parseInteger(formData.get("modelYear"));
+    const updatedMotorcycle: EditorMotorcycle = {
+      make,
+      model,
+      vin,
+      vehicleIdNr: parseString(formData.get("vehicleIdNr")) ?? null,
+      firstRegistration: parseString(formData.get("firstRegistration")) ?? null,
+      initialOdo: parseInteger(formData.get("initialOdo")) ?? 0,
+      purchaseDate: parseString(formData.get("purchaseDate")) ?? null,
+      purchasePrice: parseNumber(formData.get("purchasePrice")) ?? null,
+      currencyCode: parseString(formData.get("currencyCode")) ?? null,
+      isVeteran: parseBoolean(formData.get("isVeteran")),
+    };
+
+    updatedMotorcycle.modelYear =
+      typeof modelYear === "number" ? modelYear : null;
+
+    const updated = await updateMotorcycle(
+      dbClient,
+      motorcycleId,
+      user.id,
+      updatedMotorcycle,
+    );
+
+    if (!updated) {
+      throw new Response("Motorrad nicht gefunden.", { status: 404 });
+    }
+
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
+
+  if (intent === "deleteMotorcycle") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+
+    if (!Number.isFinite(motorcycleId)) {
+      throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
+    }
+
+    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
+      where: eq(motorcycles.id, motorcycleId),
+    });
+
+    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
+      throw new Response("Motorrad nicht gefunden.", { status: 404 });
+    }
+
+    await deleteMotorcycleCascade(dbClient, motorcycleId);
+
+    const response = redirect("/");
+    mergeHeaders(headers ?? {}).forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
 
   if (intent === "createIssue") {
     const motorcycleId = Number(formData.get("motorcycleId"));
@@ -239,6 +317,7 @@ export async function action({ request }: Route.ActionArgs) {
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
@@ -360,20 +439,29 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         <div className="space-y-5">
         {/* Basic Info Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-          <button
-            type="button"
-            onClick={() => setDetailsExpanded((prev) => !prev)}
-            className="mb-1 flex w-full items-center justify-between text-left text-base font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
-            aria-expanded={detailsExpanded}
-            aria-controls={detailsPanelId}
-          >
-            <span>Fahrzeugdaten</span>
-            <ChevronDown
-              className={clsx("h-5 w-5 transition-transform", {
-                "rotate-180": detailsExpanded,
-              })}
-            />
-          </button>
+          <div className="mb-1 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDetailsExpanded((prev) => !prev)}
+              className="flex flex-1 items-center justify-between text-left text-base font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
+              aria-expanded={detailsExpanded}
+              aria-controls={detailsPanelId}
+            >
+              <span>Fahrzeugdaten</span>
+              <ChevronDown
+                className={clsx("h-5 w-5 transition-transform", {
+                  "rotate-180": detailsExpanded,
+                })}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditMotorcycleDialogOpen(true)}
+              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+            >
+              Bearbeiten
+            </button>
+          </div>
           <div id={detailsPanelId} hidden={!detailsExpanded}>
             {visibleDetails.length > 0 ? (
               <dl className="mt-3 space-y-2 text-sm">
@@ -435,6 +523,34 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       <div className="md:hidden">
         <MaintenanceInsightsCard insights={insights} />
       </div>
+
+      <Modal
+        isOpen={editMotorcycleDialogOpen}
+        onClose={() => setEditMotorcycleDialogOpen(false)}
+        title="Motorrad bearbeiten"
+        description="Passe die Fahrzeugdaten an."
+      >
+        <AddMotorcycleForm
+          onSubmit={() => setEditMotorcycleDialogOpen(false)}
+          initialValues={motorcycle}
+          intent="updateMotorcycle"
+          submitLabel="Aktualisieren"
+        />
+        <Form
+          method="post"
+          className="mt-6"
+          onSubmit={() => setEditMotorcycleDialogOpen(false)}
+        >
+          <input type="hidden" name="intent" value="deleteMotorcycle" />
+          <input type="hidden" name="motorcycleId" value={motorcycle.id} />
+          <button
+            type="submit"
+            className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/30"
+          >
+            Motorrad löschen
+          </button>
+        </Form>
+      </Modal>
 
       <MaintenanceDialog
         isOpen={maintenanceDialogOpen}
