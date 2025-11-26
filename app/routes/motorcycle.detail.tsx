@@ -436,88 +436,89 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       </div>
 
       <div className="grid gap-5 md:grid-cols-3 items-start">
-        <div className="space-y-5">
-        {/* Basic Info Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-          <div className="mb-1 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setDetailsExpanded((prev) => !prev)}
-              className="flex flex-1 items-center justify-between text-left text-base font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
-              aria-expanded={detailsExpanded}
-              aria-controls={detailsPanelId}
-            >
-              <span>Fahrzeugdaten</span>
-              <ChevronDown
-                className={clsx("h-5 w-5 transition-transform", {
-                  "rotate-180": detailsExpanded,
-                })}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditMotorcycleDialogOpen(true)}
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-            >
-              Bearbeiten
-            </button>
+        <div className="space-y-5 md:sticky md:top-6">
+          {/* Basic Info Card */}
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+            <div className="mb-1 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDetailsExpanded((prev) => !prev)}
+                className="flex flex-1 items-center justify-between text-left text-base font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
+                aria-expanded={detailsExpanded}
+                aria-controls={detailsPanelId}
+              >
+                <span>Fahrzeugdaten</span>
+                <ChevronDown
+                  className={clsx("h-5 w-5 transition-transform", {
+                    "rotate-180": detailsExpanded,
+                  })}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditMotorcycleDialogOpen(true)}
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+              >
+                Bearbeiten
+              </button>
+            </div>
+            <div id={detailsPanelId} hidden={!detailsExpanded}>
+              {visibleDetails.length > 0 ? (
+                <dl className="mt-3 space-y-2 text-sm">
+                  {visibleDetails.map((entry) => (
+                    <div key={entry.label} className="flex justify-between">
+                      <dt className="text-secondary dark:text-navy-400">{entry.label}</dt>
+                      <dd className="font-medium text-foreground dark:text-gray-200">{entry.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="mt-4 text-sm text-secondary dark:text-navy-400">
+                  Keine Fahrzeugdaten vorhanden.
+                </p>
+              )}
+            </div>
           </div>
-          <div id={detailsPanelId} hidden={!detailsExpanded}>
-            {visibleDetails.length > 0 ? (
-              <dl className="mt-3 space-y-2 text-sm">
-                {visibleDetails.map((entry) => (
-                  <div key={entry.label} className="flex justify-between">
-                    <dt className="text-secondary dark:text-navy-400">{entry.label}</dt>
-                    <dd className="font-medium text-foreground dark:text-gray-200">{entry.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : (
-              <p className="mt-4 text-sm text-secondary dark:text-navy-400">
-                Keine Fahrzeugdaten vorhanden.
-              </p>
-            )}
+
+          <div className="hidden md:block">
+            <MaintenanceInsightsCard insights={insights} />
           </div>
         </div>
 
-        <div className="hidden md:block">
-          <MaintenanceInsightsCard insights={insights} />
-        </div>
-        </div>
+        <div className="space-y-5 md:col-span-2">
+          <OpenIssuesCard
+            issues={openIssues}
+            dateFormatter={dateFormatter}
+            onAddIssue={() => openIssueDialog(null)}
+            onIssueSelect={(issue) => openIssueDialog(issue)}
+          />
 
-        <OpenIssuesCard
-          issues={openIssues}
-          dateFormatter={dateFormatter}
-          onAddIssue={() => openIssueDialog(null)}
-          onIssueSelect={(issue) => openIssueDialog(issue)}
-          className="md:col-span-2"
-        />
-      </div>
-
-      {/* Maintenance History Card */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
-          <button
-            onClick={() => {
-                setSelectedMaintenance(null);
-                setMaintenanceDialogOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Eintrag
-          </button>
-        </div>
-        <MaintenanceList 
-            records={maintenanceHistory} 
-            currencyCode={motorcycle.currencyCode} 
-            userLocations={userLocations}
-            onEdit={(record) => {
+          {/* Maintenance History Card */}
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
+              <button
+                onClick={() => {
+                  setSelectedMaintenance(null);
+                  setMaintenanceDialogOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Eintrag
+              </button>
+            </div>
+            <MaintenanceList
+              records={maintenanceHistory}
+              currencyCode={motorcycle.currencyCode}
+              userLocations={userLocations}
+              onEdit={(record) => {
                 setSelectedMaintenance(record);
                 setMaintenanceDialogOpen(true);
-            }}
-        />
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="md:hidden">
