@@ -29,6 +29,10 @@ import { useState } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs/promises";
+import path from "path";
+import sharp from "sharp";
 
 export async function loader({ request }: Route.LoaderArgs) {
   // ... existing loader logic ...
@@ -90,7 +94,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  // ... existing action logic ...
   const { user, headers } = await requireUser(request);
   const formData = await request.formData();
 
@@ -108,6 +111,17 @@ export async function action({ request }: Route.ActionArgs) {
       parseString(value) === "true";
 
   const modelYear = parseInteger(formData.get("modelYear"));
+  
+  const imageEntry = formData.get("image");
+  let imagePath: string | null = null;
+  
+  if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
+     const newFilename = `${uuidv4()}.webp`;
+     const uploadPath = path.join(process.cwd(), "uploads", newFilename);
+     const buffer = Buffer.from(await imageEntry.arrayBuffer());
+     await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
+     imagePath = `/uploads/${newFilename}`;
+  }
 
   const newMotorcycle: NewMotorcycle = {
     make: parseString(formData.get("make")),
@@ -124,6 +138,7 @@ export async function action({ request }: Route.ActionArgs) {
     purchaseDate: parseString(formData.get("purchaseDate")),
     purchasePrice: parseNumber(formData.get("purchasePrice")) ?? 0,
     currencyCode: parseString(formData.get("currencyCode")),
+    image: imagePath,
   };
 
   const dbClient = await getDb();
@@ -223,6 +238,17 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               key={moto.id}
               className="group relative flex flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-navy-700 dark:bg-navy-800"
             >
+              {/* Image */}
+              {moto.image && (
+                <div className="aspect-[4/3] w-full overflow-hidden">
+                    <img 
+                        src={moto.image} 
+                        alt={`${moto.make} ${moto.model}`} 
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                </div>
+              )}
+
               {/* Card Header */}
               <div className="border-b border-gray-100 bg-gray-50/50 p-4 dark:border-navy-700 dark:bg-navy-900/30">
                 <div className="flex items-start justify-between">

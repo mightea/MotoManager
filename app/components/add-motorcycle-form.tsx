@@ -1,8 +1,12 @@
-import { Form } from "react-router";
+import { Form, useSubmit } from "react-router";
 import type { EditorMotorcycle } from "~/db/schema";
+import { useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
+import getCroppedImg from "~/utils/cropImage";
+import { Modal } from "./modal";
 
 interface AddMotorcycleFormProps {
-  onSubmit: () => void;
+  onSubmit?: () => void;
   initialValues?: (EditorMotorcycle & { id?: number });
   intent?: string;
   submitLabel?: string;
@@ -21,13 +25,102 @@ export function AddMotorcycleForm({
   intent = "createMotorcycle",
   submitLabel = "Speichern",
 }: AddMotorcycleFormProps) {
+  const submit = useSubmit();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [isCropping, setIsCropping] = useState(false);
+  const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+
+  const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        setSelectedImage(reader.result as string);
+        setIsCropping(true);
+      });
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const showCroppedImage = useCallback(async () => {
+    if (!selectedImage || !croppedAreaPixels) return;
+    try {
+      const blob = await getCroppedImg(selectedImage, croppedAreaPixels);
+      if (blob) {
+        setCroppedImageBlob(blob);
+        setCroppedImageUrl(URL.createObjectURL(blob));
+        setIsCropping(false);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [selectedImage, croppedAreaPixels]);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    
+    if (croppedImageBlob) {
+        formData.append("image", croppedImageBlob, "motorcycle.jpg");
+    }
+
+    submit(formData, {
+        method: "post",
+        encType: "multipart/form-data",
+    });
+
+    if (onSubmit) {
+        onSubmit();
+    }
+  };
+
   return (
-    <Form method="post" className="grid gap-5" onSubmit={onSubmit}>
+    <>
+    <Form method="post" encType="multipart/form-data" className="grid gap-5" onSubmit={handleSubmit}>
         <input type="hidden" name="intent" value={intent} />
         {typeof initialValues?.id === "number" && (
             <input type="hidden" name="motorcycleId" value={initialValues.id} />
         )}
         <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Bild</label>
+                {!croppedImageUrl ? (
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={onSelectFile}
+                        className="block w-full text-sm text-slate-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-primary file:text-white
+                        hover:file:bg-primary-dark
+                      "/>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        <img src={croppedImageUrl} alt="Preview" className="h-24 w-24 rounded-lg object-cover" />
+                        <button 
+                            type="button" 
+                            onClick={() => {
+                                setCroppedImageUrl(null);
+                                setCroppedImageBlob(null);
+                                setSelectedImage(null);
+                            }}
+                            className="text-sm text-red-500 hover:underline"
+                        >
+                            Entfernen
+                        </button>
+                    </div>
+                )}
+            </div>
+
             <div className="space-y-1.5">
                 <label htmlFor="make" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke</label>
                 <input
@@ -169,5 +262,55 @@ export function AddMotorcycleForm({
             </button>
         </div>
     </Form>
+
+    <Modal isOpen={isCropping} onClose={() => setIsCropping(false)} title="Bild zuschneiden">
+        <div className="relative h-80 w-full bg-gray-900 rounded-lg overflow-hidden">
+            {selectedImage && (
+                <Cropper
+                    image={selectedImage}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={4 / 3}
+                    onCropChange={setCrop}
+                    onCropComplete={onCropComplete}
+                    onZoomChange={setZoom}
+                />
+            )}
+        </div>
+        
+        <div className="mt-4">
+             <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Zoom</span>
+                <input
+                  type="range"
+                  value={zoom}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  aria-labelledby="Zoom"
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                />
+             </div>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+            <button
+                type="button"
+                onClick={() => setIsCropping(false)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+                Abbrechen
+            </button>
+            <button
+                type="button"
+                onClick={showCroppedImage}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
+            >
+                Fertig
+            </button>
+        </div>
+    </Modal>
+    </>
   );
 }

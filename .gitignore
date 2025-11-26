@@ -15,4 +15,14 @@ blob-report/
 tsconfig.tsbuildinfo
 
 ## App
+
 db.sqlite*
+
+
+
+GEMINI.md
+
+uploads/
+
+
+
