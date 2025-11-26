@@ -386,27 +386,52 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
-      <div className="sticky top-0 z-10 -mx-4 bg-gray-50/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:static md:mx-0 md:bg-transparent md:p-0 md:backdrop-blur-none dark:md:bg-transparent pointer-events-none">
-        <div className="flex items-start gap-4 pointer-events-auto">
+      
+      <div className={clsx(
+            "sticky top-0 z-10 -mx-4 px-4 py-4 transition-all duration-300 md:relative md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
+            motorcycle.image ? "text-white" : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
+        )}>
+        {motorcycle.image && (
+            <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
+                <img 
+                    src={motorcycle.image}
+                    alt={`${motorcycle.make} ${motorcycle.model}`}
+                    className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
+            </div>
+        )}
+
+        <div className="flex items-start gap-4 pointer-events-auto relative">
           <Link
             to="/"
-            className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm transition-all hover:bg-primary hover:text-white dark:bg-navy-800 dark:hover:bg-primary-dark"
+            className={clsx(
+                "group flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all hover:bg-primary hover:text-white",
+                motorcycle.image 
+                    ? "bg-white/20 text-white hover:bg-white hover:text-primary backdrop-blur-md" 
+                    : "bg-white text-secondary dark:bg-navy-800 dark:text-navy-400 dark:hover:bg-primary-dark"
+            )}
           >
-            <ArrowLeft className="h-5 w-5 text-secondary group-hover:text-white dark:text-navy-400" />
+            <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="text-2xl font-bold text-foreground dark:text-white">
+              <h1 className={clsx("text-2xl font-bold", motorcycle.image ? "text-white" : "text-foreground dark:text-white")}>
                 {motorcycle.make} {motorcycle.model}
               </h1>
               {motorcycle.isVeteran && (
-                <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400">
+                <span className={clsx(
+                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                    motorcycle.image 
+                        ? "border-white/30 bg-white/20 text-white backdrop-blur-sm"
+                        : "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400"
+                )}>
                   Veteran
                 </span>
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-secondary dark:text-navy-400">
+            <div className={clsx("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm", motorcycle.image ? "text-gray-200" : "text-secondary dark:text-navy-400")}>
               <span>{motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"}</span>
               <span className="hidden sm:inline">•</span>
               <span>{motorcycle.vin}</span>
@@ -416,7 +441,9 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   <span className="hidden sm:inline">•</span>
                   <div className={clsx(
                     "flex items-center gap-1.5 font-medium",
-                    nextInspection.isOverdue ? "text-red-600 dark:text-red-400" : "text-secondary dark:text-navy-400"
+                    motorcycle.image
+                        ? (nextInspection.isOverdue ? "text-red-300" : "text-gray-200")
+                        : (nextInspection.isOverdue ? "text-red-600 dark:text-red-400" : "text-secondary dark:text-navy-400")
                   )}>
                     <CalendarDays className="h-4 w-4" />
                     <span>MFK: {nextInspection.relativeLabel}</span>
