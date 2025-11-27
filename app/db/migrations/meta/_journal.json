@@ -43,6 +43,13 @@
       "when": 1761000000002,
       "tag": "0005_add_image_column_back",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "8",
+      "when": 1761000000003,
+      "tag": "0006_make_vin_nullable",
+      "breakpoints": true
     }
   ]
 }

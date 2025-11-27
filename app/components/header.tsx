@@ -28,7 +28,7 @@ export function Header({ user }: { user: User | null }) {
           <div className="flex items-center gap-3 pl-2">
             <Link to="/" className="group flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light">
-                <Bike className="h-6 w-6" />
+                <img src="/favicon.svg" alt="Logo" className="h-6 w-6 dark:invert" />
               </div>
               <div className="flex flex-col">
                 <span className="text-[0.65rem] font-bold uppercase tracking-widest text-secondary dark:text-navy-400">

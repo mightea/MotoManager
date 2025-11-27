@@ -1,18 +1,15 @@
-import { Form, Link, data, useLoaderData, useSearchParams } from "react-router";
+import { Link, data, useActionData } from "react-router";
 import type { Route } from "./+types/home";
 import { getDb } from "~/db";
 import {
   motorcycles,
-  maintenanceRecords,
-  issues,
-  locationRecords,
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { userPrefs } from "~/services/preferences.server";
-import { buildDashboardData, type MotorcycleDashboardItem } from "~/utils/home-stats";
+import { buildDashboardData } from "~/utils/home-stats";
 import {
   CalendarDays,
   Gauge,
@@ -25,14 +22,16 @@ import {
   ChevronDown
 } from "lucide-react";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import { motorcycleSchema } from "~/validations";
+
+import { MotorcycleCard } from "~/components/motorcycle-card";
 
 export async function loader({ request }: Route.LoaderArgs) {
   // ... existing loader logic ...
@@ -97,47 +96,63 @@ export async function action({ request }: Route.ActionArgs) {
   const { user, headers } = await requireUser(request);
   const formData = await request.formData();
 
-  const parseString = (value: FormDataEntryValue | null | undefined) =>
-    typeof value === "string" ? value : "";
-  const parseNumber = (value: FormDataEntryValue | null | undefined, fallback?: number) => {
-      const parsed = Number.parseFloat(parseString(value));
-      return Number.isNaN(parsed) ? fallback : parsed;
-  };
-  const parseInteger = (value: FormDataEntryValue | null | undefined, fallback?: number) => {
-      const parsed = Number.parseInt(parseString(value), 10);
-      return Number.isNaN(parsed) ? fallback : parsed;
-  };
-  const parseBoolean = (value: FormDataEntryValue | null | undefined) =>
-      parseString(value) === "true";
+  const rawData = Object.fromEntries(formData);
+  const validationResult = motorcycleSchema.safeParse(rawData);
 
-  const modelYear = parseInteger(formData.get("modelYear"));
-  
+  if (!validationResult.success) {
+    const errors = validationResult.error.flatten().fieldErrors;
+    const formattedErrors: Record<string, string> = {};
+    for (const key of Object.keys(errors)) {
+      const fieldKey = key as keyof typeof errors;
+      if (errors[fieldKey]) {
+        formattedErrors[key] = errors[fieldKey]![0];
+      }
+    }
+    return data({ errors: formattedErrors }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+  }
+
+  const {
+    make,
+    model,
+    vin,
+    modelYear,
+    vehicleIdNr,
+    numberPlate,
+    firstRegistration,
+    initialOdo,
+    purchaseDate,
+    purchasePrice,
+    currencyCode,
+    isVeteran,
+    isArchived
+  } = validationResult.data;
+
   const imageEntry = formData.get("image");
   let imagePath: string | null = null;
-  
+
   if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
-     const newFilename = `${uuidv4()}.webp`;
-     const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
-     const buffer = Buffer.from(await imageEntry.arrayBuffer());
-     await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
-     imagePath = `/data/images/${newFilename}`;
+    const newFilename = `${uuidv4()}.webp`;
+    const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
+    const buffer = Buffer.from(await imageEntry.arrayBuffer());
+    await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
+    imagePath = `/data/images/${newFilename}`;
   }
 
   const newMotorcycle: NewMotorcycle = {
-    make: parseString(formData.get("make")),
-    model: parseString(formData.get("model")),
+    make,
+    model,
     ...(modelYear !== undefined ? { modelYear } : {}),
     userId: user.id,
-    vin: parseString(formData.get("vin")),
-    vehicleIdNr: parseString(formData.get("vehicleIdNr")) || undefined,
-    numberPlate: parseString(formData.get("numberPlate")) || undefined,
-    isVeteran: parseBoolean(formData.get("isVeteran")),
-    isArchived: parseBoolean(formData.get("isArchived")),
-    firstRegistration: parseString(formData.get("firstRegistration")),
-    initialOdo: parseInteger(formData.get("initialOdo")) ?? 0,
-    purchaseDate: parseString(formData.get("purchaseDate")),
-    purchasePrice: parseNumber(formData.get("purchasePrice")) ?? 0,
-    currencyCode: parseString(formData.get("currencyCode")),
+    vin,
+    vehicleIdNr,
+    numberPlate,
+    isVeteran,
+    isArchived,
+    firstRegistration,
+    initialOdo,
+    purchaseDate,
+    purchasePrice: purchasePrice ?? 0,
+    currencyCode,
     image: imagePath,
   };
 
@@ -148,8 +163,15 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { cards, user, currentSort } = loaderData;
+  const { cards, currentSort } = loaderData;
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const actionData = useActionData<{ success?: boolean }>();
+
+  useEffect(() => {
+    if (actionData?.success) {
+      setIsAddOpen(false);
+    }
+  }, [actionData]);
 
   const numberFormatter = new Intl.NumberFormat("de-CH", {
     maximumFractionDigits: 0,
@@ -161,54 +183,54 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     { id: "age", label: "Alter", icon: Calendar },
     { id: "inspection", label: "MFK", icon: CalendarDays },
   ];
-  
+
   const activeSortLabel = sortOptions.find(o => o.id === currentSort)?.label || "Sortieren";
 
   return (
     <div className="container mx-auto p-4 space-y-6 pb-24">
-      
+
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         {/* Sort Dropdown */}
         <Menu as="div" className="relative inline-block text-left">
-            <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus:outline-none dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
-                {activeSortLabel}
-                <ChevronDown className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />
-            </MenuButton>
+          <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus:outline-none dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
+            {activeSortLabel}
+            <ChevronDown className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />
+          </MenuButton>
 
-            <MenuItems
-                transition
-                className="absolute left-0 z-10 mt-2 w-56 origin-top-left rounded-xl border border-gray-200 bg-white p-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in dark:border-navy-700 dark:bg-navy-800 dark:ring-white/10"
-            >
-                {sortOptions.map((option) => {
-                    const Icon = option.icon;
-                    const isActive = currentSort === option.id;
-                    return (
-                        <MenuItem key={option.id}>
-                            <Link
-                                to={`?sort=${option.id}`}
-                                className={clsx(
-                                    "group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
-                                    isActive 
-                                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light" 
-                                        : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
-                                )}
-                            >
-                                <Icon className={clsx("h-4 w-4", isActive ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400")} />
-                                {option.label}
-                            </Link>
-                        </MenuItem>
-                    );
-                })}
-            </MenuItems>
+          <MenuItems
+            transition
+            className="absolute left-0 z-10 mt-2 w-56 origin-top-left rounded-xl border border-gray-200 bg-white p-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in dark:border-navy-700 dark:bg-navy-800 dark:ring-white/10"
+          >
+            {sortOptions.map((option) => {
+              const Icon = option.icon;
+              const isActive = currentSort === option.id;
+              return (
+                <MenuItem key={option.id}>
+                  <Link
+                    to={`?sort=${option.id}`}
+                    className={clsx(
+                      "group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
+                      isActive
+                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
+                        : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+                    )}
+                  >
+                    <Icon className={clsx("h-4 w-4", isActive ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400")} />
+                    {option.label}
+                  </Link>
+                </MenuItem>
+              );
+            })}
+          </MenuItems>
         </Menu>
 
         <button
-            onClick={() => setIsAddOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+          onClick={() => setIsAddOpen(true)}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
         >
-            <Plus className="h-5 w-5" />
-            <span className="hidden sm:inline">Neues Motorrad</span>
+          <Plus className="h-5 w-5" />
+          <span className="hidden sm:inline">Neues Motorrad</span>
         </button>
       </div>
 
@@ -216,7 +238,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         {cards.length === 0 ? (
           <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
             <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">
-               <Gauge className="h-8 w-8 text-gray-400 dark:text-navy-300" />
+              <Gauge className="h-8 w-8 text-gray-400 dark:text-navy-300" />
             </div>
             <h3 className="text-xl font-semibold text-foreground dark:text-white">
               Keine Motorräder gefunden
@@ -224,7 +246,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
               Deine Garage ist leer. Füge dein erstes Motorrad hinzu, um Wartungen und Kilometerstände zu verwalten.
             </p>
-            <button 
+            <button
               onClick={() => setIsAddOpen(true)}
               className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-all hover:bg-primary-dark active:scale-95"
             >
@@ -234,110 +256,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </div>
         ) : (
           cards.map((moto) => (
-            <div
-              key={moto.id}
-              className="group relative flex flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-navy-700 dark:bg-navy-800"
-            >
-              {/* Image */}
-              {moto.image && (
-                <div className="aspect-[4/3] w-full overflow-hidden">
-                    <img 
-                        src={`${moto.image}?width=800`}
-                        srcSet={`${moto.image}?width=400 400w, ${moto.image}?width=800 800w`}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        alt={`${moto.make} ${moto.model}`} 
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                    />
-                </div>
-              )}
-
-              {/* Card Header */}
-              <div className="border-b border-gray-100 bg-gray-50/50 p-4 dark:border-navy-700 dark:bg-navy-900/30">
-                <div className="flex items-start justify-between">
-                    <div>
-                        <Link 
-                          to={`/motorcycle/${moto.make.toLowerCase().replace(/\s+/g, '-')}-${moto.model.toLowerCase().replace(/\s+/g, '-')}/${moto.id}`}
-                          className="group-hover:underline decoration-primary/50 underline-offset-4"
-                        >
-                          <h3 className="text-lg font-bold tracking-tight text-foreground dark:text-white">
-                            {moto.make} {moto.model}
-                          </h3>
-                        </Link>
-                        <p className="text-xs font-medium text-secondary dark:text-navy-400">
-                            {moto.modelYear || "Jahrgang unbekannt"}
-                        </p>
-                    </div>
-                    {moto.isVeteran && (
-                        <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400">
-                          Veteran
-                        </span>
-                    )}
-                </div>
-              </div>
-
-              {/* Card Stats Grid */}
-              <div className="flex-1 p-4">
-                <div className="space-y-3">
-                  
-                  {/* Odometer */}
-                  <div className="flex items-center justify-between rounded-xl bg-gray-50/50 p-2 dark:bg-navy-900/30">
-                    <div className="flex items-center gap-2 text-secondary dark:text-navy-400">
-                      <div className="grid h-7 w-7 place-items-center rounded-lg bg-white text-primary shadow-sm dark:bg-navy-800 dark:text-primary-light">
-                          <Gauge className="h-4 w-4" />
-                      </div>
-                      <span className="text-sm font-medium">Aktuell</span>
-                    </div>
-                    <span className="text-sm font-bold text-foreground dark:text-gray-100">
-                      {numberFormatter.format(moto.odometer)} km
-                    </span>
-                  </div>
-
-                  {/* KM this year */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2 text-secondary dark:text-navy-400">
-                      <RouteIcon className="h-4 w-4" />
-                      <span className="text-sm">Dieses Jahr</span>
-                    </div>
-                    <span className={clsx(
-                      "text-sm font-semibold",
-                      moto.odometerThisYear > 0 ? "text-foreground dark:text-gray-100" : "text-secondary/70 dark:text-navy-500"
-                    )}>
-                      {numberFormatter.format(moto.odometerThisYear)} km
-                    </span>
-                  </div>
-
-                  {/* Issues */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2 text-secondary dark:text-navy-400">
-                      <Wrench className="h-4 w-4" />
-                      <span className="text-sm">Offene Mängel</span>
-                    </div>
-                    <span className={clsx(
-                        "text-sm font-semibold",
-                        moto.numberOfIssues > 0 ? "text-orange-600 dark:text-orange-400" : "text-green-600 dark:text-green-400"
-                    )}>
-                      {moto.numberOfIssues > 0 ? `${moto.numberOfIssues} Ausstehend` : "Alles gut"}
-                    </span>
-                  </div>
-
-                  {/* Next Inspection */}
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2 text-secondary dark:text-navy-400">
-                      <CalendarDays className="h-4 w-4" />
-                      <span className="text-sm">Nächste MFK</span>
-                    </div>
-                    <span className={clsx(
-                      "text-sm font-semibold",
-                      moto.nextInspection?.isOverdue ? "text-red-600 dark:text-red-400" : "text-foreground dark:text-gray-100"
-                    )}>
-                      {moto.nextInspection?.relativeLabel || "Unbekannt"}
-                    </span>
-                  </div>
-
-                </div>
-              </div>
-            </div>
+            <MotorcycleCard key={moto.id} moto={moto} />
           ))
         )}
       </div>

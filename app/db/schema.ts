@@ -40,7 +40,7 @@ export const motorcycles = sqliteTable("motorcycles", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 
-  vin: text().notNull(),
+  vin: text(),
   vehicleIdNr: text("vehicle_nr"),
   numberPlate: text("number_plate"),
 

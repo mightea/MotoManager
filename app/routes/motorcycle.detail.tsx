@@ -1,11 +1,11 @@
-import { useId, useState } from "react";
-import { data, Form, Link, redirect, useRevalidator } from "react-router";
+import { useId, useState, useEffect } from "react";
+import { data, Form, Link, redirect, useRevalidator, useActionData, useSubmit } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
 import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { ArrowLeft, ChevronDown, CalendarDays, Plus } from "lucide-react";
+import { ArrowLeft, ChevronDown, CalendarDays, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText } from "lucide-react";
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo } from "~/utils/inspection";
@@ -17,10 +17,11 @@ import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
+import { StatisticEntry } from "~/components/statistic-entry";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import { motorcycleSchema } from "~/validations";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -87,12 +88,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const insights = getMaintenanceInsights(maintenanceHistory, lastKnownOdo ?? 0);
 
   const userLocations = await db.query.locations.findMany({
-      where: eq(locations.userId, user.id),
+    where: eq(locations.userId, user.id),
   });
 
   const currentLocationId = maintenanceHistory
-      .filter(r => r.type === "location")
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId;
+    .filter(r => r.type === "location")
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId;
 
   const currentLocationName = userLocations.find(l => l.id === currentLocationId)?.name ?? null;
 
@@ -106,20 +107,14 @@ export async function action({ request }: Route.ActionArgs) {
   const { user, headers } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
-  
+
   const parseString = (value: FormDataEntryValue | null | undefined) =>
     typeof value === "string" && value.length > 0 ? value : undefined;
-  
+
   const parseNumber = (value: FormDataEntryValue | null | undefined) => {
     const parsed = Number.parseFloat(typeof value === "string" ? value : "");
     return Number.isNaN(parsed) ? undefined : parsed;
   };
-  const parseInteger = (value: FormDataEntryValue | null | undefined) => {
-    const parsed = Number.parseInt(typeof value === "string" ? value : "", 10);
-    return Number.isNaN(parsed) ? undefined : parsed;
-  };
-  const parseBoolean = (value: FormDataEntryValue | null | undefined) =>
-    value === "true" || value === "on" || value === "1";
   const isValidPriority = (value: FormDataEntryValue | null): NewIssue["priority"] => {
     if (value === "high" || value === "medium" || value === "low") {
       return value;
@@ -137,42 +132,64 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "updateMotorcycle") {
     const motorcycleId = Number(formData.get("motorcycleId"));
-    const make = parseString(formData.get("make"));
-    const model = parseString(formData.get("model"));
-    const vin = parseString(formData.get("vin"));
-
-    if (
-      !Number.isFinite(motorcycleId) ||
-      !make ||
-      !model ||
-      !vin
-    ) {
-      throw new Response("Ungültige Fahrzeugdaten", { status: 400 });
+    if (!Number.isFinite(motorcycleId)) {
+      throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
     }
 
-    const modelYear = parseInteger(formData.get("modelYear"));
+    const rawData = Object.fromEntries(formData);
+    const validationResult = motorcycleSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const formattedErrors: Record<string, string> = {};
+      for (const key of Object.keys(errors)) {
+        const fieldKey = key as keyof typeof errors;
+        if (errors[fieldKey]) {
+          formattedErrors[key] = errors[fieldKey]![0];
+        }
+      }
+      return data({ errors: formattedErrors }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+    }
+
+    const {
+      make,
+      model,
+      vin,
+      modelYear,
+      vehicleIdNr,
+      numberPlate, // Not in EditorMotorcycle? Wait, let's check schema. EditorMotorcycle usually has similar fields.
+      firstRegistration,
+      initialOdo,
+      purchaseDate,
+      purchasePrice,
+      currencyCode,
+      isVeteran,
+      // isArchived is not usually editable here or maybe it is? The form doesn't show it but schema might support it.
+    } = validationResult.data;
+
     const imageEntry = formData.get("image");
     let imagePath: string | undefined = undefined;
 
     if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
-        const newFilename = `${uuidv4()}.webp`;
-        const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
-        const buffer = Buffer.from(await imageEntry.arrayBuffer());
-        await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
-        imagePath = `/data/images/${newFilename}`;
+      const newFilename = `${uuidv4()}.webp`;
+      const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
+      const buffer = Buffer.from(await imageEntry.arrayBuffer());
+      await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
+      imagePath = `/data/images/${newFilename}`;
     }
 
     const updatedMotorcycle: EditorMotorcycle = {
       make,
       model,
       vin,
-      vehicleIdNr: parseString(formData.get("vehicleIdNr")) ?? null,
-      firstRegistration: parseString(formData.get("firstRegistration")) ?? null,
-      initialOdo: parseInteger(formData.get("initialOdo")) ?? 0,
-      purchaseDate: parseString(formData.get("purchaseDate")) ?? null,
-      purchasePrice: parseNumber(formData.get("purchasePrice")) ?? null,
-      currencyCode: parseString(formData.get("currencyCode")) ?? null,
-      isVeteran: parseBoolean(formData.get("isVeteran")),
+      vehicleIdNr: vehicleIdNr ?? null,
+      numberPlate: numberPlate ?? null,
+      firstRegistration: firstRegistration ?? null,
+      initialOdo: initialOdo ?? 0,
+      purchaseDate: purchaseDate ?? null,
+      purchasePrice: purchasePrice ?? null,
+      currencyCode: currencyCode ?? null,
+      isVeteran: isVeteran,
       ...(imagePath ? { image: imagePath } : {}),
     };
 
@@ -239,7 +256,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
-  
+
   if (intent === "updateIssue") {
     const motorcycleId = Number(formData.get("motorcycleId"));
     const issueId = Number(formData.get("issueId"));
@@ -280,51 +297,51 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "createMaintenance" || intent === "updateMaintenance") {
-      const motorcycleId = Number(formData.get("motorcycleId"));
-      
-      const type = formData.get("type") as MaintenanceType;
-      let locationId: number | undefined = Number(formData.get("locationId"));
-      if (Number.isNaN(locationId)) locationId = undefined;
-      const newLocationName = parseString(formData.get("newLocationName"));
+    const motorcycleId = Number(formData.get("motorcycleId"));
 
-      if (type === "location" && newLocationName) {
-          const newLoc = await createLocation(dbClient, {
-              name: newLocationName,
-              userId: user.id
-          });
-          if (newLoc) {
-              locationId = newLoc.id;
-          }
+    const type = formData.get("type") as MaintenanceType;
+    let locationId: number | undefined = Number(formData.get("locationId"));
+    if (Number.isNaN(locationId)) locationId = undefined;
+    const newLocationName = parseString(formData.get("newLocationName"));
+
+    if (type === "location" && newLocationName) {
+      const newLoc = await createLocation(dbClient, {
+        name: newLocationName,
+        userId: user.id
+      });
+      if (newLoc) {
+        locationId = newLoc.id;
       }
+    }
 
-      const recordData: any = {
-          motorcycleId,
-          type,
-          date: String(formData.get("date")),
-          odo: Number(formData.get("odo")),
-          cost: parseNumber(formData.get("cost")),
-          currency: parseString(formData.get("currency")),
-          description: parseString(formData.get("description")),
-          brand: parseString(formData.get("brand")),
-          model: parseString(formData.get("model")),
-          tirePosition: parseString(formData.get("tirePosition")) as TirePosition | undefined,
-          tireSize: parseString(formData.get("tireSize")),
-          dotCode: parseString(formData.get("dotCode")),
-          batteryType: parseString(formData.get("batteryType")) as BatteryType | undefined,
-          fluidType: parseString(formData.get("fluidType")) as FluidType | undefined,
-          viscosity: parseString(formData.get("viscosity")),
-          inspectionLocation: parseString(formData.get("inspectionLocation")),
-          locationId: locationId,
-      };
+    const recordData: any = {
+      motorcycleId,
+      type,
+      date: String(formData.get("date")),
+      odo: Number(formData.get("odo")),
+      cost: parseNumber(formData.get("cost")),
+      currency: parseString(formData.get("currency")),
+      description: parseString(formData.get("description")),
+      brand: parseString(formData.get("brand")),
+      model: parseString(formData.get("model")),
+      tirePosition: parseString(formData.get("tirePosition")) as TirePosition | undefined,
+      tireSize: parseString(formData.get("tireSize")),
+      dotCode: parseString(formData.get("dotCode")),
+      batteryType: parseString(formData.get("batteryType")) as BatteryType | undefined,
+      fluidType: parseString(formData.get("fluidType")) as FluidType | undefined,
+      viscosity: parseString(formData.get("viscosity")),
+      inspectionLocation: parseString(formData.get("inspectionLocation")),
+      locationId: locationId,
+    };
 
-      if (intent === "createMaintenance") {
-           await createMaintenanceRecord(dbClient, recordData as NewMaintenanceRecord);
-      } else {
-           const maintenanceId = Number(formData.get("maintenanceId"));
-           await updateMaintenanceRecord(dbClient, maintenanceId, motorcycleId, recordData);
-      }
+    if (intent === "createMaintenance") {
+      await createMaintenanceRecord(dbClient, recordData as NewMaintenanceRecord);
+    } else {
+      const maintenanceId = Number(formData.get("maintenanceId"));
+      await updateMaintenanceRecord(dbClient, maintenanceId, motorcycleId, recordData);
+    }
 
-      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
 
   return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
@@ -334,101 +351,110 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const revalidator = useRevalidator();
+  const actionData = useActionData<{ success?: boolean }>();
+  const submit = useSubmit();
+
+  useEffect(() => {
+    if (actionData?.success) {
+      setEditMotorcycleDialogOpen(false);
+    }
+  }, [actionData]);
 
   const openIssueDialog = (issue: Issue | null) => {
     setSelectedIssue(issue);
     setIssueDialogOpen(true);
   };
 
-  const closeIssueDialog = () => {
-    setIssueDialogOpen(false);
-    setSelectedIssue(null);
-  };
+    const closeIssueDialog = () => {
 
-  const detailsPanelId = useId();
+      setIssueDialogOpen(false);
 
-  const dateFormatter = new Intl.DateTimeFormat("de-CH", {
-    dateStyle: "medium",
-  });
+      setSelectedIssue(null);
 
-  const currencyFormatter = new Intl.NumberFormat("de-CH", {
-    style: "currency",
-    currency: motorcycle.currencyCode || "CHF",
-  });
+    };
 
-  const detailEntries = [
-    {
-      label: "Kennzeichen",
-      value: motorcycle.numberPlate?.trim() || null,
-    },
-    {
-      label: "Stammnummer",
-      value: motorcycle.vehicleIdNr?.trim() || null,
-    },
-    {
-      label: "1. Inverkehrsetzung",
-      value: motorcycle.firstRegistration
-        ? dateFormatter.format(new Date(motorcycle.firstRegistration))
-        : null,
-    },
-    {
-      label: "Kaufdatum",
-      value: motorcycle.purchaseDate
-        ? dateFormatter.format(new Date(motorcycle.purchaseDate))
-        : null,
-    },
-    {
-      label: "Kaufpreis",
-      value:
-        motorcycle.purchasePrice !== null && motorcycle.purchasePrice !== undefined
-          ? currencyFormatter.format(motorcycle.purchasePrice)
-          : null,
-    },
-    {
-      label: "Status",
-      value: `${motorcycle.isArchived ? "Archiviert" : "Aktiv"}${motorcycle.isVeteran ? " • Veteran" : ""
-        }`,
-    },
-  ];
+  
 
-  const visibleDetails = detailEntries.filter(
-    (entry) => entry.value !== null && entry.value !== ""
-  );
+      const dateFormatter = new Intl.DateTimeFormat("de-CH", {
 
-  return (
-    <div className="container mx-auto max-w-5xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
-      
-      <div className={clsx(
-            "sticky top-0 z-10 -mx-4 px-4 py-4 transition-all duration-300 md:relative md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
-            motorcycle.image ? "text-white" : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
-        )}>
+  
+
+        dateStyle: "medium",
+
+  
+
+      });
+
+  
+
+    
+
+  
+
+      const currencyFormatter = new Intl.NumberFormat("de-CH", {
+
+  
+
+        style: "currency",
+
+  
+
+        currency: motorcycle.currencyCode || "CHF",
+
+  
+
+      });
+
+  
+
+    
+
+  
+
+      return (
+
+  
+
+        <div className="container mx-auto max-w-7xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
+
+  
+
+    
+
+  
+
+          <div className={clsx(
+        "sticky top-0 z-10 -mx-4 px-4 py-4 transition-all duration-300 md:relative md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
+        motorcycle.image ? "text-white" : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
+      )}>
         {motorcycle.image && (
-            <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
-                <img 
-                    src={`${motorcycle.image}?width=1200`}
-                    srcSet={`${motorcycle.image}?width=800 800w, ${motorcycle.image}?width=1600 1600w`}
-                    sizes="(max-width: 768px) 100vw, 1200px"
-                    alt={`${motorcycle.make} ${motorcycle.model}`}
-                    className="h-full w-full object-cover"
-                    fetchPriority="high"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
-            </div>
+          <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
+            <img
+              src={`${motorcycle.image}?width=1200`}
+              srcSet={`${motorcycle.image}?width=800 800w, ${motorcycle.image}?width=1600 1600w`}
+              sizes="(max-width: 768px) 100vw, 1200px"
+              alt={`${motorcycle.make} ${motorcycle.model}`}
+              className="h-full w-full object-cover"
+              fetchPriority="high"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
+          </div>
         )}
 
         <div className="flex items-start gap-4 pointer-events-auto relative">
           <Link
             to="/"
             className={clsx(
-                "group flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all hover:bg-primary hover:text-white",
-                motorcycle.image 
-                    ? "bg-white/20 text-white hover:bg-white hover:text-primary backdrop-blur-md" 
-                    : "bg-white text-secondary dark:bg-navy-800 dark:text-navy-400 dark:hover:bg-primary-dark"
+              "group flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all hover:bg-primary hover:text-white",
+              motorcycle.image
+                ? "bg-white/20 text-white hover:bg-white hover:text-primary backdrop-blur-md"
+                : "bg-white text-secondary dark:bg-navy-800 dark:text-navy-400 dark:hover:bg-primary-dark"
             )}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -440,29 +466,29 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               </h1>
               {motorcycle.isVeteran && (
                 <span className={clsx(
-                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                    motorcycle.image 
-                        ? "border-white/30 bg-white/20 text-white backdrop-blur-sm"
-                        : "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400"
+                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                  motorcycle.image
+                    ? "border-white/30 bg-white/20 text-white backdrop-blur-sm"
+                    : "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400"
                 )}>
                   Veteran
                 </span>
               )}
             </div>
-            
+
             <div className={clsx("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm", motorcycle.image ? "text-gray-200" : "text-secondary dark:text-navy-400")}>
               <span>{motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"}</span>
               <span className="hidden sm:inline">•</span>
               <span>{motorcycle.vin}</span>
-              
+
               {nextInspection && (
                 <>
                   <span className="hidden sm:inline">•</span>
                   <div className={clsx(
                     "flex items-center gap-1.5 font-medium",
                     motorcycle.image
-                        ? (nextInspection.isOverdue ? "text-red-300" : "text-gray-200")
-                        : (nextInspection.isOverdue ? "text-red-600 dark:text-red-400" : "text-secondary dark:text-navy-400")
+                      ? (nextInspection.isOverdue ? "text-red-300" : "text-gray-200")
+                      : (nextInspection.isOverdue ? "text-red-600 dark:text-red-400" : "text-secondary dark:text-navy-400")
                   )}>
                     <CalendarDays className="h-4 w-4" />
                     <span>MFK: {nextInspection.relativeLabel}</span>
@@ -472,8 +498,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
               {currentLocationName && (
                 <>
-                    <span className="hidden sm:inline">•</span>
-                    <span>{currentLocationName}</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span>{currentLocationName}</span>
                 </>
               )}
             </div>
@@ -491,7 +517,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                 onClick={() => setDetailsExpanded((prev) => !prev)}
                 className="flex flex-1 items-center justify-between text-left text-base font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
                 aria-expanded={detailsExpanded}
-                aria-controls={detailsPanelId}
               >
                 <span>Fahrzeugdaten</span>
                 <ChevronDown
@@ -500,32 +525,74 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   })}
                 />
               </button>
-              <button
-                type="button"
-                onClick={() => setEditMotorcycleDialogOpen(true)}
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-              >
-                Bearbeiten
-              </button>
-            </div>
-            <div id={detailsPanelId} hidden={!detailsExpanded}>
-              {visibleDetails.length > 0 ? (
-                <dl className="mt-3 space-y-2 text-sm">
-                  {visibleDetails.map((entry) => (
-                    <div key={entry.label} className="flex justify-between">
-                      <dt className="text-secondary dark:text-navy-400">{entry.label}</dt>
-                      <dd className="font-medium text-foreground dark:text-gray-200">{entry.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : (
-                <p className="mt-4 text-sm text-secondary dark:text-navy-400">
-                  Keine Fahrzeugdaten vorhanden.
-                </p>
-              )}
-            </div>
-          </div>
-
+                              <button
+                                type="button"
+                                onClick={() => setEditMotorcycleDialogOpen(true)}
+                                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+                              >
+                                Bearbeiten
+                              </button>
+                            </div>
+                            <div hidden={!detailsExpanded} className="mt-3 space-y-2">
+                              <StatisticEntry
+                                icon={Hash}
+                                label="Kennzeichen"
+                                value={motorcycle.numberPlate?.trim()}
+                              />
+                              <StatisticEntry
+                                icon={FileText}
+                                label="Stammnummer"
+                                value={motorcycle.vehicleIdNr?.trim()}
+                              />
+                              <StatisticEntry
+                                icon={Fingerprint}
+                                label="VIN"
+                                value={motorcycle.vin}
+                              />
+                              <StatisticEntry
+                                icon={Gauge}
+                                label="Anfangs-KM"
+                                value={motorcycle.initialOdo > 0 ? `${motorcycle.initialOdo} km` : null}
+                              />
+                              <StatisticEntry
+                                icon={Calendar}
+                                label="1. Inverkehrsetzung"
+                                value={
+                                  motorcycle.firstRegistration
+                                    ? dateFormatter.format(new Date(motorcycle.firstRegistration))
+                                    : null
+                                }
+                              />
+                              <StatisticEntry
+                                icon={Calendar}
+                                label="Kaufdatum"
+                                value={
+                                  motorcycle.purchaseDate
+                                    ? dateFormatter.format(new Date(motorcycle.purchaseDate))
+                                    : null
+                                }
+                              />
+                              <StatisticEntry
+                                icon={DollarSign}
+                                label="Kaufpreis"
+                                value={
+                                  motorcycle.purchasePrice !== null && motorcycle.purchasePrice !== undefined
+                                    ? currencyFormatter.format(motorcycle.purchasePrice)
+                                    : null
+                                }
+                              />
+                              <StatisticEntry
+                                icon={Info}
+                                label="Status"
+                                value={
+                                  <span className="flex items-center gap-2">
+                                    {motorcycle.isArchived ? "Archiviert" : "Aktiv"}
+                                    {motorcycle.isVeteran && " • Veteran"}
+                                  </span>
+                                }
+                              />
+                            </div>
+                          </div>
           <div className="hidden md:block">
             <MaintenanceInsightsCard insights={insights} />
           </div>
@@ -578,25 +645,45 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         description="Passe die Fahrzeugdaten an."
       >
         <AddMotorcycleForm
-          onSubmit={() => setEditMotorcycleDialogOpen(false)}
           initialValues={motorcycle}
           intent="updateMotorcycle"
-          submitLabel="Aktualisieren"
-        />
-        <Form
-          method="post"
-          className="mt-6"
+          submitLabel="Speichern"
           onSubmit={() => setEditMotorcycleDialogOpen(false)}
-        >
-          <input type="hidden" name="intent" value="deleteMotorcycle" />
-          <input type="hidden" name="motorcycleId" value={motorcycle.id} />
+          onDelete={() => setDeleteConfirmationOpen(true)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={deleteConfirmationOpen}
+        onClose={() => setDeleteConfirmationOpen(false)}
+        title="Motorrad löschen"
+        description="Bist du sicher, dass du dieses Motorrad löschen möchtest? Dies kann nicht rückgängig gemacht werden."
+      >
+        <div className="flex justify-end gap-3 mt-4">
           <button
-            type="submit"
-            className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/30"
+            type="button"
+            onClick={() => setDeleteConfirmationOpen(false)}
+            className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
           >
-            Motorrad löschen
+            Abbrechen
           </button>
-        </Form>
+          <button
+            type="button"
+            onClick={() => {
+              const formData = new FormData();
+              formData.append("intent", "deleteMotorcycle");
+              formData.append("motorcycleId", motorcycle.id.toString());
+              submit(formData, {
+                method: "post",
+              });
+              setDeleteConfirmationOpen(false);
+              setEditMotorcycleDialogOpen(false);
+            }}
+            className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-red-600/40 focus:outline-none focus:ring-4 focus:ring-red-600/30 active:scale-[0.98]"
+          >
+            Löschen
+          </button>
+        </div>
       </Modal>
 
       <MaintenanceDialog
