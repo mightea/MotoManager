@@ -17,6 +17,7 @@ export type MotorcycleDashboardItem = (Motorcycle & {
   odometerThisYear: number;
   nextInspection: NextInspectionInfo | null;
   lastActivity: string | null;
+  image: string | null;
 };
 
 export type DashboardStats = {
@@ -155,6 +156,7 @@ export function buildDashboardItems({
       odometerThisYear,
       nextInspection,
       lastActivity,
+      image: moto.image,
     };
   });
 }

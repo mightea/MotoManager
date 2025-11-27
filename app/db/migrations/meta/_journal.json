@@ -22,6 +22,27 @@
       "when": 1760962227554,
       "tag": "0002_add_privacy_columns_to_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "8",
+      "when": 1761000000000,
+      "tag": "0003_add_location_id_to_maintenance_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "8",
+      "when": 1761000000001,
+      "tag": "0004_drop_image_column",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "8",
+      "when": 1761000000002,
+      "tag": "0005_add_image_column_back",
+      "breakpoints": true
     }
   ]
 }

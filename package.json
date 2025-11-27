@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@10.2.1",
   "scripts": {
-    "build": "react-router build",
+    "build": "react-router build && cp -r app/db/migrations build/server/",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
