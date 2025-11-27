@@ -18,5 +18,6 @@ export default [
     index("routes/home.tsx"),
     route("documents", "routes/documents.tsx"),
     route("motorcycle/:slug/:id", "routes/motorcycle.detail.tsx"),
+    route("motorcycle/:slug/:id/documents", "routes/motorcycle.detail.documents.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -1,11 +1,21 @@
 import { useId, useState, useEffect } from "react";
-import { data, Form, Link, redirect, useRevalidator, useActionData, useSubmit } from "react-router";
+import {
+  data,
+  Form,
+  Link,
+  redirect,
+  useRevalidator,
+  useActionData,
+  useSubmit,
+  useLocation,
+  useParams,
+} from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
 import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { ArrowLeft, ChevronDown, CalendarDays, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText } from "lucide-react";
+import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText } from "lucide-react";
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo } from "~/utils/inspection";
@@ -22,6 +32,9 @@ import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import sharp from "sharp";
 import { motorcycleSchema } from "~/validations";
+import { createMotorcycleSlug } from "~/utils/motorcycle";
+import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
+import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -359,6 +372,15 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const revalidator = useRevalidator();
   const actionData = useActionData<{ success?: boolean }>();
   const submit = useSubmit();
+  const location = useLocation();
+  const params = useParams<{ slug?: string; id?: string }>();
+  const slug = params.slug ?? createMotorcycleSlug(motorcycle.make, motorcycle.model);
+  const motorcycleIdParam = params.id ?? motorcycle.id.toString();
+  const basePath = `/motorcycle/${slug}/${motorcycleIdParam}`;
+  const navLinks = [
+    { label: "Dokumente", to: `${basePath}/documents`, isActive: location.pathname.includes("/documents") },
+    { label: "Zweite Seite", to: "#", disabled: true },
+  ];
 
   useEffect(() => {
     if (actionData?.success) {
@@ -429,83 +451,12 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
   
 
-          <div className={clsx(
-        "sticky top-0 z-10 -mx-4 px-4 py-4 transition-all duration-300 md:relative md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
-        motorcycle.image ? "text-white" : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
-      )}>
-        {motorcycle.image && (
-          <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
-            <img
-              src={`${motorcycle.image}?width=1200`}
-              srcSet={`${motorcycle.image}?width=800 800w, ${motorcycle.image}?width=1600 1600w`}
-              sizes="(max-width: 768px) 100vw, 1200px"
-              alt={`${motorcycle.make} ${motorcycle.model}`}
-              className="h-full w-full object-cover"
-              fetchPriority="high"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
-          </div>
-        )}
-
-        <div className="flex items-start gap-4 pointer-events-auto relative">
-          <Link
-            to="/"
-            className={clsx(
-              "group flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all hover:bg-primary hover:text-white",
-              motorcycle.image
-                ? "bg-white/20 text-white hover:bg-white hover:text-primary backdrop-blur-md"
-                : "bg-white text-secondary dark:bg-navy-800 dark:text-navy-400 dark:hover:bg-primary-dark"
-            )}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="flex-1 space-y-1">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className={clsx("text-2xl font-bold", motorcycle.image ? "text-white" : "text-foreground dark:text-white")}>
-                {motorcycle.make} {motorcycle.model}
-              </h1>
-              {motorcycle.isVeteran && (
-                <span className={clsx(
-                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                  motorcycle.image
-                    ? "border-white/30 bg-white/20 text-white backdrop-blur-sm"
-                    : "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400"
-                )}>
-                  Veteran
-                </span>
-              )}
-            </div>
-
-            <div className={clsx("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm", motorcycle.image ? "text-gray-200" : "text-secondary dark:text-navy-400")}>
-              <span>{motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"}</span>
-              <span className="hidden sm:inline">•</span>
-              <span>{motorcycle.vin}</span>
-
-              {nextInspection && (
-                <>
-                  <span className="hidden sm:inline">•</span>
-                  <div className={clsx(
-                    "flex items-center gap-1.5 font-medium",
-                    motorcycle.image
-                      ? (nextInspection.isOverdue ? "text-red-300" : "text-gray-200")
-                      : (nextInspection.isOverdue ? "text-red-600 dark:text-red-400" : "text-secondary dark:text-navy-400")
-                  )}>
-                    <CalendarDays className="h-4 w-4" />
-                    <span>MFK: {nextInspection.relativeLabel}</span>
-                  </div>
-                </>
-              )}
-
-              {currentLocationName && (
-                <>
-                  <span className="hidden sm:inline">•</span>
-                  <span>{currentLocationName}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <MotorcycleDetailHeader
+        motorcycle={motorcycle}
+        nextInspection={nextInspection}
+        currentLocationName={currentLocationName}
+        navLinks={navLinks}
+      />
 
       <div className="grid gap-5 md:grid-cols-3 items-start">
         <div className="space-y-5 md:sticky md:top-6">
@@ -653,38 +604,22 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         />
       </Modal>
 
-      <Modal
+      <DeleteConfirmationDialog
         isOpen={deleteConfirmationOpen}
-        onClose={() => setDeleteConfirmationOpen(false)}
+        onCancel={() => setDeleteConfirmationOpen(false)}
+        onConfirm={() => {
+          const formData = new FormData();
+          formData.append("intent", "deleteMotorcycle");
+          formData.append("motorcycleId", motorcycle.id.toString());
+          submit(formData, {
+            method: "post",
+          });
+          setDeleteConfirmationOpen(false);
+          setEditMotorcycleDialogOpen(false);
+        }}
         title="Motorrad löschen"
         description="Bist du sicher, dass du dieses Motorrad löschen möchtest? Dies kann nicht rückgängig gemacht werden."
-      >
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            type="button"
-            onClick={() => setDeleteConfirmationOpen(false)}
-            className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
-          >
-            Abbrechen
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const formData = new FormData();
-              formData.append("intent", "deleteMotorcycle");
-              formData.append("motorcycleId", motorcycle.id.toString());
-              submit(formData, {
-                method: "post",
-              });
-              setDeleteConfirmationOpen(false);
-              setEditMotorcycleDialogOpen(false);
-            }}
-            className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-red-600/40 focus:outline-none focus:ring-4 focus:ring-red-600/30 active:scale-[0.98]"
-          >
-            Löschen
-          </button>
-        </div>
-      </Modal>
+      />
 
       <MaintenanceDialog
         isOpen={maintenanceDialogOpen}

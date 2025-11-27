@@ -3,6 +3,7 @@ import { Gauge, Route as RouteIcon, Wrench, CalendarDays } from "lucide-react";
 import clsx from "clsx";
 import type { MotorcycleDashboardItem as DashboardCard } from "~/utils/home-stats";
 import { StatisticEntry } from "./statistic-entry";
+import { createMotorcycleSlug } from "~/utils/motorcycle";
 
 interface MotorcycleCardProps {
   moto: DashboardCard;
@@ -13,9 +14,11 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
     maximumFractionDigits: 0,
   });
 
+  const slug = createMotorcycleSlug(moto.make, moto.model);
+
   return (
     <Link
-      to={`/motorcycle/${moto.make.toLowerCase().replace(/\s+/g, '-')}-${moto.model.toLowerCase().replace(/\s+/g, '-')}/${moto.id}`}
+      to={`/motorcycle/${slug}/${moto.id}`}
       className="group relative flex flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-navy-700 dark:bg-navy-800"
     >
       {/* Header with Background Image */}

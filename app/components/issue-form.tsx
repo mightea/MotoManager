@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/button";
 import type { Issue } from "~/db/schema";
-import { Modal } from "~/components/modal";
+import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 
 interface IssueFormProps {
   motorcycleId: number;
@@ -182,31 +182,15 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
         </div>
       </div>
       {confirmDeleteOpen && (
-        <Modal
+        <DeleteConfirmationDialog
           isOpen={confirmDeleteOpen}
-          onClose={() => setConfirmDeleteOpen(false)}
           title="Mangel löschen"
           description="Dieser Mangel wird dauerhaft entfernt. Möchtest du fortfahren?"
-        >
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setConfirmDeleteOpen(false)}
-              disabled={isSubmitting}
-            >
-              Abbrechen
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-            >
-              Löschen
-            </Button>
-          </div>
-        </Modal>
+          onCancel={() => setConfirmDeleteOpen(false)}
+          onConfirm={handleDelete}
+          confirmDisabled={isSubmitting}
+          cancelDisabled={isSubmitting}
+        />
       )}
     </fetcher.Form>
   );

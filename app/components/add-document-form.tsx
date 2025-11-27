@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useNavigation, useSubmit } from "react-router";
+import { useNavigation, useSubmit, type SubmitOptions } from "react-router";
 import { Button } from "./button";
 import clsx from "clsx";
 import type { Document, Motorcycle } from "~/db/schema";
@@ -13,12 +13,22 @@ interface AddDocumentFormProps {
   assignedMotorcycleIds?: number[];
   onSubmit: () => void;
   onDelete?: () => void;
+  onSubmitFormData?: (formData: FormData, options: SubmitOptions) => void;
+  isSubmittingOverride?: boolean;
 }
 
-export function AddDocumentForm({ document, motorcycles, assignedMotorcycleIds = [], onSubmit, onDelete }: AddDocumentFormProps) {
+export function AddDocumentForm({
+  document,
+  motorcycles,
+  assignedMotorcycleIds = [],
+  onSubmit,
+  onDelete,
+  onSubmitFormData,
+  isSubmittingOverride,
+}: AddDocumentFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === "submitting";
+  const isSubmitting = isSubmittingOverride ?? (navigation.state === "submitting");
   
   const [isPrivate, setIsPrivate] = useState(document?.isPrivate ?? false);
   const [selectedMotorcycles, setSelectedMotorcycles] = useState<number[]>(assignedMotorcycleIds);
@@ -94,10 +104,16 @@ export function AddDocumentForm({ document, motorcycles, assignedMotorcycleIds =
         formData.append("motorcycleIds", id.toString());
     });
 
-    submit(formData, {
-        method: "post",
-        encType: "multipart/form-data",
-    });
+    const submitOptions: SubmitOptions = {
+      method: "post",
+      encType: "multipart/form-data",
+    };
+
+    if (onSubmitFormData) {
+      onSubmitFormData(formData, submitOptions);
+    } else {
+      submit(formData, submitOptions);
+    }
     
     // We let the parent handle closing, or we could call onSubmit() if we want optimistic close
     // But usually we wait for action result. The parent can listen to actionData.

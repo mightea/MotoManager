@@ -1,4 +1,4 @@
-import { data, useActionData, useSubmit } from "react-router";
+import { data, useActionData, useSubmit, useLocation, useNavigate } from "react-router";
 import type { Route } from "./+types/documents";
 import { getDb } from "~/db";
 import { documents, users, motorcycles, documentMotorcycles } from "~/db/schema";
@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
+import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs/promises";
@@ -328,6 +329,8 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   
   const actionData = useActionData<{ success?: boolean }>();
   const submit = useSubmit();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (actionData?.success) {
@@ -384,6 +387,23 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
       setIsEditorOpen(true);
   };
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const docIdParam = searchParams.get("doc");
+    if (!docIdParam) return;
+    const docToEdit = docs.find((d) => d.id === Number(docIdParam));
+    if (!docToEdit) return;
+    openEditDialog(docToEdit);
+    searchParams.delete("doc");
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString() ? `?${searchParams.toString()}` : "",
+      },
+      { replace: true }
+    );
+  }, [location.search, docs, navigate]);
+
   return (
     <div className="container mx-auto space-y-6 p-4 pb-24">
       <div className="flex items-center justify-between">
@@ -437,6 +457,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
         description={editingDocument ? "Bearbeite Details oder ersetze die Datei." : "Lade eine neue PDF- oder Bilddatei hoch."}
       >
         <AddDocumentForm
+          key={editingDocument ? editingDocument.id : "new"}
           document={editingDocument}
           motorcycles={allMotorcycles}
           assignedMotorcycleIds={getAssignedMotorcycleIds(editingDocument?.id)}
@@ -448,39 +469,22 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <DeleteConfirmationDialog
         isOpen={deleteConfirmationOpen}
-        onClose={() => setDeleteConfirmationOpen(false)}
         title="Dokument löschen"
         description="Bist du sicher, dass du dieses Dokument löschen möchtest? Dies kann nicht rückgängig gemacht werden."
-      >
-        <div className="flex justify-end gap-3 mt-4">
-          <button
-            type="button"
-            onClick={() => setDeleteConfirmationOpen(false)}
-            className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
-          >
-            Abbrechen
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (editingDocument) {
-                const formData = new FormData();
-                formData.append("intent", "delete");
-                formData.append("id", editingDocument.id.toString());
-                submit(formData, {
-                  method: "post",
-                });
-                // We don't necessarily need to close manually if useEffect handles it, but good specifically for optimistic feel
-              }
-            }}
-            className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-red-600/40 focus:outline-none focus:ring-4 focus:ring-red-600/30 active:scale-[0.98]"
-          >
-            Löschen
-          </button>
-        </div>
-      </Modal>
+        onCancel={() => setDeleteConfirmationOpen(false)}
+        onConfirm={() => {
+          if (editingDocument) {
+            const formData = new FormData();
+            formData.append("intent", "delete");
+            formData.append("id", editingDocument.id.toString());
+            submit(formData, {
+              method: "post",
+            });
+          }
+        }}
+      />
     </div>
   );
 }
