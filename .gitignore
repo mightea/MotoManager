@@ -22,7 +22,8 @@ db.sqlite*
 
 GEMINI.md
 
-uploads/
+data/images/
+data/images/cache/
 
 
 

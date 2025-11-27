@@ -9,7 +9,7 @@ import {
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { userPrefs } from "~/services/preferences.server";
 import { buildDashboardData, type MotorcycleDashboardItem } from "~/utils/home-stats";
@@ -117,10 +117,10 @@ export async function action({ request }: Route.ActionArgs) {
   
   if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
      const newFilename = `${uuidv4()}.webp`;
-     const uploadPath = path.join(process.cwd(), "uploads", newFilename);
+     const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
      const buffer = Buffer.from(await imageEntry.arrayBuffer());
      await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
-     imagePath = `/uploads/${newFilename}`;
+     imagePath = `/data/images/${newFilename}`;
   }
 
   const newMotorcycle: NewMotorcycle = {
@@ -242,9 +242,12 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               {moto.image && (
                 <div className="aspect-[4/3] w-full overflow-hidden">
                     <img 
-                        src={moto.image} 
+                        src={`${moto.image}?width=800`}
+                        srcSet={`${moto.image}?width=400 400w, ${moto.image}?width=800 800w`}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         alt={`${moto.make} ${moto.model}`} 
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
                     />
                 </div>
               )}

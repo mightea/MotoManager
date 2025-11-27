@@ -17,6 +17,10 @@ import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs/promises";
+import path from "path";
+import sharp from "sharp";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -147,6 +151,17 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     const modelYear = parseInteger(formData.get("modelYear"));
+    const imageEntry = formData.get("image");
+    let imagePath: string | undefined = undefined;
+
+    if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
+        const newFilename = `${uuidv4()}.webp`;
+        const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
+        const buffer = Buffer.from(await imageEntry.arrayBuffer());
+        await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
+        imagePath = `/data/images/${newFilename}`;
+    }
+
     const updatedMotorcycle: EditorMotorcycle = {
       make,
       model,
@@ -158,6 +173,7 @@ export async function action({ request }: Route.ActionArgs) {
       purchasePrice: parseNumber(formData.get("purchasePrice")) ?? null,
       currencyCode: parseString(formData.get("currencyCode")) ?? null,
       isVeteran: parseBoolean(formData.get("isVeteran")),
+      ...(imagePath ? { image: imagePath } : {}),
     };
 
     updatedMotorcycle.modelYear =
@@ -394,9 +410,12 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         {motorcycle.image && (
             <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
                 <img 
-                    src={motorcycle.image}
+                    src={`${motorcycle.image}?width=1200`}
+                    srcSet={`${motorcycle.image}?width=800 800w, ${motorcycle.image}?width=1600 1600w`}
+                    sizes="(max-width: 768px) 100vw, 1200px"
                     alt={`${motorcycle.make} ${motorcycle.model}`}
                     className="h-full w-full object-cover"
+                    fetchPriority="high"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
             </div>
