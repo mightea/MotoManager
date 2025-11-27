@@ -18,8 +18,8 @@ export function Header({ user }: { user: User | null }) {
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
-    <div className="fixed top-0 md:top-4 left-0 right-0 z-50 flex justify-center md:px-4">
-      <header className="relative w-full max-w-7xl overflow-hidden rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90">
+    <div className="fixed top-0 md:top-4 left-0 right-0 z-40 flex justify-center md:px-4 pointer-events-none">
+      <header className="relative w-full max-w-7xl overflow-hidden rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90 pointer-events-auto">
         {/* Motorsport Stripe Accent */}
         <div className="absolute left-0 right-0 top-0 h-2.5 bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]" />
 
@@ -49,7 +49,7 @@ export function Header({ user }: { user: User | null }) {
                 return (
                   <li key={item.label}>
                     <Link
-                      to={item.href === "/documents" || item.href === "/settings" ? "#" : item.href}
+                      to={item.href === "/settings" ? "#" : item.href}
                       className={clsx(
                         "block rounded-full px-5 py-2 text-sm font-medium transition-all",
                         isActive
@@ -120,7 +120,7 @@ export function Header({ user }: { user: User | null }) {
                 return (
                   <Link
                     key={item.label}
-                    to={item.href === "/documents" || item.href === "/settings" ? "#" : item.href}
+                    to={item.href === "/settings" ? "#" : item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={clsx(
                       "block rounded-lg px-4 py-3 text-base font-medium transition-colors",

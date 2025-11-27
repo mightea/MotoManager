@@ -50,3 +50,10 @@ textarea,
 select {
   font-size: 16px;
 }
+
+button,
+[role="button"],
+a {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}

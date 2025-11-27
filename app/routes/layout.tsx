@@ -14,7 +14,7 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
   return (
     <div className="min-h-screen bg-background font-sans antialiased dark:bg-navy-950">
       <Header user={user} />
-      <main className="flex-1 pt-24">
+      <main className="flex-1 pt-24 relative z-0">
         <Outlet />
       </main>
     </div>
