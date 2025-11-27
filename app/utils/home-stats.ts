@@ -8,6 +8,7 @@ import {
   getNextInspectionInfo,
   type NextInspectionInfo,
 } from "~/utils/inspection";
+import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 
 export type MotorcycleDashboardItem = (Motorcycle & {
   lastInspection: string | null;
@@ -18,6 +19,7 @@ export type MotorcycleDashboardItem = (Motorcycle & {
   nextInspection: NextInspectionInfo | null;
   lastActivity: string | null;
   image: string | null;
+  hasOverdueMaintenance: boolean;
 };
 
 export type DashboardStats = {
@@ -148,6 +150,9 @@ export function buildDashboardItems({
       isVeteran: moto.isVeteran ?? false,
     });
 
+    const insights = getMaintenanceInsights(relatedMaintenance, maxOdometer);
+    const hasOverdueMaintenance = insights.some(i => i.status === "overdue");
+
     return {
       ...moto,
       lastInspection,
@@ -157,6 +162,7 @@ export function buildDashboardItems({
       nextInspection,
       lastActivity,
       image: moto.image,
+      hasOverdueMaintenance,
     };
   });
 }
