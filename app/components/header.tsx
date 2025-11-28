@@ -1,13 +1,15 @@
 import { Form, Link, useLocation } from "react-router";
-import { Bike, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import type { User } from "~/db/schema";
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function Header({ user }: { user: User | null }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
 
   const navItems = [
     { label: "Übersicht", href: "/" },
@@ -17,8 +19,73 @@ export function Header({ user }: { user: User | null }) {
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  useEffect(() => {
+    if (!isMotorcycleDetail || typeof window === "undefined") {
+      setIsHidden(false);
+      return;
+    }
+
+    let lastScrollY = window.scrollY;
+    let frame: number | null = null;
+
+    const handleScroll = () => {
+      if (frame !== null) {
+        return;
+      }
+      frame = window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollY;
+        const isScrollingDown = delta > 6;
+        const isScrollingUp = delta < -6;
+
+        if (currentY <= 80) {
+          setIsHidden(false);
+        } else if (isScrollingDown) {
+          setIsHidden(true);
+        } else if (isScrollingUp) {
+          setIsHidden(false);
+        }
+
+        lastScrollY = currentY;
+        frame = null;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      if (frame !== null) {
+        cancelAnimationFrame(frame);
+      }
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [isMotorcycleDetail]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const root = document.documentElement;
+    const offset = isHidden ? "0px" : "96px";
+
+    if (isMotorcycleDetail) {
+      root.style.setProperty("--app-header-offset", offset);
+    } else {
+      root.style.removeProperty("--app-header-offset");
+    }
+
+    return () => {
+      root.style.removeProperty("--app-header-offset");
+    };
+  }, [isMotorcycleDetail, isHidden]);
+
   return (
-    <div className="fixed top-0 md:top-4 left-0 right-0 z-40 flex justify-center md:px-4 pointer-events-none">
+    <div
+      className={clsx(
+        "fixed top-0 md:top-4 left-0 right-0 z-40 flex justify-center md:px-4 pointer-events-none transition-transform duration-300 ease-out",
+        isMotorcycleDetail && (isHidden ? "-translate-y-full" : "translate-y-0")
+      )}
+    >
       <header className="relative w-full max-w-7xl overflow-hidden rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90 pointer-events-auto">
         {/* Motorsport Stripe Accent */}
         <div className="absolute left-0 right-0 top-0 h-2.5 bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]" />

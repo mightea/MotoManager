@@ -5,6 +5,7 @@ import {
   useFetcher,
   useParams,
   useRevalidator,
+  useLocation,
 } from "react-router";
 import type { Route, DocumentWithAssignment } from "./+types/motorcycle.detail.documents";
 import { getDb } from "~/db";
@@ -185,6 +186,12 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
   const slug = params.slug ?? createMotorcycleSlug(motorcycle.make, motorcycle.model);
   const motorcycleIdParam = params.id ?? motorcycle.id.toString();
   const basePath = `/motorcycle/${slug}/${motorcycleIdParam}`;
+  const location = useLocation();
+  const normalizePath = (path: string) => path.replace(/\/+$/, "");
+  const overviewLink = {
+    to: basePath,
+    isActive: normalizePath(location.pathname) === normalizePath(basePath),
+  };
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: true },
     { label: "Zweite Seite", to: "#", disabled: true },
@@ -238,6 +245,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
         currentLocationName={currentLocationName}
         navLinks={navLinks}
         backTo={basePath}
+        overviewLink={overviewLink}
       />
 
       <div className="space-y-6">
