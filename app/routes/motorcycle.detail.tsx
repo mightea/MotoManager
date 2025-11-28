@@ -381,6 +381,11 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     { label: "Dokumente", to: `${basePath}/documents`, isActive: location.pathname.includes("/documents") },
     { label: "Zweite Seite", to: "#", disabled: true },
   ];
+  const normalizePath = (path: string) => path.replace(/\/+$/, "");
+  const overviewLink = {
+    to: basePath,
+    isActive: normalizePath(location.pathname) === normalizePath(basePath),
+  };
 
   useEffect(() => {
     if (actionData?.success) {
@@ -456,6 +461,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         nextInspection={nextInspection}
         currentLocationName={currentLocationName}
         navLinks={navLinks}
+        overviewLink={overviewLink}
       />
 
       <div className="grid gap-5 md:grid-cols-3 items-start">

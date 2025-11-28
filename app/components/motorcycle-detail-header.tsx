@@ -14,12 +14,19 @@ type NavLink = {
   disabled?: boolean;
 };
 
+type OverviewLink = {
+  to: string;
+  label?: string;
+  isActive?: boolean;
+};
+
 interface MotorcycleDetailHeaderProps {
   motorcycle: Motorcycle;
   nextInspection: NextInspectionInfo;
   currentLocationName?: string | null;
   navLinks: NavLink[];
   backTo?: string;
+  overviewLink?: OverviewLink;
 }
 
 export function MotorcycleDetailHeader({
@@ -28,17 +35,19 @@ export function MotorcycleDetailHeader({
   currentLocationName,
   navLinks,
   backTo = "/",
+  overviewLink,
 }: MotorcycleDetailHeaderProps) {
   const hasHeroImage = Boolean(motorcycle.image);
 
   return (
     <div
       className={clsx(
-        "sticky top-0 z-10 -mx-4 px-4 py-4 transition-all duration-300 md:relative md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
+        "sticky z-30 -mx-4 px-4 py-4 transition-all duration-300 md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
         hasHeroImage
           ? "text-white"
           : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
       )}
+      style={{ top: "var(--app-header-offset, 96px)" }}
     >
       {hasHeroImage && (
         <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
@@ -157,8 +166,26 @@ export function MotorcycleDetailHeader({
             )}
           </div>
 
-          {navLinks.length > 0 && (
+          {(navLinks.length > 0 || overviewLink) && (
             <div className="mt-4 flex flex-wrap gap-2">
+              {overviewLink && (
+                <Link
+                  key="overview-link"
+                  to={overviewLink.to}
+                  className={clsx(
+                    "hidden rounded-full border px-4 py-1.5 text-xs font-semibold transition-all md:inline-flex",
+                    overviewLink.isActive
+                      ? hasHeroImage
+                        ? "border-white bg-white text-primary"
+                        : "border-primary bg-primary text-white"
+                      : hasHeroImage
+                        ? "border-white/40 bg-white/10 text-white hover:bg-white/20"
+                        : "border-gray-200 text-secondary hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+                  )}
+                >
+                  {overviewLink.label ?? "Overview"}
+                </Link>
+              )}
               {navLinks.map((link) =>
                 link.disabled ? (
                   <span
