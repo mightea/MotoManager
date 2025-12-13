@@ -110,6 +110,19 @@ export async function deleteLocation(
   return deleted.at(0) ?? null;
 }
 
+export async function updateCurrencyByCode(
+  db: Database,
+  code: string,
+  conversionFactor: number,
+) {
+  const [record] = await db
+    .update(currencySettings)
+    .set({ conversionFactor })
+    .where(eq(currencySettings.code, code))
+    .returning();
+  return record ?? null;
+}
+
 export async function updateCurrencySetting(
   db: Database,
   currencyId: number,
