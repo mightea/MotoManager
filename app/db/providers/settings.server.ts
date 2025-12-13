@@ -69,6 +69,10 @@ export async function createLocation(db: Database, values: NewLocation) {
   return record ?? null;
 }
 
+export async function getCurrencies(db: Database) {
+  return db.select().from(currencySettings).orderBy(currencySettings.code);
+}
+
 export async function createCurrencySetting(
   db: Database,
   values: NewCurrencySetting,
