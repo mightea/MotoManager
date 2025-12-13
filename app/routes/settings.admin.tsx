@@ -364,7 +364,7 @@ export default function AdminSettings() {
                             <span className="rounded bg-gray-200 px-1.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-navy-800 dark:text-navy-200">{currency.symbol}</span>
                         </div>
                         <p className="mt-1 text-sm text-secondary dark:text-navy-400">
-                            Faktor: <span className="font-mono">{currency.conversionFactor}</span>
+                            Faktor: <span className="font-mono">{currency.conversionFactor.toFixed(2)}</span>
                         </p>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
