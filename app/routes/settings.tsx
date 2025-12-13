@@ -19,7 +19,7 @@ import {
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { useState } from "react";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield } from "lucide-react";
 import clsx from "clsx";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -83,7 +83,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings() {
-  const { locations } = useLoaderData<typeof loader>();
+  const { locations, user } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
@@ -100,6 +100,31 @@ export default function Settings() {
           Verwalte deine Kontoeinstellungen und Lagerorte.
         </p>
       </div>
+
+      {user.role === "admin" && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">Administrator-Bereich</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Benutzer verwalten und System-Einstellungen ändern.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => window.location.href = "/settings/admin"}
+              className="shrink-0"
+            >
+              Zum Admin-Bereich
+            </Button>
+          </div>
+        </div>
+      )}
 
       {actionData && "error" in actionData && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
