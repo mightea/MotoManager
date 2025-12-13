@@ -27,5 +27,13 @@ ENV APP_VERSION=$APP_VERSION
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
+
+# Copy source files needed for maintenance scripts
+COPY app ./app
+COPY scripts ./scripts
+
+# Setup Cron to update currencies daily at midnight
+RUN echo "0 0 * * * cd /app && ./node_modules/.bin/ts-node --esm scripts/update_currencies.ts >> /proc/1/fd/1 2>&1" > /etc/crontabs/root
+
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD crond && pnpm start
