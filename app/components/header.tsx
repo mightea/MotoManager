@@ -116,7 +116,7 @@ export function Header({ user }: { user: User | null }) {
                 return (
                   <li key={item.label}>
                     <Link
-                      to={item.href === "/settings" ? "#" : item.href}
+                      to={item.href}
                       className={clsx(
                         "block rounded-full px-5 py-2 text-sm font-medium transition-all",
                         isActive
@@ -187,7 +187,7 @@ export function Header({ user }: { user: User | null }) {
                 return (
                   <Link
                     key={item.label}
-                    to={item.href === "/settings" ? "#" : item.href}
+                    to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={clsx(
                       "block rounded-lg px-4 py-3 text-base font-medium transition-colors",
