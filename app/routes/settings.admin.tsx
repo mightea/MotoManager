@@ -104,14 +104,17 @@ export async function action({ request }: Route.ActionArgs) {
              return { error: `Währungscode "${upperCode}" nicht von der API unterstützt.` };
         }
 
-        await createCurrencySetting(db, { code: upperCode, symbol, conversionFactor: rate });
+        // Frankfurter returns rates relative to base (1 CHF = X Currency).
+        // We need the factor to convert FROM Currency TO CHF (1 Currency = Y CHF).
+        // So we invert the rate: 1 / rate.
+        await createCurrencySetting(db, { code: upperCode, symbol, conversionFactor: 1 / rate });
         
         // Update all other currencies if they exist in the rates
         const existingCurrencies = await getCurrencies(db);
         for (const currency of existingCurrencies) {
             const newRate = rates[currency.code];
             if (newRate) {
-                await updateCurrencyByCode(db, currency.code, newRate);
+                await updateCurrencyByCode(db, currency.code, 1 / newRate);
             }
         }
 
