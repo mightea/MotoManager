@@ -4,7 +4,7 @@ import path from "path";
 import { getDb } from "~/db";
 import { documents } from "~/db/schema";
 import { eq } from "drizzle-orm";
-import { getSession } from "~/services/auth.server"; // Or requireUser if we want to redirect, but for resources 403 is better
+import { getCurrentSession } from "~/services/auth.server"; // Or requireUser if we want to redirect, but for resources 403 is better
 
 const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
   ".pdf": "application/pdf",
@@ -47,10 +47,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   }
 
   if (doc.isPrivate) {
-    const session = await getSession(request.headers.get("Cookie"));
-    const userId = session.get("userId");
+    const { user } = await getCurrentSession(request);
     
-    if (!userId || userId !== doc.ownerId) {
+    if (!user || user.id !== doc.ownerId) {
         throw new Response("Unauthorized", { status: 403 });
     }
   }

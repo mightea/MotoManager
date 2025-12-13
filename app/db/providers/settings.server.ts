@@ -56,6 +56,14 @@ export async function ensureDefaultCurrency(db: Database) {
   await ensureDefaultCurrencyPromise;
 }
 
+export async function getLocations(db: Database, userId: number) {
+  return db
+    .select()
+    .from(locations)
+    .where(eq(locations.userId, userId))
+    .orderBy(locations.name);
+}
+
 export async function createLocation(db: Database, values: NewLocation) {
   const [record] = await db.insert(locations).values(values).returning();
   return record ?? null;

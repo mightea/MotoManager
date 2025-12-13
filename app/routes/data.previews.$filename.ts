@@ -4,7 +4,7 @@ import path from "path";
 import { getDb } from "~/db";
 import { documents } from "~/db/schema";
 import { eq } from "drizzle-orm";
-import { getSession } from "~/services/auth.server";
+import { getCurrentSession } from "~/services/auth.server";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { filename } = params;
@@ -25,10 +25,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   // If no doc found for this preview, maybe it's orphaned or I made a mistake?
   // But strictly we should check.
   if (doc && doc.isPrivate) {
-    const session = await getSession(request.headers.get("Cookie"));
-    const userId = session.get("userId");
+    const { user } = await getCurrentSession(request);
     
-    if (!userId || userId !== doc.ownerId) {
+    if (!user || user.id !== doc.ownerId) {
         // Option: serve a generic "Private" placeholder image instead of 403?
         // For now, 403.
         throw new Response("Unauthorized", { status: 403 });

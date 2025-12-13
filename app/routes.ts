@@ -17,6 +17,7 @@ export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
     route("documents", "routes/documents.tsx"),
+    route("settings", "routes/settings.tsx"),
     route("motorcycle/:slug/:id", "routes/motorcycle.detail.tsx"),
     route("motorcycle/:slug/:id/documents", "routes/motorcycle.detail.documents.tsx"),
   ]),

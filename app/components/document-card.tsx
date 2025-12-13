@@ -7,7 +7,7 @@ export type DocumentSummary = {
   filePath: string;
   previewPath: string | null;
   uploadedBy: string | null;
-  ownerId: number;
+  ownerId: number | null;
   ownerName: string | null;
   isPrivate: boolean;
   createdAt: string;
