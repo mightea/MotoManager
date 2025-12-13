@@ -9,6 +9,7 @@ import {
   deleteCurrencySetting,
   getCurrencies,
   updateCurrencySetting,
+  updateCurrencyByCode,
 } from "~/db/providers/settings.server";
 import { getDb } from "~/db";
 import {
@@ -22,8 +23,7 @@ import { USER_ROLES } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, ShieldAlert, Coins } from "lucide-react";
-import clsx from "clsx";
+import { Pencil, Trash2, Plus, Shield, Coins } from "lucide-react";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -82,14 +82,45 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "createCurrency") {
     const code = formData.get("code") as string;
     const symbol = formData.get("symbol") as string;
-    const conversionFactor = Number(formData.get("conversionFactor"));
     
-    if (!code || !symbol || isNaN(conversionFactor)) {
+    if (!code || !symbol) {
         return { error: "Ungültige Eingaben für Währung." };
     }
+
+    const upperCode = code.toUpperCase();
     
-    await createCurrencySetting(db, { code, symbol, conversionFactor });
-    return { success: "Währung erstellt." };
+    // Fetch rates from API
+    try {
+        const response = await fetch("https://api.frankfurter.app/latest?from=CHF");
+        if (!response.ok) {
+            throw new Error("Fehler beim Abrufen der Wechselkurse.");
+        }
+        const data = await response.json() as { rates: Record<string, number> };
+        const rates = data.rates;
+
+        // Check if new currency exists in rates
+        const rate = rates[upperCode];
+        if (!rate) {
+             return { error: `Währungscode "${upperCode}" nicht von der API unterstützt.` };
+        }
+
+        await createCurrencySetting(db, { code: upperCode, symbol, conversionFactor: rate });
+        
+        // Update all other currencies if they exist in the rates
+        const existingCurrencies = await getCurrencies(db);
+        for (const currency of existingCurrencies) {
+            const newRate = rates[currency.code];
+            if (newRate) {
+                await updateCurrencyByCode(db, currency.code, newRate);
+            }
+        }
+
+        return { success: `Währung ${upperCode} erstellt und Kurse aktualisiert.` };
+
+    } catch (error) {
+        console.error("Currency API Error:", error);
+        return { error: "Fehler bei der Kommunikation mit der Wechselkurs-API." };
+    }
   }
 
   if (intent === "updateCurrency") {
@@ -234,10 +265,13 @@ export default function AdminSettings() {
                 Währungen
                 </h2>
             </div>
+            <div className="text-xs text-secondary dark:text-navy-400">
+                * Kurse werden automatisch aktualisiert
+            </div>
         </div>
 
         {/* Add Currency Form */}
-        <Form method="post" className="mb-8 grid gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-4 sm:items-end dark:bg-navy-900/50">
+        <Form method="post" className="mb-8 grid gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-3 sm:items-end dark:bg-navy-900/50">
           <input type="hidden" name="intent" value="createCurrency" />
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase text-secondary dark:text-navy-300">Code</label>
@@ -259,17 +293,7 @@ export default function AdminSettings() {
                 className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase text-secondary dark:text-navy-300">Faktor (zu Basis)</label>
-            <input
-                type="number"
-                name="conversionFactor"
-                step="0.0001"
-                placeholder="1.0"
-                required
-                className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
-            />
-          </div>
+          {/* Conversion factor is now fetched automatically */}
           <Button type="submit" variant="secondary" className="w-full">
             <Plus className="mr-2 h-4 w-4" />
             Hinzufügen
