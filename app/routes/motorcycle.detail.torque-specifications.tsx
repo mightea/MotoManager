@@ -14,15 +14,16 @@ import {
   maintenanceRecords,
   type TorqueSpecification,
 } from "~/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, ne, inArray, and } from "drizzle-orm";
 import { requireUser, mergeHeaders } from "~/services/auth.server";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Wrench, Plus, Pencil } from "lucide-react";
+import { Wrench, Plus, Pencil, Import } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { TorqueSpecForm } from "~/components/torque-spec-form";
+import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
 import { createTorqueSpecification, updateTorqueSpecification } from "~/db/providers/motorcycles.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -84,11 +85,27 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     orderBy: [torqueSpecs.category, torqueSpecs.name],
   });
 
+  const otherMotorcycles = await db.query.motorcycles.findMany({
+    where: ne(motorcycles.id, motorcycleId),
+    columns: {
+        id: true,
+        make: true,
+        model: true,
+        modelYear: true,
+    }
+  });
+
+  const otherSpecs = await db.query.torqueSpecs.findMany({
+    where: inArray(torqueSpecs.motorcycleId, otherMotorcycles.map(m => m.id)),
+  });
+
   return data({
     motorcycle,
     nextInspection,
     currentLocationName,
     specs,
+    otherMotorcycles,
+    otherSpecs,
   });
 }
 
@@ -98,8 +115,58 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
   const db = await getDb();
 
-  if (intent === "createTorqueSpec" || intent === "updateTorqueSpec") {
+  if (intent === "createTorqueSpec" || intent === "updateTorqueSpec" || intent === "importTorqueSpecs") {
     const motorcycleId = Number(formData.get("motorcycleId"));
+    
+    // Security check: Ensure user owns the target motorcycle
+    const motorcycle = await db.query.motorcycles.findFirst({
+        where: eq(motorcycles.id, motorcycleId),
+    });
+
+    if (!motorcycle || motorcycle.userId !== user.id) {
+        return data({ error: "Nicht autorisiert." }, { status: 403, headers: mergeHeaders(headers) });
+    }
+
+    if (intent === "importTorqueSpecs") {
+        const sourceSpecIds = formData.getAll("sourceSpecIds").map(Number);
+        if (sourceSpecIds.length === 0) {
+            return data({ success: true }, { headers: mergeHeaders(headers) });
+        }
+
+        const sourceSpecs = await db.query.torqueSpecs.findMany({
+            where: inArray(torqueSpecs.id, sourceSpecIds),
+        });
+
+        const existingSpecs = await db.query.torqueSpecs.findMany({
+            where: eq(torqueSpecs.motorcycleId, motorcycleId),
+        });
+
+        for (const src of sourceSpecs) {
+            // Check for existing by category + name (case insensitive ideally, but exact for now)
+            const existing = existingSpecs.find(
+                e => e.category === src.category && e.name === src.name
+            );
+
+            const newValues = {
+                motorcycleId,
+                category: src.category,
+                name: src.name,
+                torque: src.torque,
+                torqueEnd: src.torqueEnd,
+                variation: src.variation,
+                toolSize: src.toolSize,
+                description: src.description,
+            };
+
+            if (existing) {
+                await updateTorqueSpecification(db, existing.id, motorcycleId, newValues);
+            } else {
+                await createTorqueSpecification(db, newValues);
+            }
+        }
+        return data({ success: true }, { headers: mergeHeaders(headers) });
+    }
+
     const category = formData.get("category") as string;
     const name = formData.get("name") as string;
     const torque = Number(formData.get("torque"));
@@ -116,15 +183,6 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (!motorcycleId || !category || !name || isNaN(torque)) {
       return data({ error: "Bitte alle Pflichtfelder ausfüllen." }, { status: 400, headers: mergeHeaders(headers) });
-    }
-
-    // Security check: Ensure user owns the motorcycle
-    const motorcycle = await db.query.motorcycles.findFirst({
-        where: eq(motorcycles.id, motorcycleId),
-    });
-
-    if (!motorcycle || motorcycle.userId !== user.id) {
-        return data({ error: "Nicht autorisiert." }, { status: 403, headers: mergeHeaders(headers) });
     }
 
     if (intent === "createTorqueSpec") {
@@ -166,6 +224,8 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     nextInspection,
     currentLocationName,
     specs,
+    otherMotorcycles,
+    otherSpecs,
   } = loaderData;
   const actionData = useActionData<typeof action>();
   const params = useParams<{ slug?: string; id?: string }>();
@@ -184,11 +244,13 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   ];
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingSpec, setEditingSpec] = useState<TorqueSpecification | null>(null);
 
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
       setIsAddModalOpen(false);
+      setIsImportModalOpen(false);
       setEditingSpec(null);
     }
   }, [actionData]);
@@ -205,20 +267,31 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       />
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 className="text-2xl font-bold text-foreground dark:text-white">Anzugsmomente</h2>
                 <p className="text-sm text-secondary dark:text-navy-400">
                 Spezifikationen für {motorcycle.make} {motorcycle.model}
                 </p>
             </div>
-            <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
-            >
-                <Plus className="h-5 w-5" />
-                Hinzufügen
-            </button>
+            <div className="flex items-center gap-2">
+                {otherMotorcycles.length > 0 && (
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+                    >
+                        <Import className="h-5 w-5" />
+                        Importieren
+                    </button>
+                )}
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+                >
+                    <Plus className="h-5 w-5" />
+                    Hinzufügen
+                </button>
+            </div>
         </div>
 
         {actionData && "error" in actionData && (
@@ -238,13 +311,24 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
               Es wurden noch keine Drehmoment-Spezifikationen für dieses Fahrzeug hinterlegt.
             </p>
-            <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
-            >
-                <Plus className="h-5 w-5" />
-                Ersten Eintrag erstellen
-            </button>
+            <div className="mt-6 flex gap-3">
+                {otherMotorcycles.length > 0 && (
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+                    >
+                        <Import className="h-5 w-5" />
+                        Importieren
+                    </button>
+                )}
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+                >
+                    <Plus className="h-5 w-5" />
+                    Ersten Eintrag erstellen
+                </button>
+            </div>
           </div>
         ) : (
           <div className="grid gap-6">
@@ -322,6 +406,15 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             />
         )}
       </Modal>
+
+      <ImportTorqueSpecsDialog
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        targetMotorcycleId={motorcycle.id}
+        otherMotorcycles={otherMotorcycles}
+        otherSpecs={otherSpecs}
+        existingSpecs={specs}
+      />
     </div>
   );
 }
