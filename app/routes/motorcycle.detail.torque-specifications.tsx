@@ -110,6 +110,7 @@ export async function action({ request }: Route.ActionArgs) {
     const variationRaw = formData.get("variation");
     const variation = variationRaw ? Number(variationRaw) : undefined;
     
+    const toolSize = formData.get("toolSize") as string | undefined;
     const description = formData.get("description") as string | undefined;
 
     if (!motorcycleId || !category || !name || isNaN(torque)) {
@@ -132,6 +133,7 @@ export async function action({ request }: Route.ActionArgs) {
         torque,
         torqueEnd,
         variation,
+        toolSize,
         description,
     });
 
@@ -238,9 +240,14 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                             <div key={spec.id} className="flex items-center justify-between px-4 py-3">
                                 <div className="space-y-0.5">
                                     <div className="font-medium text-foreground dark:text-white">{spec.name}</div>
-                                    {spec.description && (
-                                        <div className="text-xs text-secondary dark:text-navy-400">{spec.description}</div>
-                                    )}
+                                    <div className="flex flex-wrap gap-2 text-xs text-secondary dark:text-navy-400">
+                                      {spec.toolSize && (
+                                        <span className="rounded bg-gray-100 px-1.5 py-0.5 font-medium dark:bg-navy-700 dark:text-navy-200">
+                                          {spec.toolSize}
+                                        </span>
+                                      )}
+                                      {spec.description && <span>{spec.description}</span>}
+                                    </div>
                                 </div>
                                 <div className="text-right">
                                     <div className="font-bold text-foreground dark:text-white">

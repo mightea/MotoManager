@@ -50,6 +50,13 @@
       "when": 1761000000003,
       "tag": "0006_make_vin_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "8",
+      "when": 1761000000004,
+      "tag": "0007_add_tool_size_to_torque_specs",
+      "breakpoints": true
     }
   ]
 }

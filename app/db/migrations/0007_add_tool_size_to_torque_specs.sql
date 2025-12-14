@@ -1,0 +1,1 @@
+ALTER TABLE `torque_specs` ADD `tool_size` text;
