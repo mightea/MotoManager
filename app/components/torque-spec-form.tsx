@@ -1,22 +1,32 @@
 import { Form, useSubmit } from "react-router";
 import { useState } from "react";
 import { Button } from "./button";
+import type { TorqueSpecification } from "~/db/schema";
 
 type VariationType = "none" | "plus_minus" | "range";
 
-interface AddTorqueSpecFormProps {
+interface TorqueSpecFormProps {
   motorcycleId: number;
+  initialValues?: TorqueSpecification | null;
   onClose: () => void;
   onSubmit?: () => void;
 }
 
-export function AddTorqueSpecForm({
+export function TorqueSpecForm({
   motorcycleId,
+  initialValues,
   onClose,
   onSubmit,
-}: AddTorqueSpecFormProps) {
+}: TorqueSpecFormProps) {
   const submit = useSubmit();
-  const [variationType, setVariationType] = useState<VariationType>("none");
+  
+  const getInitialVariationType = (): VariationType => {
+    if (initialValues?.torqueEnd) return "range";
+    if (initialValues?.variation) return "plus_minus";
+    return "none";
+  };
+
+  const [variationType, setVariationType] = useState<VariationType>(getInitialVariationType());
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -29,8 +39,9 @@ export function AddTorqueSpecForm({
 
   return (
     <Form method="post" className="space-y-5" onSubmit={handleSubmit}>
-      <input type="hidden" name="intent" value="createTorqueSpec" />
+      <input type="hidden" name="intent" value={initialValues ? "updateTorqueSpec" : "createTorqueSpec"} />
       <input type="hidden" name="motorcycleId" value={motorcycleId} />
+      {initialValues && <input type="hidden" name="torqueId" value={initialValues.id} />}
 
       <div className="space-y-1.5">
         <label htmlFor="category" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
@@ -43,6 +54,7 @@ export function AddTorqueSpecForm({
           required
           placeholder="z.B. Motor, Fahrwerk, Bremsen"
           list="category-suggestions"
+          defaultValue={initialValues?.category}
           className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
         <datalist id="category-suggestions">
@@ -65,6 +77,7 @@ export function AddTorqueSpecForm({
           id="name"
           required
           placeholder="z.B. Ölablassschraube"
+          defaultValue={initialValues?.name}
           className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>
@@ -78,6 +91,7 @@ export function AddTorqueSpecForm({
           name="toolSize"
           id="toolSize"
           placeholder="z.B. 17mm, T40, H6"
+          defaultValue={initialValues?.toolSize ?? ""}
           className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>
@@ -104,6 +118,7 @@ export function AddTorqueSpecForm({
                     required
                     step="0.1"
                     placeholder="Wert (Nm)"
+                    defaultValue={initialValues?.torque}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
                 
@@ -117,6 +132,7 @@ export function AddTorqueSpecForm({
                             required
                             step="0.1"
                             placeholder="Tol."
+                            defaultValue={initialValues?.variation ?? ""}
                             className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         />
                     </>
@@ -131,6 +147,7 @@ export function AddTorqueSpecForm({
                             required
                             step="0.1"
                             placeholder="Max"
+                            defaultValue={initialValues?.torqueEnd ?? ""}
                             className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         />
                     </>
@@ -147,6 +164,7 @@ export function AddTorqueSpecForm({
           name="description"
           id="description"
           rows={2}
+          defaultValue={initialValues?.description ?? ""}
           className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>

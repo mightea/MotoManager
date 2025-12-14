@@ -12,17 +12,18 @@ import {
   torqueSpecs,
   locations,
   maintenanceRecords,
+  type TorqueSpecification,
 } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { requireUser, mergeHeaders } from "~/services/auth.server";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Wrench, Plus } from "lucide-react";
+import { Wrench, Plus, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
-import { AddTorqueSpecForm } from "~/components/add-torque-spec-form";
-import { createTorqueSpecification } from "~/db/providers/motorcycles.server";
+import { TorqueSpecForm } from "~/components/torque-spec-form";
+import { createTorqueSpecification, updateTorqueSpecification } from "~/db/providers/motorcycles.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -97,7 +98,7 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
   const db = await getDb();
 
-  if (intent === "createTorqueSpec") {
+  if (intent === "createTorqueSpec" || intent === "updateTorqueSpec") {
     const motorcycleId = Number(formData.get("motorcycleId"));
     const category = formData.get("category") as string;
     const name = formData.get("name") as string;
@@ -126,16 +127,32 @@ export async function action({ request }: Route.ActionArgs) {
         return data({ error: "Nicht autorisiert." }, { status: 403, headers: mergeHeaders(headers) });
     }
 
-    await createTorqueSpecification(db, {
-        motorcycleId,
-        category,
-        name,
-        torque,
-        torqueEnd,
-        variation,
-        toolSize,
-        description,
-    });
+    if (intent === "createTorqueSpec") {
+        await createTorqueSpecification(db, {
+            motorcycleId,
+            category,
+            name,
+            torque,
+            torqueEnd,
+            variation,
+            toolSize,
+            description,
+        });
+    } else {
+        const torqueId = Number(formData.get("torqueId"));
+        if (!torqueId) {
+             return data({ error: "ID fehlt für Update." }, { status: 400, headers: mergeHeaders(headers) });
+        }
+        await updateTorqueSpecification(db, torqueId, motorcycleId, {
+            category,
+            name,
+            torque,
+            torqueEnd: torqueEnd ?? null,
+            variation: variation ?? null,
+            toolSize: toolSize ?? null,
+            description: description ?? null,
+        });
+    }
 
     return data({ success: true }, { headers: mergeHeaders(headers) });
   }
@@ -167,10 +184,12 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   ];
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingSpec, setEditingSpec] = useState<TorqueSpecification | null>(null);
 
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
       setIsAddModalOpen(false);
+      setEditingSpec(null);
     }
   }, [actionData]);
 
@@ -237,7 +256,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     </div>
                     <div className="divide-y divide-gray-100 dark:divide-navy-700">
                         {specs.filter(s => s.category === category).map(spec => (
-                            <div key={spec.id} className="flex items-center justify-between px-4 py-3">
+                            <div key={spec.id} className="group flex items-center justify-between px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-navy-700/50">
                                 <div className="space-y-0.5">
                                     <div className="font-medium text-foreground dark:text-white">{spec.name}</div>
                                     <div className="flex flex-wrap gap-2 text-xs text-secondary dark:text-navy-400">
@@ -249,15 +268,24 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                                       {spec.description && <span>{spec.description}</span>}
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className="font-bold text-foreground dark:text-white">
-                                        {spec.torque}{spec.torqueEnd ? ` - ${spec.torqueEnd}` : ''} Nm
-                                    </div>
-                                    {spec.variation && (
-                                        <div className="text-xs text-secondary dark:text-navy-400">
-                                            ± {spec.variation} Nm
+                                <div className="flex items-center gap-4">
+                                    <div className="text-right">
+                                        <div className="font-bold text-foreground dark:text-white">
+                                            {spec.torque}{spec.torqueEnd ? ` - ${spec.torqueEnd}` : ''} Nm
                                         </div>
-                                    )}
+                                        {spec.variation && (
+                                            <div className="text-xs text-secondary dark:text-navy-400">
+                                                ± {spec.variation} Nm
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setEditingSpec(spec)}
+                                        className="rounded-lg p-2 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-600 dark:hover:text-primary-light"
+                                        title="Bearbeiten"
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -274,10 +302,25 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
         title="Anzugsmoment hinzufügen"
         description="Füge einen neuen Eintrag hinzu."
       >
-        <AddTorqueSpecForm
+        <TorqueSpecForm
             motorcycleId={motorcycle.id}
             onClose={() => setIsAddModalOpen(false)}
         />
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(editingSpec)}
+        onClose={() => setEditingSpec(null)}
+        title="Anzugsmoment bearbeiten"
+        description="Passe den Eintrag an."
+      >
+        {editingSpec && (
+            <TorqueSpecForm
+                motorcycleId={motorcycle.id}
+                initialValues={editingSpec}
+                onClose={() => setEditingSpec(null)}
+            />
+        )}
       </Modal>
     </div>
   );
