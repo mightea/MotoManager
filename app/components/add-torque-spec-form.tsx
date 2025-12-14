@@ -70,6 +70,19 @@ export function AddTorqueSpecForm({
       </div>
 
       <div className="space-y-1.5">
+        <label htmlFor="toolSize" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+          Werkzeuggröße (Optional)
+        </label>
+        <input
+          type="text"
+          name="toolSize"
+          id="toolSize"
+          placeholder="z.B. 17mm, T40, H6"
+          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+        />
+      </div>
+
+      <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
           Wert
         </label>
