@@ -2,6 +2,8 @@ import {
   data,
   useParams,
   useLocation,
+  Form,
+  useActionData,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.torque-specifications";
 import { getDb } from "~/db";
@@ -12,11 +14,15 @@ import {
   maintenanceRecords,
 } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { requireUser } from "~/services/auth.server";
+import { requireUser, mergeHeaders } from "~/services/auth.server";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Wrench } from "lucide-react";
+import { Wrench, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Modal } from "~/components/modal";
+import { AddTorqueSpecForm } from "~/components/add-torque-spec-form";
+import { createTorqueSpecification } from "~/db/providers/motorcycles.server";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -85,6 +91,56 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   });
 }
 
+export async function action({ request }: Route.ActionArgs) {
+  const { user, headers } = await requireUser(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  const db = await getDb();
+
+  if (intent === "createTorqueSpec") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const category = formData.get("category") as string;
+    const name = formData.get("name") as string;
+    const torque = Number(formData.get("torque"));
+    
+    // Optional fields
+    const torqueEndRaw = formData.get("torqueEnd");
+    const torqueEnd = torqueEndRaw ? Number(torqueEndRaw) : undefined;
+    
+    const variationRaw = formData.get("variation");
+    const variation = variationRaw ? Number(variationRaw) : undefined;
+    
+    const description = formData.get("description") as string | undefined;
+
+    if (!motorcycleId || !category || !name || isNaN(torque)) {
+      return data({ error: "Bitte alle Pflichtfelder ausfüllen." }, { status: 400, headers: mergeHeaders(headers) });
+    }
+
+    // Security check: Ensure user owns the motorcycle
+    const motorcycle = await db.query.motorcycles.findFirst({
+        where: eq(motorcycles.id, motorcycleId),
+    });
+
+    if (!motorcycle || motorcycle.userId !== user.id) {
+        return data({ error: "Nicht autorisiert." }, { status: 403, headers: mergeHeaders(headers) });
+    }
+
+    await createTorqueSpecification(db, {
+        motorcycleId,
+        category,
+        name,
+        torque,
+        torqueEnd,
+        variation,
+        description,
+    });
+
+    return data({ success: true }, { headers: mergeHeaders(headers) });
+  }
+
+  return null;
+}
+
 export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route.ComponentProps) {
   const {
     motorcycle,
@@ -92,6 +148,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     currentLocationName,
     specs,
   } = loaderData;
+  const actionData = useActionData<typeof action>();
   const params = useParams<{ slug?: string; id?: string }>();
   const slug = params.slug ?? createMotorcycleSlug(motorcycle.make, motorcycle.model);
   const motorcycleIdParam = params.id ?? motorcycle.id.toString();
@@ -107,6 +164,14 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     { label: "Anzugsmomente", to: `${basePath}/torque-specs`, isActive: true },
   ];
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (actionData && "success" in actionData && actionData.success) {
+      setIsAddModalOpen(false);
+    }
+  }, [actionData]);
+
   return (
     <div className="container mx-auto max-w-7xl space-y-6 px-4 pb-24 pt-0 md:p-6 md:space-y-8">
       <MotorcycleDetailHeader
@@ -119,12 +184,27 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       />
 
       <div className="space-y-6">
-        <div>
-            <h2 className="text-2xl font-bold text-foreground dark:text-white">Anzugsmomente</h2>
-            <p className="text-sm text-secondary dark:text-navy-400">
-              Spezifikationen für {motorcycle.make} {motorcycle.model}
-            </p>
+        <div className="flex items-center justify-between">
+            <div>
+                <h2 className="text-2xl font-bold text-foreground dark:text-white">Anzugsmomente</h2>
+                <p className="text-sm text-secondary dark:text-navy-400">
+                Spezifikationen für {motorcycle.make} {motorcycle.model}
+                </p>
+            </div>
+            <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+            >
+                <Plus className="h-5 w-5" />
+                Hinzufügen
+            </button>
         </div>
+
+        {actionData && "error" in actionData && (
+             <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+             {actionData.error}
+           </div>
+        )}
 
         {specs.length === 0 ? (
           <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
@@ -137,6 +217,13 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
               Es wurden noch keine Drehmoment-Spezifikationen für dieses Fahrzeug hinterlegt.
             </p>
+            <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+            >
+                <Plus className="h-5 w-5" />
+                Ersten Eintrag erstellen
+            </button>
           </div>
         ) : (
           <div className="grid gap-6">
@@ -173,6 +260,18 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Anzugsmoment hinzufügen"
+        description="Füge einen neuen Eintrag hinzu."
+      >
+        <AddTorqueSpecForm
+            motorcycleId={motorcycle.id}
+            onClose={() => setIsAddModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 }
