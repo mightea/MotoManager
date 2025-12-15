@@ -85,19 +85,26 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     orderBy: [torqueSpecs.category, torqueSpecs.name],
   });
 
-  const otherMotorcycles = await db.query.motorcycles.findMany({
-    where: ne(motorcycles.id, motorcycleId),
-    columns: {
-        id: true,
-        make: true,
-        model: true,
-        modelYear: true,
-    }
+  // 1. Find all torque specs that belong to *other* motorcycles
+  const otherSpecs = await db.query.torqueSpecs.findMany({
+    where: ne(torqueSpecs.motorcycleId, motorcycleId),
   });
 
-  const otherSpecs = await db.query.torqueSpecs.findMany({
-    where: inArray(torqueSpecs.motorcycleId, otherMotorcycles.map(m => m.id)),
-  });
+  // 2. Extract unique motorcycle IDs that actually have specs
+  const otherMotorcycleIds = Array.from(new Set(otherSpecs.map(s => s.motorcycleId)));
+
+  // 3. Fetch only those motorcycles
+  const otherMotorcycles = otherMotorcycleIds.length > 0
+    ? await db.query.motorcycles.findMany({
+        where: inArray(motorcycles.id, otherMotorcycleIds),
+        columns: {
+            id: true,
+            make: true,
+            model: true,
+            modelYear: true,
+        }
+      })
+    : [];
 
   return data({
     motorcycle,
