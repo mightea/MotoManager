@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
 import type { MaintenanceInsight, InsightCategory } from "~/utils/maintenance-intervals";
+import { formatNumber } from "~/utils/numberUtils";
 
 type MaintenanceInsightsCardProps = {
   insights: MaintenanceInsight[];
@@ -42,27 +43,27 @@ export function MaintenanceInsightsCard({
     const months = Math.floor(remainingDaysAfterYears / 30);
 
     if (years > 0) {
-        return `vor ${years} Jahr${years > 1 ? 'en' : ''}`;
+      return `vor ${years} Jahr${years > 1 ? 'en' : ''}`;
     }
     if (months > 0) {
-        return `vor ${months} Monat${months > 1 ? 'en' : ''}`;
+      return `vor ${months} Monat${months > 1 ? 'en' : ''}`;
     }
     return `vor ${diffDays} Tag${diffDays > 1 ? 'en' : ''}`;
   };
 
   // Sort within groups: overdue first, then due, then ok
   const sortInsights = (items: MaintenanceInsight[]) => {
-      const priority = { overdue: 0, due: 1, ok: 2, unknown: 3 };
-      return [...items].sort((a, b) => priority[a.status] - priority[b.status]);
+    const priority = { overdue: 0, due: 1, ok: 2, unknown: 3 };
+    return [...items].sort((a, b) => priority[a.status] - priority[b.status]);
   };
 
   // Group by category
   const groupedInsights = insights.reduce<Record<InsightCategory, MaintenanceInsight[]>>((acc, insight) => {
-      if (!acc[insight.category]) {
-          acc[insight.category] = [];
-      }
-      acc[insight.category].push(insight);
-      return acc;
+    if (!acc[insight.category]) {
+      acc[insight.category] = [];
+    }
+    acc[insight.category].push(insight);
+    return acc;
   }, {} as Record<InsightCategory, MaintenanceInsight[]>);
 
   // Define display order for categories
@@ -87,49 +88,49 @@ export function MaintenanceInsightsCard({
         </div>
       ) : (
         <div className="space-y-5">
-            {categoryOrder.map(category => {
-                const items = groupedInsights[category];
-                if (!items || items.length === 0) return null;
+          {categoryOrder.map(category => {
+            const items = groupedInsights[category];
+            if (!items || items.length === 0) return null;
 
-                const sortedItems = sortInsights(items);
+            const sortedItems = sortInsights(items);
 
-                return (
-                    <div key={category}>
-                        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-300/70">
-                            {category}
-                        </h3>
-                        <ul className="space-y-3">
-                            {sortedItems.map((insight) => {
-                                const formattedDate = insight.lastDate ? dateFormatter.format(new Date(insight.lastDate)) : "";
-                                const relativeDuration = insight.lastDate ? formatRelativeDuration(insight.lastDate) : "";
-                                const kmsSince = insight.kmsSinceLast ? `${insight.kmsSinceLast.toLocaleString('de-CH')} km` : "";
+            return (
+              <div key={category}>
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-300/70">
+                  {category}
+                </h3>
+                <ul className="space-y-3">
+                  {sortedItems.map((insight) => {
+                    const formattedDate = insight.lastDate ? dateFormatter.format(new Date(insight.lastDate)) : "";
+                    const relativeDuration = insight.lastDate ? formatRelativeDuration(insight.lastDate) : "";
+                    const kmsSince = insight.kmsSinceLast ? `${formatNumber(insight.kmsSinceLast)} km` : "";
 
-                                const parts = [
-                                    formattedDate,
-                                    relativeDuration ? `(${relativeDuration})` : null,
-                                    kmsSince ? `• ${kmsSince}` : null
-                                ].filter(Boolean).join(" ");
+                    const parts = [
+                      formattedDate,
+                      relativeDuration ? `(${relativeDuration})` : null,
+                      kmsSince ? `• ${kmsSince}` : null
+                    ].filter(Boolean).join(" ");
 
-                                return (
-                                <li key={insight.key} className="flex items-start gap-3">
-                                    <div className="mt-0.5 shrink-0">
-                                        {getStatusIcon(insight.status)}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-sm text-foreground dark:text-white">
-                                            {insight.label}
-                                        </p>
-                                        <p className="text-xs text-secondary dark:text-navy-400">
-                                            {parts || "Keine Daten"}
-                                        </p>
-                                    </div>
-                                </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                );
-            })}
+                    return (
+                      <li key={insight.key} className="flex items-start gap-3">
+                        <div className="mt-0.5 shrink-0">
+                          {getStatusIcon(insight.status)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-foreground dark:text-white">
+                            {insight.label}
+                          </p>
+                          <p className="text-xs text-secondary dark:text-navy-400">
+                            {parts || "Keine Daten"}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

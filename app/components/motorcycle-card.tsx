@@ -6,15 +6,14 @@ import type { MotorcycleDashboardItem as DashboardCard } from "~/utils/home-stat
 import { StatisticEntry } from "./statistic-entry";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 
+import { formatNumber } from "~/utils/numberUtils";
+
 interface MotorcycleCardProps {
   moto: DashboardCard;
 }
 
 export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   const [imageError, setImageError] = useState(false);
-  const numberFormatter = new Intl.NumberFormat("de-CH", {
-    maximumFractionDigits: 0,
-  });
 
   const slug = createMotorcycleSlug(moto.make, moto.model);
 
@@ -85,13 +84,13 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
           <StatisticEntry
             icon={Gauge}
             label="Aktuell"
-            value={`${numberFormatter.format(moto.odometer)} km`}
+            value={`${formatNumber(moto.odometer)} km`}
           />
 
           <StatisticEntry
             icon={RouteIcon}
             label="Dieses Jahr"
-            value={`${numberFormatter.format(moto.odometerThisYear)} km`}
+            value={`${formatNumber(moto.odometerThisYear)} km`}
             valueClassName={
               moto.odometerThisYear > 0
                 ? "text-foreground dark:text-gray-100"
