@@ -10,127 +10,13 @@ import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
-import fs from "fs/promises";
-import { execFile } from "child_process";
-import { promisify } from "util";
+import { deleteDocumentFiles, getFileCategory, saveDocumentFile } from "~/services/documents.server";
 
-const execFileAsync = promisify(execFile);
 
-const SUPPORTED_IMAGE_EXTENSIONS = new Set([
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".jfif",
-  ".gif",
-  ".bmp",
-  ".webp",
-  ".svg",
-  ".heic",
-  ".heif",
-  ".tif",
-  ".tiff",
-]);
 
 const UNSUPPORTED_FILE_MESSAGE = "Nur PDF- oder Bilddateien sind erlaubt.";
 
-function isPdfFile(file: File) {
-  const mimeType = file.type?.toLowerCase() ?? "";
-  const name = file.name?.toLowerCase() ?? "";
-  return mimeType === "application/pdf" || name.endsWith(".pdf");
-}
 
-function isImageFile(file: File) {
-  const mimeType = file.type?.toLowerCase() ?? "";
-  if (mimeType.startsWith("image/")) {
-    return true;
-  }
-  const ext = path.extname(file.name || "").toLowerCase();
-  return SUPPORTED_IMAGE_EXTENSIONS.has(ext);
-}
-
-function getFileCategory(file: File): "pdf" | "image" | null {
-  if (isPdfFile(file)) return "pdf";
-  if (isImageFile(file)) return "image";
-  return null;
-}
-
-async function deleteFileIfExists(filePath: string) {
-  try {
-    await fs.unlink(filePath);
-  } catch {
-    // Ignore error if file doesn't exist
-  }
-}
-
-async function generatePdfPreview(
-  pdfPath: string,
-  outputPath: string,
-): Promise<boolean> {
-  try {
-    await execFileAsync("sips", [
-      "-s",
-      "format",
-      "png",
-      pdfPath,
-      "--out",
-      outputPath,
-    ]);
-    return true;
-  } catch (error) {
-    console.warn("PDF preview generation failed", error);
-    await deleteFileIfExists(outputPath);
-    return false;
-  }
-}
-
-async function saveDocumentFile(file: File) {
-  const fileCategory = getFileCategory(file);
-  if (!fileCategory) {
-    throw new Error("Unsupported file type");
-  }
-
-  const documentsDir = path.join(process.cwd(), "data", "documents");
-  const previewsDir = path.join(process.cwd(), "data", "previews");
-  await fs.mkdir(documentsDir, { recursive: true });
-  await fs.mkdir(previewsDir, { recursive: true });
-
-  const originalExtension = path.extname(file.name || "").toLowerCase();
-  const defaultExtension = fileCategory === "pdf" ? ".pdf" : ".png";
-  const validImageExtension =
-    fileCategory === "image" && SUPPORTED_IMAGE_EXTENSIONS.has(originalExtension)
-      ? originalExtension
-      : null;
-  const extension =
-    fileCategory === "pdf"
-      ? ".pdf"
-      : validImageExtension || (originalExtension && originalExtension !== ".pdf" ? originalExtension : defaultExtension);
-
-  const fileName = `${uuidv4()}${extension}`;
-  const absoluteFilePath = path.join(documentsDir, fileName);
-
-  await fs.writeFile(absoluteFilePath, Buffer.from(await file.arrayBuffer()));
-
-  let previewPath: string | null = null;
-
-  if (fileCategory === "pdf") {
-    const previewName = `${uuidv4()}.png`;
-    const previewFilePath = path.join(previewsDir, previewName);
-    const previewGenerated = await generatePdfPreview(absoluteFilePath, previewFilePath);
-
-    if (previewGenerated) {
-      previewPath = `/data/previews/${previewName}`;
-    }
-  } else {
-    previewPath = `/data/documents/${fileName}`;
-  }
-
-  return {
-    filePath: `/data/documents/${fileName}`,
-    previewPath,
-  };
-}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -246,16 +132,7 @@ export async function action({ request }: Route.ActionArgs) {
       }
 
       // Delete old files
-      try {
-        const oldFilePath = path.join(process.cwd(), doc.filePath.replace("/data/documents", "data/documents"));
-        await fs.unlink(oldFilePath);
-        if (doc.previewPath) {
-          const oldPreviewPath = path.join(process.cwd(), doc.previewPath.replace("/data/previews", "data/previews"));
-          await fs.unlink(oldPreviewPath).catch(() => { });
-        }
-      } catch {
-        // Ignore error if file doesn't exist
-      }
+      await deleteDocumentFiles(doc.filePath, doc.previewPath);
 
       newPaths = await saveDocumentFile(file);
     }
@@ -303,17 +180,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // Delete files
-    try {
-      const fullFilePath = path.join(process.cwd(), doc.filePath.replace("/data/documents", "data/documents"));
-      await fs.unlink(fullFilePath).catch(() => { });
-
-      if (doc.previewPath) {
-        const fullPreviewPath = path.join(process.cwd(), doc.previewPath.replace("/data/previews", "data/previews"));
-        await fs.unlink(fullPreviewPath).catch(() => { });
-      }
-    } catch (e) {
-      console.error("Error deleting files:", e);
-    }
+    await deleteDocumentFiles(doc.filePath, doc.previewPath);
 
     await db.delete(documents).where(eq(documents.id, id));
 
