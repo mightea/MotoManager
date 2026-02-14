@@ -24,10 +24,8 @@ import { useState, useEffect } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
-import sharp from "sharp";
 import { motorcycleSchema } from "~/validations";
+import { processImageUpload } from "~/services/images.server";
 
 import { MotorcycleCard } from "~/components/motorcycle-card";
 
@@ -129,11 +127,7 @@ export async function action({ request }: Route.ActionArgs) {
   let imagePath: string | null = null;
 
   if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
-    const newFilename = `${uuidv4()}.webp`;
-    const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
-    const buffer = Buffer.from(await imageEntry.arrayBuffer());
-    await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
-    imagePath = `/data/images/${newFilename}`;
+    imagePath = await processImageUpload(imageEntry);
   }
 
   const newMotorcycle: NewMotorcycle = {

@@ -26,10 +26,8 @@ import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { StatisticEntry } from "~/components/statistic-entry";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
-import sharp from "sharp";
 import { motorcycleSchema } from "~/validations";
+import { processImageUpload } from "~/services/images.server";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
@@ -183,11 +181,7 @@ export async function action({ request }: Route.ActionArgs) {
     let imagePath: string | undefined = undefined;
 
     if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
-      const newFilename = `${uuidv4()}.webp`;
-      const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
-      const buffer = Buffer.from(await imageEntry.arrayBuffer());
-      await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
-      imagePath = `/data/images/${newFilename}`;
+      imagePath = await processImageUpload(imageEntry);
     }
 
     const updatedMotorcycle: EditorMotorcycle = {
