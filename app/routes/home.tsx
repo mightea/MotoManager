@@ -13,8 +13,6 @@ import { buildDashboardData } from "~/utils/home-stats";
 import {
   CalendarDays,
   Gauge,
-  Route as RouteIcon,
-  Wrench,
   Plus,
   Clock,
   Tag,
@@ -169,13 +167,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (actionData?.success) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAddOpen(false);
     }
   }, [actionData]);
-
-  const numberFormatter = new Intl.NumberFormat("de-CH", {
-    maximumFractionDigits: 0,
-  });
 
   const sortOptions = [
     { id: "updated", label: "Aktualität", icon: Clock },

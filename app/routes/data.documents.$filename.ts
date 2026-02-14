@@ -33,7 +33,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   // We assume filePath ends with the filename. 
   // Stored as /data/documents/uuid.pdf
   const searchPath = `/data/documents/${filename}`;
-  
+
   const [doc] = await db
     .select()
     .from(documents)
@@ -41,16 +41,16 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     .limit(1);
 
   if (!doc) {
-     // Try without leading slash if stored differently? 
-     // The action stores it as `/data/documents/${fileName}`.
-     throw new Response("Not Found", { status: 404 });
+    // Try without leading slash if stored differently? 
+    // The action stores it as `/data/documents/${fileName}`.
+    throw new Response("Not Found", { status: 404 });
   }
 
   if (doc.isPrivate) {
     const { user } = await getCurrentSession(request);
-    
+
     if (!user || user.id !== doc.ownerId) {
-        throw new Response("Unauthorized", { status: 403 });
+      throw new Response("Unauthorized", { status: 403 });
     }
   }
 
@@ -62,7 +62,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   try {
     await fs.promises.access(filePath, fs.constants.F_OK);
-  } catch (error) {
+  } catch {
     throw new Response("Not Found", { status: 404 });
   }
 

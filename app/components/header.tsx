@@ -21,6 +21,7 @@ export function Header({ user }: { user: User | null }) {
 
   useEffect(() => {
     if (!isMotorcycleDetail || typeof window === "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsHidden(false);
       return;
     }

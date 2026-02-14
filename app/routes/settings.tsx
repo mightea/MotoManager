@@ -20,7 +20,6 @@ import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { useState } from "react";
 import { Pencil, Trash2, Plus, Shield } from "lucide-react";
-import clsx from "clsx";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
@@ -205,7 +204,7 @@ export default function Settings() {
         <h2 className="mb-4 text-xl font-semibold text-foreground dark:text-white">
           Lagerorte verwalten
         </h2>
-        
+
         {/* Add Location Form */}
         <Form method="post" className="mb-6 flex gap-3">
           <input type="hidden" name="intent" value="createLocation" />
@@ -240,7 +239,6 @@ export default function Settings() {
                     type="text"
                     name="name"
                     defaultValue={location.name}
-                    autoFocus
                     required
                     className="block w-full flex-1 rounded-lg border-gray-200 bg-white p-2 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
                   />

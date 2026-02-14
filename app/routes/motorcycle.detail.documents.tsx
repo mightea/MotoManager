@@ -148,12 +148,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const rawAssignments = allDocIds.length
     ? await db
-        .select({
-          documentId: documentMotorcycles.documentId,
-          motorcycleId: documentMotorcycles.motorcycleId,
-        })
-        .from(documentMotorcycles)
-        .where(inArray(documentMotorcycles.documentId, allDocIds))
+      .select({
+        documentId: documentMotorcycles.documentId,
+        motorcycleId: documentMotorcycles.motorcycleId,
+      })
+      .from(documentMotorcycles)
+      .where(inArray(documentMotorcycles.documentId, allDocIds))
     : [];
 
   return data({
@@ -224,8 +224,11 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
 
   useEffect(() => {
     if (editFetcher.state === "idle" && editFetcher.data?.success) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsEditorOpen(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDeleteConfirmationOpen(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditingDocument(null);
       revalidator.revalidate();
     }
@@ -284,7 +287,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
                 document={doc}
                 formatDate={formatDate}
                 isOwner={doc.ownerId === userId}
-                onEdit={(_selected) => {
+                onEdit={() => {
                   setEditingDocument(doc);
                   setIsEditorOpen(true);
                 }}

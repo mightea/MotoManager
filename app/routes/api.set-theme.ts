@@ -1,7 +1,7 @@
-import { data, redirect } from "react-router";
+import { data } from "react-router";
 import type { Route } from "./+types/api.set-theme";
 import { setTheme } from "~/utils/theme.server";
-import { Theme, isTheme } from "~/utils/theme";
+import { isTheme } from "~/utils/theme";
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
