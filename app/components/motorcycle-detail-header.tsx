@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { Link } from "react-router";
+import { useState } from "react";
 import type { Motorcycle } from "~/db/schema";
 
 type NextInspectionInfo = {
@@ -37,7 +38,8 @@ export function MotorcycleDetailHeader({
   backTo = "/",
   overviewLink,
 }: MotorcycleDetailHeaderProps) {
-  const hasHeroImage = Boolean(motorcycle.image);
+  const [imageError, setImageError] = useState(false);
+  const hasHeroImage = true;
 
   return (
     <div
@@ -52,11 +54,24 @@ export function MotorcycleDetailHeader({
       {hasHeroImage && (
         <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
           <img
-            src={`${motorcycle.image}?width=1200`}
-            srcSet={`${motorcycle.image}?width=800 800w, ${motorcycle.image}?width=1600 1600w`}
+            src={
+              !imageError && motorcycle.image
+                ? `${motorcycle.image}?width=1200`
+                : "/favicon.svg"
+            }
+            srcSet={
+              !imageError && motorcycle.image
+                ? `${motorcycle.image}?width=800 800w, ${motorcycle.image}?width=1600 1600w`
+                : undefined
+            }
             sizes="(max-width: 768px) 100vw, 1200px"
             alt={`${motorcycle.make} ${motorcycle.model}`}
-            className="h-full w-full object-cover"
+            className={clsx(
+              "h-full w-full object-cover",
+              (imageError || !motorcycle.image) &&
+              "p-32 object-contain opacity-50 grayscale dark:invert"
+            )}
+            onError={() => setImageError(true)}
             fetchPriority="high"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30" />

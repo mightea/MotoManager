@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { useState } from "react";
 import { Gauge, Route as RouteIcon, Wrench, CalendarDays } from "lucide-react";
 import clsx from "clsx";
 import type { MotorcycleDashboardItem as DashboardCard } from "~/utils/home-stats";
@@ -10,6 +11,7 @@ interface MotorcycleCardProps {
 }
 
 export function MotorcycleCard({ moto }: MotorcycleCardProps) {
+  const [imageError, setImageError] = useState(false);
   const numberFormatter = new Intl.NumberFormat("de-CH", {
     maximumFractionDigits: 0,
   });
@@ -25,15 +27,25 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
       <div className="relative h-48 w-full overflow-hidden">
         {/* Background Image */}
         <img
-          src={moto.image ? `${moto.image}?width=800` : "/favicon.svg"}
-          srcSet={moto.image ? `${moto.image}?width=400 400w, ${moto.image}?width=800 800w` : undefined}
+          src={
+            !imageError && moto.image
+              ? `${moto.image}?width=800`
+              : "/favicon.svg"
+          }
+          srcSet={
+            !imageError && moto.image
+              ? `${moto.image}?width=400 400w, ${moto.image}?width=800 800w`
+              : undefined
+          }
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           alt={`${moto.make} ${moto.model}`}
           className={clsx(
             "h-full w-full object-cover transition-transform duration-300 group-hover:scale-105",
-            !moto.image && "p-8 object-scale-down opacity-50 grayscale dark:invert"
+            (imageError || !moto.image) &&
+            "p-8 object-scale-down opacity-50 grayscale dark:invert"
           )}
           loading="lazy"
+          onError={() => setImageError(true)}
         />
 
         {/* Overlay Gradient */}
