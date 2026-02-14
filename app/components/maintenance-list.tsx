@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
 import clsx from "clsx";
+import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 
 interface MaintenanceListProps {
   records: MaintenanceRecord[];
@@ -183,10 +184,6 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
     dateStyle: "medium",
   });
 
-  const numberFormatter = new Intl.NumberFormat("de-CH", {
-    maximumFractionDigits: 0,
-  });
-
   const groupedRecords = groupMaintenanceRecords(records, userLocations);
 
   const toggleExpand = (id: string) => {
@@ -240,7 +237,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                   </h3>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-foreground dark:text-white tabular-nums">
-                      {numberFormatter.format(group.odo)} km
+                      {formatNumber(group.odo)} km
                     </span>
                     <ChevronDown className={clsx("h-4 w-4 text-secondary transition-transform dark:text-navy-400", isExpanded && "rotate-180")} />
                   </div>
@@ -267,10 +264,6 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
             {isExpanded && (
               <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
                 {group.originalRecords.map((record) => {
-                  const recordCurrencyFormatter = new Intl.NumberFormat("de-CH", {
-                    style: "currency",
-                    currency: record.currency || currencyCode || "CHF",
-                  });
                   const metadataItems = [
                     { label: "Beschreibung", value: record.description },
                     { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type },
@@ -297,7 +290,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name },
                     ] : []),
 
-                    { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? recordCurrencyFormatter.format(record.cost) : null },
+                    { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null },
                   ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 
                   return (

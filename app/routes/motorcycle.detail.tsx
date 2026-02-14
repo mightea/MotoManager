@@ -33,6 +33,7 @@ import { motorcycleSchema } from "~/validations";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
+import { formatCurrency } from "~/utils/numberUtils";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -423,19 +424,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
 
 
-  const currencyFormatter = new Intl.NumberFormat("de-CH", {
-
-
-
-    style: "currency",
-
-
-
-    currency: motorcycle.currencyCode || "CHF",
-
-
-
-  });
+  // currencyFormatter removed
 
 
 
@@ -533,7 +522,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                 label="Kaufpreis"
                 value={
                   motorcycle.purchasePrice !== null && motorcycle.purchasePrice !== undefined
-                    ? currencyFormatter.format(motorcycle.purchasePrice)
+                    ? formatCurrency(motorcycle.purchasePrice, motorcycle.currencyCode || undefined)
                     : null
                 }
               />
