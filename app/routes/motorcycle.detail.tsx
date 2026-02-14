@@ -1,8 +1,6 @@
-import { useId, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   data,
-  Form,
-  Link,
   redirect,
   useRevalidator,
   useActionData,
@@ -12,7 +10,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type OilType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText } from "lucide-react";
@@ -389,6 +387,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (actionData?.success) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditMotorcycleDialogOpen(false);
     }
   }, [actionData]);
@@ -398,63 +397,63 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     setIssueDialogOpen(true);
   };
 
-    const closeIssueDialog = () => {
+  const closeIssueDialog = () => {
 
-      setIssueDialogOpen(false);
+    setIssueDialogOpen(false);
 
-      setSelectedIssue(null);
+    setSelectedIssue(null);
 
-    };
+  };
 
-  
 
-      const dateFormatter = new Intl.DateTimeFormat("de-CH", {
 
-  
+  const dateFormatter = new Intl.DateTimeFormat("de-CH", {
 
-        dateStyle: "medium",
 
-  
 
-      });
+    dateStyle: "medium",
 
-  
 
-    
 
-  
+  });
 
-      const currencyFormatter = new Intl.NumberFormat("de-CH", {
 
-  
 
-        style: "currency",
 
-  
 
-        currency: motorcycle.currencyCode || "CHF",
 
-  
 
-      });
+  const currencyFormatter = new Intl.NumberFormat("de-CH", {
 
-  
 
-    
 
-  
+    style: "currency",
 
-      return (
 
-  
 
-        <div className="container mx-auto max-w-7xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
+    currency: motorcycle.currencyCode || "CHF",
 
-  
 
-    
 
-  
+  });
+
+
+
+
+
+
+
+  return (
+
+
+
+    <div className="container mx-auto max-w-7xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
+
+
+
+
+
+
 
       <MotorcycleDetailHeader
         motorcycle={motorcycle}
@@ -482,74 +481,74 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   })}
                 />
               </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditMotorcycleDialogOpen(true)}
-                                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-                              >
-                                Bearbeiten
-                              </button>
-                            </div>
-                            <div hidden={!detailsExpanded} className="mt-3 space-y-2">
-                              <StatisticEntry
-                                icon={Hash}
-                                label="Kennzeichen"
-                                value={motorcycle.numberPlate?.trim()}
-                              />
-                              <StatisticEntry
-                                icon={FileText}
-                                label="Stammnummer"
-                                value={motorcycle.vehicleIdNr?.trim()}
-                              />
-                              <StatisticEntry
-                                icon={Fingerprint}
-                                label="VIN"
-                                value={motorcycle.vin}
-                              />
-                              <StatisticEntry
-                                icon={Gauge}
-                                label="Anfangs-KM"
-                                value={motorcycle.initialOdo > 0 ? `${motorcycle.initialOdo} km` : null}
-                              />
-                              <StatisticEntry
-                                icon={Calendar}
-                                label="1. Inverkehrsetzung"
-                                value={
-                                  motorcycle.firstRegistration
-                                    ? dateFormatter.format(new Date(motorcycle.firstRegistration))
-                                    : null
-                                }
-                              />
-                              <StatisticEntry
-                                icon={Calendar}
-                                label="Kaufdatum"
-                                value={
-                                  motorcycle.purchaseDate
-                                    ? dateFormatter.format(new Date(motorcycle.purchaseDate))
-                                    : null
-                                }
-                              />
-                              <StatisticEntry
-                                icon={DollarSign}
-                                label="Kaufpreis"
-                                value={
-                                  motorcycle.purchasePrice !== null && motorcycle.purchasePrice !== undefined
-                                    ? currencyFormatter.format(motorcycle.purchasePrice)
-                                    : null
-                                }
-                              />
-                              <StatisticEntry
-                                icon={Info}
-                                label="Status"
-                                value={
-                                  <span className="flex items-center gap-2">
-                                    {motorcycle.isArchived ? "Archiviert" : "Aktiv"}
-                                    {motorcycle.isVeteran && " • Veteran"}
-                                  </span>
-                                }
-                              />
-                            </div>
-                          </div>
+              <button
+                type="button"
+                onClick={() => setEditMotorcycleDialogOpen(true)}
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+              >
+                Bearbeiten
+              </button>
+            </div>
+            <div hidden={!detailsExpanded} className="mt-3 space-y-2">
+              <StatisticEntry
+                icon={Hash}
+                label="Kennzeichen"
+                value={motorcycle.numberPlate?.trim()}
+              />
+              <StatisticEntry
+                icon={FileText}
+                label="Stammnummer"
+                value={motorcycle.vehicleIdNr?.trim()}
+              />
+              <StatisticEntry
+                icon={Fingerprint}
+                label="VIN"
+                value={motorcycle.vin}
+              />
+              <StatisticEntry
+                icon={Gauge}
+                label="Anfangs-KM"
+                value={motorcycle.initialOdo > 0 ? `${motorcycle.initialOdo} km` : null}
+              />
+              <StatisticEntry
+                icon={Calendar}
+                label="1. Inverkehrsetzung"
+                value={
+                  motorcycle.firstRegistration
+                    ? dateFormatter.format(new Date(motorcycle.firstRegistration))
+                    : null
+                }
+              />
+              <StatisticEntry
+                icon={Calendar}
+                label="Kaufdatum"
+                value={
+                  motorcycle.purchaseDate
+                    ? dateFormatter.format(new Date(motorcycle.purchaseDate))
+                    : null
+                }
+              />
+              <StatisticEntry
+                icon={DollarSign}
+                label="Kaufpreis"
+                value={
+                  motorcycle.purchasePrice !== null && motorcycle.purchasePrice !== undefined
+                    ? currencyFormatter.format(motorcycle.purchasePrice)
+                    : null
+                }
+              />
+              <StatisticEntry
+                icon={Info}
+                label="Status"
+                value={
+                  <span className="flex items-center gap-2">
+                    {motorcycle.isArchived ? "Archiviert" : "Aktiv"}
+                    {motorcycle.isVeteran && " • Veteran"}
+                  </span>
+                }
+              />
+            </div>
+          </div>
           <div className="hidden md:block">
             <MaintenanceInsightsCard insights={insights} />
           </div>

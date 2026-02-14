@@ -204,11 +204,6 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
   return (
     <ul className="space-y-2">
       {groupedRecords.map((group) => {
-        const currencyFormatter = new Intl.NumberFormat("de-CH", {
-          style: "currency",
-          currency: group.currency || currencyCode || "CHF",
-        });
-
         const Icon = getIconForType(group.type);
         const isExpanded = expandedGroupId === group.id;
 
@@ -218,12 +213,19 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
         if (group.descriptions.length > 0) {
           description = group.descriptions.join(", ");
         } else {
-           description = maintenanceTypeLabels[group.type] || group.type;
+          description = maintenanceTypeLabels[group.type] || group.type;
         }
 
         return (
           <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
             <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  toggleExpand(group.id);
+                }
+              }}
               onClick={() => toggleExpand(group.id)}
               className="group flex cursor-pointer items-start gap-2 py-1 pl-0"
             >
@@ -261,14 +263,14 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
               </div>
             </div>
 
-                        {/* Expanded Details */}
-                        {isExpanded && (
-                            <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
-                                {group.originalRecords.map((record) => {
-                                    const recordCurrencyFormatter = new Intl.NumberFormat("de-CH", {
-                                        style: "currency",
-                                        currency: record.currency || currencyCode || "CHF",
-                                    });
+            {/* Expanded Details */}
+            {isExpanded && (
+              <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
+                {group.originalRecords.map((record) => {
+                  const recordCurrencyFormatter = new Intl.NumberFormat("de-CH", {
+                    style: "currency",
+                    currency: record.currency || currencyCode || "CHF",
+                  });
                   const metadataItems = [
                     { label: "Beschreibung", value: record.description },
                     { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type },

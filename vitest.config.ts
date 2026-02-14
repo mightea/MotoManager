@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { defineConfig } from "vitest/config";
+import { defineConfig, configDefaults } from "vitest/config";
 
 const currentDir = fileURLToPath(new URL(".", import.meta.url));
 
@@ -19,5 +19,6 @@ export default defineConfig({
       include: ["app/**/*.{ts,tsx}"],
       exclude: ["app/**/*.d.ts"],
     },
+    exclude: [...configDefaults.exclude, "tests/e2e/**"],
   },
 });

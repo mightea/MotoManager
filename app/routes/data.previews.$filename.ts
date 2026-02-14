@@ -15,7 +15,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   // Security check
   const db = await getDb();
   const searchPath = `/data/previews/${filename}`;
-  
+
   const [doc] = await db
     .select()
     .from(documents)
@@ -26,11 +26,11 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   // But strictly we should check.
   if (doc && doc.isPrivate) {
     const { user } = await getCurrentSession(request);
-    
+
     if (!user || user.id !== doc.ownerId) {
-        // Option: serve a generic "Private" placeholder image instead of 403?
-        // For now, 403.
-        throw new Response("Unauthorized", { status: 403 });
+      // Option: serve a generic "Private" placeholder image instead of 403?
+      // For now, 403.
+      throw new Response("Unauthorized", { status: 403 });
     }
   }
 
@@ -38,7 +38,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   try {
     await fs.promises.access(filePath, fs.constants.F_OK);
-  } catch (error) {
+  } catch {
     throw new Response("Not Found", { status: 404 });
   }
 

@@ -59,7 +59,7 @@ function getFileCategory(file: File): "pdf" | "image" | null {
 async function deleteFileIfExists(filePath: string) {
   try {
     await fs.unlink(filePath);
-  } catch (error) {
+  } catch {
     // Ignore error if file doesn't exist
   }
 }
@@ -173,7 +173,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const { user } = await requireUser(request);
-  
+
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -184,35 +184,35 @@ export async function action({ request }: Route.ActionArgs) {
     const motorcycleIds = formData.getAll("motorcycleIds").map(Number);
 
     if (!file || file.size === 0) {
-        return data({ error: "Keine Datei ausgewählt." }, { status: 400 });
+      return data({ error: "Keine Datei ausgewählt." }, { status: 400 });
     }
 
     if (!getFileCategory(file)) {
-        return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
+      return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
     }
 
     const { filePath, previewPath } = await saveDocumentFile(file);
 
     const db = await getDb();
-    
-    await db.transaction(async (tx) => {
-        const [inserted] = await tx.insert(documents).values({
-            title,
-            filePath,
-            previewPath,
-            uploadedBy: user.username,
-            ownerId: user.id,
-            isPrivate,
-        }).returning({ id: documents.id });
 
-        if (motorcycleIds.length > 0) {
-            await tx.insert(documentMotorcycles).values(
-                motorcycleIds.map(mid => ({
-                    documentId: inserted.id,
-                    motorcycleId: mid
-                }))
-            );
-        }
+    await db.transaction(async (tx) => {
+      const [inserted] = await tx.insert(documents).values({
+        title,
+        filePath,
+        previewPath,
+        uploadedBy: user.username,
+        ownerId: user.id,
+        isPrivate,
+      }).returning({ id: documents.id });
+
+      if (motorcycleIds.length > 0) {
+        await tx.insert(documentMotorcycles).values(
+          motorcycleIds.map(mid => ({
+            documentId: inserted.id,
+            motorcycleId: mid
+          }))
+        );
+      }
     });
 
     return data({ success: true });
@@ -226,7 +226,7 @@ export async function action({ request }: Route.ActionArgs) {
     const file = formData.get("file") as File | null;
 
     const db = await getDb();
-    
+
     // Verify ownership
     const [doc] = await db
       .select()
@@ -235,51 +235,53 @@ export async function action({ request }: Route.ActionArgs) {
       .limit(1);
 
     if (!doc || doc.ownerId !== user.id) {
-        throw new Response("Unauthorized", { status: 403 });
+      throw new Response("Unauthorized", { status: 403 });
     }
 
     // Handle File Replacement
     let newPaths = {};
     if (file && file.size > 0) {
-        if (!getFileCategory(file)) {
-            return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
+      if (!getFileCategory(file)) {
+        return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
+      }
+
+      // Delete old files
+      try {
+        const oldFilePath = path.join(process.cwd(), doc.filePath.replace("/data/documents", "data/documents"));
+        await fs.unlink(oldFilePath);
+        if (doc.previewPath) {
+          const oldPreviewPath = path.join(process.cwd(), doc.previewPath.replace("/data/previews", "data/previews"));
+          await fs.unlink(oldPreviewPath).catch(() => { });
         }
+      } catch {
+        // Ignore error if file doesn't exist
+      }
 
-        // Delete old files
-        try {
-            const oldFilePath = path.join(process.cwd(), doc.filePath.replace("/data/documents", "data/documents"));
-            await fs.unlink(oldFilePath).catch(() => {});
-            if (doc.previewPath) {
-                const oldPreviewPath = path.join(process.cwd(), doc.previewPath.replace("/data/previews", "data/previews"));
-                await fs.unlink(oldPreviewPath).catch(() => {});
-            }
-        } catch (e) { console.error("Error cleaning up old files", e); }
-
-        newPaths = await saveDocumentFile(file);
+      newPaths = await saveDocumentFile(file);
     }
 
     await db.transaction(async (tx) => {
-        await tx
-          .update(documents)
-          .set({ 
-              title, 
-              isPrivate, 
-              updatedAt: new Date().toISOString(),
-              ...newPaths 
-          })
-          .where(eq(documents.id, id));
+      await tx
+        .update(documents)
+        .set({
+          title,
+          isPrivate,
+          updatedAt: new Date().toISOString(),
+          ...newPaths
+        })
+        .where(eq(documents.id, id));
 
-        // Update assignments
-        await tx.delete(documentMotorcycles).where(eq(documentMotorcycles.documentId, id));
-        
-        if (motorcycleIds.length > 0) {
-            await tx.insert(documentMotorcycles).values(
-                motorcycleIds.map(mid => ({
-                    documentId: id,
-                    motorcycleId: mid
-                }))
-            );
-        }
+      // Update assignments
+      await tx.delete(documentMotorcycles).where(eq(documentMotorcycles.documentId, id));
+
+      if (motorcycleIds.length > 0) {
+        await tx.insert(documentMotorcycles).values(
+          motorcycleIds.map(mid => ({
+            documentId: id,
+            motorcycleId: mid
+          }))
+        );
+      }
     });
 
     return data({ success: true });
@@ -291,26 +293,26 @@ export async function action({ request }: Route.ActionArgs) {
 
     // Verify ownership
     const [doc] = await db
-        .select()
-        .from(documents)
-        .where(eq(documents.id, id))
-        .limit(1);
+      .select()
+      .from(documents)
+      .where(eq(documents.id, id))
+      .limit(1);
 
     if (!doc || doc.ownerId !== user.id) {
-        throw new Response("Unauthorized", { status: 403 });
+      throw new Response("Unauthorized", { status: 403 });
     }
 
     // Delete files
     try {
-        const fullFilePath = path.join(process.cwd(), doc.filePath.replace("/data/documents", "data/documents"));
-        await fs.unlink(fullFilePath).catch(() => {});
-        
-        if (doc.previewPath) {
-            const fullPreviewPath = path.join(process.cwd(), doc.previewPath.replace("/data/previews", "data/previews"));
-            await fs.unlink(fullPreviewPath).catch(() => {});
-        }
+      const fullFilePath = path.join(process.cwd(), doc.filePath.replace("/data/documents", "data/documents"));
+      await fs.unlink(fullFilePath).catch(() => { });
+
+      if (doc.previewPath) {
+        const fullPreviewPath = path.join(process.cwd(), doc.previewPath.replace("/data/previews", "data/previews"));
+        await fs.unlink(fullPreviewPath).catch(() => { });
+      }
     } catch (e) {
-        console.error("Error deleting files:", e);
+      console.error("Error deleting files:", e);
     }
 
     await db.delete(documents).where(eq(documents.id, id));
@@ -326,7 +328,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
-  
+
   const actionData = useActionData<{ success?: boolean }>();
   const submit = useSubmit();
   const location = useLocation();
@@ -378,13 +380,13 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   }, {});
 
   const openCreateDialog = () => {
-      setEditingDocument(undefined);
-      setIsEditorOpen(true);
+    setEditingDocument(undefined);
+    setIsEditorOpen(true);
   };
 
   const openEditDialog = (doc: typeof docs[0]) => {
-      setEditingDocument(doc);
-      setIsEditorOpen(true);
+    setEditingDocument(doc);
+    setIsEditorOpen(true);
   };
 
   useEffect(() => {
@@ -393,6 +395,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     if (!docIdParam) return;
     const docToEdit = docs.find((d) => d.id === Number(docIdParam));
     if (!docToEdit) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     openEditDialog(docToEdit);
     searchParams.delete("doc");
     navigate(
@@ -402,6 +405,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
       },
       { replace: true }
     );
+    // eslint-disable-line react-hooks/exhaustive-deps
   }, [location.search, docs, navigate]);
 
   return (
@@ -414,11 +418,11 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
           </p>
         </div>
         <button
-            onClick={openCreateDialog}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+          onClick={openCreateDialog}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
         >
-            <Plus className="h-5 w-5" />
-            <span className="hidden sm:inline">Hochladen</span>
+          <Plus className="h-5 w-5" />
+          <span className="hidden sm:inline">Hochladen</span>
         </button>
       </div>
 
@@ -462,7 +466,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
           motorcycles={allMotorcycles}
           assignedMotorcycleIds={getAssignedMotorcycleIds(editingDocument?.id)}
           onSubmit={() => {
-              if (!editingDocument) setIsEditorOpen(false); // Close on cancel for create
+            if (!editingDocument) setIsEditorOpen(false); // Close on cancel for create
           }}
           onDelete={() => setDeleteConfirmationOpen(true)}
         />

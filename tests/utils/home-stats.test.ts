@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildDashboardData } from "~/utils/home-stats";
-import type { Motorcycle, Issue, MaintenanceRecord, CurrentLocation } from "~/db/schema";
+import type { Motorcycle, MaintenanceRecord } from "~/db/schema";
 
 describe("buildDashboardData", () => {
   const mockMotorcycle: Motorcycle = {
@@ -92,7 +92,7 @@ describe("buildDashboardData", () => {
     expect(stats.totalKmThisYear).toBe(4000);
   });
 
-    it("should correctly calculate km this year with records from previous years", () => {
+  it("should correctly calculate km this year with records from previous years", () => {
     const maintenance: MaintenanceRecord[] = [
       {
         id: 1,
@@ -103,7 +103,7 @@ describe("buildDashboardData", () => {
         cost: 200,
         currency: "CHF",
         description: null,
-         brand: null,
+        brand: null,
         model: null,
         tirePosition: null,
         tireSize: null,
@@ -124,7 +124,7 @@ describe("buildDashboardData", () => {
         cost: 300,
         currency: "CHF",
         description: null,
-         brand: null,
+        brand: null,
         model: null,
         tirePosition: null,
         tireSize: null,

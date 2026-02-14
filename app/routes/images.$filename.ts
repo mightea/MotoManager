@@ -46,7 +46,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   try {
     await fs.promises.access(cacheFilePath, fs.constants.F_OK);
     return serveFile(cacheFilePath, cacheKey);
-  } catch (e) {
+  } catch {
     // Cache miss, proceed to generate
   }
 

@@ -109,7 +109,7 @@ export function AddMotorcycleForm({
         )}
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Bild</label>
+            <label htmlFor="image-upload" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Bild</label>
             <div className="flex items-start gap-4">
               {initialValues?.image && !croppedImageUrl && (
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-navy-700">
@@ -120,11 +120,12 @@ export function AddMotorcycleForm({
                   />
                 </div>
               )}
-              
+
               {!croppedImageUrl ? (
                 <div className="flex-1">
                   <input
                     type="file"
+                    id="image-upload"
                     accept="image/*"
                     onChange={onSelectFile}
                     className="block w-full text-sm text-slate-500

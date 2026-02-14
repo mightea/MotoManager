@@ -3,7 +3,7 @@ import { useSubmit } from "react-router";
 import { Modal } from "./modal";
 import { Button } from "./button";
 import type { TorqueSpecification } from "~/db/schema";
-import { AlertTriangle, Check, Search } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import clsx from "clsx";
 
 interface ImportTorqueSpecsDialogProps {
@@ -75,8 +75,6 @@ export function ImportTorqueSpecsDialog({
     setSelectedSpecIds(new Set());
   };
 
-  const selectedMotorcycle = otherMotorcycles.find(m => m.id === selectedMotorcycleId);
-
   return (
     <Modal
       isOpen={isOpen}
@@ -87,15 +85,16 @@ export function ImportTorqueSpecsDialog({
       <div className="space-y-4">
         {/* Step 1: Select Motorcycle */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+          <label htmlFor="source-motorcycle" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
             Quelle wählen
           </label>
           <select
+            id="source-motorcycle"
             className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
             value={selectedMotorcycleId ?? ""}
             onChange={(e) => {
-                setSelectedMotorcycleId(Number(e.target.value) || null);
-                setSelectedSpecIds(new Set());
+              setSelectedMotorcycleId(Number(e.target.value) || null);
+              setSelectedSpecIds(new Set());
             }}
           >
             <option value="">-- Fahrzeug wählen --</option>
@@ -152,20 +151,20 @@ export function ImportTorqueSpecsDialog({
                       </div>
                       <div className="flex-1 space-y-0.5">
                         <div className="flex items-center justify-between">
-                            <span className="font-medium text-foreground dark:text-white">{spec.name}</span>
-                            <span className="text-sm font-semibold text-foreground dark:text-white">
-                                {spec.torque} Nm
-                            </span>
+                          <span className="font-medium text-foreground dark:text-white">{spec.name}</span>
+                          <span className="text-sm font-semibold text-foreground dark:text-white">
+                            {spec.torque} Nm
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-xs text-secondary dark:text-navy-400">
-                            <span>{spec.category}</span>
-                            <span>{spec.toolSize}</span>
+                          <span>{spec.category}</span>
+                          <span>{spec.toolSize}</span>
                         </div>
                         {isOverwrite && (
-                            <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-                                <AlertTriangle className="h-3 w-3" />
-                                <span>Wird überschrieben</span>
-                            </div>
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                            <AlertTriangle className="h-3 w-3" />
+                            <span>Wird überschrieben</span>
+                          </div>
                         )}
                       </div>
                     </label>

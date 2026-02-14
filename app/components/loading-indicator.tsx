@@ -17,6 +17,7 @@ export function LoadingIndicator() {
 
   useEffect(() => {
     if (active) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
       setProgress(0);
     } else {
@@ -36,18 +37,18 @@ export function LoadingIndicator() {
     // Indeterminate animation simulation
     // Quickly go to 20%, then slowly to 90%
     // If it finishes before active becomes false, it stays at 90%
-    
+
     let animationFrameId: number;
     let start = performance.now();
 
     const animate = (time: number) => {
       const elapsed = time - start;
-      
+
       // Simple curve
       // 0 to 30% in 200ms
       // 30% to 80% in 3000ms
       // 80% to 95% in 10000ms
-      
+
       let nextProgress = 0;
       if (elapsed < 200) {
         nextProgress = (elapsed / 200) * 30;
@@ -58,7 +59,7 @@ export function LoadingIndicator() {
       }
 
       if (nextProgress > 95) nextProgress = 95;
-      
+
       setProgress(nextProgress);
       animationFrameId = requestAnimationFrame(animate);
     };
