@@ -1,5 +1,5 @@
-import { getDb } from "../app/db/index.ts";
-import { maintenanceRecords, motorcycles, currencySettings } from "../app/db/schema.ts";
+import { getDb } from "../app/db/index";
+import { maintenanceRecords, motorcycles } from "../app/db/schema";
 import { eq } from "drizzle-orm";
 
 async function backfill() {

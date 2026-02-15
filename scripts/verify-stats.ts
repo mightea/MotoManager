@@ -1,6 +1,15 @@
-import { getDb } from "../app/db/index.ts";
-import { buildDashboardData } from "../app/utils/home-stats.ts";
-import { motorcycles, issues, maintenanceRecords, locationRecords, currencySettings } from "../app/db/schema.ts";
+// Imports used by buildDashboardData internal logic, but here we just need buildDashboardData
+// Actually buildDashboardData might need types if we were being strict but unused vars are unused.
+// We don't need to import schema tables if we are not using them directly, 
+// EXCEPT wait, verify-stats.ts USES them:
+// const allMotos = await db.query.motorcycles.findMany();
+// ...
+// So why did lint say they are unused?
+// Ah, `db.query.motorcycles` uses the schema object from `db` (which is imported setup), 
+// BUT maybe we imported them as values but didn't use the values? 
+// Let's check the file content first.
+import { getDb } from "../app/db/index";
+import { buildDashboardData } from "../app/utils/home-stats";
 
 async function verify() {
     const db = await getDb();

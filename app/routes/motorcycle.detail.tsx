@@ -10,7 +10,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, locations, currencySettings, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText, Clock } from "lucide-react";
