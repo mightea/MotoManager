@@ -194,7 +194,7 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                 )}
 
                 {/* Generic Brand/Model */}
-                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor", "general", "repair"].includes(type)) && (
+                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
                     <>
                         <div className="space-y-1.5">
                             <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
