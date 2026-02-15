@@ -60,6 +60,7 @@ export const motorcycles = sqliteTable("motorcycles", {
 
   purchaseDate: text("purchase_date"), // SQLite DATE stored as TEXT
   purchasePrice: real("purchase_price"), // decimal‐friendly REAL column
+  normalizedPurchasePrice: real("normalized_purchase_price"), // Converted to base currency (CHF)
   currencyCode: text("currency_code"),
 });
 
@@ -97,6 +98,7 @@ export const maintenanceRecords = sqliteTable("maintenance_records", {
     .notNull()
     .references(() => motorcycles.id),
   cost: real("cost"), // decimal‐friendly REAL column
+  normalizedCost: real("normalized_cost"), // Converted to base currency (CHF)
   currency: text("currency"), // e.g. "CHF", "EUR", "USD"
   description: text("description"), // optional notes
   type: text("type").notNull().$type<MaintenanceType>(), // discriminator

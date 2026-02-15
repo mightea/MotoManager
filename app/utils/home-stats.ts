@@ -203,14 +203,16 @@ export function buildDashboardStats({
   );
 
   const totalMaintenanceCostThisYear = maintenance.reduce((sum, entry) => {
-    if (!entry.date || entry.cost == null) {
+    if (!entry.date) {
       return sum;
     }
     const entryYear = new Date(entry.date).getFullYear();
     if (entryYear !== year) {
       return sum;
     }
-    return sum + (entry.cost ?? 0);
+    // Prefer normalizedCost but fall back to cost for legacy records
+    const costValue = entry.normalizedCost ?? entry.cost ?? 0;
+    return sum + costValue;
   }, 0);
 
   const veteranCount = motorcycles.filter((moto) => moto.isVeteran).length;

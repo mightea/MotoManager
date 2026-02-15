@@ -226,9 +226,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
     if (editFetcher.state === "idle" && editFetcher.data?.success) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsEditorOpen(false);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDeleteConfirmationOpen(false);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditingDocument(null);
       revalidator.revalidate();
     }

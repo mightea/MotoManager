@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
-import type { User, Motorcycle, Issue, MaintenanceRecord, Location } from "~/db/schema";
+import type { User, Motorcycle, Issue, MaintenanceRecord, Location, CurrencySetting } from "~/db/schema";
 import type { NextInspectionInfo } from "~/utils/inspection";
 import type { MaintenanceInsight } from "~/utils/maintenance-intervals";
 
@@ -16,6 +16,7 @@ export namespace Route {
     insights: MaintenanceInsight[];
     userLocations: Location[];
     currentLocationName: string | null;
+    currencies: CurrencySetting[];
   };
   export type ComponentProps = { loaderData: LoaderData };
 }

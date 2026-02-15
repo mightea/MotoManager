@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1760199497662,
-      "tag": "0000_initial",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1760199498662,
-      "tag": "0001_add_torque_end_to_torque_specs",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "8",
-      "when": 1760962227554,
-      "tag": "0002_add_privacy_columns_to_documents",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "8",
-      "when": 1761000000000,
-      "tag": "0003_add_location_id_to_maintenance_records",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "8",
-      "when": 1761000000001,
-      "tag": "0004_drop_image_column",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "8",
-      "when": 1761000000002,
-      "tag": "0005_add_image_column_back",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "8",
-      "when": 1761000000003,
-      "tag": "0006_make_vin_nullable",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "8",
-      "when": 1761000000004,
-      "tag": "0007_add_tool_size_to_torque_specs",
+      "when": 1771162262375,
+      "tag": "0000_nice_sally_floyd",
       "breakpoints": true
     }
   ]

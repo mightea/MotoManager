@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Form } from "react-router";
-import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
+import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting } from "~/db/schema";
 import {
     Wrench,
     Battery,
@@ -21,6 +21,7 @@ interface MaintenanceFormProps {
     currencyCode?: string | null;
     defaultOdo?: number | null;
     userLocations?: Location[];
+    currencies?: CurrencySetting[];
     onSubmit: () => void;
     onCancel: () => void;
     onDelete?: () => void;
@@ -40,9 +41,14 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
     { value: "general", label: "Allgemein", icon: Wrench },
 ];
 
-export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
+
+
+export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, currencies = [], onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
     const [isNewLocation, setIsNewLocation] = useState(false);
+
+    // Fallback if no currencies provided
+
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -113,9 +119,11 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                                 className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
                                 defaultValue={initialData?.currency || currencyCode || "CHF"}
                             >
-                                <option value="CHF">CHF</option>
-                                <option value="EUR">EUR</option>
-                                <option value="USD">USD</option>
+                                {currencies?.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.code}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -186,7 +194,7 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                 )}
 
                 {/* Generic Brand/Model */}
-                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor", "general", "repair"].includes(type)) && (
+                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
                     <>
                         <div className="space-y-1.5">
                             <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>

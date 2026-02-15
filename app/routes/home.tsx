@@ -42,6 +42,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const allIssues = await db.query.issues.findMany();
   const allMaintenance = await db.query.maintenanceRecords.findMany();
   const allLocations = await db.query.locationRecords.findMany();
+  const currencies = await db.query.currencySettings.findMany();
 
   const { items: cards, stats } = buildDashboardData({
     motorcycles: motorcyclesList,
@@ -84,7 +85,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   return data(
-    { cards, stats, user, currentSort },
+    { cards, stats, user, currentSort, currencies },
     { headers },
   );
 }
@@ -150,13 +151,24 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   const dbClient = await getDb();
+
+  // Normalize Purchase Price
+  const currencies = await dbClient.query.currencySettings.findMany();
+  const getCurrencyFactor = (code: string | null | undefined) => {
+    if (!code) return 1;
+    const currency = currencies.find(c => c.code === code);
+    return currency ? currency.conversionFactor : 1;
+  };
+
+  newMotorcycle.normalizedPurchasePrice = (newMotorcycle.purchasePrice || 0) * getCurrencyFactor(currencyCode);
+
   await createMotorcycle(dbClient, newMotorcycle);
 
   return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { cards, stats, currentSort } = loaderData;
+  const { cards, stats, currentSort, currencies } = loaderData;
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
 
@@ -263,7 +275,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         title="Motorrad hinzufügen"
         description="Füge ein neues Fahrzeug zu deiner Garage hinzu."
       >
-        <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} />
+        <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} currencies={currencies} />
       </Modal>
     </div>
   );

@@ -106,8 +106,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const currentLocationName = userLocations.find(l => l.id === currentLocationId)?.name ?? null;
 
+  const currencies = await db.query.currencySettings.findMany();
+
   return data(
-    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName },
+    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
@@ -152,6 +154,14 @@ export async function action({ request }: Route.ActionArgs) {
     deleteMotorcycleCascade,
     deleteMaintenanceRecord
   } = await import("~/db/providers/motorcycles.server");
+
+  // Fetch currencies for normalization
+  const currencies = await dbClient.query.currencySettings.findMany();
+  const getCurrencyFactor = (code: string | null | undefined) => {
+    if (!code) return 1;
+    const currency = currencies.find(c => c.code === code);
+    return currency ? currency.conversionFactor : 1;
+  };
 
 
   if (intent === "updateMotorcycle") {
@@ -211,6 +221,7 @@ export async function action({ request }: Route.ActionArgs) {
       currencyCode: currencyCode ?? null,
       isVeteran: isVeteran,
       ...(imagePath ? { image: imagePath } : {}),
+      normalizedPurchasePrice: (purchasePrice || 0) * getCurrencyFactor(currencyCode),
     };
 
     updatedMotorcycle.modelYear =
@@ -358,6 +369,7 @@ export async function action({ request }: Route.ActionArgs) {
       viscosity: parseString(formData.get("viscosity")),
       inspectionLocation: parseString(formData.get("inspectionLocation")),
       locationId: locationId,
+      normalizedCost: (parseNumber(formData.get("cost")) || 0) * getCurrencyFactor(parseString(formData.get("currency"))),
     };
 
     if (intent === "createMaintenance") {
@@ -387,7 +399,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName } = loaderData;
+  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -686,6 +698,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           submitLabel="Speichern"
           onSubmit={() => setEditMotorcycleDialogOpen(false)}
           onDelete={() => setDeleteConfirmationOpen(true)}
+          currencies={currencies}
         />
       </Modal>
 
@@ -718,6 +731,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setDeleteMaintenanceConfirmationOpen(true);
         }}
         userLocations={userLocations}
+        currencies={currencies}
       />
 
       <DeleteConfirmationDialog

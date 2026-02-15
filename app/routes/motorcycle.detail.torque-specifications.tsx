@@ -257,9 +257,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     if (actionData && "success" in actionData && actionData.success) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAddModalOpen(false);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsImportModalOpen(false);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditingSpec(null);
     }
   }, [actionData]);
