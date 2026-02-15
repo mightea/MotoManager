@@ -3,6 +3,7 @@ import type { Route } from "./+types/home";
 import { getDb } from "~/db";
 import {
   motorcycles,
+  currencySettings,
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
@@ -42,6 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const allIssues = await db.query.issues.findMany();
   const allMaintenance = await db.query.maintenanceRecords.findMany();
   const allLocations = await db.query.locationRecords.findMany();
+  const currencies = await db.query.currencySettings.findMany();
 
   const { items: cards, stats } = buildDashboardData({
     motorcycles: motorcyclesList,
@@ -84,7 +86,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   return data(
-    { cards, stats, user, currentSort },
+    { cards, stats, user, currentSort, currencies },
     { headers },
   );
 }
@@ -156,7 +158,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { cards, stats, currentSort } = loaderData;
+  const { cards, stats, currentSort, currencies } = loaderData;
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
 
@@ -263,7 +265,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         title="Motorrad hinzufügen"
         description="Füge ein neues Fahrzeug zu deiner Garage hinzu."
       >
-        <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} />
+        <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} currencies={currencies} />
       </Modal>
     </div>
   );
