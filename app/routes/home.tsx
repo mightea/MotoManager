@@ -189,7 +189,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const activeSortLabel = sortOptions.find(o => o.id === currentSort)?.label || "Sortieren";
 
   return (
-    <div className="container mx-auto p-4 space-y-12 pb-24">
+    <div className="container mx-auto p-4 space-y-10 pb-28 sm:pb-24 animate-fade-in">
 
       {/* Header Actions */}
       <div className="flex items-center justify-between">
@@ -236,7 +236,16 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {/* FAB on mobile */}
+      <button
+        onClick={() => setIsAddOpen(true)}
+        className="fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary-dark hover:shadow-xl active:scale-95 sm:hidden"
+        aria-label="Neues Motorrad hinzufügen"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
+
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         {cards.length === 0 ? (
           <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
             <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">

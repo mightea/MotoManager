@@ -182,7 +182,7 @@ export function MotorcycleDetailHeader({
           </div>
 
           {(navLinks.length > 0 || overviewLink) && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               {overviewLink && (
                 <Link
                   key="overview-link"
@@ -206,7 +206,7 @@ export function MotorcycleDetailHeader({
                   <span
                     key={link.label}
                     className={clsx(
-                      "rounded-full border px-3 py-1 text-xs font-semibold opacity-60",
+                      "whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold opacity-60",
                       hasHeroImage
                         ? "border-white/40 text-white"
                         : "border-gray-200 text-secondary dark:border-navy-600 dark:text-navy-300"
@@ -219,7 +219,7 @@ export function MotorcycleDetailHeader({
                     key={link.to}
                     to={link.to}
                     className={clsx(
-                      "rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
+                      "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition-all",
                       link.isActive
                         ? hasHeroImage
                           ? "border-white bg-white text-primary"

@@ -41,6 +41,11 @@
   --color-navy-950: #0a0711;
 }
 
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
 /* Prevent iOS Safari from zooming in on form fields */
 input[type="text"],
 input[type="email"],
@@ -56,4 +61,55 @@ button,
 a {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Brand selection color */
+::selection {
+  background-color: rgba(0, 138, 201, 0.25);
+  color: inherit;
+}
+
+/* Page fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+/* Dark mode custom scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(101, 94, 122, 0.4);
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(101, 94, 122, 0.6);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
