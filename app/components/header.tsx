@@ -19,9 +19,16 @@ export function Header({ user }: { user: User | null }) {
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  // Scroll-based show/hide — desktop motorcycle detail only
   useEffect(() => {
     if (!isMotorcycleDetail || typeof window === "undefined") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsHidden(false);
+      return;
+    }
+
+    // On mobile, the header is non-fixed and scrolls with content → no hide logic needed
+    if (window.innerWidth < 768) {
       setIsHidden(false);
       return;
     }
@@ -30,20 +37,16 @@ export function Header({ user }: { user: User | null }) {
     let frame: number | null = null;
 
     const handleScroll = () => {
-      if (frame !== null) {
-        return;
-      }
+      if (frame !== null) return;
       frame = window.requestAnimationFrame(() => {
         const currentY = window.scrollY;
         const delta = currentY - lastScrollY;
-        const isScrollingDown = delta > 6;
-        const isScrollingUp = delta < -6;
 
         if (currentY <= 80) {
           setIsHidden(false);
-        } else if (isScrollingDown) {
+        } else if (delta > 6) {
           setIsHidden(true);
-        } else if (isScrollingUp) {
+        } else if (delta < -6) {
           setIsHidden(false);
         }
 
@@ -54,37 +57,35 @@ export function Header({ user }: { user: User | null }) {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      if (frame !== null) {
-        cancelAnimationFrame(frame);
-      }
+      if (frame !== null) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", handleScroll);
     };
   }, [isMotorcycleDetail]);
 
+  // CSS variable for desktop detail header offset
   useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
-    }
-
+    if (typeof document === "undefined") return;
     const root = document.documentElement;
-    const offset = isHidden ? "0px" : "96px";
 
-    if (isMotorcycleDetail) {
-      root.style.setProperty("--app-header-offset", offset);
+    if (isMotorcycleDetail && window.innerWidth >= 768) {
+      root.style.setProperty("--app-header-offset", isHidden ? "0px" : "96px");
     } else {
       root.style.removeProperty("--app-header-offset");
     }
 
-    return () => {
-      root.style.removeProperty("--app-header-offset");
-    };
+    return () => { root.style.removeProperty("--app-header-offset"); };
   }, [isMotorcycleDetail, isHidden]);
 
   return (
     <div
       className={clsx(
-        "fixed top-0 md:top-4 left-0 right-0 z-40 flex justify-center md:px-4 pointer-events-none transition-transform duration-300 ease-out",
-        isMotorcycleDetail && (isHidden ? "-translate-y-full" : "translate-y-0")
+        "z-40 flex justify-center pointer-events-none",
+        // On mobile motorcycle detail: non-fixed, scrolls with page naturally
+        isMotorcycleDetail
+          ? "relative md:fixed md:top-4 md:px-4 md:left-0 md:right-0 transition-transform duration-300 ease-out"
+          : "fixed top-0 md:top-4 left-0 right-0 md:px-4 transition-transform duration-300 ease-out",
+        // Hide transform only on desktop motorcycle detail
+        isMotorcycleDetail && isHidden && "md:-translate-y-full"
       )}
     >
       <header className="relative w-full max-w-7xl overflow-hidden rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90 pointer-events-auto">
