@@ -399,8 +399,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  // Cast loaderData to any because the generated type definition is stale and not including 'currencies'
-  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies } = loaderData as any;
+  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
