@@ -142,9 +142,14 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "deleteCurrency") {
     const id = Number(formData.get("id"));
-    if (!id) return { error: "Ungültige ID." };
     await deleteCurrencySetting(db, id);
     return { success: "Währung gelöscht." };
+  }
+
+  if (intent === "regeneratePreviews") {
+    const { regenerateAllDocumentPreviews } = await import("~/services/documents.server");
+    const count = await regenerateAllDocumentPreviews(db);
+    return { success: `${count} Vorschauen erfolgreich neu generiert.` };
   }
 
   return null;
@@ -403,6 +408,30 @@ export default function AdminSettings() {
               )}
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* System Maintenance */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-lg bg-orange-100 p-2 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+            <Shield className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground dark:text-white">
+            Systemwartung
+          </h2>
+        </div>
+        <div className="space-y-4">
+          <p className="text-sm text-secondary dark:text-navy-300">
+            Fehlende oder defekte Vorschaubilder für PDF-Dokumente können hier neu generiert werden.
+            Dies kann einige Zeit in Anspruch nehmen.
+          </p>
+          <Form method="post">
+            <input type="hidden" name="intent" value="regeneratePreviews" />
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Arbeite..." : "Alle Vorschauen neu generieren"}
+            </Button>
+          </Form>
         </div>
       </section>
     </div>

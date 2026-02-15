@@ -60,14 +60,30 @@ async function generatePdfPreview(
     outputPath: string,
 ): Promise<boolean> {
     try {
-        await execFileAsync("sips", [
-            "-s",
-            "format",
-            "png",
-            pdfPath,
-            "--out",
-            outputPath,
-        ]);
+        if (process.platform === "darwin") {
+            await execFileAsync("sips", [
+                "-s",
+                "format",
+                "png",
+                pdfPath,
+                "--out",
+                outputPath,
+            ]);
+        } else {
+            // Linux (Docker) - use pdftoppm (poppler-utils)
+            // pdftoppm adds extension automatically, so we remove it from outputPath
+            const outputPrefix = outputPath.replace(/\.png$/i, "");
+            await execFileAsync("pdftoppm", [
+                "-png",
+                "-f",
+                "1",
+                "-l",
+                "1",
+                "-singlefile",
+                pdfPath,
+                outputPrefix,
+            ]);
+        }
         return true;
     } catch (error) {
         console.warn("PDF preview generation failed", error);
@@ -143,4 +159,62 @@ export async function deleteDocumentFiles(filePath: string, previewPath: string 
         console.error("Error deleting files:", e);
         // Be robust, maybe one file was already gone
     }
+}
+
+import { eq } from "drizzle-orm";
+import { documents } from "~/db/schema";
+import type { LibSQLDatabase } from "drizzle-orm/libsql";
+import type * as schema from "~/db/schema";
+
+type Database = LibSQLDatabase<typeof schema>;
+
+export async function regenerateAllDocumentPreviews(db: Database) {
+    const allDocs = await db.select().from(documents);
+    let count = 0;
+
+    const previewsDir = path.join(process.cwd(), "data", "previews");
+    await fs.mkdir(previewsDir, { recursive: true });
+
+    for (const doc of allDocs) {
+        // Only process likely PDFs based on extension or mime if we had it.
+        // We only have filePath.
+        // Check for .pdf extension (case insensitive)
+        if (!doc.filePath.toLowerCase().endsWith(".pdf")) {
+            continue;
+        }
+
+        const relativeFilePath = doc.filePath.startsWith("/") ? doc.filePath.substring(1) : doc.filePath;
+        const absoluteFilePath = path.join(process.cwd(), relativeFilePath);
+
+        try {
+            // Check if file exists
+            await fs.access(absoluteFilePath);
+
+            // Generate new preview
+            const previewName = `${uuidv4()}.png`;
+            const previewFilePath = path.join(previewsDir, previewName);
+            const success = await generatePdfPreview(absoluteFilePath, previewFilePath);
+
+            if (success) {
+                // Delete old preview if it exists
+                if (doc.previewPath) {
+                    const oldRelative = doc.previewPath.startsWith("/") ? doc.previewPath.substring(1) : doc.previewPath;
+                    const oldAbsolute = path.join(process.cwd(), oldRelative);
+                    await deleteFileIfExists(oldAbsolute);
+                }
+
+                // Update DB
+                const newWebPath = `/data/previews/${previewName}`;
+                await db.update(documents)
+                    .set({ previewPath: newWebPath })
+                    .where(eq(documents.id, doc.id));
+
+                count++;
+            }
+        } catch (e) {
+            console.error(`Failed to regenerate preview for doc ${doc.id}:`, e);
+            // Continue with next doc
+        }
+    }
+    return count;
 }
