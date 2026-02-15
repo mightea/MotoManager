@@ -155,6 +155,14 @@ export async function action({ request }: Route.ActionArgs) {
     deleteMaintenanceRecord
   } = await import("~/db/providers/motorcycles.server");
 
+  // Fetch currencies for normalization
+  const currencies = await dbClient.query.currencySettings.findMany();
+  const getCurrencyFactor = (code: string | null | undefined) => {
+    if (!code) return 1;
+    const currency = currencies.find(c => c.code === code);
+    return currency ? currency.conversionFactor : 1;
+  };
+
 
   if (intent === "updateMotorcycle") {
     const motorcycleId = Number(formData.get("motorcycleId"));
@@ -213,6 +221,7 @@ export async function action({ request }: Route.ActionArgs) {
       currencyCode: currencyCode ?? null,
       isVeteran: isVeteran,
       ...(imagePath ? { image: imagePath } : {}),
+      normalizedPurchasePrice: (purchasePrice || 0) * getCurrencyFactor(currencyCode),
     };
 
     updatedMotorcycle.modelYear =
@@ -360,6 +369,7 @@ export async function action({ request }: Route.ActionArgs) {
       viscosity: parseString(formData.get("viscosity")),
       inspectionLocation: parseString(formData.get("inspectionLocation")),
       locationId: locationId,
+      normalizedCost: (parseNumber(formData.get("cost")) || 0) * getCurrencyFactor(parseString(formData.get("currency"))),
     };
 
     if (intent === "createMaintenance") {

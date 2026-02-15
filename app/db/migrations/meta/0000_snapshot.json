@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "eb15dd70-e191-42da-86a0-828974c78967",
+  "id": "9a995e9a-a2ef-4c23-b7c6-0425386fb670",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "currencies": {
@@ -163,6 +163,21 @@
           "notNull": false,
           "autoincrement": false
         },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_private": {
+          "name": "is_private",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "text",
@@ -181,7 +196,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "documents_owner_id_users_id_fk": {
+          "name": "documents_owner_id_users_id_fk",
+          "tableFrom": "documents",
+          "tableTo": "users",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -418,6 +447,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "normalized_cost": {
+          "name": "normalized_cost",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "currency": {
           "name": "currency",
           "type": "text",
@@ -508,6 +544,13 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -518,6 +561,19 @@
           "tableTo": "motorcycles",
           "columnsFrom": [
             "motorcycle_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "maintenance_records_location_id_locations_id_fk": {
+          "name": "maintenance_records_location_id_locations_id_fk",
+          "tableFrom": "maintenance_records",
+          "tableTo": "locations",
+          "columnsFrom": [
+            "location_id"
           ],
           "columnsTo": [
             "id"
@@ -572,7 +628,7 @@
           "name": "vin",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "vehicle_nr": {
@@ -644,6 +700,13 @@
         },
         "purchase_price": {
           "name": "purchase_price",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "normalized_purchase_price": {
+          "name": "normalized_purchase_price",
           "type": "real",
           "primaryKey": false,
           "notNull": false,
@@ -783,9 +846,23 @@
           "notNull": true,
           "autoincrement": false
         },
+        "torque_end": {
+          "name": "torque_end",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "variation": {
           "name": "variation",
           "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tool_size": {
+          "name": "tool_size",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

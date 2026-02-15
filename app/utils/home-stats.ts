@@ -210,7 +210,7 @@ export function buildDashboardStats({
     if (entryYear !== year) {
       return sum;
     }
-    return sum + (entry.cost ?? 0);
+    return sum + (entry.normalizedCost ?? 0);
   }, 0);
 
   const veteranCount = motorcycles.filter((moto) => moto.isVeteran).length;

@@ -152,6 +152,17 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   const dbClient = await getDb();
+
+  // Normalize Purchase Price
+  const currencies = await dbClient.query.currencySettings.findMany();
+  const getCurrencyFactor = (code: string | null | undefined) => {
+    if (!code) return 1;
+    const currency = currencies.find(c => c.code === code);
+    return currency ? currency.conversionFactor : 1;
+  };
+
+  newMotorcycle.normalizedPurchasePrice = (newMotorcycle.purchasePrice || 0) * getCurrencyFactor(currencyCode);
+
   await createMotorcycle(dbClient, newMotorcycle);
 
   return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
