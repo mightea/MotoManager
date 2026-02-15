@@ -20,6 +20,7 @@ describe("buildDashboardData", () => {
     manualOdo: null,
     purchaseDate: null,
     purchasePrice: null,
+    normalizedPurchasePrice: null,
     currencyCode: null,
   };
 
@@ -59,6 +60,7 @@ describe("buildDashboardData", () => {
         odo: 5000,
         type: "service",
         cost: 200,
+        normalizedCost: 200,
         currency: "CHF",
         description: null,
         brand: null,
@@ -101,6 +103,7 @@ describe("buildDashboardData", () => {
         odo: 4000,
         type: "service",
         cost: 200,
+        normalizedCost: 200,
         currency: "CHF",
         description: null,
         brand: null,
@@ -122,6 +125,7 @@ describe("buildDashboardData", () => {
         odo: 6000,
         type: "service",
         cost: 300,
+        normalizedCost: 300,
         currency: "CHF",
         description: null,
         brand: null,

@@ -1,4 +1,5 @@
 import { data, useActionData, useSubmit, useLocation, useNavigate } from "react-router";
+import { useCallback } from "react";
 import type { Route } from "./+types/documents";
 import { getDb } from "~/db";
 import { documents, users, motorcycles, documentMotorcycles } from "~/db/schema";
@@ -251,10 +252,10 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     setIsEditorOpen(true);
   };
 
-  const openEditDialog = (doc: typeof docs[0]) => {
+  const openEditDialog = useCallback((doc: typeof docs[0]) => {
     setEditingDocument(doc);
     setIsEditorOpen(true);
-  };
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -272,8 +273,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
       },
       { replace: true }
     );
-    // eslint-disable-line react-hooks/exhaustive-deps
-  }, [location.search, docs, navigate]);
+  }, [location.search, docs, navigate, openEditDialog, location.pathname]);
 
   return (
     <div className="container mx-auto space-y-6 p-4 pb-24">

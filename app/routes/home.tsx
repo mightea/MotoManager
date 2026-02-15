@@ -3,7 +3,6 @@ import type { Route } from "./+types/home";
 import { getDb } from "~/db";
 import {
   motorcycles,
-  currencySettings,
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
