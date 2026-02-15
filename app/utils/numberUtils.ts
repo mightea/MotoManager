@@ -38,14 +38,18 @@ export const formatCurrency = (
   return `${currency} ${formatted.replace(/,/g, "’")}`;
 };
 
-export const formatNumber = (value: number | undefined | null): string => {
+export const formatNumber = (
+  value: number | undefined | null,
+  decimals: number = 0
+): string => {
   if (isFalsy(value)) {
     return "0";
   }
   // Ensure consistent formatting between server and client by forcing 'en-US' (comma)
   // and then replacing with the Swiss separator (RIGHT SINGLE QUOTATION MARK)
   return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 0,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   })
     .format(value)
     .replace(/,/g, "’");
