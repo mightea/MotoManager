@@ -27,6 +27,7 @@ import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { motorcycleSchema } from "~/validations";
 import { processImageUpload } from "~/services/images.server";
 
+import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -42,7 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const allMaintenance = await db.query.maintenanceRecords.findMany();
   const allLocations = await db.query.locationRecords.findMany();
 
-  const { items: cards } = buildDashboardData({
+  const { items: cards, stats } = buildDashboardData({
     motorcycles: motorcyclesList,
     issues: allIssues,
     maintenance: allMaintenance,
@@ -83,7 +84,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   return data(
-    { cards, user, currentSort },
+    { cards, stats, user, currentSort },
     { headers },
   );
 }
@@ -155,7 +156,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { cards, currentSort } = loaderData;
+  const { cards, stats, currentSort } = loaderData;
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
 
@@ -176,7 +177,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const activeSortLabel = sortOptions.find(o => o.id === currentSort)?.label || "Sortieren";
 
   return (
-    <div className="container mx-auto p-4 space-y-6 pb-24">
+    <div className="container mx-auto p-4 space-y-12 pb-24">
 
       {/* Header Actions */}
       <div className="flex items-center justify-between">
@@ -249,6 +250,12 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           ))
         )}
       </div>
+
+      {cards.length > 0 && (
+        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-navy-700">
+          <DashboardStats stats={stats} />
+        </div>
+      )}
 
       <Modal
         isOpen={isAddOpen}
