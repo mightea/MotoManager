@@ -14,12 +14,7 @@ const addYears = (date: Date, years: number) => {
   return copy;
 };
 
-const formatRelative = (diffDays: number) => {
-  if (diffDays === 0) {
-    return "Heute fällig";
-  }
-
-  const isOverdue = diffDays < 0;
+export const formatDuration = (diffDays: number) => {
   const absDays = Math.abs(diffDays);
 
   const daysThreshold = 14;
@@ -50,6 +45,17 @@ const formatRelative = (diffDays: number) => {
     value = Math.round(absDays / 365);
     unit = value === 1 ? "Jahr" : "Jahren";
   }
+
+  return { value, unit };
+};
+
+const formatRelative = (diffDays: number) => {
+  if (diffDays === 0) {
+    return "Heute fällig";
+  }
+
+  const isOverdue = diffDays < 0;
+  const { value, unit } = formatDuration(diffDays);
 
   if (value === 0) {
     return isOverdue ? "Überfällig" : "Heute fällig";
