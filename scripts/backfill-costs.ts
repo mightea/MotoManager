@@ -21,7 +21,7 @@ async function backfill() {
     console.log(`Found ${motos.length} motorcycles.`);
 
     for (const moto of motos) {
-        if (moto.purchasePrice) {
+        if (moto.purchasePrice != null) {
             const factor = getFactor(moto.currencyCode);
             const normalizedPrice = moto.purchasePrice * factor;
 
@@ -38,7 +38,7 @@ async function backfill() {
     console.log(`Found ${records.length} maintenance records.`);
 
     for (const record of records) {
-        if (record.cost) {
+        if (record.cost != null) {
             const factor = getFactor(record.currency);
             const normalizedCost = record.cost * factor;
 
