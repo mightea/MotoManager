@@ -23,6 +23,7 @@ interface MaintenanceFormProps {
     userLocations?: Location[];
     onSubmit: () => void;
     onCancel: () => void;
+    onDelete?: () => void;
 }
 
 const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] = [
@@ -39,7 +40,7 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
     { value: "general", label: "Allgemein", icon: Wrench },
 ];
 
-export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, onSubmit, onCancel }: MaintenanceFormProps) {
+export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
     const [isNewLocation, setIsNewLocation] = useState(false);
 
@@ -336,20 +337,33 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                 )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
-                >
-                    Abbrechen
-                </button>
-                <button
-                    type="submit"
-                    className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
-                >
-                    {initialData ? "Aktualisieren" : "Erstellen"}
-                </button>
+            <div className="flex items-center justify-between pt-2">
+                {initialData && onDelete ? (
+                    <button
+                        type="button"
+                        onClick={onDelete}
+                        className="rounded-xl px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                        Löschen
+                    </button>
+                ) : (
+                    <div></div>
+                )}
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
+                    >
+                        Abbrechen
+                    </button>
+                    <button
+                        type="submit"
+                        className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
+                    >
+                        {initialData ? "Aktualisieren" : "Erstellen"}
+                    </button>
+                </div>
             </div>
         </Form>
     );
