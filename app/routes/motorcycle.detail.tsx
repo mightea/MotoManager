@@ -13,10 +13,10 @@ import { getDb } from "~/db";
 import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText } from "lucide-react";
+import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText, Clock } from "lucide-react";
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
-import { getNextInspectionInfo } from "~/utils/inspection";
+import { getNextInspectionInfo, formatDuration } from "~/utils/inspection";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
@@ -31,7 +31,7 @@ import { processImageUpload } from "~/services/images.server";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
-import { formatCurrency } from "~/utils/numberUtils";
+import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
@@ -387,6 +387,20 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     }
   }, [actionData]);
 
+  // Ownership Calculations
+  const purchaseDate = motorcycle.purchaseDate ? new Date(motorcycle.purchaseDate) : null;
+  const daysOwned = purchaseDate
+    ? Math.max(0, Math.floor((new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const yearsOwned = daysOwned / 365.25;
+
+  const currentOdo = lastKnownOdo ?? motorcycle.initialOdo;
+  const kmDriven = Math.max(0, currentOdo - motorcycle.initialOdo);
+  const avgKmPerYear = yearsOwned > 0.1 ? kmDriven / yearsOwned : 0; // Avoid division by zero or tiny duration logic
+
+  const ownershipDuration = purchaseDate ? formatDuration(daysOwned) : null;
+  const ownershipLabel = ownershipDuration ? `${ownershipDuration.value} ${ownershipDuration.unit}` : null;
+
   const openIssueDialog = (issue: Issue | null) => {
     setSelectedIssue(issue);
     setIssueDialogOpen(true);
@@ -473,63 +487,112 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               </button>
             </div>
             <div hidden={!detailsExpanded} className="mt-3 space-y-2">
-              <StatisticEntry
-                icon={Hash}
-                label="Kennzeichen"
-                value={motorcycle.numberPlate?.trim()}
-              />
-              <StatisticEntry
-                icon={FileText}
-                label="Stammnummer"
-                value={motorcycle.vehicleIdNr?.trim()}
-              />
-              <StatisticEntry
-                icon={Fingerprint}
-                label="VIN"
-                value={motorcycle.vin}
-              />
-              <StatisticEntry
-                icon={Gauge}
-                label="Anfangs-KM"
-                value={motorcycle.initialOdo > 0 ? `${motorcycle.initialOdo} km` : null}
-              />
-              <StatisticEntry
-                icon={Calendar}
-                label="1. Inverkehrsetzung"
-                value={
-                  motorcycle.firstRegistration
-                    ? dateFormatter.format(new Date(motorcycle.firstRegistration))
-                    : null
-                }
-              />
-              <StatisticEntry
-                icon={Calendar}
-                label="Kaufdatum"
-                value={
-                  motorcycle.purchaseDate
-                    ? dateFormatter.format(new Date(motorcycle.purchaseDate))
-                    : null
-                }
-              />
-              <StatisticEntry
-                icon={DollarSign}
-                label="Kaufpreis"
-                value={
-                  motorcycle.purchasePrice !== null && motorcycle.purchasePrice !== undefined
-                    ? formatCurrency(motorcycle.purchasePrice, motorcycle.currencyCode || undefined)
-                    : null
-                }
-              />
-              <StatisticEntry
-                icon={Info}
-                label="Status"
-                value={
-                  <span className="flex items-center gap-2">
-                    {motorcycle.isArchived ? "Archiviert" : "Aktiv"}
-                    {motorcycle.isVeteran && " • Veteran"}
-                  </span>
-                }
-              />
+              <div hidden={!detailsExpanded} className="mt-4 space-y-6">
+                <div className="space-y-2">
+                  <StatisticEntry
+                    icon={Hash}
+                    label="Kennzeichen"
+                    value={motorcycle.numberPlate?.trim()}
+                  />
+                  <StatisticEntry
+                    icon={FileText}
+                    label="Stammnummer"
+                    value={motorcycle.vehicleIdNr?.trim()}
+                  />
+                  <StatisticEntry
+                    icon={Fingerprint}
+                    label="VIN"
+                    value={motorcycle.vin}
+                  />
+                  <StatisticEntry
+                    icon={Calendar}
+                    label="1. Inverkehrsetzung"
+                    value={
+                      motorcycle.firstRegistration
+                        ? dateFormatter.format(new Date(motorcycle.firstRegistration))
+                        : null
+                    }
+                  />
+                  <StatisticEntry
+                    icon={Info}
+                    label="Status"
+                    value={
+                      <span className="flex items-center gap-2">
+                        {motorcycle.isArchived ? "Archiviert" : "Aktiv"}
+                        {motorcycle.isVeteran && " • Veteran"}
+                      </span>
+                    }
+                  />
+                </div>
+
+                {/* Purchase & Usage Group */}
+                <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-secondary mb-3 px-1">
+                    Kauf & Nutzung
+                  </h3>
+                  <StatisticEntry
+                    icon={Calendar}
+                    label="Kaufdatum"
+                    value={purchaseDate ? dateFormatter.format(purchaseDate) : null}
+                  />
+                  <StatisticEntry
+                    icon={Clock} // Using Clock as icon for duration/usage
+                    label="Besitzdauer"
+                    value={
+                      purchaseDate
+                        ? ownershipLabel
+                        : null
+                    }
+                  />
+                  <StatisticEntry
+                    icon={DollarSign}
+                    label="Kaufpreis"
+                    value={
+                      motorcycle.purchasePrice !== null && motorcycle.purchasePrice !== undefined
+                        ? formatCurrency(motorcycle.purchasePrice, motorcycle.currencyCode || undefined)
+                        : null
+                    }
+                  />
+                  <StatisticEntry
+                    icon={Gauge}
+                    label="Anfangs-KM"
+                    value={motorcycle.initialOdo > 0 ? `${formatNumber(motorcycle.initialOdo)} km` : null}
+                  />
+                  <StatisticEntry
+                    icon={Gauge}
+                    label="Distanz seit Kauf"
+                    value={purchaseDate ? `${formatNumber(kmDriven)} km` : null}
+                  />
+                  <StatisticEntry
+                    icon={Gauge}
+                    label="Ø km / Jahr"
+                    value={purchaseDate && yearsOwned > 0.1 ? `${formatNumber(Math.round(avgKmPerYear))} km` : null}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Collapsed Summary */}
+            <div hidden={detailsExpanded} className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-secondary dark:text-navy-300">
+              {motorcycle.numberPlate && (
+                <>
+                  <span className="font-medium text-foreground dark:text-gray-100">{motorcycle.numberPlate}</span>
+                </>
+              )}
+
+              {ownershipLabel && (
+                <>
+                  {motorcycle.numberPlate && <span className="text-gray-300 dark:text-navy-600">•</span>}
+                  <span>{ownershipLabel} im Besitz</span>
+                </>
+              )}
+
+              {purchaseDate && (
+                <>
+                  {(motorcycle.numberPlate || ownershipLabel) && <span className="text-gray-300 dark:text-navy-600">•</span>}
+                  <span>{formatNumber(kmDriven)} km gefahren</span>
+                </>
+              )}
             </div>
           </div>
           <div className="hidden md:block">
@@ -629,6 +692,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setSelectedIssue(null);
         }}
       />
-    </div>
+    </div >
   );
 }
