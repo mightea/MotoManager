@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.0...2026.3.0) (2026-02-15)
+
+### Features
+
+* Add functionality to regenerate all PDF document previews with cross-platform support and a dedicated admin setting. ([a853745](https://github.com/mightea/MotoManager/commit/a853745b02af94f8bbe61608530146c9af5fede4))
+* Add script to add `tool_size` column to `torque_specs` table and update DB inspection to focus on `torque_specs`. ([55c47fa](https://github.com/mightea/MotoManager/commit/55c47fa0733779a35eac3b19a2fcb3b576e497b7))
+* Implement dynamic currency selection in motorcycle and maintenance forms, fetching currency settings from the database. ([f0f4ef8](https://github.com/mightea/MotoManager/commit/f0f4ef869d203605dedf26a50a0e22816f7c15d5))
+* Include currencies in motorcycle detail loader data and update component type usage. ([9a13ca4](https://github.com/mightea/MotoManager/commit/9a13ca4058d98c8b1f91418f97bfeefad0d43354))
+* Introduce document privacy and normalized cost tracking, rebase database migrations, and add new database utility scripts. ([4180e63](https://github.com/mightea/MotoManager/commit/4180e630a4207116ca38ccd486696cf1fe43cee6))
+
+### Bug Fixes
+
+* attribute manual odometer readings to the last known activity date. ([539de9e](https://github.com/mightea/MotoManager/commit/539de9e2d37e4d92f8057736d0b63a1f4bc4da2a))
+* attribute manual odometer readings to the last known activity date. ([cf5ae9f](https://github.com/mightea/MotoManager/commit/cf5ae9f3e1d4d57a4198f07d39c8263f94fed11a))
+* Fall back to cost when normalizedCost is null in maintenance totals ([0930c63](https://github.com/mightea/MotoManager/commit/0930c63c82eaa1bb48bb46729602ccc0f034bc12))
+* use explicit null checks in backfill script to handle zero values ([0d5be92](https://github.com/mightea/MotoManager/commit/0d5be92466f9bf7337d857618a95f11168851423))
+
 ## [2025.12.0](https://github.com/mightea/MotoManager/compare/2025.11.0...2025.12.0) (2026-02-15)
 
 ### Features
