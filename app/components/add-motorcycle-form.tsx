@@ -1,5 +1,5 @@
 import { Form, useSubmit, useActionData } from "react-router";
-import type { EditorMotorcycle } from "~/db/schema";
+import type { EditorMotorcycle, CurrencySetting } from "~/db/schema";
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
@@ -10,8 +10,15 @@ interface AddMotorcycleFormProps {
   initialValues?: (EditorMotorcycle & { id?: number });
   intent?: string;
   submitLabel?: string;
+  currencies?: CurrencySetting[];
   onDelete?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
+
+const DEFAULT_CURRENCIES: CurrencySetting[] = [
+  { id: 0, code: "CHF", symbol: "CHF", label: "Schweizer Franken", conversionFactor: 1, createdAt: "" },
+  { id: 0, code: "EUR", symbol: "€", label: "Euro", conversionFactor: 1, createdAt: "" },
+  { id: 0, code: "USD", symbol: "$", label: "US Dollar", conversionFactor: 1, createdAt: "" },
+];
 
 const formatDateInput = (value?: string | null) => {
   if (!value) {
@@ -25,9 +32,13 @@ export function AddMotorcycleForm({
   initialValues,
   intent = "createMotorcycle",
   submitLabel = "Speichern",
+  currencies = [],
   onDelete,
 }: AddMotorcycleFormProps) {
   const submit = useSubmit();
+  // Fallback
+  const availableCurrencies = currencies && currencies.length > 0 ? currencies : DEFAULT_CURRENCIES;
+
   const actionData = useActionData<{
     errors?: {
       make?: string;
@@ -284,9 +295,11 @@ export function AddMotorcycleForm({
                 className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
                 defaultValue={initialValues?.currencyCode ?? "CHF"}
               >
-                <option value="CHF">CHF</option>
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
+                {availableCurrencies.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code}
+                  </option>
+                ))}
               </select>
             </div>
             {actionData?.errors?.purchasePrice && (

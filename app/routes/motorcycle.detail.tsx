@@ -10,7 +10,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, locations, currencySettings, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText, Clock } from "lucide-react";
@@ -106,8 +106,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const currentLocationName = userLocations.find(l => l.id === currentLocationId)?.name ?? null;
 
+  const currencies = await db.query.currencySettings.findMany();
+
   return data(
-    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName },
+    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
@@ -387,7 +389,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName } = loaderData;
+  // Cast loaderData to any because the generated type definition is stale and not including 'currencies'
+  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies } = loaderData as any;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -686,6 +689,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           submitLabel="Speichern"
           onSubmit={() => setEditMotorcycleDialogOpen(false)}
           onDelete={() => setDeleteConfirmationOpen(true)}
+          currencies={currencies}
         />
       </Modal>
 
@@ -718,6 +722,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setDeleteMaintenanceConfirmationOpen(true);
         }}
         userLocations={userLocations}
+        currencies={currencies}
       />
 
       <DeleteConfirmationDialog
