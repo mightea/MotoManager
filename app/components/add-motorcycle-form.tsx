@@ -14,11 +14,7 @@ interface AddMotorcycleFormProps {
   onDelete?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-const DEFAULT_CURRENCIES: CurrencySetting[] = [
-  { id: 0, code: "CHF", symbol: "CHF", label: "Schweizer Franken", conversionFactor: 1, createdAt: "" },
-  { id: 0, code: "EUR", symbol: "€", label: "Euro", conversionFactor: 1, createdAt: "" },
-  { id: 0, code: "USD", symbol: "$", label: "US Dollar", conversionFactor: 1, createdAt: "" },
-];
+
 
 const formatDateInput = (value?: string | null) => {
   if (!value) {
@@ -37,7 +33,7 @@ export function AddMotorcycleForm({
 }: AddMotorcycleFormProps) {
   const submit = useSubmit();
   // Fallback
-  const availableCurrencies = currencies && currencies.length > 0 ? currencies : DEFAULT_CURRENCIES;
+
 
   const actionData = useActionData<{
     errors?: {
@@ -295,7 +291,7 @@ export function AddMotorcycleForm({
                 className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
                 defaultValue={initialValues?.currencyCode ?? "CHF"}
               >
-                {availableCurrencies.map((c) => (
+                {currencies?.map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.code}
                   </option>
