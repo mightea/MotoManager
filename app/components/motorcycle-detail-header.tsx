@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { Link } from "react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Motorcycle } from "~/db/schema";
 
 type NextInspectionInfo = {
@@ -39,17 +39,40 @@ export function MotorcycleDetailHeader({
   overviewLink,
 }: MotorcycleDetailHeaderProps) {
   const [imageError, setImageError] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
   const hasHeroImage = true;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const isMobile = () => window.innerWidth < 768;
+
+    const handleScroll = () => {
+      if (!isMobile()) {
+        setIsCompact(false);
+        return;
+      }
+      // Compact when scrolled past 120px (roughly the hero area top)
+      setIsCompact(window.scrollY > 120);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // check initial state
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <div
+      ref={headerRef}
       className={clsx(
-        "sticky z-30 -mx-4 px-4 py-4 transition-all duration-300 md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
+        "sticky z-30 -mx-4 px-4 transition-all duration-300 md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
+        isCompact ? "py-2" : "py-4",
         hasHeroImage
           ? "text-white"
           : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
       )}
-      style={{ top: "var(--app-header-offset, 96px)" }}
+      style={{ top: "var(--app-header-offset, 0px)" }}
     >
       {hasHeroImage && (
         <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
@@ -106,7 +129,8 @@ export function MotorcycleDetailHeader({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <h1
               className={clsx(
-                "text-2xl font-bold",
+                "font-bold transition-all duration-300",
+                isCompact ? "text-lg" : "text-2xl",
                 hasHeroImage ? "text-white" : "text-foreground dark:text-white"
               )}
             >
@@ -126,59 +150,69 @@ export function MotorcycleDetailHeader({
             )}
           </div>
 
+          {/* Collapsible info section – hidden when compact on mobile */}
           <div
             className={clsx(
-              "flex flex-wrap items-center gap-x-4 gap-y-2 text-sm",
-              hasHeroImage ? "text-gray-200" : "text-secondary dark:text-navy-400"
+              "grid transition-all duration-300 ease-in-out md:grid-rows-[1fr] md:opacity-100",
+              isCompact ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
             )}
           >
-            <span>
-              {motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"}
-            </span>
-            <span className="hidden sm:inline">•</span>
-            <span>{motorcycle.vin}</span>
-
-            {nextInspection && (
-              <>
+            <div className="overflow-hidden">
+              <div
+                className={clsx(
+                  "flex flex-wrap items-center gap-x-4 gap-y-2 text-sm",
+                  hasHeroImage ? "text-gray-200" : "text-secondary dark:text-navy-400"
+                )}
+              >
+                <span>
+                  {motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"}
+                </span>
                 <span className="hidden sm:inline">•</span>
-                <div
-                  className={clsx(
-                    "flex items-center gap-1.5 font-medium",
-                    hasHeroImage
-                      ? nextInspection.isOverdue
-                        ? "text-red-300"
-                        : "text-gray-200"
-                      : nextInspection.isOverdue
-                        ? "text-red-600 dark:text-red-400"
-                        : "text-secondary dark:text-navy-400"
-                  )}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M8 2v4" />
-                    <path d="M16 2v4" />
-                    <rect width="18" height="18" x="3" y="4" rx="2" />
-                    <path d="M3 10h18" />
-                  </svg>
-                  <span>MFK: {nextInspection.relativeLabel}</span>
-                </div>
-              </>
-            )}
+                <span>{motorcycle.vin}</span>
 
-            {currentLocationName && (
-              <>
-                <span className="hidden sm:inline">•</span>
-                <span>{currentLocationName}</span>
-              </>
-            )}
+                {nextInspection && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <div
+                      className={clsx(
+                        "flex items-center gap-1.5 font-medium",
+                        hasHeroImage
+                          ? nextInspection.isOverdue
+                            ? "text-red-300"
+                            : "text-gray-200"
+                          : nextInspection.isOverdue
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-secondary dark:text-navy-400"
+                      )}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M8 2v4" />
+                        <path d="M16 2v4" />
+                        <rect width="18" height="18" x="3" y="4" rx="2" />
+                        <path d="M3 10h18" />
+                      </svg>
+                      <span>MFK: {nextInspection.relativeLabel}</span>
+                    </div>
+                  </>
+                )}
+
+                {currentLocationName && (
+                  <>
+                    <span className="hidden sm:inline">•</span>
+                    <span>{currentLocationName}</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           {(navLinks.length > 0 || overviewLink) && (
