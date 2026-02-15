@@ -20,7 +20,6 @@ import { getNextInspectionInfo, formatDuration } from "~/utils/inspection";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
-import { createIssue, createMaintenanceRecord, deleteIssue, updateIssue, updateMaintenanceRecord, createLocation, updateMotorcycle, deleteMotorcycleCascade } from "~/db/providers/motorcycles.server";
 import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 import { Modal } from "~/components/modal";
@@ -119,11 +118,14 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
 
   const parseString = (value: FormDataEntryValue | null | undefined) =>
-    typeof value === "string" && value.length > 0 ? value : undefined;
+    typeof value === "string" && value.length > 0 ? value : null;
 
   const parseNumber = (value: FormDataEntryValue | null | undefined) => {
-    const parsed = Number.parseFloat(typeof value === "string" ? value : "");
-    return Number.isNaN(parsed) ? undefined : parsed;
+    if (!value) return null;
+    const strVal = String(value);
+    if (strVal.trim() === "") return null;
+    const parsed = Number.parseFloat(strVal);
+    return Number.isNaN(parsed) ? null : parsed;
   };
   const isValidPriority = (value: FormDataEntryValue | null): NewIssue["priority"] => {
     if (value === "high" || value === "medium" || value === "low") {
@@ -139,6 +141,18 @@ export async function action({ request }: Route.ActionArgs) {
   };
 
   const dbClient = await getDb();
+  const {
+    createIssue,
+    createMaintenanceRecord,
+    deleteIssue,
+    updateIssue,
+    updateMaintenanceRecord,
+    createLocation,
+    updateMotorcycle,
+    deleteMotorcycleCascade,
+    deleteMaintenanceRecord
+  } = await import("~/db/providers/motorcycles.server");
+
 
   if (intent === "updateMotorcycle") {
     const motorcycleId = Number(formData.get("motorcycleId"));
@@ -306,8 +320,14 @@ export async function action({ request }: Route.ActionArgs) {
     const motorcycleId = Number(formData.get("motorcycleId"));
 
     const type = formData.get("type") as MaintenanceType;
-    let locationId: number | undefined = Number(formData.get("locationId"));
-    if (Number.isNaN(locationId)) locationId = undefined;
+    let locationId: number | undefined = undefined;
+    const rawLocationId = formData.get("locationId");
+    if (typeof rawLocationId === "string" && rawLocationId.trim() !== "") {
+      const parsed = Number(rawLocationId);
+      if (Number.isFinite(parsed)) {
+        locationId = parsed;
+      }
+    }
     const newLocationName = parseString(formData.get("newLocationName"));
 
     if (type === "location" && newLocationName) {
@@ -350,6 +370,19 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
 
+  if (intent === "deleteMaintenance") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const maintenanceId = Number(formData.get("maintenanceId"));
+
+    if (!Number.isFinite(motorcycleId) || !Number.isFinite(maintenanceId)) {
+      throw new Response("Ungültige Fahrzeug- oder Wartungs-ID", { status: 400 });
+    }
+
+    await deleteMaintenanceRecord(dbClient, maintenanceId, motorcycleId);
+
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
+
   return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
 }
 
@@ -358,6 +391,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [deleteMaintenanceConfirmationOpen, setDeleteMaintenanceConfirmationOpen] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
@@ -679,7 +713,37 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         initialData={selectedMaintenance}
         currencyCode={motorcycle.currencyCode}
         defaultOdo={lastKnownOdo}
+        onDelete={() => {
+          setMaintenanceDialogOpen(false);
+          setDeleteMaintenanceConfirmationOpen(true);
+        }}
         userLocations={userLocations}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={deleteMaintenanceConfirmationOpen}
+        onCancel={() => {
+          setDeleteMaintenanceConfirmationOpen(false);
+          // Re-open maintenance dialog if cancelled? Or just close?
+          // Usually just closing is fine, or re-opening. Let's just close for now.
+          // If we want to re-open, we need to keep selectedMaintenance. We do keep it.
+          setMaintenanceDialogOpen(true);
+        }}
+        onConfirm={() => {
+          if (selectedMaintenance) {
+            const formData = new FormData();
+            formData.append("intent", "deleteMaintenance");
+            formData.append("motorcycleId", motorcycle.id.toString());
+            formData.append("maintenanceId", selectedMaintenance.id.toString());
+            submit(formData, { method: "post" });
+          }
+          setDeleteMaintenanceConfirmationOpen(false);
+          setSelectedMaintenance(null);
+        }}
+        title="Eintrag löschen"
+        description="Möchtest du diesen Wartungseintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Löschen"
+        confirmDisabled={!selectedMaintenance}
       />
       <IssueDialog
         isOpen={issueDialogOpen}

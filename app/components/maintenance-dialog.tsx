@@ -10,9 +10,10 @@ interface MaintenanceDialogProps {
   currencyCode?: string | null;
   defaultOdo?: number | null;
   userLocations?: Location[];
+  onDelete?: () => void;
 }
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo, userLocations }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo, userLocations, onDelete }: MaintenanceDialogProps) {
   return (
     <Modal
       isOpen={isOpen}
@@ -20,14 +21,15 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
       title={initialData ? "Eintrag bearbeiten" : "Neuer Wartungseintrag"}
       description={initialData ? "Details zum Wartungseintrag anpassen." : "Füge einen neuen Service oder eine Reparatur hinzu."}
     >
-      <MaintenanceForm 
-        motorcycleId={motorcycleId} 
-        initialData={initialData} 
+      <MaintenanceForm
+        motorcycleId={motorcycleId}
+        initialData={initialData}
         currencyCode={currencyCode}
         defaultOdo={defaultOdo}
         userLocations={userLocations}
-        onSubmit={onClose} 
-        onCancel={onClose} 
+        onSubmit={onClose}
+        onCancel={onClose}
+        onDelete={onDelete}
       />
     </Modal>
   );
