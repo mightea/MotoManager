@@ -18,12 +18,14 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
                 </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Horizontal scroll on mobile, grid on larger */}
+            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-3">
                 {/* Kilometer dieses Jahr */}
                 <StatCard
                     label="KILOMETER DIESES JAHR"
                     value={`${formatNumber(stats.totalKmThisYear)} km`}
                     description={`Summe aller registrierten Fahrten ${stats.year}.`}
+                    accent="primary"
                 />
 
                 {/* Kilometer insgesamt */}
@@ -38,6 +40,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
                     label="AKTIVE TO-DOS"
                     value={stats.totalActiveIssues.toString()}
                     description="Noch offene Issues über alle Motorräder hinweg."
+                    accent={stats.totalActiveIssues > 0 ? "warning" : undefined}
                 />
 
                 {/* Wartungskosten */}
@@ -67,6 +70,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
                             ? `${formatNumber(stats.topRider.odometerThisYear)} km in ${stats.year}`
                             : "Keine Fahrten in diesem Jahr."
                     }
+                    accent="primary"
                 />
             </div>
         </div>
@@ -77,22 +81,31 @@ function StatCard({
     label,
     value,
     description,
+    accent,
 }: {
     label: string;
     value: string;
     description: string;
+    accent?: "primary" | "warning";
 }) {
+    const accentBorder =
+        accent === "primary"
+            ? "border-t-primary dark:border-t-primary-light"
+            : accent === "warning"
+                ? "border-t-orange-500 dark:border-t-orange-400"
+                : "border-t-transparent";
+
     return (
-        <div className="flex flex-col justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-6 dark:border-navy-700 dark:bg-navy-800/50">
+        <div className={`flex min-w-[200px] snap-start flex-col justify-between rounded-xl border border-gray-200 border-t-2 ${accentBorder} bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:border-navy-700 dark:bg-navy-800/50`}>
             <div>
-                <dt className="text-xs font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
                     {label}
                 </dt>
-                <dd className="mt-4 text-2xl font-bold text-foreground dark:text-gray-100">
+                <dd className="mt-3 text-2xl font-bold text-foreground dark:text-gray-100">
                     {value}
                 </dd>
             </div>
-            <p className="mt-4 text-sm text-secondary dark:text-navy-300">
+            <p className="mt-3 text-xs text-secondary dark:text-navy-300">
                 {description}
             </p>
         </div>

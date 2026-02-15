@@ -181,131 +181,133 @@ export default function Login() {
       : null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 dark:bg-navy-950">
-      <div className="w-full max-w-xl space-y-6 rounded-lg bg-white p-6 shadow-lg dark:bg-navy-900">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100 p-4 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+      {/* Motorsport accent stripe */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-1 bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]" />
+
+      <div className="w-full max-w-md animate-fade-in space-y-6 rounded-2xl border border-white/60 bg-white/80 p-8 shadow-2xl ring-1 ring-black/5 backdrop-blur-xl dark:border-navy-700/60 dark:bg-navy-900/70 dark:ring-white/5">
         <div className="flex flex-col items-center gap-3 text-center">
-          <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary/20 text-primary dark:bg-navy-700 dark:text-primary-light">
-            <Bike className="h-5 w-5" />
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary shadow-sm dark:from-navy-700 dark:to-navy-800 dark:text-primary-light">
+            <Bike className="h-7 w-7" />
           </span>
 
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-secondary dark:text-gray-400">
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-secondary dark:text-navy-400">
               MotoManager
             </p>
-            <h1 className="text-2xl font-semibold text-foreground dark:text-gray-50">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-gray-50">
               Garage Cockpit
             </h1>
           </div>
         </div>
 
         {isFirstUser ? (
-          <div className="space-y-4 rounded-xl border border-dashed border-primary/40 p-4 dark:border-primary/60">
+          <div className="space-y-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-5 dark:border-primary/40 dark:bg-primary/10">
+            <div>
+              <h2 className="text-base font-semibold text-foreground dark:text-gray-100">
+                Erstes Konto erstellen
+              </h2>
+              <p className="mt-1 text-xs text-secondary dark:text-navy-300">
+                Noch kein Benutzer vorhanden. Lege jetzt das erste Administrationskonto an.
+              </p>
+            </div>
+
+            <Form method="post" className="space-y-3">
+              <input type="hidden" name="intent" value="register" />
+              <input type="hidden" name="redirectTo" value={redirectTo} />
+
               <div>
-                <h2 className="text-base font-semibold text-foreground dark:text-gray-100">
-                  Erstes Konto erstellen
-                </h2>
-                <p className="mt-1 text-xs text-secondary dark:text-navy-300">
-                  Noch kein Benutzer vorhanden. Lege jetzt das erste Administrationskonto an.
-                </p>
+                <label htmlFor="name" className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                  Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  autoComplete="name"
+                  required
+                  className="mt-1.5 block w-full rounded-xl border-gray-200 bg-white shadow-sm transition-shadow focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-gray-50"
+                />
               </div>
 
-              <Form method="post" className="space-y-3">
-                <input type="hidden" name="intent" value="register" />
-                <input type="hidden" name="redirectTo" value={redirectTo} />
+              <div>
+                <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                  E-Mail
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="mt-1.5 block w-full rounded-xl border-gray-200 bg-white shadow-sm transition-shadow focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-gray-50"
+                />
+              </div>
 
+              <div>
+                <label htmlFor="username" className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                  Benutzername
+                </label>
+                <input
+                  id="username"
+                  name="username"
+                  autoComplete="username"
+                  required
+                  className="mt-1.5 block w-full rounded-xl border-gray-200 bg-white shadow-sm transition-shadow focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-gray-50"
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-foreground dark:text-gray-200">
-                    Name
+                  <label htmlFor="new-password" className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                    Passwort
                   </label>
                   <input
-                    id="name"
-                    name="name"
-                    autoComplete="name"
+                    id="new-password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
+                    className="mt-1.5 block w-full rounded-xl border-gray-200 bg-white shadow-sm transition-shadow focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-gray-50"
                   />
                 </div>
-
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-foreground dark:text-gray-200">
-                    E-Mail
+                  <label htmlFor="confirm-password" className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                    Passwort bestätigen
                   </label>
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
+                    className="mt-1.5 block w-full rounded-xl border-gray-200 bg-white shadow-sm transition-shadow focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-gray-50"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-foreground dark:text-gray-200">
-                    Benutzername
-                  </label>
-                  <input
-                    id="username"
-                    name="username"
-                    autoComplete="username"
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
-                  />
+              {registerError && (
+                <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">
+                  {registerError}
                 </div>
+              )}
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="new-password" className="block text-sm font-medium text-foreground dark:text-gray-200">
-                      Passwort
-                    </label>
-                    <input
-                      id="new-password"
-                      name="password"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="confirm-password" className="block text-sm font-medium text-foreground dark:text-gray-200">
-                      Passwort bestätigen
-                    </label>
-                    <input
-                      id="confirm-password"
-                      name="confirmPassword"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                {registerError && (
-                  <div className="rounded-md bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">
-                    {registerError}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isRegisterSubmitting}
-                  className="w-full flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-semibold text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 dark:bg-primary dark:hover:bg-primary-light"
-                >
-                  {isRegisterSubmitting ? "Erstellen..." : "Konto erstellen"}
-                </button>
-              </Form>
+              <button
+                type="submit"
+                disabled={isRegisterSubmitting}
+                className="w-full flex justify-center rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/10 dark:focus:ring-offset-navy-900"
+              >
+                {isRegisterSubmitting ? "Erstellen..." : "Konto erstellen"}
+              </button>
+            </Form>
           </div>
         ) : (
-          <div className="space-y-6 rounded-xl border border-gray-100 p-4 dark:border-navy-700">
-            <h2 className="text-base font-semibold text-foreground dark:text-gray-100">Anmelden</h2>
+          <div className="space-y-5">
             <Form method="post" className="space-y-4">
               <input type="hidden" name="intent" value="login" />
               <input type="hidden" name="redirectTo" value={redirectTo} />
 
               <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-foreground dark:text-gray-200">
+                <label htmlFor="identifier" className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
                   E-Mail / Username
                 </label>
                 <input
@@ -313,12 +315,12 @@ export default function Login() {
                   name="identifier"
                   autoComplete="username"
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
+                  className="mt-1.5 block w-full rounded-xl border-gray-200 bg-white shadow-sm transition-shadow focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-gray-50"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-foreground dark:text-gray-200">
+                <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
                   Passwort
                 </label>
                 <input
@@ -327,12 +329,12 @@ export default function Login() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 sm:text-sm"
+                  className="mt-1.5 block w-full rounded-xl border-gray-200 bg-white shadow-sm transition-shadow focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-gray-50"
                 />
               </div>
 
               {loginError && (
-                <div className="rounded-md bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">
+                <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">
                   {loginError}
                 </div>
               )}
@@ -340,9 +342,9 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoginSubmitting}
-                className="w-full flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-60 dark:bg-primary dark:hover:bg-primary-light"
+                className="w-full flex justify-center rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/10 dark:focus:ring-offset-navy-900"
               >
-                {isLoginSubmitting ? "Wird angemeldet..." : "Login"}
+                {isLoginSubmitting ? "Wird angemeldet..." : "Anmelden"}
               </button>
             </Form>
           </div>

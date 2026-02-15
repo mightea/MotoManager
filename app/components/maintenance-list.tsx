@@ -224,9 +224,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                 }
               }}
               onClick={() => toggleExpand(group.id)}
-              className="group flex cursor-pointer items-start gap-2 py-1 pl-0"
+              className="group flex cursor-pointer items-start gap-3 py-3 pl-0"
             >
-              <div className="mt-1 grid h-10 w-10 place-items-center rounded-xl bg-gray-50 text-secondary transition-colors group-hover:bg-primary/10 group-hover:text-primary dark:bg-navy-700 dark:text-navy-300 dark:group-hover:bg-navy-600 dark:group-hover:text-primary-light shrink-0">
+              <div className="mt-0.5 grid h-11 w-11 place-items-center rounded-xl bg-gray-50 text-secondary transition-colors group-hover:bg-primary/10 group-hover:text-primary dark:bg-navy-700 dark:text-navy-300 dark:group-hover:bg-navy-600 dark:group-hover:text-primary-light shrink-0">
                 <Icon className="h-5 w-5" />
               </div>
 
@@ -261,78 +261,84 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
             </div>
 
             {/* Expanded Details */}
-            {isExpanded && (
-              <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
-                {group.originalRecords.map((record) => {
-                  const metadataItems = [
-                    { label: "Beschreibung", value: record.description },
-                    { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type },
-                    { label: "Marke", value: record.brand },
-                    { label: "Modell", value: record.model },
+            <div className={clsx(
+              "grid transition-all duration-300 ease-in-out",
+              isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            )}>
+              <div className="overflow-hidden">
+                <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
+                  {group.originalRecords.map((record) => {
+                    const metadataItems = [
+                      { label: "Beschreibung", value: record.description },
+                      { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type },
+                      { label: "Marke", value: record.brand },
+                      { label: "Modell", value: record.model },
 
-                    // Type-specific fields
-                    ...(record.type === "tire" ? [
-                      { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null },
-                      { label: "Grösse", value: record.tireSize },
-                      { label: "DOT Code", value: record.dotCode },
-                    ] : []),
-                    ...(record.type === "fluid" ? [
-                      { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType] || record.fluidType : null },
-                      { label: "Viskosität", value: record.viscosity },
-                    ] : []),
-                    ...(record.type === "battery" ? [
-                      { label: "Batterietyp", value: record.batteryType },
-                    ] : []),
-                    ...(record.type === "inspection" ? [
-                      { label: "Prüfstelle", value: record.inspectionLocation },
-                    ] : []),
-                    ...(record.type === "location" ? [
-                      { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name },
-                    ] : []),
+                      // Type-specific fields
+                      ...(record.type === "tire" ? [
+                        { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null },
+                        { label: "Grösse", value: record.tireSize },
+                        { label: "DOT Code", value: record.dotCode },
+                      ] : []),
+                      ...(record.type === "fluid" ? [
+                        { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType] || record.fluidType : null },
+                        { label: "Viskosität", value: record.viscosity },
+                      ] : []),
+                      ...(record.type === "battery" ? [
+                        { label: "Batterietyp", value: record.batteryType },
+                      ] : []),
+                      ...(record.type === "inspection" ? [
+                        { label: "Prüfstelle", value: record.inspectionLocation },
+                      ] : []),
+                      ...(record.type === "location" ? [
+                        { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name },
+                      ] : []),
 
-                    { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null },
-                  ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
+                      { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null },
+                    ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 
-                  return (
-                    <div key={record.id} className="rounded-xl bg-gray-50 p-3 dark:bg-navy-800">
-                      <div className="flex items-center justify-between">
-                        <h4 className="mb-2 text-sm font-semibold text-foreground dark:text-white">
-                          {maintenanceTypeLabels[record.type] || record.type}
-                        </h4>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit(record);
-                          }}
-                          className="rounded-lg p-2 text-secondary hover:bg-gray-200 hover:text-primary dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-primary-light"
-                          title="Bearbeiten"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
+                    return (
+                      <div key={record.id} className="rounded-xl bg-gray-50 p-3 dark:bg-navy-800">
+                        <div className="flex items-center justify-between">
+                          <h4 className="mb-2 text-sm font-semibold text-foreground dark:text-white">
+                            {maintenanceTypeLabels[record.type] || record.type}
+                          </h4>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(record);
+                            }}
+                            className="rounded-lg p-2 text-secondary hover:bg-gray-200 hover:text-primary dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-primary-light"
+                            title="Bearbeiten"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {metadataItems.length > 0 ? (
+                          <dl className="space-y-1 text-sm">
+                            {metadataItems.map((item) => (
+                              <div key={item.label} className="flex justify-between">
+                                <dt className="text-secondary dark:text-navy-400">{item.label}</dt>
+                                <dd className="font-medium text-foreground dark:text-gray-200">{item.value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        ) : (
+                          <p className="text-sm text-secondary dark:text-navy-400">
+                            Keine weiteren Details verfügbar.
+                          </p>
+                        )}
                       </div>
-
-                      {metadataItems.length > 0 ? (
-                        <dl className="space-y-1 text-sm">
-                          {metadataItems.map((item) => (
-                            <div key={item.label} className="flex justify-between">
-                              <dt className="text-secondary dark:text-navy-400">{item.label}</dt>
-                              <dd className="font-medium text-foreground dark:text-gray-200">{item.value}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      ) : (
-                        <p className="text-sm text-secondary dark:text-navy-400">
-                          Keine weiteren Details verfügbar.
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            )}
+            </div>
           </li>
         );
       })}
     </ul>
   );
 }
+
