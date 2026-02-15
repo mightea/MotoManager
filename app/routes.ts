@@ -19,6 +19,7 @@ export default [
     route("documents", "routes/documents.tsx"),
     route("settings", "routes/settings.tsx"),
     route("settings/admin", "routes/settings.admin.tsx"),
+    route("settings/server-stats", "routes/settings.server-stats.tsx"),
     route("motorcycle/:slug/:id", "routes/motorcycle.detail.tsx"),
     route("motorcycle/:slug/:id/documents", "routes/motorcycle.detail.documents.tsx"),
     route("motorcycle/:slug/:id/torque-specs", "routes/motorcycle.detail.torque-specifications.tsx"),
