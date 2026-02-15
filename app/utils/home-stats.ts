@@ -90,7 +90,7 @@ export function buildDashboardItems({
       ...relatedMaintenance.map((m) => m.date),
       ...relatedLocations.map((l) => l.date),
     ].filter((d): d is string => typeof d === "string" && d.length > 0);
-    
+
     const lastActivity = allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).at(0) ?? null;
 
     const openIssuesCount = relatedIssues.filter(
@@ -126,6 +126,12 @@ export function buildDashboardItems({
     relatedLocations.forEach((entry) =>
       registerOdoForYear(odometerByYear, entry.date, entry.odometer),
     );
+
+    // If we have a manual odometer reading, attribute it to the last known activity date
+    // This prevents it from being treated as "today's" reading if the bike hasn't been ridden this year.
+    if (moto.manualOdo && lastActivity) {
+      registerOdoForYear(odometerByYear, lastActivity, moto.manualOdo);
+    }
 
     const previousYearEntries = Array.from(odometerByYear.entries())
       .filter(([entryYear]) => entryYear < year)
