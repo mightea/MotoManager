@@ -1,7 +1,7 @@
 FROM node:25-alpine AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest && corepack enable && corepack prepare pnpm@10.2.1 --activate
+RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest --force && corepack enable && corepack prepare pnpm@10.2.1 --activate
 WORKDIR /app
 
 FROM base AS builder
@@ -19,7 +19,7 @@ ENV NODE_ENV=production
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN mkdir -p $PNPM_HOME \
-  && npm install -g corepack@latest \
+  && npm install -g corepack@latest --force \
   && corepack enable \
   && corepack prepare pnpm@10.2.1 --activate \
   && apk add --no-cache poppler-utils
