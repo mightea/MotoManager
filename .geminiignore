@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+.react-router/
+build/
+tmp/
+test-results/
+playwright-report/
+blob-report/
+.direnv/
+.env
+tsconfig.tsbuildinfo
+db.sqlite*
+data/images/
+data/images/cache/
+.git/
+pnpm-lock.yaml

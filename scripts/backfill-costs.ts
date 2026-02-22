@@ -20,7 +20,7 @@ async function backfill() {
     const motos = await db.query.motorcycles.findMany();
     console.log(`Found ${motos.length} motorcycles.`);
 
-    for (const moto of motos) {
+    const motoUpdates = motos.map(async (moto) => {
         if (moto.purchasePrice != null) {
             const factor = getFactor(moto.currencyCode);
             const normalizedPrice = moto.purchasePrice * factor;
@@ -31,13 +31,14 @@ async function backfill() {
 
             console.log(`Updated Moto ID ${moto.id}: ${moto.purchasePrice} ${moto.currencyCode} -> ${normalizedPrice} CHF`);
         }
-    }
+    });
+    await Promise.all(motoUpdates);
 
     // 3. Backfill Maintenance Records
     const records = await db.query.maintenanceRecords.findMany();
     console.log(`Found ${records.length} maintenance records.`);
 
-    for (const record of records) {
+    const recordUpdates = records.map(async (record) => {
         if (record.cost != null) {
             const factor = getFactor(record.currency);
             const normalizedCost = record.cost * factor;
@@ -48,7 +49,8 @@ async function backfill() {
 
             console.log(`Updated Record ID ${record.id}: ${record.cost} ${record.currency} -> ${normalizedCost} CHF`);
         }
-    }
+    });
+    await Promise.all(recordUpdates);
 
     console.log("Backfill complete.");
 }

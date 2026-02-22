@@ -93,8 +93,10 @@ async function ensureMigrationHistoryForExistingDb() {
 
     try {
       const filePath = resolve(migrationsFolder, `${entry.tag}.sql`);
+      // oxlint-disable-next-line no-await-in-loop
       const fileBuffer = await readFile(filePath);
       const hash = createHash("sha256").update(fileBuffer).digest("hex");
+      // oxlint-disable-next-line no-await-in-loop
       await db.run(
         sql`INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES (${hash}, ${entry.when})`,
       );

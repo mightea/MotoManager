@@ -147,7 +147,7 @@ export async function action({ request }: Route.ActionArgs) {
         where: eq(torqueSpecs.motorcycleId, motorcycleId),
       });
 
-      for (const src of sourceSpecs) {
+      const importPromises = sourceSpecs.map(async (src) => {
         // Check for existing by category + name (case insensitive ideally, but exact for now)
         const existing = existingSpecs.find(
           e => e.category === src.category && e.name === src.name
@@ -169,7 +169,8 @@ export async function action({ request }: Route.ActionArgs) {
         } else {
           await createTorqueSpecification(db, newValues);
         }
-      }
+      });
+      await Promise.all(importPromises);
       return data({ success: true }, { headers: mergeHeaders(headers) });
     }
 

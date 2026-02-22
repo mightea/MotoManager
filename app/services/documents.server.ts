@@ -170,17 +170,16 @@ type Database = LibSQLDatabase<typeof schema>;
 
 export async function regenerateAllDocumentPreviews(db: Database) {
     const allDocs = await db.select().from(documents);
-    let count = 0;
 
     const previewsDir = path.join(process.cwd(), "data", "previews");
     await fs.mkdir(previewsDir, { recursive: true });
 
-    for (const doc of allDocs) {
+    const previewPromises = allDocs.map(async (doc) => {
         // Only process likely PDFs based on extension or mime if we had it.
         // We only have filePath.
         // Check for .pdf extension (case insensitive)
         if (!doc.filePath.toLowerCase().endsWith(".pdf")) {
-            continue;
+            return false;
         }
 
         const relativeFilePath = doc.filePath.startsWith("/") ? doc.filePath.substring(1) : doc.filePath;
@@ -209,12 +208,15 @@ export async function regenerateAllDocumentPreviews(db: Database) {
                     .set({ previewPath: newWebPath })
                     .where(eq(documents.id, doc.id));
 
-                count++;
+                return true;
             }
         } catch (e) {
             console.error(`Failed to regenerate preview for doc ${doc.id}:`, e);
             // Continue with next doc
         }
-    }
-    return count;
+        return false;
+    });
+
+    const results = await Promise.all(previewPromises);
+    return results.filter(Boolean).length;
 }
