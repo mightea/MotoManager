@@ -1,5 +1,6 @@
 import {
   Form,
+  Link,
   useActionData,
   useLoaderData,
   useNavigation,
@@ -23,7 +24,7 @@ import { USER_ROLES } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Coins } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft } from "lucide-react";
 
 export function meta() {
   return [
@@ -177,14 +178,22 @@ export default function AdminSettings() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-28 pb-20">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground dark:text-white">
-          Admin-Bereich
-        </h1>
-        <p className="text-secondary dark:text-navy-300">
-          Benutzer verwalten und Währungseinstellungen konfigurieren.
-        </p>
+    <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-4 sm:pt-28 pb-20">
+      <div className="flex items-center gap-4">
+        <Link
+          to="/settings"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-foreground dark:text-white">
+            Admin-Bereich
+          </h1>
+          <p className="text-secondary dark:text-navy-300">
+            Benutzer verwalten und Währungseinstellungen konfigurieren.
+          </p>
+        </div>
       </div>
 
       {actionData && "error" in actionData && (
