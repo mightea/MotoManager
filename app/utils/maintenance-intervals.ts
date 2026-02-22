@@ -49,6 +49,32 @@ const getStatus = (dueDate: Date): MaintenanceInsight["status"] => {
   return "ok";
 };
 
+/**
+ * Parses a 4-digit DOT code (WWYY) into an approximate Date object.
+ * @param dotCode 4-digit string at the end of DOT code
+ */
+export function parseDotCode(dotCode: string | null | undefined): Date | null {
+  if (!dotCode) return null;
+  
+  // Extract only the last 4 digits
+  const cleaned = dotCode.replace(/\s/g, "");
+  const match = cleaned.match(/(\d{2})(\d{2})$/);
+  if (!match) return null;
+
+  const week = parseInt(match[1], 10);
+  const yearShort = parseInt(match[2], 10);
+  
+  if (isNaN(week) || isNaN(yearShort) || week < 1 || week > 53) return null;
+
+  // DOT codes from 2000 onwards have 4 digits
+  const year = 2000 + yearShort;
+  
+  const date = new Date(year, 0, 1);
+  date.setDate(date.getDate() + (week - 1) * 7);
+  
+  return date;
+}
+
 export const getMaintenanceInsights = (
   history: MaintenanceRecord[],
   currentOdo: number
@@ -68,15 +94,17 @@ export const getMaintenanceInsights = (
     category: InsightCategory,
     label: string,
     lastRecord?: MaintenanceRecord,
-    intervalYears?: number
+    intervalYears?: number,
+    customBaseDate?: Date | null
   ) => {
-    if (!lastRecord || !lastRecord.date || !intervalYears) {
-        // Option: return an "unknown" state or just skip
+    if (!lastRecord || !intervalYears) {
         return; 
     }
 
-    const lastDate = new Date(lastRecord.date);
-    const nextDate = addYears(lastDate, intervalYears);
+    const baseDate = customBaseDate || (lastRecord.date ? new Date(lastRecord.date) : null);
+    if (!baseDate) return;
+
+    const nextDate = addYears(baseDate, intervalYears);
     const today = new Date();
     
     // Calculate remaining years (can be negative)
@@ -89,8 +117,8 @@ export const getMaintenanceInsights = (
       category,
       label,
       status: getStatus(nextDate),
-      lastDate: lastRecord.date,
-      nextDate: nextDate.toISOString().split('T')[0], // simplistic ISO date
+      lastDate: baseDate.toISOString().split('T')[0],
+      nextDate: nextDate.toISOString().split('T')[0],
       yearsRemaining: Number(yearsRemaining.toFixed(1)),
       lastOdo: lastRecord.odo,
       kmsSinceLast: kmsSinceLast !== undefined && kmsSinceLast > 0 ? kmsSinceLast : undefined,
@@ -99,10 +127,12 @@ export const getMaintenanceInsights = (
 
   // 1. Tires
   const latestFrontTire = findLatest(r => r.type === 'tire' && r.tirePosition === 'front');
-  createInsight("tire-front", "Reifen", "Vorderreifen", latestFrontTire, MAINTENANCE_INTERVALS.tire);
+  const frontDotDate = latestFrontTire ? parseDotCode(latestFrontTire.dotCode) : null;
+  createInsight("tire-front", "Reifen", "Vorderreifen", latestFrontTire, MAINTENANCE_INTERVALS.tire, frontDotDate);
 
   const latestRearTire = findLatest(r => r.type === 'tire' && r.tirePosition === 'rear');
-  createInsight("tire-rear", "Reifen", "Hinterreifen", latestRearTire, MAINTENANCE_INTERVALS.tire);
+  const rearDotDate = latestRearTire ? parseDotCode(latestRearTire.dotCode) : null;
+  createInsight("tire-rear", "Reifen", "Hinterreifen", latestRearTire, MAINTENANCE_INTERVALS.tire, rearDotDate);
 
   // 2. Battery
   const latestBattery = findLatest(r => r.type === 'battery');

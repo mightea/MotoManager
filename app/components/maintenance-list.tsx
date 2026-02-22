@@ -17,6 +17,7 @@ import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
+import { parseDotCode } from "~/utils/maintenance-intervals";
 
 interface MaintenanceListProps {
   records: MaintenanceRecord[];
@@ -277,6 +278,15 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null },
                         { label: "Grösse", value: record.tireSize },
                         { label: "DOT Code", value: record.dotCode },
+                        { 
+                          label: "Reifenalter", 
+                          value: (() => {
+                            const dotDate = parseDotCode(record.dotCode);
+                            if (!dotDate) return null;
+                            const ageInYears = (new Date().getTime() - dotDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+                            return `${ageInYears.toFixed(1)} Jahre`;
+                          })()
+                        },
                       ] : []),
                       ...(record.type === "fluid" ? [
                         { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType] || record.fluidType : null },
