@@ -18,8 +18,5 @@ tsconfig.tsbuildinfo
 
 db.sqlite*
 
-data/images/
-data/images/cache/
-
-
+data/*
 

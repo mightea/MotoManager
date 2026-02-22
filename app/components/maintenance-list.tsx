@@ -24,6 +24,13 @@ import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { parseDotCode } from "~/utils/maintenance-intervals";
+import { 
+  maintenanceTypeLabels, 
+  fluidTypeLabels, 
+  tirePositionLabels, 
+  batteryTypeLabels,
+  summarizeMaintenanceRecord 
+} from "~/utils/maintenance";
 
 interface MaintenanceListProps {
   records: MaintenanceRecord[];
@@ -40,23 +47,9 @@ interface GroupedMaintenanceRecord {
   count: number;
   cost: number;
   currency: string | null;
-  descriptions: string[];
+  summaries: string[];
   originalRecords: MaintenanceRecord[];
 }
-
-const maintenanceTypeLabels: Record<MaintenanceType, string> = {
-  tire: "Reifenwechsel",
-  battery: "Batterie",
-  brakepad: "Bremsbeläge",
-  chain: "Kette",
-  brakerotor: "Bremsscheibe",
-  fluid: "Flüssigkeit",
-  general: "Allgemein",
-  repair: "Reparatur",
-  service: "Service",
-  inspection: "MFK",
-  location: "Standort",
-};
 
 const getIconForType = (type: MaintenanceType) => {
   switch (type) {
@@ -74,71 +67,6 @@ const getIconForType = (type: MaintenanceType) => {
   }
 };
 
-const fluidTypeLabels: Record<string, string> = {
-  engineoil: "Motoröl",
-  gearboxoil: "Getriebeöl",
-  finaldriveoil: "Kardanöl",
-  driveshaftoil: "Kardanwellenöl",
-  forkoil: "Gabelöl",
-  breakfluid: "Bremsflüssigkeit",
-  coolant: "Kühlflüssigkeit",
-};
-
-const tirePositionLabels: Record<string, string> = {
-  front: "Vorne",
-  rear: "Hinten",
-  sidecar: "Beiwagen",
-};
-
-function generateDescription(record: MaintenanceRecord, userLocations?: Location[]): string | null {
-  const parts: string[] = [];
-
-  // Location
-  if (record.type === "location" && record.locationId && userLocations) {
-    const loc = userLocations.find(l => l.id === record.locationId);
-    if (loc) parts.push(loc.name);
-  }
-
-  // Tires
-  else if (record.type === "tire") {
-    const brandModel = [record.brand, record.model].filter(Boolean).join(" ");
-    if (brandModel) parts.push(brandModel);
-
-    if (record.tirePosition && tirePositionLabels[record.tirePosition]) {
-      parts.push(`(${tirePositionLabels[record.tirePosition]})`);
-    } else if (record.tirePosition) {
-      parts.push(`(${record.tirePosition})`);
-    }
-
-    if (record.tireSize) parts.push(record.tireSize);
-    if (record.dotCode) parts.push(`DOT ${record.dotCode}`);
-  }
-
-  // Fluids
-  else if (record.type === "fluid") {
-    if (record.fluidType) {
-      parts.push(fluidTypeLabels[record.fluidType] || record.fluidType);
-    }
-    if (record.brand) parts.push(record.brand);
-    if (record.viscosity) parts.push(record.viscosity);
-  }
-
-  // Battery
-  else if (record.type === "battery") {
-    if (record.brand) parts.push(record.brand);
-    if (record.model) parts.push(record.model);
-    if (record.batteryType) parts.push(record.batteryType);
-  }
-
-  // Others (Brakes, Chain, etc.)
-  else {
-    if (record.brand) parts.push(record.brand);
-    if (record.model) parts.push(record.model);
-  }
-
-  return parts.length > 0 ? parts.join(" ") : null;
-}
-
 function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: Location[]): GroupedMaintenanceRecord[] {
   const groups = new Map<string, GroupedMaintenanceRecord>();
 
@@ -154,7 +82,7 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
         count: 0,
         cost: 0,
         currency: record.currency || null,
-        descriptions: [],
+        summaries: [],
         originalRecords: [],
       });
     }
@@ -167,12 +95,11 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
       group.currency = record.currency;
     }
 
-    const desc = generateDescription(record, userLocations);
-    const description = record.description || desc; // Use explicit description or generated
+    const summary = summarizeMaintenanceRecord(record, userLocations);
 
-    if (description) {
-      if (!group.descriptions.includes(description)) {
-        group.descriptions.push(description);
+    if (summary) {
+      if (!group.summaries.includes(summary)) {
+        group.summaries.push(summary);
       }
     }
 
@@ -183,6 +110,7 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 }
+
 
 export function MaintenanceList({ records, currencyCode, userLocations, onEdit }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
@@ -232,13 +160,13 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
               const Icon = getIconForType(group.type);
               const isExpanded = expandedGroupId === group.id;
 
-              // Determine display description
-              let description = "";
+              // Determine display summary
+              let summary = "";
 
-              if (group.descriptions.length > 0) {
-                description = group.descriptions.join(", ");
+              if (group.summaries.length > 0) {
+                summary = group.summaries.join(", ");
               } else {
-                description = maintenanceTypeLabels[group.type] || group.type;
+                summary = maintenanceTypeLabels[group.type] || group.type;
               }
 
               return (
@@ -274,7 +202,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         {group.count}x
                       </span>
                     )}
-                    {description}
+                    {summary}
                   </p>
 
                   <span className="shrink-0 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
