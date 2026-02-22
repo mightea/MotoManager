@@ -218,10 +218,10 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {sortedYears.map((year) => (
-        <div key={year} className="space-y-3">
-          <div className="flex items-center gap-4">
+        <div key={year} className="space-y-2">
+          <div className="flex items-center gap-4 py-1">
             <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
             <span className="text-sm font-bold text-secondary dark:text-navy-500">{year}</span>
             <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
