@@ -11,7 +11,13 @@ import {
   ClipboardList,
   ChevronDown,
   Edit2,
-  MapPin
+  MapPin,
+  Tag,
+  Maximize2,
+  Calendar,
+  Coins,
+  Info,
+  Hash
 } from "lucide-react";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
@@ -289,17 +295,18 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                 <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
                   {group.originalRecords.map((record) => {
                     const metadataItems = [
-                      { label: "Beschreibung", value: record.description },
-                      { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type },
-                      { label: "Marke", value: record.brand },
-                      { label: "Modell", value: record.model },
+                      { label: "Beschreibung", value: record.description, icon: Info },
+                      { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type, icon: Tag },
+                      { label: "Marke", value: record.brand, icon: Tag },
+                      { label: "Modell", value: record.model, icon: Hash },
 
                       // Type-specific fields
                       ...(record.type === "tire" ? [
-                        { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null },
-                        { label: "Grösse", value: record.tireSize },
+                        { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null, icon: MapPin },
+                        { label: "Grösse", value: record.tireSize, icon: Maximize2 },
                         { 
                           label: "DOT / Alter", 
+                          icon: Calendar,
                           value: (() => {
                             if (!record.dotCode) return null;
                             
@@ -316,26 +323,26 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         },
                       ] : []),
                       ...(record.type === "fluid" ? [
-                        { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType] || record.fluidType : null },
-                        { label: "Viskosität", value: record.viscosity },
+                        { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType] || record.fluidType : null, icon: Droplet },
+                        { label: "Viskosität", value: record.viscosity, icon: Wrench },
                       ] : []),
                       ...(record.type === "battery" ? [
-                        { label: "Batterietyp", value: record.batteryType },
+                        { label: "Batterietyp", value: record.batteryType, icon: Battery },
                       ] : []),
                       ...(record.type === "inspection" ? [
-                        { label: "Prüfstelle", value: record.inspectionLocation },
+                        { label: "Prüfstelle", value: record.inspectionLocation, icon: MapPin },
                       ] : []),
                       ...(record.type === "location" ? [
-                        { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name },
+                        { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name, icon: MapPin },
                       ] : []),
 
-                      { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null },
+                      { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null, icon: Coins },
                     ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 
                     return (
                       <div key={record.id} className="rounded-xl bg-gray-50 p-3 dark:bg-navy-800">
-                        <div className="flex items-center justify-between">
-                          <h4 className="mb-2 text-sm font-semibold text-foreground dark:text-white">
+                        <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3 dark:border-navy-700">
+                          <h4 className="text-sm font-semibold text-foreground dark:text-white">
                             {maintenanceTypeLabels[record.type] || record.type}
                           </h4>
                           <button
@@ -351,13 +358,25 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         </div>
 
                         {metadataItems.length > 0 ? (
-                          <dl className="space-y-1 text-sm">
-                            {metadataItems.map((item) => (
-                              <div key={item.label} className="flex justify-between">
-                                <dt className="text-secondary dark:text-navy-400">{item.label}</dt>
-                                <dd className="font-medium text-foreground dark:text-gray-200">{item.value}</dd>
-                              </div>
-                            ))}
+                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                            {metadataItems.map((item) => {
+                              const ItemIcon = item.icon;
+                              return (
+                                <div key={item.label} className="flex items-start gap-3">
+                                  <div className="mt-0.5 rounded-lg bg-gray-100 p-1.5 dark:bg-navy-700 shrink-0">
+                                    <ItemIcon className="h-3.5 w-3.5 text-secondary dark:text-navy-400" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <dt className="text-[10px] font-bold uppercase tracking-wider text-secondary dark:text-navy-500">
+                                      {item.label}
+                                    </dt>
+                                    <dd className="font-medium text-foreground dark:text-gray-200 truncate">
+                                      {item.value}
+                                    </dd>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </dl>
                         ) : (
                           <p className="text-sm text-secondary dark:text-navy-400">
