@@ -22,6 +22,13 @@ import { Button } from "~/components/button";
 import { useState } from "react";
 import { Pencil, Trash2, Plus, Shield, Server } from "lucide-react";
 
+export function meta() {
+  return [
+    { title: "Einstellungen - Moto Manager" },
+    { name: "description", content: "Verwalte deine Kontoeinstellungen und Lagerorte." },
+  ];
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
   const db = await getDb();

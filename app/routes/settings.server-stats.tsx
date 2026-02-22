@@ -18,6 +18,13 @@ import { ArrowLeft, Users, Bike, FileText, Wrench, AlertCircle, MapPin, History,
 import type { Route } from "./+types/settings.server-stats";
 import clsx from "clsx";
 
+export function meta() {
+  return [
+    { title: "Server Statistiken - Moto Manager" },
+    { name: "description", content: "Globale Kennzahlen und Systemstatus der Instanz." },
+  ];
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
     // Ensure user is authenticated. 
     // In a real app, you might want to restrict this to admins only.

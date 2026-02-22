@@ -13,7 +13,12 @@ import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { deleteDocumentFiles, getFileCategory, saveDocumentFile } from "~/services/documents.server";
 
-
+export function meta() {
+  return [
+    { title: "Dokumente - Moto Manager" },
+    { name: "description", content: "Verwalte deine Dokumente und sehe öffentliche Dokumente anderer Nutzer." },
+  ];
+}
 
 const UNSUPPORTED_FILE_MESSAGE = "Nur PDF- oder Bilddateien sind erlaubt.";
 

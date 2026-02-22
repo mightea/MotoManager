@@ -32,6 +32,17 @@ import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 
+export function meta({ data }: Route.MetaArgs) {
+  if (!data || !data.motorcycle) {
+    return [{ title: "Fahrzeug nicht gefunden - Moto Manager" }];
+  }
+  const { make, model } = data.motorcycle;
+  return [
+    { title: `${make} ${model} - Moto Manager` },
+    { name: "description", content: `Details, Wartungshistorie und Mängel für ${make} ${model}.` },
+  ];
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user, headers } = await requireUser(request);
   const db = await getDb();

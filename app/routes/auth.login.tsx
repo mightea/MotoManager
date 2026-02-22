@@ -1,17 +1,13 @@
 import { Bike } from "lucide-react";
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/auth.login";
-import {
-  createSession,
-  createUser,
-  getCurrentSession,
-  getUserCount,
-  mergeHeaders,
-  verifyLogin,
-} from "~/services/auth.server";
 
-const EMAIL_REGEX = /.+@.+\..+/i;
-const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
+export function meta() {
+  return [
+    { title: "Login - Moto Manager" },
+    { name: "description", content: "Melde dich bei deiner Garage an." },
+  ];
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);

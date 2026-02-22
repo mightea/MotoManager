@@ -28,6 +28,17 @@ import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 
+export function meta({ data }: Route.MetaArgs) {
+  if (!data || !data.motorcycle) {
+    return [{ title: "Dokumente - Moto Manager" }];
+  }
+  const { make, model } = data.motorcycle;
+  return [
+    { title: `Dokumente: ${make} ${model} - Moto Manager` },
+    { name: "description", content: `Dokumente und Unterlagen für ${make} ${model}.` },
+  ];
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
   const db = await getDb();
