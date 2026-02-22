@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.1...2026.3.0) (2026-02-22)
+
+### Features
+
+* adds titles ([094cf58](https://github.com/mightea/MotoManager/commit/094cf5887b1183080e49ba789fa57964b4df20b4))
+* Adjust header behavior on motorcycle detail pages, making the main header scrollable on mobile and the detail header compact on scroll. ([c76b7f0](https://github.com/mightea/MotoManager/commit/c76b7f06bf3eba00d08ebebe6417920549e59342))
+* enhance UI with improved spacing, sizing, and smooth expansion animations for lists and modals. ([91513e8](https://github.com/mightea/MotoManager/commit/91513e87efa408d8de3723f697f1ceb24e6dfca2))
+
+### Bug Fixes
+
+* accessibility, sequential preview regeneration, and sequential DB updates ([51b56ed](https://github.com/mightea/MotoManager/commit/51b56edd412d6bd1e21368dc89ba77d1e5bc1e0a))
+* resolve type errors and update project mandates ([db021c6](https://github.com/mightea/MotoManager/commit/db021c61c30b09ef865850f7109a8d76f5db7134))
+* satisfy exhaustive-deps lint rule in documents route ([0ca40d2](https://github.com/mightea/MotoManager/commit/0ca40d261b446ed1e50121130f68443f5e50bed5))
+
+### Performance Improvements
+
+* optimize database performance, image delivery, and security ([d653012](https://github.com/mightea/MotoManager/commit/d6530128e4f289dd84226390d813ce58dbb172d3))
+
 ## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.0...2026.3.0) (2026-02-15)
 
 ### Features
