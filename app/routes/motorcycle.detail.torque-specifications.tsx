@@ -402,17 +402,22 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                         
                         <div className="flex flex-col items-end min-w-[80px]">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500 mb-1">Drehmoment</span>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none">
-                              {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
-                            </span>
-                            <span className="text-xs font-bold text-secondary dark:text-navy-400 uppercase">Nm</span>
-                          </div>
-                          {spec.variation && (
-                            <div className="mt-1.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded border border-amber-100/50 dark:border-amber-900/30 tabular-nums">
-                              ± {spec.variation} Nm
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none">
+                                {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
+                              </span>
+                              {!spec.variation && (
+                                <span className="text-xs font-bold text-secondary dark:text-navy-400 uppercase">Nm</span>
+                              )}
                             </div>
-                          )}
+                            {spec.variation && (
+                              <div className="flex items-baseline gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-100/50 dark:border-amber-900/30 tabular-nums whitespace-nowrap">
+                                <span>± {spec.variation}</span>
+                                <span className="text-[9px] uppercase opacity-70">Nm</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
