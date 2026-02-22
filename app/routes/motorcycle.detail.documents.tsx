@@ -7,8 +7,19 @@ import {
   useRevalidator,
   useLocation,
 } from "react-router";
-import type { Route, DocumentWithAssignment } from "./+types/motorcycle.detail.documents";
+import type { Route } from "./+types/motorcycle.detail.documents";
+import type { DocumentSummary } from "~/components/document-card";
 import { getDb } from "~/db";
+
+export type DocumentWithAssignment = DocumentSummary & {
+  assignedMotorcycleNames: string[];
+};
+
+export type DocumentAssignment = {
+  documentId: number;
+  motorcycleId: number;
+};
+
 import {
   motorcycles,
   maintenanceRecords,

@@ -2,6 +2,7 @@
 
 ## General Instructions
 
+- ALWAYS run `pnpm typecheck` and `pnpm lint` before finishing a task to ensure no regressions or style issues were introduced.
 - When you generate new TypeScript code, follow the existing coding style.
 - Ensure all new functions and classes have JSDoc comments.
 - Prefer functional programming paradigms where appropriate.
