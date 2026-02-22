@@ -358,22 +358,20 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         </div>
 
                         {metadataItems.length > 0 ? (
-                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2 text-sm">
                             {metadataItems.map((item) => {
                               const ItemIcon = item.icon;
                               return (
-                                <div key={item.label} className="flex items-start gap-3">
-                                  <div className="mt-0.5 rounded-lg bg-gray-100 p-1.5 dark:bg-navy-700 shrink-0">
-                                    <ItemIcon className="h-3.5 w-3.5 text-secondary dark:text-navy-400" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <dt className="text-[10px] font-bold uppercase tracking-wider text-secondary dark:text-navy-500">
+                                <div key={item.label} className="flex items-center justify-between gap-4 border-b border-gray-50 py-1 dark:border-navy-700/50">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <ItemIcon className="h-3.5 w-3.5 text-secondary/60 dark:text-navy-500 shrink-0" />
+                                    <dt className="text-xs font-medium text-secondary dark:text-navy-400 truncate">
                                       {item.label}
                                     </dt>
-                                    <dd className="font-medium text-foreground dark:text-gray-200 truncate">
-                                      {item.value}
-                                    </dd>
                                   </div>
+                                  <dd className="text-xs font-semibold text-foreground dark:text-gray-200 text-right shrink-0">
+                                    {item.value}
+                                  </dd>
                                 </div>
                               );
                             })}
