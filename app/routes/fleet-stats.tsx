@@ -8,7 +8,7 @@ import { calculateFleetStats } from "~/utils/fleet-stats";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "lucide-react";
 import clsx from "clsx";
-import { useState, Fragment } from "react";
+import { useState, Fragment, useRef, useEffect } from "react";
 
 export function meta() {
   return [
@@ -65,8 +65,15 @@ function ChartSection({
   colorClass: string;
   iconBgClass: string;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const reversedData = [...data].reverse();
   const showEveryNthYear = data.length > 15 ? 5 : (data.length > 8 ? 2 : 1);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, []);
 
   return (
     <section className="space-y-4">
@@ -85,7 +92,10 @@ function ChartSection({
           ))}
         </div>
 
-        <div className="overflow-x-auto pb-2 -mx-2 px-2 custom-scrollbar">
+        <div 
+          ref={scrollRef}
+          className="overflow-x-auto pb-2 -mx-2 px-2 custom-scrollbar"
+        >
           <div className="relative flex h-32 items-end gap-1.5 sm:gap-3 min-w-[max-content]">
             {reversedData.map((year, idx) => {
               const value = (year as any)[valueKey] || 0;
