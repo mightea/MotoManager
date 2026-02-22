@@ -94,7 +94,7 @@ function ChartSection({
 
         <div 
           ref={scrollRef}
-          className="overflow-x-auto pb-2 -mx-2 px-2 custom-scrollbar"
+          className="overflow-x-auto pb-2 -mx-2 px-2"
         >
           <div className="relative flex h-32 items-end gap-1.5 sm:gap-3 min-w-[max-content]">
             {reversedData.map((year, idx) => {
