@@ -111,12 +111,13 @@ export async function action({ request }: Route.ActionArgs) {
 
       // Update all other currencies if they exist in the rates
       const existingCurrencies = await getCurrencies(db);
-      for (const currency of existingCurrencies) {
+      const updatePromises = existingCurrencies.map(async (currency) => {
         const newRate = rates[currency.code];
         if (newRate) {
           await updateCurrencyByCode(db, currency.code, 1 / newRate);
         }
-      }
+      });
+      await Promise.all(updatePromises);
 
       return { success: `Währung ${upperCode} erstellt und Kurse aktualisiert.` };
 

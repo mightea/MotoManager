@@ -39,11 +39,11 @@ async function main() {
     console.log("Rates fetched successfully.");
 
     // 3. Update currencies
-    let updatedCount = 0;
+    console.log("Updating currencies...");
     
-    for (const currency of currencies) {
-      // Skip if it's the base currency (though typically base currency isn't in the rates object anyway)
-      if (currency.code === DEFAULT_CURRENCY_CODE) continue;
+    const updatePromises = currencies.map(async (currency) => {
+      // Skip if it's the base currency
+      if (currency.code === DEFAULT_CURRENCY_CODE) return false;
 
       const rate = rates[currency.code];
       if (rate) {
@@ -57,11 +57,15 @@ async function main() {
           .where(eq(schema.currencySettings.id, currency.id));
           
         console.log(`Updated ${currency.code}: rate ${rate} -> factor ${conversionFactor.toFixed(4)}`);
-        updatedCount++;
+        return true;
       } else {
         console.warn(`No rate found for currency: ${currency.code}`);
+        return false;
       }
-    }
+    });
+
+    const results = await Promise.all(updatePromises);
+    const updatedCount = results.filter(Boolean).length;
 
     console.log(`Finished. Updated ${updatedCount} currencies.`);
 

@@ -92,6 +92,7 @@ async function seedDefaultUser() {
 async function truncateTables() {
   const db = drizzle(databaseUrl, { schema });
   for (const table of TABLES_IN_DELETE_ORDER) {
+    // oxlint-disable-next-line no-await-in-loop
     await db.delete(table);
   }
 }

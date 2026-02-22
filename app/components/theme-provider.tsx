@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Theme } from "~/utils/theme";
 import { useFetcher } from "react-router";
 
@@ -53,8 +53,10 @@ export function ThemeProvider({
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, [specifiedTheme]);
 
+  const value = useMemo(() => ({ theme, setTheme: setThemeState }), [theme]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: setThemeState }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

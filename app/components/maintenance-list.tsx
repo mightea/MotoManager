@@ -215,16 +215,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
 
         return (
           <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
-            <div
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  toggleExpand(group.id);
-                }
-              }}
+            <button
               onClick={() => toggleExpand(group.id)}
-              className="group flex cursor-pointer items-start gap-3 py-3 pl-0"
+              className="group flex w-full cursor-pointer items-start gap-3 py-3 pl-0 text-left"
             >
               <div className="mt-0.5 grid h-11 w-11 place-items-center rounded-xl bg-gray-50 text-secondary transition-colors group-hover:bg-primary/10 group-hover:text-primary dark:bg-navy-700 dark:text-navy-300 dark:group-hover:bg-navy-600 dark:group-hover:text-primary-light shrink-0">
                 <Icon className="h-5 w-5" />
@@ -258,7 +251,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                   </span>
                 </div>
               </div>
-            </div>
+            </button>
 
             {/* Expanded Details */}
             <div className={clsx(
