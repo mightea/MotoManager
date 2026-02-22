@@ -1,70 +1,18 @@
 import { Bike } from "lucide-react";
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/auth.login";
+import {
+  createSession,
+  createUser,
+  getCurrentSession,
+  getUserCount,
+  mergeHeaders,
+  verifyLogin,
+} from "~/services/auth.server";
 
-// Basic validation patterns for login form fields.
-// These can be replaced with shared constants if the project exposes them elsewhere.
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
+const EMAIL_REGEX = /.+@.+\..+/i;
+const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
 
-// Merge an arbitrary HeadersInit into a Headers instance.
-// This allows calling code to treat returned headers uniformly.
-function mergeHeaders(init?: HeadersInit | null): Headers {
-  const headers = new Headers();
-
-  if (!init) {
-    return headers;
-  }
-
-  const source = new Headers(init);
-  source.forEach((value, key) => {
-    headers.append(key, value);
-  });
-
-  return headers;
-}
-
-// Placeholder type for an authenticated user.
-// Adjust this to match your application's actual user shape if needed.
-type SessionUser = {
-  id: string;
-  email?: string;
-  username?: string;
-};
-
-// Retrieve the current session associated with the incoming request.
-// This is a minimal implementation that always reports "no active user".
-// Replace with your real session lookup if available.
-async function getCurrentSession(
-  _request: Request,
-): Promise<{ user: SessionUser | null; headers?: HeadersInit }> {
-  return { user: null, headers: undefined };
-}
-
-// Return the number of users in the system.
-// This stub assumes there are no users; adjust when wiring to real persistence.
-async function getUserCount(): Promise<number> {
-  return 0;
-}
-
-// Verify login credentials from the incoming request or form data.
-// This stub always returns null (authentication failure); integrate with your
-// real user store to perform proper verification.
-async function verifyLogin(
-  _request: Request,
-): Promise<SessionUser | null> {
-  return null;
-}
-
-// Create a new authenticated session for the given user and redirect to the
-// provided URL. This minimal implementation simply returns a redirect
-// response without persisting any real session information.
-async function createSession(
-  _user: SessionUser,
-  redirectTo: string,
-): Promise<Response> {
-  return redirect(redirectTo);
-}
 export function meta() {
   return [
     { title: "Login - Moto Manager" },
