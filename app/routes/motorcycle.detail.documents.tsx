@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   data,
   Link,
@@ -216,16 +216,13 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
     });
 
   const documentsToDisplay = [...assignedDocs, ...unassignedDocs];
-  const assignmentMap = useMemo(() => {
-    const map: Record<number, number[]> = {};
-    for (const assignment of docAssignments) {
-      if (!map[assignment.documentId]) {
-        map[assignment.documentId] = [];
-      }
-      map[assignment.documentId]!.push(assignment.motorcycleId);
+  const assignmentMap: Record<number, number[]> = {};
+  for (const assignment of docAssignments) {
+    if (!assignmentMap[assignment.documentId]) {
+      assignmentMap[assignment.documentId] = [];
     }
-    return map;
-  }, [docAssignments]);
+    assignmentMap[assignment.documentId]!.push(assignment.motorcycleId);
+  }
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
