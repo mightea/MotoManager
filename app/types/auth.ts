@@ -10,4 +10,5 @@ export type PublicUser = {
   role: UserRole;
   createdAt: string;
   updatedAt: string;
+  lastLoginAt?: string | null;
 };

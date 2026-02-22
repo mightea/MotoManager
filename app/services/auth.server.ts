@@ -183,7 +183,13 @@ export async function createSession(userId: number) {
     expiresAt,
   };
 
-  await db.insert(sessions).values(newSession);
+  await db.transaction(async (tx) => {
+    await tx.insert(sessions).values(newSession);
+    await tx
+      .update(users)
+      .set({ lastLoginAt: new Date().toISOString() })
+      .where(eq(users.id, userId));
+  });
 
   return {
     token,
@@ -358,6 +364,7 @@ export async function listUsers(): Promise<PublicUser[]> {
       role: users.role,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
+      lastLoginAt: users.lastLoginAt,
     })
     .from(users)
     .orderBy(users.name);

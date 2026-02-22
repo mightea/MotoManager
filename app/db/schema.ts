@@ -25,6 +25,7 @@ export const users = sqliteTable(
     updatedAt: text("updated_at")
       .notNull()
       .default(sql`(CURRENT_TIMESTAMP)`),
+    lastLoginAt: text("last_login_at"),
   },
   (table) => ({
     emailIdx: uniqueIndex("users_email_unique").on(table.email),

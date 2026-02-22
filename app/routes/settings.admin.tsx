@@ -171,6 +171,11 @@ export default function AdminSettings() {
 
   const isSubmitting = navigation.state === "submitting";
 
+  const dateFormatter = new Intl.DateTimeFormat("de-CH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-28 pb-20">
       <div className="space-y-2">
@@ -211,6 +216,7 @@ export default function AdminSettings() {
               <tr>
                 <th className="px-4 py-3 font-semibold">Benutzername</th>
                 <th className="px-4 py-3 font-semibold">E-Mail</th>
+                <th className="px-4 py-3 font-semibold">Letzter Login</th>
                 <th className="px-4 py-3 font-semibold">Rolle</th>
                 <th className="px-4 py-3 font-semibold text-right">Aktionen</th>
               </tr>
@@ -223,6 +229,9 @@ export default function AdminSettings() {
                   </td>
                   <td className="px-4 py-3 text-secondary dark:text-navy-300">
                     {u.email}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
+                    {u.lastLoginAt ? dateFormatter.format(new Date(u.lastLoginAt)) : "Nie"}
                   </td>
                   <td className="px-4 py-3">
                     <Form method="post" className="flex items-center gap-2">
