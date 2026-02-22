@@ -13,8 +13,8 @@ import { MaintenanceList } from "~/components/maintenance-list";
 
 export function meta() {
   return [
-    { title: "Flottenstatistik - Moto Manager" },
-    { name: "description", content: "Statistiken über deine Motorrad-Flotte über die Jahre." },
+    { title: "Statistiken - Moto Manager" },
+    { name: "description", content: "Detaillierte Statistiken über deine Motorrad-Flotte über die Jahre." },
   ];
 }
 
@@ -163,10 +163,12 @@ export default function FleetStatsPage() {
     setExpandedYear(expandedYear === year ? null : year);
   };
 
-  if (stats.yearly.length === 0) {
+  const activeYearlyStats = stats.yearly.filter(y => y.distance > 0 || y.cost > 0);
+
+  if (activeYearlyStats.length === 0) {
     return (
       <div className="container mx-auto p-4 space-y-6 pt-28 pb-20 text-center">
-        <h1 className="text-3xl font-bold">Flottenstatistik</h1>
+        <h1 className="text-3xl font-bold">Statistiken</h1>
         <p className="text-secondary">Noch keine Daten vorhanden, um Statistiken anzuzeigen.</p>
         <Link to="/" className="text-primary hover:underline">Zurück zur Übersicht</Link>
       </div>
@@ -183,7 +185,7 @@ export default function FleetStatsPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground dark:text-white">Flottenstatistik</h1>
+          <h1 className="text-3xl font-bold text-foreground dark:text-white">Statistiken</h1>
           <p className="text-secondary dark:text-navy-400">Entwicklung deiner Garage über die Jahre.</p>
         </div>
       </div>
@@ -272,7 +274,7 @@ export default function FleetStatsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-navy-700">
-                  {stats.yearly.map((year) => {
+                  {activeYearlyStats.map((year) => {
                     const avgCostPerKm = year.distance > 0 ? year.cost / year.distance : 0;
                     const isExpanded = expandedYear === year.year;
                     return (
