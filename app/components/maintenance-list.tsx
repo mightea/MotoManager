@@ -277,14 +277,20 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       ...(record.type === "tire" ? [
                         { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null },
                         { label: "Grösse", value: record.tireSize },
-                        { label: "DOT Code", value: record.dotCode },
                         { 
-                          label: "Reifenalter", 
+                          label: "DOT / Alter", 
                           value: (() => {
+                            if (!record.dotCode) return null;
+                            
+                            // Reformat DOT Code (e.g., 1223 -> 12/23)
+                            const dotMatch = record.dotCode.match(/(\d{2})(\d{2})$/);
+                            const formattedDot = dotMatch ? `${dotMatch[1]}/${dotMatch[2]}` : record.dotCode;
+                            
                             const dotDate = parseDotCode(record.dotCode);
-                            if (!dotDate) return null;
+                            if (!dotDate) return formattedDot;
+                            
                             const ageInYears = (new Date().getTime() - dotDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-                            return `${ageInYears.toFixed(1)} Jahre`;
+                            return `${formattedDot} (${ageInYears.toFixed(1)} Jahre)`;
                           })()
                         },
                       ] : []),
