@@ -132,6 +132,10 @@ async function applySchemaPatches() {
       sql`ALTER TABLE "torque_specs" ADD COLUMN "tool_size" text`,
     );
   }
+
+  await db.run(
+    sql`UPDATE "maintenance_records" SET "fluid_type" = 'brakefluid' WHERE "fluid_type" = 'breakfluid'`,
+  );
 }
 
 export async function ensureMigrations() {

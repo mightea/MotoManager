@@ -87,7 +87,7 @@ export type FluidType =
   | "finaldriveoil"
   | "driveshaftoil"
   | "forkoil"
-  | "breakfluid"
+  | "brakefluid"
   | "coolant";
 
 export type TirePosition = "front" | "rear" | "sidecar";
