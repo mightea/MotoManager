@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useSubmit } from "react-router";
 import { Modal } from "./modal";
 import { Button } from "./button";
@@ -27,18 +27,14 @@ export function ImportTorqueSpecsDialog({
   const [selectedMotorcycleId, setSelectedMotorcycleId] = useState<number | null>(null);
   const [selectedSpecIds, setSelectedSpecIds] = useState<Set<number>>(new Set());
 
-  const sourceSpecs = useMemo(() => {
-    if (!selectedMotorcycleId) return [];
-    return otherSpecs.filter((s) => s.motorcycleId === selectedMotorcycleId);
-  }, [selectedMotorcycleId, otherSpecs]);
+  const sourceSpecs = !selectedMotorcycleId
+    ? []
+    : otherSpecs.filter((s) => s.motorcycleId === selectedMotorcycleId);
 
-  const existingMap = useMemo(() => {
-    const map = new Map<string, boolean>();
-    existingSpecs.forEach((s) => {
-      map.set(`${s.category}:${s.name}`.toLowerCase(), true);
-    });
-    return map;
-  }, [existingSpecs]);
+  const existingMap = new Map<string, boolean>();
+  existingSpecs.forEach((s) => {
+    existingMap.set(`${s.category}:${s.name}`.toLowerCase(), true);
+  });
 
   const handleToggle = (specId: number) => {
     const newSet = new Set(selectedSpecIds);

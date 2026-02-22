@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigation, useSubmit, type SubmitOptions } from "react-router";
 import { Button } from "./button";
 import clsx from "clsx";
@@ -40,7 +40,7 @@ export function AddDocumentForm({
 
   const isEditMode = !!document;
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = (acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0];
     if (!selectedFile) return;
 
@@ -52,7 +52,7 @@ export function AddDocumentForm({
     } else {
       setFilePreviewUrl(null);
     }
-  }, []);
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

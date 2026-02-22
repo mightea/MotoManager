@@ -1,6 +1,6 @@
 import { Form, useSubmit, useActionData } from "react-router";
 import type { EditorMotorcycle, CurrencySetting } from "~/db/schema";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
 import { Modal } from "./modal";
@@ -64,11 +64,11 @@ export function AddMotorcycleForm({
     }
   };
 
-  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  };
 
-  const showCroppedImage = useCallback(async () => {
+  const showCroppedImage = async () => {
     if (!selectedImage || !croppedAreaPixels) return;
     try {
       const blob = await getCroppedImg(selectedImage, croppedAreaPixels);
@@ -80,7 +80,7 @@ export function AddMotorcycleForm({
     } catch (e) {
       console.error(e);
     }
-  }, [selectedImage, croppedAreaPixels]);
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
