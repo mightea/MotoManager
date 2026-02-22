@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.2.4](https://github.com/mightea/MotoManager/compare/2026.2.3...2026.2.4) (2026-02-22)
+
+### Features
+
+* add fleet statistics page with yearly development data ([d07cb3f](https://github.com/mightea/MotoManager/commit/d07cb3fa8f2af97d086a05cc59b83a3712ddf40b))
+* group all maintenance and fleet data by year ([1892df4](https://github.com/mightea/MotoManager/commit/1892df4cde5ff6dec31691bbd71f7aa566ddc1e3))
+* improve maintenance record descriptions in list ([79146a8](https://github.com/mightea/MotoManager/commit/79146a8576777a77227785b4191a055da73a64e2))
+
+### Bug Fixes
+
+* docker build error by installing corepack via npm ([dc72ec1](https://github.com/mightea/MotoManager/commit/dc72ec16e9b5baaed1ce98a06f047e3e70596b77))
+* proper version noting in changelog by disabling recommended bump in conventional-changelog plugin ([e4708d2](https://github.com/mightea/MotoManager/commit/e4708d287ff8390e7bf4f29ffc58b41741341712))
+
 ## [2026.2.3](https://github.com/mightea/MotoManager/compare/2026.2.2...2026.2.3) (2026-02-22)
 
 ### Features
