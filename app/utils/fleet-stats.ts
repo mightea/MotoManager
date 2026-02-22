@@ -5,6 +5,8 @@ export type YearlyFleetStats = {
   distance: number;
   cost: number;
   motorcycleCount: number;
+  motorcycles: { id: number; make: string; model: string; distance: number; cost: number }[];
+  records: MaintenanceRecord[];
 };
 
 export type FleetStats = {
@@ -46,16 +48,24 @@ export function calculateFleetStats(
 
   // Initialize years
   for (let y = startYear; y <= currentYear; y++) {
-    yearsMap.set(y, { year: y, distance: 0, cost: 0, motorcycleCount: 0 });
+    yearsMap.set(y, { 
+      year: y, 
+      distance: 0, 
+      cost: 0, 
+      motorcycleCount: 0, 
+      motorcycles: [], 
+      records: [] 
+    });
   }
 
-  // Calculate Costs per Year
+  // Calculate Costs and Records per Year
   maintenance.forEach(record => {
     if (!record.date) return;
     const year = new Date(record.date).getFullYear();
     const stats = yearsMap.get(year);
     if (stats) {
       stats.cost += record.normalizedCost ?? record.cost ?? 0;
+      stats.records.push(record);
     }
   });
 
@@ -75,7 +85,19 @@ export function calculateFleetStats(
     motoIssues.forEach(r => { if (r.date) odoEntries.push({ date: r.date, odo: r.odo }); });
     motoLocations.forEach(r => { if (r.date && r.odometer != null) odoEntries.push({ date: r.date, odo: r.odometer }); });
 
-    if (odoEntries.length === 0) return;
+    if (odoEntries.length === 0) {
+        // Special case: check if owned even without odo entries
+        for (let y = startYear; y <= currentYear; y++) {
+            const stats = yearsMap.get(y);
+            if (!stats) continue;
+            const purchaseYear = moto.purchaseDate ? new Date(moto.purchaseDate).getFullYear() : startYear;
+            if (y >= purchaseYear) {
+                stats.motorcycleCount++;
+                stats.motorcycles.push({ id: moto.id, make: moto.make, model: moto.model, distance: 0, cost: 0 });
+            }
+        }
+        return;
+    }
 
     // Group max odo by year
     const odoByYear = new Map<number, number>();
@@ -99,14 +121,27 @@ export function calculateFleetStats(
       const purchaseDate = moto.purchaseDate ? new Date(moto.purchaseDate) : null;
       const purchaseYear = purchaseDate ? purchaseDate.getFullYear() : startYear;
       
-      // We count it if it was purchased in or before this year
       if (y >= purchaseYear) {
         stats.motorcycleCount++;
         
+        let yearlyDistance = 0;
         if (yearlyMax !== undefined) {
-          stats.distance += Math.max(0, yearlyMax - lastOdo);
+          yearlyDistance = Math.max(0, yearlyMax - lastOdo);
+          stats.distance += yearlyDistance;
           lastOdo = yearlyMax;
         }
+
+        const yearlyCost = motoMaintenance
+            .filter(r => r.date && new Date(r.date).getFullYear() === y)
+            .reduce((sum, r) => sum + (r.normalizedCost ?? r.cost ?? 0), 0);
+
+        stats.motorcycles.push({ 
+            id: moto.id, 
+            make: moto.make, 
+            model: moto.model, 
+            distance: yearlyDistance, 
+            cost: yearlyCost 
+        });
       }
     }
   });

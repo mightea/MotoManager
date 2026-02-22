@@ -187,6 +187,18 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
 
   const groupedRecords = groupMaintenanceRecords(records, userLocations);
 
+  // Group by year
+  const recordsByYear = new Map<number, typeof groupedRecords>();
+  groupedRecords.forEach(group => {
+    const year = new Date(group.date).getFullYear();
+    if (!recordsByYear.has(year)) {
+      recordsByYear.set(year, []);
+    }
+    recordsByYear.get(year)!.push(group);
+  });
+
+  const sortedYears = Array.from(recordsByYear.keys()).sort((a, b) => b - a);
+
   const toggleExpand = (id: string) => {
     setExpandedGroupId(expandedGroupId === id ? null : id);
   };
@@ -200,22 +212,31 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
   }
 
   return (
-    <ul className="space-y-2">
-      {groupedRecords.map((group) => {
-        const Icon = getIconForType(group.type);
-        const isExpanded = expandedGroupId === group.id;
+    <div className="space-y-8">
+      {sortedYears.map((year) => (
+        <div key={year} className="space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
+            <span className="text-sm font-bold text-secondary dark:text-navy-500">{year}</span>
+            <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
+          </div>
 
-        // Determine display description
-        let description = "";
+          <ul className="space-y-2">
+            {recordsByYear.get(year)!.map((group) => {
+              const Icon = getIconForType(group.type);
+              const isExpanded = expandedGroupId === group.id;
 
-        if (group.descriptions.length > 0) {
-          description = group.descriptions.join(", ");
-        } else {
-          description = maintenanceTypeLabels[group.type] || group.type;
-        }
+              // Determine display description
+              let description = "";
 
-        return (
-          <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
+              if (group.descriptions.length > 0) {
+                description = group.descriptions.join(", ");
+              } else {
+                description = maintenanceTypeLabels[group.type] || group.type;
+              }
+
+              return (
+                <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
             <button
               type="button"
               onClick={() => toggleExpand(group.id)}
@@ -352,7 +373,10 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
           </li>
         );
       })}
-    </ul>
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 
