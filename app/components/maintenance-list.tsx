@@ -216,7 +216,10 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
         return (
           <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
             <button
+              type="button"
               onClick={() => toggleExpand(group.id)}
+              aria-expanded={isExpanded}
+              aria-controls={`maintenance-details-${group.id}`}
               className="group flex w-full cursor-pointer items-start gap-3 py-3 pl-0 text-left"
             >
               <div className="mt-0.5 grid h-11 w-11 place-items-center rounded-xl bg-gray-50 text-secondary transition-colors group-hover:bg-primary/10 group-hover:text-primary dark:bg-navy-700 dark:text-navy-300 dark:group-hover:bg-navy-600 dark:group-hover:text-primary-light shrink-0">
@@ -254,7 +257,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
             </button>
 
             {/* Expanded Details */}
-            <div className={clsx(
+            <div
+              id={`maintenance-details-${group.id}`}
+              className={clsx(
               "grid transition-all duration-300 ease-in-out",
               isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
             )}>

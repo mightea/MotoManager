@@ -174,12 +174,11 @@ export async function regenerateAllDocumentPreviews(db: Database) {
     const previewsDir = path.join(process.cwd(), "data", "previews");
     await fs.mkdir(previewsDir, { recursive: true });
 
-    const previewPromises = allDocs.map(async (doc) => {
-        // Only process likely PDFs based on extension or mime if we had it.
-        // We only have filePath.
-        // Check for .pdf extension (case insensitive)
+    let count = 0;
+    for (const doc of allDocs) {
+        // Only process PDFs based on file extension
         if (!doc.filePath.toLowerCase().endsWith(".pdf")) {
-            return false;
+            continue;
         }
 
         const relativeFilePath = doc.filePath.startsWith("/") ? doc.filePath.substring(1) : doc.filePath;
@@ -208,15 +207,12 @@ export async function regenerateAllDocumentPreviews(db: Database) {
                     .set({ previewPath: newWebPath })
                     .where(eq(documents.id, doc.id));
 
-                return true;
+                count++;
             }
         } catch (e) {
             console.error(`Failed to regenerate preview for doc ${doc.id}:`, e);
             // Continue with next doc
         }
-        return false;
-    });
-
-    const results = await Promise.all(previewPromises);
-    return results.filter(Boolean).length;
+    }
+    return count;
 }
