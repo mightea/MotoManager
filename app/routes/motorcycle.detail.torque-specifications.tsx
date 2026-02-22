@@ -409,7 +409,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                             <span className="text-xs font-bold text-secondary dark:text-navy-400 uppercase">Nm</span>
                           </div>
                           {spec.variation && (
-                            <div className="mt-1 text-[9px] font-bold text-secondary/70 dark:text-navy-500">
+                            <div className="mt-1.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded border border-amber-100/50 dark:border-amber-900/30 tabular-nums">
                               ± {spec.variation} Nm
                             </div>
                           )}
