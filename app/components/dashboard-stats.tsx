@@ -96,7 +96,7 @@ function StatCard({
                 : "border-t-transparent";
 
     return (
-        <div className={`flex min-w-[200px] snap-start flex-col justify-between rounded-xl border border-gray-200 border-t-2 ${accentBorder} bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:border-navy-700 dark:bg-navy-800/50`}>
+        <div className={`flex min-w-[200px] snap-start flex-col justify-between rounded-xl border border-gray-200 dark:border-navy-700 border-t-2 ${accentBorder} bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:bg-navy-800/50`}>
             <div>
                 <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
                     {label}
