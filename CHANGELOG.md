@@ -1,14 +1,6 @@
 # Changelog
 
-## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.3...2026.3.0) (2026-02-22)
-
-### Features
-
-* add fleet statistics page with yearly development data ([d07cb3f](https://github.com/mightea/MotoManager/commit/d07cb3fa8f2af97d086a05cc59b83a3712ddf40b))
-* group all maintenance and fleet data by year ([1892df4](https://github.com/mightea/MotoManager/commit/1892df4cde5ff6dec31691bbd71f7aa566ddc1e3))
-* improve maintenance record descriptions in list ([79146a8](https://github.com/mightea/MotoManager/commit/79146a8576777a77227785b4191a055da73a64e2))
-
-## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.2...2026.3.0) (2026-02-22)
+## [2026.2.3](https://github.com/mightea/MotoManager/compare/2026.2.2...2026.3.0) (2026-02-22)
 
 ### Features
 
@@ -16,7 +8,7 @@
 * calculate tire age from DOT code for maintenance and insights ([54fea9c](https://github.com/mightea/MotoManager/commit/54fea9c84e12ce01a6177e9f2849e48fabfbe115))
 * display app version in settings and re-apply lint fixes ([e112feb](https://github.com/mightea/MotoManager/commit/e112febbb7496f4134e3d8fe5424f0b65e21a551))
 
-## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.1...2026.3.0) (2026-02-22)
+## [2026.2.1](https://github.com/mightea/MotoManager/compare/2026.2.1...2026.3.0) (2026-02-22)
 
 ### Features
 
@@ -34,7 +26,7 @@
 
 * optimize database performance, image delivery, and security ([d653012](https://github.com/mightea/MotoManager/commit/d6530128e4f289dd84226390d813ce58dbb172d3))
 
-## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.0...2026.3.0) (2026-02-15)
+## [2026.2.0](https://github.com/mightea/MotoManager/compare/2026.2.0...2026.3.0) (2026-02-15)
 
 ### Features
 
