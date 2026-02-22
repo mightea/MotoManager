@@ -119,6 +119,19 @@ async function applySchemaPatches() {
       sql`ALTER TABLE "maintenance_records" ADD COLUMN "location_id" integer REFERENCES "locations"("id")`,
     );
   }
+
+  const torqueSpecsInfo = await db.run(
+    sql`PRAGMA table_info("torque_specs")`,
+  );
+  const hasToolSizeColumn = torqueSpecsInfo.rows.some(
+    (row) => row.name === "tool_size",
+  );
+
+  if (!hasToolSizeColumn) {
+    await db.run(
+      sql`ALTER TABLE "torque_specs" ADD COLUMN "tool_size" text`,
+    );
+  }
 }
 
 export async function ensureMigrations() {
