@@ -18,8 +18,8 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
                 </p>
             </div>
 
-            {/* Horizontal scroll on mobile, grid on larger */}
-            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-3">
+            {/* Stacked on mobile, grid on larger */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {/* Kilometer dieses Jahr */}
                 <StatCard
                     label="KILOMETER DIESES JAHR"
@@ -96,7 +96,7 @@ function StatCard({
                 : "border-t-transparent";
 
     return (
-        <div className={`flex min-w-[200px] snap-start flex-col justify-between rounded-xl border border-gray-200 dark:border-navy-700 border-t-2 ${accentBorder} bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:bg-navy-800/50`}>
+        <div className={`flex flex-col justify-between rounded-xl border border-gray-200 dark:border-navy-700 border-t-2 ${accentBorder} bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:bg-navy-800/50`}>
             <div>
                 <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
                     {label}
