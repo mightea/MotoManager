@@ -254,7 +254,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         { label: "Viskosität", value: record.viscosity, icon: Wrench },
                       ] : []),
                       ...(record.type === "battery" ? [
-                        { label: "Batterietyp", value: record.batteryType, icon: Battery },
+                        { label: "Batterietyp", value: record.batteryType ? batteryTypeLabels[record.batteryType] || record.batteryType : null, icon: Battery },
                       ] : []),
                       ...(record.type === "inspection" ? [
                         { label: "Prüfstelle", value: record.inspectionLocation, icon: MapPin },
