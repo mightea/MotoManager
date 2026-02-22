@@ -14,7 +14,7 @@
 ## File Structure
 
 - Place tests in the /tests directory, mirroring the source file structure.
-- Place playwrite tests in the /tests/e2e directory.
+- Place Playwright tests in the /tests/e2e directory.
 
 ## Tools and Libraries
 
