@@ -1,7 +1,7 @@
 FROM node:25-alpine AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN mkdir -p $PNPM_HOME && corepack enable && corepack prepare pnpm@10.2.1 --activate
+RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest && corepack enable && corepack prepare pnpm@10.2.1 --activate
 WORKDIR /app
 
 FROM base AS builder
@@ -19,6 +19,7 @@ ENV NODE_ENV=production
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN mkdir -p $PNPM_HOME \
+  && npm install -g corepack@latest \
   && corepack enable \
   && corepack prepare pnpm@10.2.1 --activate \
   && apk add --no-cache poppler-utils
@@ -36,4 +37,4 @@ COPY scripts ./scripts
 RUN echo "0 0 * * * cd /app && ./node_modules/.bin/ts-node --esm scripts/update_currencies.ts >> /proc/1/fd/1 2>&1" > /etc/crontabs/root
 
 EXPOSE 3000
-CMD crond && pnpm start
+CMD ["sh", "-c", "crond && pnpm start"]
