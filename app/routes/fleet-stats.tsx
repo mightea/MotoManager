@@ -7,6 +7,7 @@ import { requireUser } from "~/services/auth.server";
 import { calculateFleetStats } from "~/utils/fleet-stats";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft } from "lucide-react";
+import clsx from "clsx";
 
 export function meta() {
   return [
@@ -40,6 +41,79 @@ export async function loader({ request }: Route.LoaderArgs) {
   const stats = calculateFleetStats(motorcyclesList, allMaintenance, allIssues, allLocations);
 
   return data({ stats });
+}
+
+function ChartSection({
+  title,
+  icon: Icon,
+  data,
+  maxValue,
+  valueKey,
+  unit,
+  isCurrency = false,
+  colorClass,
+  iconBgClass
+}: {
+  title: string;
+  icon: any;
+  data: any[];
+  maxValue: number;
+  valueKey: string;
+  unit: string;
+  isCurrency?: boolean;
+  colorClass: string;
+  iconBgClass: string;
+}) {
+  const reversedData = [...data].reverse();
+  const showEveryNthYear = data.length > 15 ? 5 : (data.length > 8 ? 2 : 1);
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className={clsx("rounded-lg p-2", iconBgClass)}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <h2 className="text-lg font-bold text-foreground dark:text-white">{title}</h2>
+      </div>
+
+      <div className="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        {/* Grid Lines */}
+        <div className="absolute inset-x-6 bottom-14 top-6 flex flex-col justify-between pointer-events-none">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="w-full border-t border-gray-100 dark:border-navy-700/50" />
+          ))}
+        </div>
+
+        <div className="relative flex h-32 items-end gap-1.5 sm:gap-3">
+          {reversedData.map((year, idx) => {
+            const value = (year as any)[valueKey] || 0;
+            const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+            const showLabel = (year.year % showEveryNthYear === 0) || idx === 0 || idx === reversedData.length - 1;
+
+            return (
+              <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end">
+                <div
+                  className={clsx("w-full rounded-t-sm transition-all relative z-10", colorClass)}
+                  style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
+                >
+                  {/* Tooltip-like Label */}
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 dark:bg-navy-600 text-white text-[10px] py-1 px-2 rounded font-bold项目 whitespace-nowrap z-20 shadow-xl">
+                    {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
+                  </div>
+                </div>
+                <div className={clsx(
+                  "mt-3 text-[10px] font-bold transition-colors",
+                  showLabel ? "text-secondary dark:text-navy-400" : "text-transparent"
+                )}>
+                  {year.year}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export default function FleetStatsPage() {
@@ -102,96 +176,42 @@ export default function FleetStatsPage() {
       </div>
 
       {/* Detailed Stats Table & Charts */}
-      <div className="space-y-12">
-        {/* Count Chart */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-              <Bike className="h-6 w-6" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground dark:text-white">Anzahl Motorräder pro Jahr</h2>
-          </div>
-          
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden">
-            <div className="flex h-40 items-end gap-2 sm:gap-4 px-2">
-              {[...stats.yearly].reverse().map((year) => (
-                <div key={year.year} className="group relative flex-1 flex flex-col items-center">
-                  <div 
-                    className="w-full bg-amber-500 rounded-t-lg transition-all hover:bg-amber-400 relative"
-                    style={{ height: `${(year.motorcycleCount / stats.overall.maxYearlyCount) * 100}%`, minHeight: year.motorcycleCount > 0 ? '4px' : '0px' }}
-                  >
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-10">
-                      {year.motorcycleCount} {year.motorcycleCount === 1 ? 'Bike' : 'Bikes'}
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400">
-                    {year.year}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+      <div className="space-y-8">
+        <ChartSection
+          title="Anzahl Motorräder"
+          icon={Bike}
+          data={stats.yearly}
+          maxValue={stats.overall.maxYearlyCount}
+          valueKey="motorcycleCount"
+          unit=""
+          colorClass="bg-amber-500 hover:bg-amber-400"
+          iconBgClass="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+        />
 
-        {/* Distance Chart */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-              <BarChart3 className="h-6 w-6" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground dark:text-white">Fahrleistung pro Jahr</h2>
-          </div>
-          
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden">
-            <div className="flex h-40 items-end gap-2 sm:gap-4 px-2">
-              {[...stats.yearly].reverse().map((year) => (
-                <div key={year.year} className="group relative flex-1 flex flex-col items-center">
-                  <div 
-                    className="w-full bg-indigo-500 rounded-t-lg transition-all hover:bg-indigo-400 relative"
-                    style={{ height: `${(year.distance / stats.overall.maxYearlyDistance) * 100}%`, minHeight: year.distance > 0 ? '4px' : '0px' }}
-                  >
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-10">
-                      {formatNumber(year.distance)} km
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400">
-                    {year.year}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ChartSection
+          title="Fahrleistung"
+          icon={BarChart3}
+          data={stats.yearly}
+          maxValue={stats.overall.maxYearlyDistance}
+          valueKey="distance"
+          unit=" km"
+          colorClass="bg-indigo-500 hover:bg-indigo-400"
+          iconBgClass="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+        />
 
-        {/* Cost Chart */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-              <Wallet className="h-6 w-6" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground dark:text-white">Unterhaltskosten pro Jahr</h2>
-          </div>
-          
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden">
-            <div className="flex h-40 items-end gap-2 sm:gap-4 px-2">
-              {[...stats.yearly].reverse().map((year) => (
-                <div key={year.year} className="group relative flex-1 flex flex-col items-center">
-                  <div 
-                    className="w-full bg-emerald-500 rounded-t-lg transition-all hover:bg-emerald-400 relative"
-                    style={{ height: `${(year.cost / stats.overall.maxYearlyCost) * 100}%`, minHeight: year.cost > 0 ? '4px' : '0px' }}
-                  >
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-10">
-                      {formatCurrency(year.cost)}
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400">
-                    {year.year}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ChartSection
+          title="Unterhaltskosten"
+          icon={Wallet}
+          data={stats.yearly}
+          maxValue={stats.overall.maxYearlyCost}
+          valueKey="cost"
+          unit=""
+          isCurrency
+          colorClass="bg-emerald-500 hover:bg-emerald-400"
+          iconBgClass="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+        />
+
+        {/* Yearly Data Table */}
 
         {/* Yearly Data Table */}
         <section className="space-y-6 pb-10">
