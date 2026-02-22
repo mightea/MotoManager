@@ -174,11 +174,10 @@ export async function regenerateAllDocumentPreviews(db: Database) {
     const previewsDir = path.join(process.cwd(), "data", "previews");
     await fs.mkdir(previewsDir, { recursive: true });
 
-    let count = 0;
-    for (const doc of allDocs) {
+    const previewPromises = allDocs.map(async (doc) => {
         // Only process PDFs based on file extension
         if (!doc.filePath.toLowerCase().endsWith(".pdf")) {
-            continue;
+            return false;
         }
 
         const relativeFilePath = doc.filePath.startsWith("/") ? doc.filePath.substring(1) : doc.filePath;
@@ -207,12 +206,15 @@ export async function regenerateAllDocumentPreviews(db: Database) {
                     .set({ previewPath: newWebPath })
                     .where(eq(documents.id, doc.id));
 
-                count++;
+                return true;
             }
         } catch (e) {
             console.error(`Failed to regenerate preview for doc ${doc.id}:`, e);
             // Continue with next doc
         }
-    }
-    return count;
+        return false;
+    });
+
+    const results = await Promise.all(previewPromises);
+    return results.filter(Boolean).length;
 }

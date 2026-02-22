@@ -339,6 +339,13 @@ export default function Settings() {
           )}
         </div>
       </section>
+
+      {/* Version Info */}
+      <div className="pt-4 text-center">
+        <p className="text-xs text-secondary/50 dark:text-navy-500">
+          MotoManager v{process.env.APP_VERSION}
+        </p>
+      </div>
     </div>
   );
 }

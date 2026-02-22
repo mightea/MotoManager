@@ -13,3 +13,7 @@ export function isRegistrationEnabled(): boolean {
 
   return true;
 }
+
+export function getVersion(): string {
+  return process.env.APP_VERSION ?? "0.0.0";
+}
