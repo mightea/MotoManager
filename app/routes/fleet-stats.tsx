@@ -86,32 +86,34 @@ function ChartSection({
           ))}
         </div>
 
-        <div className="relative flex h-32 items-end gap-1.5 sm:gap-3">
-          {reversedData.map((year, idx) => {
-            const value = (year as any)[valueKey] || 0;
-            const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
-            const showLabel = (year.year % showEveryNthYear === 0) || idx === 0 || idx === reversedData.length - 1;
+        <div className="overflow-x-auto pb-2 -mx-2 px-2 custom-scrollbar">
+          <div className="relative flex h-32 items-end gap-1.5 sm:gap-3 min-w-[max-content]">
+            {reversedData.map((year, idx) => {
+              const value = (year as any)[valueKey] || 0;
+              const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+              const showLabel = (year.year % showEveryNthYear === 0) || idx === 0 || idx === reversedData.length - 1;
 
-            return (
-              <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end">
-                <div
-                  className={clsx("w-full rounded-t-sm transition-all relative z-10", colorClass)}
-                  style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
-                >
-                  {/* Tooltip-like Label */}
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 dark:bg-navy-600 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-20 shadow-xl">
-                    {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
+              return (
+                <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end min-w-[2.5rem] sm:min-w-[3.5rem]">
+                  <div
+                    className={clsx("w-full rounded-t-sm transition-all relative z-10", colorClass)}
+                    style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
+                  >
+                    {/* Tooltip-like Label */}
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 dark:bg-navy-600 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-20 shadow-xl">
+                      {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
+                    </div>
+                  </div>
+                  <div className={clsx(
+                    "mt-3 text-[10px] font-bold transition-colors",
+                    showLabel ? "text-secondary dark:text-navy-400" : "text-transparent"
+                  )}>
+                    {year.year}
                   </div>
                 </div>
-                <div className={clsx(
-                  "mt-3 text-[10px] font-bold transition-colors",
-                  showLabel ? "text-secondary dark:text-navy-400" : "text-transparent"
-                )}>
-                  {year.year}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
@@ -266,10 +268,10 @@ export default function FleetStatsPage() {
                 <thead className="bg-gray-50 text-xs uppercase text-secondary dark:bg-navy-900 dark:text-navy-300">
                   <tr>
                     <th className="px-6 py-4 font-bold tracking-wider">Jahr</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-right">Motorräder</th>
+                    <th className="hidden sm:table-cell px-6 py-4 font-bold tracking-wider text-right">Motorräder</th>
                     <th className="px-6 py-4 font-bold tracking-wider text-right">Distanz</th>
                     <th className="px-6 py-4 font-bold tracking-wider text-right">Kosten</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-right">Ø Kosten/km</th>
+                    <th className="hidden sm:table-cell px-6 py-4 font-bold tracking-wider text-right">Ø Kosten/km</th>
                     <th className="px-6 py-4 w-10"></th>
                   </tr>
                 </thead>
@@ -289,7 +291,7 @@ export default function FleetStatsPage() {
                           <td className="px-6 py-4 font-bold text-foreground dark:text-white">
                             {year.year}
                           </td>
-                          <td className="px-6 py-4 text-right text-secondary dark:text-navy-300 tabular-nums">
+                          <td className="hidden sm:table-cell px-6 py-4 text-right text-secondary dark:text-navy-300 tabular-nums">
                             {year.motorcycleCount}
                           </td>
                           <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
@@ -298,10 +300,10 @@ export default function FleetStatsPage() {
                           <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
                             {formatCurrency(year.cost)}
                           </td>
-                          <td className="px-6 py-4 text-right text-secondary dark:text-navy-400 tabular-nums">
+                          <td className="hidden sm:table-cell px-6 py-4 text-right text-secondary dark:text-navy-400 tabular-nums">
                             {year.distance > 0 ? formatCurrency(avgCostPerKm) : '-'}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 text-right">
                             <ChevronDown className={clsx(
                               "h-4 w-4 text-secondary transition-transform",
                               isExpanded && "rotate-180"
