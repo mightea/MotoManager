@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.2...2026.3.0) (2026-02-22)
+
+### Features
+
+* add last login time to user management in admin panel ([1c004d8](https://github.com/mightea/MotoManager/commit/1c004d830f3093c76a311947adf12424fb6857bf))
+* calculate tire age from DOT code for maintenance and insights ([54fea9c](https://github.com/mightea/MotoManager/commit/54fea9c84e12ce01a6177e9f2849e48fabfbe115))
+* display app version in settings and re-apply lint fixes ([e112feb](https://github.com/mightea/MotoManager/commit/e112febbb7496f4134e3d8fe5424f0b65e21a551))
+
 ## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.1...2026.3.0) (2026-02-22)
 
 ### Features
