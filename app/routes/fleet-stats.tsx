@@ -9,7 +9,6 @@ import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import { useState, Fragment } from "react";
-import { MaintenanceList } from "~/components/maintenance-list";
 
 export function meta() {
   return [
@@ -143,15 +142,6 @@ function YearlyDetails({ yearStats }: { yearStats: any }) {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Maintenance List */}
-      <div className="space-y-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-secondary dark:text-navy-500">Wartungshistorie {yearStats.year}</h4>
-        <MaintenanceList 
-          records={yearStats.records} 
-          onEdit={() => {}} // Read-only in this view
-        />
       </div>
     </div>
   );
