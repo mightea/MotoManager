@@ -20,6 +20,7 @@ export type MotorcycleDashboardItem = (Motorcycle & {
   lastActivity: string | null;
   image: string | null;
   hasOverdueMaintenance: boolean;
+  overdueMaintenanceItems: string[];
 };
 
 export type DashboardStats = {
@@ -157,7 +158,10 @@ export function buildDashboardItems({
     });
 
     const insights = getMaintenanceInsights(relatedMaintenance, maxOdometer);
-    const hasOverdueMaintenance = insights.some(i => i.status === "overdue");
+    const overdueMaintenanceItems = insights
+      .filter((i) => i.status === "overdue")
+      .map((i) => i.label);
+    const hasOverdueMaintenance = overdueMaintenanceItems.length > 0;
 
     return {
       ...moto,
@@ -169,6 +173,7 @@ export function buildDashboardItems({
       lastActivity,
       image: moto.image,
       hasOverdueMaintenance,
+      overdueMaintenanceItems,
     };
   });
 }

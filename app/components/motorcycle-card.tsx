@@ -63,12 +63,12 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
             </div>
             <div className="flex gap-2">
               {moto.hasOverdueMaintenance && (
-                <span className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
+                <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-lg shadow-red-900/20 ring-1 ring-white/20">
                   Wartung fällig
                 </span>
               )}
               {moto.isVeteran && (
-                <span className="inline-flex items-center rounded-full border border-white/30 bg-white/20 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
+                <span className="inline-flex items-center rounded-full border border-white/30 bg-white/20 px-2.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
                   Veteran
                 </span>
               )}
@@ -80,6 +80,23 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
       {/* Card Stats Grid */}
       <div className="flex-1 p-4">
         <div className="space-y-3">
+          {moto.hasOverdueMaintenance && (
+            <div className="mb-4 space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
+                Überfällige Wartung
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {moto.overdueMaintenanceItems.map((item) => (
+                  <span
+                    key={item}
+                    className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-inset ring-red-600/10 dark:bg-red-900/30 dark:text-red-300 dark:ring-red-400/20"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <StatisticEntry
             icon={Gauge}
