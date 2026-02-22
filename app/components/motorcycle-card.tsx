@@ -115,17 +115,19 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
             checkValue={moto.numberOfIssues}
           />
 
-          <StatisticEntry
-            icon={CalendarDays}
-            label="Nächste MFK"
-            value={moto.nextInspection?.relativeLabel || "Unbekannt"}
-            valueClassName={
-              moto.nextInspection?.isOverdue
-                ? "text-red-600 dark:text-red-400"
-                : "text-foreground dark:text-gray-100"
-            }
-            checkValue={moto.nextInspection?.relativeLabel}
-          />
+          {moto.nextInspection?.relativeLabel && (
+            <StatisticEntry
+              icon={CalendarDays}
+              label="Nächste MFK"
+              value={moto.nextInspection.relativeLabel}
+              valueClassName={
+                moto.nextInspection.isOverdue
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-foreground dark:text-gray-100"
+              }
+              checkValue={moto.nextInspection.relativeLabel}
+            />
+          )}
 
         </div>
       </div>
