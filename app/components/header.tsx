@@ -13,6 +13,7 @@ export function Header({ user }: { user: User | null }) {
 
   const navItems = [
     { label: "Übersicht", href: "/" },
+    { label: "Statistik", href: "/fleet-stats" },
     { label: "Dokumente", href: "/documents" },
     { label: "Einstellungen", href: "/settings" },
   ];
