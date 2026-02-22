@@ -67,15 +67,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       });
     }
 
-    // Force webp if supported, or if it was already requested via cache key logic
-    if (supportsWebp) {
-      await pipeline.webp({ quality: 80 }).toFile(cacheFilePath);
-    } else {
-      // If webp not supported but resizing was requested, still output something cached
-      // For simplicity, we use webp in cache anyway as all modern browsers support it,
-      // but the logic above allows for expansion.
-      await pipeline.webp({ quality: 80 }).toFile(cacheFilePath);
-    }
+    // Always encode resized images as WebP for caching
+    await pipeline.webp({ quality: 80 }).toFile(cacheFilePath);
 
     return serveFile(cacheFilePath, cacheKey);
   } catch (error) {
