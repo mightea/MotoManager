@@ -178,7 +178,7 @@ export default function FleetStatsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-10 pt-28 pb-24 animate-fade-in max-w-6xl">
+    <div className="container mx-auto p-4 space-y-10 pt-4 pb-24 animate-fade-in max-w-6xl">
       <div className="flex items-center gap-4">
         <Link
           to="/"
