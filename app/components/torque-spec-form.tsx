@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Button } from "./button";
 import type { TorqueSpecification } from "~/db/schema";
 
+import { Pencil, Trash2 } from "lucide-react";
+
 type VariationType = "none" | "plus_minus" | "range";
 
 interface TorqueSpecFormProps {
@@ -11,6 +13,7 @@ interface TorqueSpecFormProps {
   existingCategories?: string[];
   onClose: () => void;
   onSubmit?: () => void;
+  onDelete?: (spec: TorqueSpecification) => void;
 }
 
 export function TorqueSpecForm({
@@ -19,6 +22,7 @@ export function TorqueSpecForm({
   existingCategories = [],
   onClose,
   onSubmit,
+  onDelete,
 }: TorqueSpecFormProps) {
   const submit = useSubmit();
 
@@ -171,13 +175,28 @@ export function TorqueSpecForm({
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4">
-        <Button type="button" variant="ghost" onClick={onClose}>
-          Abbrechen
-        </Button>
-        <Button type="submit">
-          Speichern
-        </Button>
+      <div className="flex justify-between items-center pt-4">
+        <div>
+          {initialValues && onDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onDelete(initialValues)}
+              className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Löschen
+            </Button>
+          )}
+        </div>
+        <div className="flex justify-end gap-3">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Abbrechen
+          </Button>
+          <Button type="submit">
+            Speichern
+          </Button>
+        </div>
       </div>
     </Form>
   );

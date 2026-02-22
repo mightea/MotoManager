@@ -3,6 +3,7 @@ import {
   useParams,
   useLocation,
   useActionData,
+  useSubmit,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.torque-specifications";
 import { getDb } from "~/db";
@@ -23,7 +24,12 @@ import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { TorqueSpecForm } from "~/components/torque-spec-form";
 import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
-import { createTorqueSpecification, updateTorqueSpecification } from "~/db/providers/motorcycles.server";
+import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
+import { 
+  createTorqueSpecification, 
+  updateTorqueSpecification,
+  deleteTorqueSpecification 
+} from "~/db/providers/motorcycles.server";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -138,7 +144,7 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
   const db = await getDb();
 
-  if (intent === "createTorqueSpec" || intent === "updateTorqueSpec" || intent === "importTorqueSpecs") {
+  if (intent === "createTorqueSpec" || intent === "updateTorqueSpec" || intent === "importTorqueSpecs" || intent === "deleteTorqueSpec") {
     const motorcycleId = Number(formData.get("motorcycleId"));
 
     // Security check: Ensure user owns the target motorcycle
@@ -148,6 +154,15 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (!motorcycle || motorcycle.userId !== user.id) {
       return data({ error: "Nicht autorisiert." }, { status: 403, headers: mergeHeaders(headers) });
+    }
+
+    if (intent === "deleteTorqueSpec") {
+      const torqueId = Number(formData.get("torqueId"));
+      if (!torqueId) {
+        return data({ error: "ID fehlt für Löschen." }, { status: 400, headers: mergeHeaders(headers) });
+      }
+      await deleteTorqueSpecification(db, torqueId, motorcycleId);
+      return data({ success: true }, { headers: mergeHeaders(headers) });
     }
 
     if (intent === "importTorqueSpecs") {
@@ -253,6 +268,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     allCategories,
   } = loaderData;
   const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
   const params = useParams<{ slug?: string; id?: string }>();
   const slug = params.slug ?? createMotorcycleSlug(motorcycle.make, motorcycle.model);
   const motorcycleIdParam = params.id ?? motorcycle.id.toString();
@@ -271,6 +287,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingSpec, setEditingSpec] = useState<TorqueSpecification | null>(null);
+  const [deletingSpec, setDeletingSpec] = useState<TorqueSpecification | null>(null);
 
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
@@ -278,8 +295,18 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       setIsAddModalOpen(false);
       setIsImportModalOpen(false);
       setEditingSpec(null);
+      setDeletingSpec(null);
     }
   }, [actionData]);
+
+  const handleDelete = () => {
+    if (!deletingSpec) return;
+    const formData = new FormData();
+    formData.append("intent", "deleteTorqueSpec");
+    formData.append("motorcycleId", motorcycle.id.toString());
+    formData.append("torqueId", deletingSpec.id.toString());
+    submit(formData, { method: "post" });
+  };
 
   return (
     <div className="container mx-auto max-w-7xl space-y-6 px-4 pb-24 pt-0 md:p-6 md:space-y-8">
@@ -454,9 +481,18 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             initialValues={editingSpec}
             existingCategories={allCategories}
             onClose={() => setEditingSpec(null)}
+            onDelete={(spec) => setDeletingSpec(spec)}
           />
         )}
       </Modal>
+
+      <DeleteConfirmationDialog
+        isOpen={Boolean(deletingSpec)}
+        title="Anzugsmoment löschen"
+        description={`Möchtest du das Anzugsmoment "${deletingSpec?.name}" wirklich löschen?`}
+        onConfirm={handleDelete}
+        onCancel={() => setDeletingSpec(null)}
+      />
 
       <ImportTorqueSpecsDialog
         isOpen={isImportModalOpen}
