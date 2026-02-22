@@ -336,7 +336,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name, icon: MapPin },
                       ] : []),
 
-                      { label: "Kosten", value: record.cost !== null && record.cost !== undefined ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null, icon: Coins },
+                      { label: "Kosten", value: record.cost && record.cost > 0 ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null, icon: Coins },
                     ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 
                     return (
