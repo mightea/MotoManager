@@ -296,7 +296,6 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                   {group.originalRecords.map((record) => {
                     const metadataItems = [
                       { label: "Beschreibung", value: record.description, icon: Info },
-                      { label: "Typ", value: maintenanceTypeLabels[record.type] || record.type, icon: Tag },
                       { label: "Marke", value: record.brand, icon: Tag },
                       { label: "Modell", value: record.model, icon: Hash },
 
