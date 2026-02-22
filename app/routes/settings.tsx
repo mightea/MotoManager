@@ -98,7 +98,7 @@ export default function Settings() {
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-8 p-4 pt-28 pb-20">
+    <div className="mx-auto w-full max-w-3xl space-y-8 p-4 pt-4 sm:pt-28 pb-20">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground dark:text-white">
           Einstellungen

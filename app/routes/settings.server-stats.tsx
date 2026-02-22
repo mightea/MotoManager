@@ -76,7 +76,7 @@ export default function ServerStats() {
     const { stats, avgMotoPerUser, avgDocsPerUser } = useLoaderData<typeof loader>();
 
     return (
-        <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-28 pb-20">
+        <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-4 sm:pt-28 pb-20">
             <div className="flex items-center gap-4">
                 <Link
                     to="/settings"
