@@ -3,10 +3,13 @@ import type { Route } from "./+types/home";
 import { getDb } from "~/db";
 import {
   motorcycles,
+  issues,
+  maintenanceRecords,
+  locationRecords,
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { userPrefs } from "~/services/preferences.server";
 import { buildDashboardData } from "~/utils/home-stats";
@@ -38,7 +41,6 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  // ... existing loader logic ...
   const { user, headers: authHeaders } = await requireUser(request);
   const db = await getDb();
 
@@ -46,10 +48,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     where: eq(motorcycles.userId, user.id),
   });
 
-  const allIssues = await db.query.issues.findMany();
-  const allMaintenance = await db.query.maintenanceRecords.findMany();
-  const allLocations = await db.query.locationRecords.findMany();
-  const currencies = await db.query.currencySettings.findMany();
+  const motoIds = motorcyclesList.map(m => m.id);
+
+  const [allIssues, allMaintenance, allLocations, currencies] = await Promise.all([
+    motoIds.length > 0
+      ? db.query.issues.findMany({ where: inArray(issues.motorcycleId, motoIds) })
+      : Promise.resolve([]),
+    motoIds.length > 0
+      ? db.query.maintenanceRecords.findMany({ where: inArray(maintenanceRecords.motorcycleId, motoIds) })
+      : Promise.resolve([]),
+    motoIds.length > 0
+      ? db.query.locationRecords.findMany({ where: inArray(locationRecords.motorcycleId, motoIds) })
+      : Promise.resolve([]),
+    db.query.currencySettings.findMany(),
+  ]);
 
   const { items: cards, stats } = buildDashboardData({
     motorcycles: motorcyclesList,

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  index,
   int,
   integer,
   primaryKey,
@@ -62,7 +63,9 @@ export const motorcycles = sqliteTable("motorcycles", {
   purchasePrice: real("purchase_price"), // decimal‐friendly REAL column
   normalizedPurchasePrice: real("normalized_purchase_price"), // Converted to base currency (CHF)
   currencyCode: text("currency_code"),
-});
+}, (table) => ({
+  userIdIdx: index("motorcycles_user_id_idx").on(table.userId),
+}));
 
 export type MaintenanceType =
   | "tire"
@@ -125,7 +128,9 @@ export const maintenanceRecords = sqliteTable("maintenance_records", {
 
   // Location-specific fields
   locationId: int("location_id").references(() => locations.id),
-});
+}, (table) => ({
+  motoIdIdx: index("maintenance_motorcycle_id_idx").on(table.motorcycleId),
+}));
 
 export const issues = sqliteTable("issues", {
   id: int().primaryKey({ autoIncrement: true }),
@@ -141,7 +146,9 @@ export const issues = sqliteTable("issues", {
     .notNull()
     .default("new"),
   date: text("date").default(sql`(CURRENT_DATE)`), // SQLite DATE stored as TEXT
-});
+}, (table) => ({
+  motoIdIdx: index("issues_motorcycle_id_idx").on(table.motorcycleId),
+}));
 
 export const locations = sqliteTable("locations", {
   id: int().primaryKey({ autoIncrement: true }),
@@ -149,7 +156,9 @@ export const locations = sqliteTable("locations", {
   userId: int("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-});
+}, (table) => ({
+  userIdIdx: index("locations_user_id_idx").on(table.userId),
+}));
 
 export const currencySettings = sqliteTable("currencies", {
   id: int().primaryKey({ autoIncrement: true }),
@@ -174,7 +183,9 @@ export const locationRecords = sqliteTable("location_records", {
   date: text("date")
     .notNull()
     .default(sql`(CURRENT_DATE)`), // SQLite DATE stored as TEXT
-});
+}, (table) => ({
+  motoIdIdx: index("location_records_motorcycle_id_idx").on(table.motorcycleId),
+}));
 
 export const torqueSpecs = sqliteTable("torque_specs", {
   id: int().primaryKey({ autoIncrement: true }),

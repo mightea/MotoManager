@@ -44,6 +44,7 @@ export function DocumentCard({
             src={document.previewPath}
             alt={document.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -51,6 +52,7 @@ export function DocumentCard({
               src="/images/pdf-placeholder.svg"
               alt="PDF"
               className="h-20 w-20 opacity-50"
+              loading="lazy"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
                 e.currentTarget.nextElementSibling?.classList.remove("hidden");
