@@ -6,8 +6,10 @@ import { eq, inArray } from "drizzle-orm";
 import { requireUser } from "~/services/auth.server";
 import { calculateFleetStats } from "~/utils/fleet-stats";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
-import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft } from "lucide-react";
+import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "lucide-react";
 import clsx from "clsx";
+import { useState, Fragment } from "react";
+import { MaintenanceList } from "~/components/maintenance-list";
 
 export function meta() {
   return [
@@ -97,7 +99,7 @@ function ChartSection({
                   style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
                 >
                   {/* Tooltip-like Label */}
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 dark:bg-navy-600 text-white text-[10px] py-1 px-2 rounded font-bold项目 whitespace-nowrap z-20 shadow-xl">
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 dark:bg-navy-600 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-20 shadow-xl">
                     {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
                   </div>
                 </div>
@@ -116,8 +118,50 @@ function ChartSection({
   );
 }
 
+function YearlyDetails({ yearStats }: { yearStats: any }) {
+  return (
+    <div className="p-6 bg-gray-50/50 dark:bg-navy-900/30 border-t border-gray-100 dark:border-navy-700 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
+      {/* Motorcycles Summary */}
+      <div className="space-y-4">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-secondary dark:text-navy-500">Fahrzeuge in {yearStats.year}</h4>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {yearStats.motorcycles.map((m: any) => (
+            <div key={m.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+              <div className="font-bold text-foreground dark:text-white mb-2">{m.make} {m.model}</div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-secondary dark:text-navy-500">Distanz</div>
+                  <div className="font-medium">{formatNumber(m.distance)} km</div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-secondary dark:text-navy-500">Kosten</div>
+                  <div className="font-medium">{formatCurrency(m.cost)}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Maintenance List */}
+      <div className="space-y-4">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-secondary dark:text-navy-500">Wartungshistorie {yearStats.year}</h4>
+        <MaintenanceList 
+          records={yearStats.records} 
+          onEdit={() => {}} // Read-only in this view
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function FleetStatsPage() {
   const { stats } = useLoaderData<typeof loader>();
+  const [expandedYear, setExpandedYear] = useState<number | null>(null);
+
+  const toggleYear = (year: number) => {
+    setExpandedYear(expandedYear === year ? null : year);
+  };
 
   if (stats.yearly.length === 0) {
     return (
@@ -212,46 +256,69 @@ export default function FleetStatsPage() {
         />
 
         {/* Yearly Data Table */}
-
-        {/* Yearly Data Table */}
         <section className="space-y-6 pb-10">
           <h2 className="text-xl font-bold text-foreground dark:text-white px-1">Jahresübersicht</h2>
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-secondary dark:bg-navy-900 dark:text-navy-300">
-                <tr>
-                  <th className="px-6 py-4 font-bold tracking-wider">Jahr</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Motorräder</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Distanz</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Kosten</th>
-                  <th className="px-6 py-4 font-bold tracking-wider text-right">Ø Kosten/km</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-navy-700">
-                {stats.yearly.map((year) => {
-                  const avgCostPerKm = year.distance > 0 ? year.cost / year.distance : 0;
-                  return (
-                    <tr key={year.year} className="group hover:bg-gray-50 dark:hover:bg-navy-700/50">
-                      <td className="px-6 py-4 font-bold text-foreground dark:text-white">
-                        {year.year}
-                      </td>
-                      <td className="px-6 py-4 text-right text-secondary dark:text-navy-300 tabular-nums">
-                        {year.motorcycleCount}
-                      </td>
-                      <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
-                        {formatNumber(year.distance)} km
-                      </td>
-                      <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
-                        {formatCurrency(year.cost)}
-                      </td>
-                      <td className="px-6 py-4 text-right text-secondary dark:text-navy-400 tabular-nums">
-                        {year.distance > 0 ? formatCurrency(avgCostPerKm) : '-'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 text-xs uppercase text-secondary dark:bg-navy-900 dark:text-navy-300">
+                  <tr>
+                    <th className="px-6 py-4 font-bold tracking-wider">Jahr</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-right">Motorräder</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-right">Distanz</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-right">Kosten</th>
+                    <th className="px-6 py-4 font-bold tracking-wider text-right">Ø Kosten/km</th>
+                    <th className="px-6 py-4 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-navy-700">
+                  {stats.yearly.map((year) => {
+                    const avgCostPerKm = year.distance > 0 ? year.cost / year.distance : 0;
+                    const isExpanded = expandedYear === year.year;
+                    return (
+                      <Fragment key={year.year}>
+                        <tr 
+                          className={clsx(
+                            "group cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-navy-700/50",
+                            isExpanded && "bg-gray-50/80 dark:bg-navy-700/30"
+                          )}
+                          onClick={() => toggleYear(year.year)}
+                        >
+                          <td className="px-6 py-4 font-bold text-foreground dark:text-white">
+                            {year.year}
+                          </td>
+                          <td className="px-6 py-4 text-right text-secondary dark:text-navy-300 tabular-nums">
+                            {year.motorcycleCount}
+                          </td>
+                          <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
+                            {formatNumber(year.distance)} km
+                          </td>
+                          <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
+                            {formatCurrency(year.cost)}
+                          </td>
+                          <td className="px-6 py-4 text-right text-secondary dark:text-navy-400 tabular-nums">
+                            {year.distance > 0 ? formatCurrency(avgCostPerKm) : '-'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <ChevronDown className={clsx(
+                              "h-4 w-4 text-secondary transition-transform",
+                              isExpanded && "rotate-180"
+                            )} />
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={6} className="p-0">
+                              <YearlyDetails yearStats={year} />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>
