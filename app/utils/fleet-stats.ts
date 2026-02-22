@@ -14,6 +14,7 @@ export type FleetStats = {
     totalCost: number;
     maxYearlyDistance: number;
     maxYearlyCost: number;
+    maxYearlyCount: number;
   };
 };
 
@@ -95,7 +96,10 @@ export function calculateFleetStats(
       const yearlyMax = odoByYear.get(y);
       
       // Determine if motorcycle was owned this year
-      const purchaseYear = moto.purchaseDate ? new Date(moto.purchaseDate).getFullYear() : startYear;
+      const purchaseDate = moto.purchaseDate ? new Date(moto.purchaseDate) : null;
+      const purchaseYear = purchaseDate ? purchaseDate.getFullYear() : startYear;
+      
+      // We count it if it was purchased in or before this year
       if (y >= purchaseYear) {
         stats.motorcycleCount++;
         
@@ -114,6 +118,7 @@ export function calculateFleetStats(
     totalCost: yearly.reduce((sum, s) => sum + s.cost, 0),
     maxYearlyDistance: Math.max(...yearly.map(s => s.distance), 1),
     maxYearlyCost: Math.max(...yearly.map(s => s.cost), 1),
+    maxYearlyCount: Math.max(...yearly.map(s => s.motorcycleCount), 1),
   };
 
   return { yearly, overall };

@@ -103,6 +103,36 @@ export default function FleetStatsPage() {
 
       {/* Detailed Stats Table & Charts */}
       <div className="space-y-12">
+        {/* Count Chart */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+              <Bike className="h-6 w-6" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground dark:text-white">Anzahl Motorräder pro Jahr</h2>
+          </div>
+          
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden">
+            <div className="flex h-40 items-end gap-2 sm:gap-4 px-2">
+              {[...stats.yearly].reverse().map((year) => (
+                <div key={year.year} className="group relative flex-1 flex flex-col items-center">
+                  <div 
+                    className="w-full bg-amber-500 rounded-t-lg transition-all hover:bg-amber-400 relative"
+                    style={{ height: `${(year.motorcycleCount / stats.overall.maxYearlyCount) * 100}%`, minHeight: year.motorcycleCount > 0 ? '4px' : '0px' }}
+                  >
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-10">
+                      {year.motorcycleCount} {year.motorcycleCount === 1 ? 'Bike' : 'Bikes'}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400">
+                    {year.year}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Distance Chart */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
@@ -113,7 +143,7 @@ export default function FleetStatsPage() {
           </div>
           
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden">
-            <div className="flex h-64 items-end gap-2 sm:gap-4 px-2">
+            <div className="flex h-40 items-end gap-2 sm:gap-4 px-2">
               {[...stats.yearly].reverse().map((year) => (
                 <div key={year.year} className="group relative flex-1 flex flex-col items-center">
                   <div 
@@ -124,7 +154,7 @@ export default function FleetStatsPage() {
                       {formatNumber(year.distance)} km
                     </div>
                   </div>
-                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400 rotate-45 sm:rotate-0">
+                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400">
                     {year.year}
                   </div>
                 </div>
@@ -143,7 +173,7 @@ export default function FleetStatsPage() {
           </div>
           
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden">
-            <div className="flex h-64 items-end gap-2 sm:gap-4 px-2">
+            <div className="flex h-40 items-end gap-2 sm:gap-4 px-2">
               {[...stats.yearly].reverse().map((year) => (
                 <div key={year.year} className="group relative flex-1 flex flex-col items-center">
                   <div 
@@ -154,7 +184,7 @@ export default function FleetStatsPage() {
                       {formatCurrency(year.cost)}
                     </div>
                   </div>
-                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400 rotate-45 sm:rotate-0">
+                  <div className="mt-2 text-xs font-bold text-secondary dark:text-navy-400">
                     {year.year}
                   </div>
                 </div>
