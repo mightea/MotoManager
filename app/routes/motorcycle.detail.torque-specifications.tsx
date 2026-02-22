@@ -366,50 +366,50 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-navy-700">
                   {specs.filter(s => s.category === category).map(spec => (
-                    <div key={spec.id} className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-5 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
+                    <div key={spec.id} className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-lg text-foreground dark:text-white leading-tight">
+                          <h3 className="font-bold text-foreground dark:text-white leading-tight">
                             {spec.name}
                           </h3>
                           <button
                             onClick={() => setEditingSpec(spec)}
-                            className="rounded-lg p-1.5 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light focus:opacity-100"
+                            className="rounded-lg p-1 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light focus:opacity-100"
                             title="Bearbeiten"
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-3.5 w-3.5" />
                           </button>
                         </div>
                         {spec.description && (
-                          <p className="text-sm text-secondary dark:text-navy-400 max-w-xl italic">
+                          <p className="text-xs text-secondary dark:text-navy-400 max-w-xl italic">
                             {spec.description}
                           </p>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 border-t border-gray-50 pt-4 sm:border-0 sm:pt-0 dark:border-navy-700/50">
+                      <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 border-t border-gray-50 pt-3 sm:border-0 sm:pt-0 dark:border-navy-700/50">
                         {spec.toolSize ? (
                           <div className="flex flex-col items-center gap-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/60 dark:text-navy-500">Werkzeug</span>
-                            <div className="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200 dark:border-navy-700 shadow-inner">
-                              <Wrench className="h-3.5 w-3.5 text-primary dark:text-primary-light" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500">Werkzeug</span>
+                            <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/60 dark:border-navy-700 shadow-sm">
+                              <Wrench className="h-3 w-3 text-secondary/70 dark:text-navy-400" />
                               {spec.toolSize}
                             </div>
                           </div>
                         ) : (
-                          <div className="hidden sm:block w-20" /> 
+                          <div className="hidden sm:block w-16" /> 
                         )}
                         
-                        <div className="flex flex-col items-end min-w-[100px]">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/60 dark:text-navy-500 mb-1">Drehmoment</span>
+                        <div className="flex flex-col items-end min-w-[80px]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500 mb-1">Drehmoment</span>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-black tracking-tighter text-primary dark:text-primary-light tabular-nums leading-none">
+                            <span className="text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none">
                               {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
                             </span>
-                            <span className="text-sm font-bold text-secondary dark:text-navy-400">Nm</span>
+                            <span className="text-xs font-bold text-secondary dark:text-navy-400 uppercase">Nm</span>
                           </div>
                           {spec.variation && (
-                            <div className="mt-1 text-[10px] font-bold text-secondary/80 dark:text-navy-500 bg-gray-100 dark:bg-navy-900 px-1.5 py-0.5 rounded-md">
+                            <div className="mt-1 text-[9px] font-bold text-secondary/70 dark:text-navy-500">
                               ± {spec.variation} Nm
                             </div>
                           )}
