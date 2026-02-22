@@ -116,6 +116,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     })
     : [];
 
+  const allCategories = Array.from(new Set([
+    ...specs.map(s => s.category),
+    ...otherSpecs.map(s => s.category),
+  ])).sort();
+
   return data({
     motorcycle,
     nextInspection,
@@ -123,6 +128,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     specs,
     otherMotorcycles,
     otherSpecs,
+    allCategories,
   });
 }
 
@@ -244,6 +250,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     specs,
     otherMotorcycles,
     otherSpecs,
+    allCategories,
   } = loaderData;
   const actionData = useActionData<typeof action>();
   const params = useParams<{ slug?: string; id?: string }>();
@@ -407,6 +414,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       >
         <TorqueSpecForm
           motorcycleId={motorcycle.id}
+          existingCategories={allCategories}
           onClose={() => setIsAddModalOpen(false)}
         />
       </Modal>
@@ -421,6 +429,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           <TorqueSpecForm
             motorcycleId={motorcycle.id}
             initialValues={editingSpec}
+            existingCategories={allCategories}
             onClose={() => setEditingSpec(null)}
           />
         )}

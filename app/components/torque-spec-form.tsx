@@ -8,6 +8,7 @@ type VariationType = "none" | "plus_minus" | "range";
 interface TorqueSpecFormProps {
   motorcycleId: number;
   initialValues?: TorqueSpecification | null;
+  existingCategories?: string[];
   onClose: () => void;
   onSubmit?: () => void;
 }
@@ -15,10 +16,14 @@ interface TorqueSpecFormProps {
 export function TorqueSpecForm({
   motorcycleId,
   initialValues,
+  existingCategories = [],
   onClose,
   onSubmit,
 }: TorqueSpecFormProps) {
   const submit = useSubmit();
+
+  const defaultCategories = ["Motor", "Fahrwerk", "Bremsen", "Antrieb", "Elektrik", "Karosserie"];
+  const combinedCategories = Array.from(new Set([...defaultCategories, ...existingCategories])).sort();
 
   const getInitialVariationType = (): VariationType => {
     if (initialValues?.torqueEnd) return "range";
@@ -58,12 +63,9 @@ export function TorqueSpecForm({
           className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
         <datalist id="category-suggestions">
-          <option value="Motor" />
-          <option value="Fahrwerk" />
-          <option value="Bremsen" />
-          <option value="Antrieb" />
-          <option value="Elektrik" />
-          <option value="Karosserie" />
+          {combinedCategories.map(cat => (
+            <option key={cat} value={cat} />
+          ))}
         </datalist>
       </div>
 
