@@ -18,10 +18,6 @@ tsconfig.tsbuildinfo
 
 db.sqlite*
 
-
-
-GEMINI.md
-
 data/images/
 data/images/cache/
 
