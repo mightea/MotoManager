@@ -80,7 +80,7 @@ export function Header({ user }: { user: User | null }) {
   return (
     <div
       className={clsx(
-        "z-40 flex justify-center pointer-events-none",
+        "z-40 flex justify-center pointer-events-none print:hidden",
         // On mobile motorcycle detail: non-fixed, scrolls with page naturally
         isMotorcycleDetail
           ? "relative md:fixed md:top-4 md:px-4 md:left-0 md:right-0 transition-transform duration-300 ease-out"
