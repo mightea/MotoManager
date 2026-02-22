@@ -25,6 +25,13 @@ import { Button } from "~/components/button";
 import { useState } from "react";
 import { Pencil, Trash2, Plus, Shield, Coins } from "lucide-react";
 
+export function meta() {
+  return [
+    { title: "Admin-Bereich - Moto Manager" },
+    { name: "description", content: "Systemweite Verwaltung von Benutzern und Währungen." },
+  ];
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
   requireAdmin(user);

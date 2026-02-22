@@ -30,6 +30,13 @@ import { processImageUpload } from "~/services/images.server";
 import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
 
+export function meta() {
+  return [
+    { title: "Garage - Moto Manager" },
+    { name: "description", content: "Verwalte deine Motorräder, Wartungen und Dokumente." },
+  ];
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   // ... existing loader logic ...
   const { user, headers: authHeaders } = await requireUser(request);

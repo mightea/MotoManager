@@ -25,6 +25,17 @@ import { TorqueSpecForm } from "~/components/torque-spec-form";
 import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
 import { createTorqueSpecification, updateTorqueSpecification } from "~/db/providers/motorcycles.server";
 
+export function meta({ data }: Route.MetaArgs) {
+  if (!data || !data.motorcycle) {
+    return [{ title: "Anzugsmomente - Moto Manager" }];
+  }
+  const { make, model } = data.motorcycle;
+  return [
+    { title: `Anzugsmomente: ${make} ${model} - Moto Manager` },
+    { name: "description", content: `Drehmoment-Spezifikationen für ${make} ${model}.` },
+  ];
+}
+
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
   const db = await getDb();
