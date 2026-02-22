@@ -13,6 +13,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const actualFilename: string = filename;
 
   const url = new URL(request.url);
+  const acceptHeader = request.headers.get("Accept") || "";
+  const supportsWebp = acceptHeader.includes("image/webp");
 
   const widthParam = url.searchParams.get("width");
   const heightParam = url.searchParams.get("height");
@@ -32,16 +34,16 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  // If no resizing requested, serve original
-  if (!width && !height) {
+  // If no resizing requested and no webp conversion needed, serve original
+  if (!width && !height && !supportsWebp) {
     return serveFile(originalFilePath, actualFilename);
   }
 
   // Check cache
   const cacheDir = path.join(process.cwd(), "data", "images", "cache");
-  const cacheKey = `${path.basename(actualFilename, path.extname(actualFilename))}_w${width || 'auto'}_h${height || 'auto'}.webp`;
+  // Include supportsWebp in cache key if we are forcing it
+  const cacheKey = `${path.basename(actualFilename, path.extname(actualFilename))}_w${width || 'orig'}_h${height || 'auto'}${supportsWebp ? '_webp' : ''}.webp`;
   const cacheFilePath = path.join(cacheDir, cacheKey);
-  console.log(`Image loader: Checking cache for ${cacheFilePath}`);
 
   try {
     await fs.promises.access(cacheFilePath, fs.constants.F_OK);
@@ -51,22 +53,31 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   }
 
   try {
-    // Create cache dir if not exists (although we created it via shell, good to be safe)
+    // Create cache dir if not exists
     await fs.promises.mkdir(cacheDir, { recursive: true });
 
     const pipeline = sharp(originalFilePath);
 
-    pipeline.resize({
-      width: width || undefined,
-      height: height || undefined,
-      fit: 'cover',
-      withoutEnlargement: true
-    });
+    if (width || height) {
+      pipeline.resize({
+        width: width || undefined,
+        height: height || undefined,
+        fit: 'cover',
+        withoutEnlargement: true
+      });
+    }
 
-    // Force webp for cached images as it is generally smaller and we are using it elsewhere
-    await pipeline.webp({ quality: 80 }).toFile(cacheFilePath);
+    // Force webp if supported, or if it was already requested via cache key logic
+    if (supportsWebp) {
+      await pipeline.webp({ quality: 80 }).toFile(cacheFilePath);
+    } else {
+      // If webp not supported but resizing was requested, still output something cached
+      // For simplicity, we use webp in cache anyway as all modern browsers support it,
+      // but the logic above allows for expansion.
+      await pipeline.webp({ quality: 80 }).toFile(cacheFilePath);
+    }
 
-    return serveFile(cacheFilePath, actualFilename);
+    return serveFile(cacheFilePath, cacheKey);
   } catch (error) {
     console.error("[Images Loader] Error resizing image:", error);
     // Fallback to original if resize fails

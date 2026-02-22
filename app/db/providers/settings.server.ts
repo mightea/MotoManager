@@ -14,6 +14,10 @@ import {
 
 type Database = LibSQLDatabase<typeof schema>;
 
+let currencyCache: typeof currencySettings.$inferSelect[] | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
 const defaultCurrencyPreset = AVAILABLE_CURRENCY_PRESETS.find(
   (currency) => currency.code === DEFAULT_CURRENCY_CODE,
 );
@@ -43,6 +47,7 @@ async function upsertDefaultCurrency(db: Database) {
     label: defaultCurrencyPreset!.label,
     conversionFactor: defaultCurrencyPreset!.conversionFactor,
   });
+  currencyCache = null;
 }
 
 export async function ensureDefaultCurrency(db: Database) {
@@ -70,7 +75,15 @@ export async function createLocation(db: Database, values: NewLocation) {
 }
 
 export async function getCurrencies(db: Database) {
-  return db.select().from(currencySettings).orderBy(currencySettings.code);
+  const now = Date.now();
+  if (currencyCache && (now - lastCacheTime < CACHE_TTL)) {
+    return currencyCache;
+  }
+
+  const results = await db.select().from(currencySettings).orderBy(currencySettings.code);
+  currencyCache = results;
+  lastCacheTime = now;
+  return results;
 }
 
 export async function createCurrencySetting(
@@ -81,6 +94,7 @@ export async function createCurrencySetting(
     .insert(currencySettings)
     .values(values)
     .returning();
+  currencyCache = null;
   return record ?? null;
 }
 
@@ -120,6 +134,7 @@ export async function updateCurrencyByCode(
     .set({ conversionFactor })
     .where(eq(currencySettings.code, code))
     .returning();
+  currencyCache = null;
   return record ?? null;
 }
 
@@ -133,6 +148,7 @@ export async function updateCurrencySetting(
     .set(values)
     .where(eq(currencySettings.id, currencyId))
     .returning();
+  currencyCache = null;
   return record ?? null;
 }
 
@@ -144,5 +160,6 @@ export async function deleteCurrencySetting(
     .delete(currencySettings)
     .where(eq(currencySettings.id, currencyId))
     .returning();
+  currencyCache = null;
   return deleted.at(0) ?? null;
 }
