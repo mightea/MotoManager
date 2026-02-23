@@ -131,7 +131,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings() {
-  const { locations, userAuthenticators } = useLoaderData<typeof loader>();
+  const { locations, userAuthenticators, settings } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
@@ -217,7 +217,7 @@ export default function Settings() {
                   type="number"
                   name="tireInterval"
                   id="tireInterval"
-                  defaultValue={loaderData.settings?.tireInterval}
+                  defaultValue={settings?.tireInterval}
                   min="1"
                   max="20"
                   required
@@ -231,7 +231,7 @@ export default function Settings() {
                   type="number"
                   name="batteryDefaultInterval"
                   id="batteryDefaultInterval"
-                  defaultValue={loaderData.settings?.batteryDefaultInterval}
+                  defaultValue={settings?.batteryDefaultInterval}
                   min="1"
                   max="20"
                   required
@@ -245,7 +245,7 @@ export default function Settings() {
                   type="number"
                   name="batteryLithiumInterval"
                   id="batteryLithiumInterval"
-                  defaultValue={loaderData.settings?.batteryLithiumInterval}
+                  defaultValue={settings?.batteryLithiumInterval}
                   min="1"
                   max="20"
                   required
@@ -263,7 +263,7 @@ export default function Settings() {
                   type="number"
                   name="engineOilInterval"
                   id="engineOilInterval"
-                  defaultValue={loaderData.settings?.engineOilInterval}
+                  defaultValue={settings?.engineOilInterval}
                   min="1"
                   max="10"
                   required
@@ -277,7 +277,7 @@ export default function Settings() {
                   type="number"
                   name="gearboxOilInterval"
                   id="gearboxOilInterval"
-                  defaultValue={loaderData.settings?.gearboxOilInterval}
+                  defaultValue={settings?.gearboxOilInterval}
                   min="1"
                   max="10"
                   required
@@ -291,7 +291,7 @@ export default function Settings() {
                   type="number"
                   name="finalDriveOilInterval"
                   id="finalDriveOilInterval"
-                  defaultValue={loaderData.settings?.finalDriveOilInterval}
+                  defaultValue={settings?.finalDriveOilInterval}
                   min="1"
                   max="10"
                   required
