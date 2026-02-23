@@ -1,24 +1,37 @@
 import { Form, Link, useLocation } from "react-router";
-import { Bike, LogOut, Menu, X } from "lucide-react";
+import { Bike, LogOut, Menu, X, Settings, Shield, ChevronDown } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import type { User } from "~/db/schema";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export function Header({ user }: { user: User | null }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
 
   const navItems = [
     { label: "Übersicht", href: "/" },
     { label: "Dokumente", href: "/documents" },
     { label: "Statistiken", href: "/fleet-stats" },
-    { label: "Einstellungen", href: "/settings" },
   ];
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Scroll-based show/hide — desktop motorcycle detail only
   useEffect(() => {
@@ -140,27 +153,63 @@ export function Header({ user }: { user: User | null }) {
             <ThemeToggle />
 
             {user ? (
-              <>
-                <div className="hidden items-center gap-3 rounded-full bg-gray-50 py-1.5 pl-1.5 pr-4 dark:bg-navy-900/50 md:flex">
+              <div className="relative hidden md:block" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className={clsx(
+                    "flex items-center gap-3 rounded-full bg-gray-50 py-1.5 pl-1.5 pr-3 transition-colors hover:bg-gray-100 dark:bg-navy-900/50 dark:hover:bg-navy-900",
+                    isUserMenuOpen && "bg-gray-100 dark:bg-navy-900"
+                  )}
+                >
                   <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary dark:bg-navy-700 dark:text-primary-light">
                     {user.username.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-foreground dark:text-gray-200">
                     {user.username}
                   </span>
-                </div>
+                  <ChevronDown className={clsx("h-4 w-4 text-secondary transition-transform", isUserMenuOpen && "rotate-180")} />
+                </button>
 
-                <Form action="/auth/logout" method="post" className="hidden md:block">
-                  <button
-                    type="submit"
-                    className="grid h-10 w-10 place-items-center rounded-xl text-secondary transition-colors hover:bg-red-50 hover:text-red-600 dark:text-navy-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                    aria-label="Logout"
-                    title="Logout"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </button>
-                </Form>
-              </>
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl dark:border-navy-700 dark:bg-navy-800">
+                    <div className="px-3 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-400">Konto</p>
+                    </div>
+                    
+                    <Link
+                      to="/settings"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Einstellungen
+                    </Link>
+
+                    {user.role === "admin" && (
+                      <Link
+                        to="/settings/admin"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+                      >
+                        <Shield className="h-4 w-4" />
+                        Admin-Bereich
+                      </Link>
+                    )}
+
+                    <div className="my-1 h-px bg-gray-100 dark:bg-navy-700" />
+
+                    <Form action="/auth/logout" method="post">
+                      <button
+                        type="submit"
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Abmelden
+                      </button>
+                    </Form>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link
                 to="/auth/login"
@@ -210,11 +259,35 @@ export function Header({ user }: { user: User | null }) {
                     <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-base font-bold text-primary dark:bg-navy-700 dark:text-primary-light">
                       {user.username.charAt(0).toUpperCase()}
                     </div>
-                    <span className="font-medium text-foreground dark:text-gray-200">
-                      {user.username}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground dark:text-gray-200">
+                        {user.username}
+                      </span>
+                      <span className="text-xs text-secondary dark:text-navy-400 capitalize">{user.role}</span>
+                    </div>
                   </div>
-                  <Form action="/auth/logout" method="post">
+
+                  <Link
+                    to="/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-secondary transition-colors hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+                  >
+                    <Settings className="h-5 w-5" />
+                    Einstellungen
+                  </Link>
+
+                  {user.role === "admin" && (
+                    <Link
+                      to="/settings/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-secondary transition-colors hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+                    >
+                      <Shield className="h-5 w-5" />
+                      Admin-Bereich
+                    </Link>
+                  )}
+
+                  <Form action="/auth/logout" method="post" className="mt-2">
                     <button
                       type="submit"
                       className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
