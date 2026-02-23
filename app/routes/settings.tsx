@@ -24,7 +24,17 @@ import { eq, and } from "drizzle-orm";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Server, Fingerprint, Key, Activity } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Server,
+  Fingerprint,
+  Key,
+  Activity,
+  Lock,
+  MapPin,
+} from "lucide-react";
 import { registerPasskey } from "~/utils/webauthn";
 
 export function meta() {
@@ -198,9 +208,19 @@ export default function Settings() {
 
       {/* Password Change Section */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-        <h2 className="mb-4 text-xl font-semibold text-foreground dark:text-white">
-          Passwort ändern
-        </h2>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="rounded-lg bg-orange-100 p-2 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+            <Lock className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+              Passwort ändern
+            </h2>
+            <p className="text-sm text-secondary dark:text-navy-300">
+              Aktualisiere dein Passwort für mehr Sicherheit.
+            </p>
+          </div>
+        </div>
         <Form method="post" className="space-y-4">
           <input type="hidden" name="intent" value="changePassword" />
           <div className="space-y-1.5">
@@ -329,9 +349,19 @@ export default function Settings() {
 
       {/* Storage Locations Section */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-        <h2 className="mb-4 text-xl font-semibold text-foreground dark:text-white">
-          Lagerorte verwalten
-        </h2>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+            <MapPin className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+              Lagerorte verwalten
+            </h2>
+            <p className="text-sm text-secondary dark:text-navy-300">
+              Definiere Orte, an denen deine Fahrzeuge untergebracht sind.
+            </p>
+          </div>
+        </div>
 
         {/* Add Location Form */}
         <Form method="post" className="mb-6 flex gap-3">
