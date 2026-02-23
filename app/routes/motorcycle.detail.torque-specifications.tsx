@@ -375,10 +375,11 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+              title="Drucken"
             >
-              <Printer className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span>Drucken</span>
+              <Printer className="h-5 w-5" />
+              <span className="sr-only">Drucken</span>
             </button>
             {otherMotorcycles.length > 0 && (
               <button
