@@ -315,74 +315,10 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
 
   return (
     <div className="container mx-auto max-w-7xl space-y-6 px-4 pb-24 pt-0 md:p-6 md:space-y-8 print:p-0 print:m-0 print:max-w-none print:bg-white print:text-black">
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @media print {
-          @page { margin: 1.5cm; }
-          
-          /* Force Light Mode & High Contrast */
-          :root, html, body, .dark, [data-theme='dark'] {
-            background-color: white !important;
-            color: black !important;
-            color-scheme: light !important;
-          }
-          
-          /* General Resets */
-          * {
-            color: black !important;
-            border-color: #ccc !important;
-            box-shadow: none !important;
-            text-shadow: none !important;
-            transition: none !important;
-            background-color: transparent !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          
-          .print\\:hidden { display: none !important; }
-          .hidden.print\\:block { display: block !important; }
-          
-          /* Specialized Print Layout */
-          .print-header { 
-            background-color: white !important;
-            border-bottom: 2px solid black !important; 
-            padding-bottom: 1rem !important; 
-            margin-bottom: 2rem !important; 
-          }
-          .print-category { 
-            background-color: white !important;
-            border: 1.5px solid black !important; 
-            margin-bottom: 1.5rem !important; 
-            page-break-inside: avoid; 
-          }
-          .print-category-title { 
-            background-color: white !important; 
-            border-bottom: 1.5px solid black !important; 
-            padding: 0.5rem 1rem !important; 
-            font-size: 12px !important; 
-            font-weight: bold !important; 
-            text-transform: uppercase !important;
-            color: black !important;
-          }
-          .print-row { 
-            background-color: white !important;
-            display: flex !important; 
-            align-items: center !important; 
-            justify-content: space-between !important; 
-            padding: 0.75rem 1rem !important; 
-            border-bottom: 1px solid #eee !important; 
-          }
-          .print-row:last-child { border-bottom: none !important; }
-          .print-label { font-size: 10px !important; color: #4b5563 !important; text-transform: uppercase !important; display: block !important; margin-bottom: 2px !important; }
-          .print-value { font-size: 14px !important; font-weight: bold !important; color: black !important; display: block !important; }
-          .print-spec-name { font-size: 14px !important; font-weight: bold !important; flex: 1 !important; margin-right: 1rem !important; color: black !important; }
-          .print-spec-desc { font-size: 11px !important; color: #374151 !important; font-style: italic !important; margin-top: 2px !important; display: block !important; }
-          .print-tech-group { display: flex !important; gap: 2rem !important; align-items: flex-start !important; text-align: right !important; }
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{ __html: "@media print { @page { margin: 1.5cm; } }" }} />
 
       {/* Print Only Header */}
-      <div className="hidden print:block print-header">
+      <div className="hidden print:block print:bg-white print:border-b-2 print:border-black print:pb-4 print:mb-8">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold !text-black">
@@ -405,7 +341,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             { label: "1. Inverkehrssetzung", value: motorcycle.firstRegistration || "-" },
             { label: "Standort", value: currentLocationName || "-" }
           ].map((item) => (
-            <div key={item.label} className="flex justify-between border-b border-gray-200 pb-1">
+            <div key={item.label} className="flex justify-between border-b border-gray-200 pb-1 print:border-gray-300">
               <span className="font-bold uppercase !text-gray-500 text-[10px]">{item.label}</span>
               <span className={clsx("font-semibold !text-black", item.mono && "font-mono")}>{item.value}</span>
             </div>
@@ -424,7 +360,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
         />
       </div>
 
-      <div className="space-y-6 print:space-y-0 print:!bg-white">
+      <div className="space-y-6 print:space-y-0 print:bg-white">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
           <div>
             <h2 className="text-2xl font-bold text-foreground dark:text-white">Anzugsmomente</h2>
@@ -497,19 +433,19 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 print:block print:gap-0 print:!bg-white">
+          <div className="grid gap-6 print:block print:gap-0 print:bg-white">
             {/* Group by category */}
             {Array.from(new Set(specs.map(s => s.category))).map(category => (
-              <div key={category} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print-category print:!rounded-b-none print:!bg-white print:!shadow-none">
-                <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print:!bg-gray-100 print:!text-black print:!border-black print-category-title">
+              <div key={category} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:bg-white print:shadow-none">
+                <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print:bg-gray-100 print:text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
                   {category}
                 </div>
-                <div className="divide-y divide-gray-100 dark:divide-navy-700 print:!divide-black">
+                <div className="divide-y divide-gray-100 dark:divide-navy-700 print:divide-gray-300">
                   {specs.filter(s => s.category === category).map(spec => (
-                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:!py-3 print:!bg-white print:!text-black print-row">
+                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:border-b print:border-gray-200 print:bg-white print:text-black">
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-foreground dark:text-white leading-tight truncate print:!text-black print:text-sm print:whitespace-normal print:overflow-visible print-spec-name">
+                          <h3 className="font-bold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:text-black print:whitespace-normal print:overflow-visible">
                             {spec.name}
                           </h3>
                           <button
@@ -521,38 +457,38 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           </button>
                         </div>
                         {spec.description && (
-                          <p className="text-[10px] sm:text-xs text-secondary dark:text-navy-400 max-w-xl italic truncate sm:whitespace-normal print:!text-gray-700 print:!italic print:overflow-visible print:whitespace-normal print-spec-desc">
+                          <p className="text-[10px] sm:text-xs text-secondary dark:text-navy-400 max-w-xl italic truncate sm:whitespace-normal print:text-[11px] print:text-gray-700 print:italic print:mt-0.5 print:block print:overflow-visible print:whitespace-normal">
                             {spec.description}
                           </p>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-end gap-3 sm:gap-8 shrink-0 print:!border-0 print:!pt-0 print-tech-group">
+                      <div className="flex items-center justify-end gap-3 sm:gap-8 shrink-0 print:flex print:gap-8 print:items-start print:text-right print:border-0 print:pt-0">
                         {spec.toolSize && (
                           <div className="flex flex-col items-end sm:gap-0.5">
-                            <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 print:block print-label">Werkzeug</span>
-                            <div className="flex items-center gap-1.5 rounded-lg bg-gray-50/50 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/40 dark:border-navy-700 shadow-sm print:!bg-white print:!border-none print:!shadow-none print:!px-0 print:!py-0 print:!text-black">
+                            <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 print:block print:text-[10px] print:text-gray-600 print:mb-0.5">Werkzeug</span>
+                            <div className="flex items-center gap-1.5 rounded-lg bg-gray-50/50 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/40 dark:border-navy-700 shadow-sm print:bg-white print:border-none print:shadow-none print:p-0 print:text-[14px] print:font-bold print:text-black">
                               <Wrench className="h-3 w-3 text-secondary/70 dark:text-navy-400 print:hidden" />
-                              <span className="print-value">{spec.toolSize}</span>
+                              <span>{spec.toolSize}</span>
                             </div>
                           </div>
                         )}
 
                         <div className="flex flex-col items-end min-w-[65px] sm:min-w-[80px]">
-                          <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 mb-0.5 print:block print-label">Drehmoment</span>
+                          <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 mb-0.5 print:block print:text-[10px] print:text-gray-600">Drehmoment</span>
                           <div className="flex items-center gap-1.5 sm:gap-2">
                             <div className="flex items-baseline gap-0.5 sm:gap-1">
-                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none print:text-black print:text-lg print-value">
+                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none print:text-[14px] print:font-bold print:text-black">
                                 {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
                               </span>
                               {!spec.variation && (
-                                <span className="text-[10px] sm:text-xs font-bold text-secondary dark:text-navy-400 uppercase print:!text-black print:text-sm">Nm</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-secondary dark:text-navy-400 uppercase print:text-black print:text-sm">Nm</span>
                               )}
                             </div>
                             {spec.variation && (
-                              <div className="flex items-baseline gap-0.5 text-[10px] sm:text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded border border-amber-100/30 dark:border-amber-900/30 tabular-nums whitespace-nowrap print:!bg-white print:!text-black print:!border-none print:!p-0">
-                                <span className="print-value">± {spec.variation}</span>
-                                <span className="text-[8px] uppercase opacity-60 print:text-[10px] print:!opacity-100">Nm</span>
+                              <div className="flex items-baseline gap-0.5 text-[10px] sm:text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded border border-amber-100/30 dark:border-amber-900/30 tabular-nums whitespace-nowrap print:bg-white print:text-black print:border-none print:p-0">
+                                <span className="print:text-[14px] print:font-bold">± {spec.variation}</span>
+                                <span className="text-[8px] uppercase opacity-60 print:text-[10px] print:opacity-100">Nm</span>
                               </div>
                             )}
                           </div>
