@@ -165,7 +165,13 @@ export async function action({ request }: Route.ActionArgs) {
       if (!torqueId) {
         return data({ error: "ID fehlt für Löschen." }, { status: 400, headers: mergeHeaders(headers) });
       }
-      await deleteTorqueSpecification(db, torqueId, motorcycleId);
+      const deleted = await deleteTorqueSpecification(db, torqueId, motorcycleId);
+      if (!deleted) {
+        return data(
+          { error: "Drehmoment-Spezifikation nicht gefunden oder gehört nicht zu diesem Motorrad." },
+          { status: 404, headers: mergeHeaders(headers) },
+        );
+      }
       return data({ success: true }, { headers: mergeHeaders(headers) });
     }
 
