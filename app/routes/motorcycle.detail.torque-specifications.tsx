@@ -372,29 +372,29 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
               Spezifikationen für {motorcycle.make} {motorcycle.model}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
             >
-              <Printer className="h-5 w-5" />
-              Drucken
+              <Printer className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span>Drucken</span>
             </button>
             {otherMotorcycles.length > 0 && (
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
               >
-                <Import className="h-5 w-5" />
-                Importieren
+                <Import className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Importieren</span>
               </button>
             )}
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
             >
-              <Plus className="h-5 w-5" />
-              Hinzufügen
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span>Hinzufügen</span>
             </button>
           </div>
         </div>
@@ -445,15 +445,15 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-navy-700 print:divide-gray-200">
                   {specs.filter(s => s.category === category).map(spec => (
-                    <div key={spec.id} className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex-row print:py-3 print:bg-white print:text-black">
-                      <div className="flex-1 space-y-1">
+                    <div key={spec.id} className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 py-4 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex-row print:py-3 print:bg-white print:text-black">
+                      <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-foreground dark:text-white leading-tight print:text-black print:text-sm">
                             {spec.name}
                           </h3>
                           <button
                             onClick={() => setEditingSpec(spec)}
-                            className="rounded-lg p-1 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light focus:opacity-100 print:hidden"
+                            className="rounded-lg p-1 text-secondary sm:opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light focus:opacity-100 print:hidden"
                             title="Bearbeiten"
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -466,20 +466,18 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 border-t border-gray-50 pt-3 sm:border-0 sm:pt-0 dark:border-navy-700/50 print:border-0 print:pt-0">
-                        {spec.toolSize ? (
-                          <div className="flex flex-col items-center gap-1 print:items-end">
+                      <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3 shrink-0 border-t border-gray-50 pt-3 sm:border-0 sm:pt-0 dark:border-navy-700/50 print:border-0 print:pt-0">
+                        {spec.toolSize && (
+                          <div className="flex flex-col items-end gap-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500 print:text-gray-500">Werkzeug</span>
                             <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/60 dark:border-navy-700 shadow-sm print:bg-white print:border-gray-200 print:shadow-none print:px-0 print:py-0">
                               <Wrench className="h-3 w-3 text-secondary/70 dark:text-navy-400 print:hidden" />
                               <span className="print:text-sm">{spec.toolSize}</span>
                             </div>
                           </div>
-                        ) : (
-                          <div className="hidden sm:block w-16 print:hidden" /> 
                         )}
                         
-                        <div className="flex flex-col items-end min-w-[80px]">
+                        <div className="flex flex-col items-end min-w-[70px] sm:min-w-[80px]">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500 mb-1 print:text-gray-500">Drehmoment</span>
                           <div className="flex items-center gap-2">
                             <div className="flex items-baseline gap-1">

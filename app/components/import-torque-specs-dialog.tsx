@@ -137,7 +137,7 @@ export function ImportTorqueSpecsDialog({
                           : "border-transparent hover:bg-gray-50 dark:hover:bg-navy-800"
                       )}
                     >
-                      <div className="pt-0.5">
+                      <div className="pt-1">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -145,21 +145,21 @@ export function ImportTorqueSpecsDialog({
                           className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900"
                         />
                       </div>
-                      <div className="flex-1 space-y-0.5">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-foreground dark:text-white">{spec.name}</span>
-                          <span className="text-sm font-semibold text-foreground dark:text-white">
+                      <div className="flex-1 min-w-0 space-y-0.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-medium text-foreground dark:text-white truncate">{spec.name}</span>
+                          <span className="text-sm font-semibold text-foreground dark:text-white whitespace-nowrap shrink-0">
                             {spec.torque} Nm
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-secondary dark:text-navy-400">
+                        <div className="flex items-center justify-between text-[10px] text-secondary dark:text-navy-400">
                           <span>{spec.category}</span>
-                          <span>{spec.toolSize}</span>
+                          <span className="shrink-0">{spec.toolSize}</span>
                         </div>
                         {isOverwrite && (
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-                            <AlertTriangle className="h-3 w-3" />
-                            <span>Wird überschrieben</span>
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400">
+                            <AlertTriangle className="h-3 w-3 shrink-0" />
+                            <span className="font-bold">Wird überschrieben</span>
                           </div>
                         )}
                       </div>
