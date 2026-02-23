@@ -96,7 +96,7 @@ export async function verifyRegistrationResponse(
 
     // Save the new authenticator
     await db.insert(authenticators).values({
-      id: Buffer.from(credential.id).toString("base64url"),
+      id: credential.id, // In v13, this is already a Base64URL string
       userId: challengeRecord.userId,
       publicKey: Buffer.from(credential.publicKey),
       counter: credential.counter,
