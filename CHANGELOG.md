@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.2.5](https://github.com/mightea/MotoManager/compare/2026.2.4...2026.2.5) (2026-02-23)
+
+### Features
+
+* add delete functionality to torque specifications with confirmation dialog ([ee678ff](https://github.com/mightea/MotoManager/commit/ee678ff8c540536382481e7c11adf9c422753cb4))
+* add optimized print view for torque specifications with technical motorcycle data ([05eb7ec](https://github.com/mightea/MotoManager/commit/05eb7ec67068819394eac02ab0541f200f721a4a))
+* implement passkey (WebAuthn) support for faster and more secure logins ([975a0f7](https://github.com/mightea/MotoManager/commit/975a0f7961e484b9ac3228233b732eefcc477c98))
+* provide category suggestions in torque spec form using existing entries ([5e336b7](https://github.com/mightea/MotoManager/commit/5e336b7a3851be0032cec512119fb01e3ecc8fdd))
+
+### Bug Fixes
+
+* improve torque specification print stylesheet and ignore root PNGs ([fa96fc8](https://github.com/mightea/MotoManager/commit/fa96fc8bbc0a4946484f51051c29654842053129))
+
 ## [2026.2.4](https://github.com/mightea/MotoManager/compare/2026.2.3...2026.2.4) (2026-02-22)
 
 ### Features
