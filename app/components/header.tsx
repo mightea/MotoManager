@@ -102,7 +102,7 @@ export function Header({ user }: { user: User | null }) {
         isMotorcycleDetail && isHidden && "md:-translate-y-full"
       )}
     >
-      <header className="relative w-full max-w-7xl overflow-hidden rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90 pointer-events-auto">
+      <header className="relative w-full max-w-7xl rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90 pointer-events-auto">
         {/* Motorsport Stripe Accent */}
         <div className="absolute left-0 right-0 top-0 h-2.5 bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]" />
 
@@ -232,7 +232,7 @@ export function Header({ user }: { user: User | null }) {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="border-t border-gray-100 p-4 md:hidden dark:border-navy-700">
+          <div className="border-t border-gray-100 p-4 rounded-b-2xl md:hidden dark:border-navy-700">
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
