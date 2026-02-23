@@ -443,15 +443,15 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             {/* Group by category */}
             {Array.from(new Set(specs.map(s => s.category))).map(category => (
               <div key={category} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:bg-white print:shadow-none">
-                <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print:bg-gray-100 print:text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
+                <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print:bg-gray-100 print:!text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
                   {category}
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-navy-700 print:divide-gray-300">
                   {specs.filter(s => s.category === category).map(spec => (
-                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:border-b print:border-gray-200 print:bg-white print:text-black">
+                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:border-b print:border-gray-200 print:bg-white print:!text-black">
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:text-black print:whitespace-normal print:overflow-visible">
+                          <h3 className="font-bold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
                             {spec.name}
                           </h3>
                           <button
@@ -463,7 +463,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           </button>
                         </div>
                         {spec.description && (
-                          <p className="text-[10px] sm:text-xs text-secondary dark:text-navy-400 max-w-xl italic truncate sm:whitespace-normal print:text-[11px] print:text-gray-700 print:italic print:mt-0.5 print:block print:overflow-visible print:whitespace-normal">
+                          <p className="text-[10px] sm:text-xs text-secondary dark:text-navy-400 max-w-xl italic truncate sm:whitespace-normal print:text-[11px] print:!text-gray-700 print:italic print:mt-0.5 print:block print:overflow-visible print:whitespace-normal">
                             {spec.description}
                           </p>
                         )}
@@ -473,7 +473,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                         {spec.toolSize && (
                           <div className="flex flex-col items-end sm:gap-0.5">
                             <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 print:block print:text-[10px] print:text-gray-600 print:mb-0.5">Werkzeug</span>
-                            <div className="flex items-center gap-1.5 rounded-lg bg-gray-50/50 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/40 dark:border-navy-700 shadow-sm print:bg-white print:border-none print:shadow-none print:p-0 print:text-[14px] print:font-bold print:text-black">
+                            <div className="flex items-center gap-1.5 rounded-lg bg-gray-50/50 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/40 dark:border-navy-700 shadow-sm print:bg-white print:border-none print:shadow-none print:p-0 print:text-[14px] print:font-bold print:!text-black">
                               <Wrench className="h-3 w-3 text-secondary/70 dark:text-navy-400 print:hidden" />
                               <span>{spec.toolSize}</span>
                             </div>
@@ -484,15 +484,15 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 mb-0.5 print:block print:text-[10px] print:text-gray-600">Drehmoment</span>
                           <div className="flex items-center gap-1.5 sm:gap-2">
                             <div className="flex items-baseline gap-0.5 sm:gap-1">
-                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none print:text-[14px] print:font-bold print:text-black">
+                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none print:text-[14px] print:font-bold print:!text-black">
                                 {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
                               </span>
                               {!spec.variation && (
-                                <span className="text-[10px] sm:text-xs font-bold text-secondary dark:text-navy-400 uppercase print:text-black print:text-sm">Nm</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-secondary dark:text-navy-400 uppercase print:!text-black print:text-sm">Nm</span>
                               )}
                             </div>
                             {spec.variation && (
-                              <div className="flex items-baseline gap-0.5 text-[10px] sm:text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded border border-amber-100/30 dark:border-amber-900/30 tabular-nums whitespace-nowrap print:bg-white print:text-black print:border-none print:p-0">
+                              <div className="flex items-baseline gap-0.5 text-[10px] sm:text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded border border-amber-100/30 dark:border-amber-900/30 tabular-nums whitespace-nowrap print:bg-white print:!text-black print:border-none print:p-0">
                                 <span className="print:text-[14px] print:font-bold">± {spec.variation}</span>
                                 <span className="text-[8px] uppercase opacity-60 print:text-[10px] print:opacity-100">Nm</span>
                               </div>
