@@ -119,8 +119,44 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const currencies = await db.query.currencySettings.findMany();
 
+  // Ownership Calculations
+  const purchaseDate = motorcycle.purchaseDate ? new Date(motorcycle.purchaseDate) : null;
+  const daysOwned = purchaseDate
+    ? Math.max(0, Math.floor((new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const yearsOwned = daysOwned / 365.25;
+
+  const currentOdo = lastKnownOdo ?? motorcycle.initialOdo;
+  const kmDriven = Math.max(0, currentOdo - motorcycle.initialOdo);
+  const avgKmPerYear = yearsOwned > 0.1 ? kmDriven / yearsOwned : 0;
+
+  const ownershipDuration = purchaseDate ? formatDuration(daysOwned) : null;
+  const ownershipLabel = ownershipDuration ? `${ownershipDuration.value} ${ownershipDuration.unit}` : null;
+
+  const dateFormatter = new Intl.DateTimeFormat("de-CH", {
+    dateStyle: "medium",
+  });
+
   return data(
-    { motorcycle, user, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies },
+    { 
+      motorcycle, 
+      user, 
+      openIssues, 
+      maintenanceHistory, 
+      nextInspection, 
+      lastKnownOdo, 
+      insights, 
+      userLocations, 
+      currentLocationName, 
+      currencies,
+      ownershipLabel,
+      kmDriven,
+      avgKmPerYear,
+      yearsOwned,
+      formattedPurchaseDate: purchaseDate ? dateFormatter.format(purchaseDate) : null,
+      formattedFirstRegistration: motorcycle.firstRegistration ? dateFormatter.format(new Date(motorcycle.firstRegistration)) : null,
+      hasPurchaseDate: !!purchaseDate
+    },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
@@ -410,7 +446,24 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { motorcycle, openIssues, maintenanceHistory, nextInspection, lastKnownOdo, insights, userLocations, currentLocationName, currencies } = loaderData;
+  const { 
+    motorcycle, 
+    openIssues, 
+    maintenanceHistory, 
+    nextInspection, 
+    lastKnownOdo, 
+    insights, 
+    userLocations, 
+    currentLocationName, 
+    currencies,
+    ownershipLabel,
+    kmDriven,
+    avgKmPerYear,
+    yearsOwned,
+    formattedPurchaseDate,
+    formattedFirstRegistration,
+    hasPurchaseDate
+  } = loaderData;
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -444,63 +497,21 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     }
   }, [actionData]);
 
-  // Ownership Calculations
-  const purchaseDate = motorcycle.purchaseDate ? new Date(motorcycle.purchaseDate) : null;
-  const daysOwned = purchaseDate
-    ? Math.max(0, Math.floor((new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
-  const yearsOwned = daysOwned / 365.25;
-
-  const currentOdo = lastKnownOdo ?? motorcycle.initialOdo;
-  const kmDriven = Math.max(0, currentOdo - motorcycle.initialOdo);
-  const avgKmPerYear = yearsOwned > 0.1 ? kmDriven / yearsOwned : 0; // Avoid division by zero or tiny duration logic
-
-  const ownershipDuration = purchaseDate ? formatDuration(daysOwned) : null;
-  const ownershipLabel = ownershipDuration ? `${ownershipDuration.value} ${ownershipDuration.unit}` : null;
-
   const openIssueDialog = (issue: Issue | null) => {
     setSelectedIssue(issue);
     setIssueDialogOpen(true);
   };
 
   const closeIssueDialog = () => {
-
     setIssueDialogOpen(false);
-
     setSelectedIssue(null);
-
   };
 
-
-
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
-
-
-
     dateStyle: "medium",
-
-
-
   });
 
-
-
-
-
-
-
-  // currencyFormatter removed
-
-
-
-
-
-
-
   return (
-
-
-
     <div className="container mx-auto max-w-7xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
 
 
@@ -564,11 +575,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   <StatisticEntry
                     icon={Calendar}
                     label="1. Inverkehrsetzung"
-                    value={
-                      motorcycle.firstRegistration
-                        ? dateFormatter.format(new Date(motorcycle.firstRegistration))
-                        : null
-                    }
+                    value={formattedFirstRegistration}
                   />
                   <StatisticEntry
                     icon={Info}
@@ -590,16 +597,12 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   <StatisticEntry
                     icon={Calendar}
                     label="Kaufdatum"
-                    value={purchaseDate ? dateFormatter.format(purchaseDate) : null}
+                    value={formattedPurchaseDate}
                   />
                   <StatisticEntry
                     icon={Clock} // Using Clock as icon for duration/usage
                     label="Besitzdauer"
-                    value={
-                      purchaseDate
-                        ? ownershipLabel
-                        : null
-                    }
+                    value={ownershipLabel}
                   />
                   <StatisticEntry
                     icon={DollarSign}
@@ -618,12 +621,12 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   <StatisticEntry
                     icon={Gauge}
                     label="Distanz seit Kauf"
-                    value={purchaseDate ? `${formatNumber(kmDriven)} km` : null}
+                    value={hasPurchaseDate ? `${formatNumber(kmDriven)} km` : null}
                   />
                   <StatisticEntry
                     icon={Gauge}
                     label="Ø km / Jahr"
-                    value={purchaseDate && yearsOwned > 0.1 ? `${formatNumber(Math.round(avgKmPerYear))} km` : null}
+                    value={hasPurchaseDate && yearsOwned > 0.1 ? `${formatNumber(Math.round(avgKmPerYear))} km` : null}
                   />
                 </div>
               </div>
@@ -644,7 +647,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                 </>
               )}
 
-              {purchaseDate && (
+              {hasPurchaseDate && (
                 <>
                   {(motorcycle.numberPlate || ownershipLabel) && <span className="text-gray-300 dark:text-navy-600">•</span>}
                   <span>{formatNumber(kmDriven)} km gefahren</span>

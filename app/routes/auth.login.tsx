@@ -1,5 +1,6 @@
 import { Bike } from "lucide-react";
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { useEffect } from "react";
 import type { Route } from "./+types/auth.login";
 import {
   createSession,
@@ -186,6 +187,32 @@ export default function Login() {
     actionData && !actionData.success && actionData.form === "register"
       ? actionData.message
       : null;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        // If an input is focused, the browser handles form submission naturally.
+        // We only trigger it manually if focus is outside interactive elements.
+        const activeElement = document.activeElement;
+        const isInteractive =
+          activeElement?.tagName === "INPUT" ||
+          activeElement?.tagName === "BUTTON" ||
+          activeElement?.tagName === "SELECT" ||
+          activeElement?.tagName === "TEXTAREA" ||
+          activeElement?.tagName === "A";
+
+        if (!isInteractive) {
+          const form = document.querySelector("form");
+          if (form && !isLoginSubmitting && !isRegisterSubmitting) {
+            form.requestSubmit();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLoginSubmitting, isRegisterSubmitting]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-100 via-blue-50 to-gray-100 p-4 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">

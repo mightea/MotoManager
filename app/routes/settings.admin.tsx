@@ -239,7 +239,7 @@ export default function AdminSettings() {
                   <td className="px-4 py-3 text-secondary dark:text-navy-300">
                     {u.email}
                   </td>
-                  <td className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
+                  <td suppressHydrationWarning className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
                     {u.lastLoginAt ? dateFormatter.format(new Date(u.lastLoginAt)) : "Nie"}
                   </td>
                   <td className="px-4 py-3">

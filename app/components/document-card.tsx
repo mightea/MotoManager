@@ -105,7 +105,7 @@ export function DocumentCard({
             <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-secondary/70 dark:text-navy-500">Hochgeladen</p>
             <div className="mt-0.5 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
-              <span>{formatDate(document.createdAt)}</span>
+              <span suppressHydrationWarning>{formatDate(document.createdAt)}</span>
             </div>
           </div>
           {assignedMotorcycleNames.length > 0 && (

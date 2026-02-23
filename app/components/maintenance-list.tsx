@@ -184,7 +184,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
 
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-foreground dark:text-white">
+                  <h3 suppressHydrationWarning className="font-bold text-foreground dark:text-white">
                     {dateFormatter.format(new Date(group.date))}
                   </h3>
                   <div className="flex items-center gap-2">
@@ -296,7 +296,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                       {item.label}
                                     </dt>
                                   </div>
-                                  <dd className="text-xs font-semibold text-foreground dark:text-gray-200 text-right shrink-0">
+                                  <dd suppressHydrationWarning className="text-xs font-semibold text-foreground dark:text-gray-200 text-right shrink-0">
                                     {item.value}
                                   </dd>
                                 </div>

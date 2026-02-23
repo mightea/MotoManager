@@ -35,6 +35,7 @@ export function StatisticEntry({
         <span className="text-sm font-medium">{label}</span>
       </div>
       <span
+        suppressHydrationWarning
         className={clsx(
           "text-sm font-semibold",
           valueClassName

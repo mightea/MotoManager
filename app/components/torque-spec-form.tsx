@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "./button";
 import type { TorqueSpecification } from "~/db/schema";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 type VariationType = "none" | "plus_minus" | "range";
 
