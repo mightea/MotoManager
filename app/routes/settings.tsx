@@ -196,167 +196,6 @@ export default function Settings() {
         </div>
       )}
 
-      {/* Maintenance Intervals Section */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-            <Activity className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">Wartungsintervalle</h2>
-            <p className="text-sm text-secondary dark:text-navy-300">
-              Konfiguriere die Zeitabstände (in Jahren) für deine Wartungserinnerungen.
-            </p>
-          </div>
-        </div>
-
-        <Form method="post" className="space-y-6">
-          <input type="hidden" name="intent" value="updateUserSettings" />
-          
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Allgemein</h3>
-              
-              <div className="space-y-1.5">
-                <label htmlFor="tireInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Reifen (Jahre)</label>
-                <input
-                  type="number"
-                  name="tireInterval"
-                  id="tireInterval"
-                  defaultValue={settings?.tireInterval}
-                  min="1"
-                  max="20"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="batteryDefaultInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Standard (Jahre)</label>
-                <input
-                  type="number"
-                  name="batteryDefaultInterval"
-                  id="batteryDefaultInterval"
-                  defaultValue={settings?.batteryDefaultInterval}
-                  min="1"
-                  max="20"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="batteryLithiumInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Lithium (Jahre)</label>
-                <input
-                  type="number"
-                  name="batteryLithiumInterval"
-                  id="batteryLithiumInterval"
-                  defaultValue={settings?.batteryLithiumInterval}
-                  min="1"
-                  max="20"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Öle & Flüssigkeiten</h3>
-              
-              <div className="space-y-1.5">
-                <label htmlFor="engineOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Motoröl (Jahre)</label>
-                <input
-                  type="number"
-                  name="engineOilInterval"
-                  id="engineOilInterval"
-                  defaultValue={settings?.engineOilInterval}
-                  min="1"
-                  max="10"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="gearboxOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Getriebeöl (Jahre)</label>
-                <input
-                  type="number"
-                  name="gearboxOilInterval"
-                  id="gearboxOilInterval"
-                  defaultValue={settings?.gearboxOilInterval}
-                  min="1"
-                  max="10"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="finalDriveOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kardanöl / Endantrieb (Jahre)</label>
-                <input
-                  type="number"
-                  name="finalDriveOilInterval"
-                  id="finalDriveOilInterval"
-                  defaultValue={settings?.finalDriveOilInterval}
-                  min="1"
-                  max="10"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="forkOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Gabelöl (Jahre)</label>
-                <input
-                  type="number"
-                  name="forkOilInterval"
-                  id="forkOilInterval"
-                  defaultValue={settings?.forkOilInterval}
-                  min="1"
-                  max="10"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="brakeFluidInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Bremsflüssigkeit (Jahre)</label>
-                <input
-                  type="number"
-                  name="brakeFluidInterval"
-                  id="brakeFluidInterval"
-                  defaultValue={settings?.brakeFluidInterval}
-                  min="1"
-                  max="10"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="coolantInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kühlflüssigkeit (Jahre)</label>
-                <input
-                  type="number"
-                  name="coolantInterval"
-                  id="coolantInterval"
-                  defaultValue={settings?.coolantInterval}
-                  min="1"
-                  max="10"
-                  required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={isSubmitting}>
-              Intervalle speichern
-            </Button>
-          </div>
-        </Form>
-      </section>
-
       {/* Password Change Section */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
         <h2 className="mb-4 text-xl font-semibold text-foreground dark:text-white">
@@ -590,6 +429,167 @@ export default function Settings() {
             </p>
           )}
         </div>
+      </section>
+
+      {/* Maintenance Intervals Section */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+            <Activity className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">Wartungsintervalle</h2>
+            <p className="text-sm text-secondary dark:text-navy-300">
+              Konfiguriere die Zeitabstände (in Jahren) für deine Wartungserinnerungen.
+            </p>
+          </div>
+        </div>
+
+        <Form method="post" className="space-y-6">
+          <input type="hidden" name="intent" value="updateUserSettings" />
+          
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Allgemein</h3>
+              
+              <div className="space-y-1.5">
+                <label htmlFor="tireInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Reifen (Jahre)</label>
+                <input
+                  type="number"
+                  name="tireInterval"
+                  id="tireInterval"
+                  defaultValue={settings?.tireInterval}
+                  min="1"
+                  max="20"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="batteryDefaultInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Standard (Jahre)</label>
+                <input
+                  type="number"
+                  name="batteryDefaultInterval"
+                  id="batteryDefaultInterval"
+                  defaultValue={settings?.batteryDefaultInterval}
+                  min="1"
+                  max="20"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="batteryLithiumInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Lithium (Jahre)</label>
+                <input
+                  type="number"
+                  name="batteryLithiumInterval"
+                  id="batteryLithiumInterval"
+                  defaultValue={settings?.batteryLithiumInterval}
+                  min="1"
+                  max="20"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Öle & Flüssigkeiten</h3>
+              
+              <div className="space-y-1.5">
+                <label htmlFor="engineOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Motoröl (Jahre)</label>
+                <input
+                  type="number"
+                  name="engineOilInterval"
+                  id="engineOilInterval"
+                  defaultValue={settings?.engineOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="gearboxOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Getriebeöl (Jahre)</label>
+                <input
+                  type="number"
+                  name="gearboxOilInterval"
+                  id="gearboxOilInterval"
+                  defaultValue={settings?.gearboxOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="finalDriveOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kardanöl / Endantrieb (Jahre)</label>
+                <input
+                  type="number"
+                  name="finalDriveOilInterval"
+                  id="finalDriveOilInterval"
+                  defaultValue={settings?.finalDriveOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="forkOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Gabelöl (Jahre)</label>
+                <input
+                  type="number"
+                  name="forkOilInterval"
+                  id="forkOilInterval"
+                  defaultValue={settings?.forkOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="brakeFluidInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Bremsflüssigkeit (Jahre)</label>
+                <input
+                  type="number"
+                  name="brakeFluidInterval"
+                  id="brakeFluidInterval"
+                  defaultValue={settings?.brakeFluidInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="coolantInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kühlflüssigkeit (Jahre)</label>
+                <input
+                  type="number"
+                  name="coolantInterval"
+                  id="coolantInterval"
+                  defaultValue={settings?.coolantInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button type="submit" disabled={isSubmitting}>
+              Intervalle speichern
+            </Button>
+          </div>
+        </Form>
       </section>
 
       {/* Version Info */}
