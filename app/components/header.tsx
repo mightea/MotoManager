@@ -1,5 +1,5 @@
 import { Form, Link, useLocation } from "react-router";
-import { LogOut, Menu, X } from "lucide-react";
+import { Bike, LogOut, Menu, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import type { User } from "~/db/schema";
 import clsx from "clsx";
@@ -98,14 +98,14 @@ export function Header({ user }: { user: User | null }) {
           <div className="flex items-center gap-3 pl-2">
             <Link to="/" className="group flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light">
-                <img src="/favicon.svg" alt="Logo" className="h-6 w-6 dark:invert" />
+                <Bike className="h-8 w-8" />
               </div>
               <div className="flex flex-col">
                 <span className="text-[0.65rem] font-bold uppercase tracking-widest text-secondary dark:text-navy-400">
                   MotoManager
                 </span>
                 <span className="text-lg font-bold leading-none tracking-tight text-foreground dark:text-white">
-                  Garage Cockpit
+                  Garagenverwaltung
                 </span>
               </div>
             </Link>
