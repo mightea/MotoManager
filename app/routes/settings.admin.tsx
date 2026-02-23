@@ -14,17 +14,22 @@ import {
 } from "~/db/providers/settings.server";
 import { getDb } from "~/db";
 import {
+  createUser,
   deleteUser,
   listUsers,
   requireAdmin,
   requireUser,
+  updateUser,
+  updateUserPassword,
   updateUserRole,
 } from "~/services/auth.server";
 import { USER_ROLES } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
-import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus } from "lucide-react";
+import { UserDialog } from "~/components/user-dialog";
+import type { PublicUser } from "~/types/auth";
 
 export function meta() {
   return [
@@ -55,6 +60,55 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent");
 
   // User Management
+  if (intent === "createUser") {
+    const email = formData.get("email") as string;
+    const username = formData.get("username") as string;
+    const name = formData.get("name") as string;
+    const password = formData.get("password") as string;
+    const role = formData.get("role") as any;
+
+    if (!email || !username || !name || !password || !USER_ROLES.includes(role)) {
+      return { error: "Ungültige Daten." };
+    }
+
+    try {
+      await createUser({ email, username, name, password, role });
+      return { success: "Benutzer erfolgreich erstellt." };
+    } catch (e: any) {
+      return { error: e.message || "Fehler beim Erstellen des Benutzers." };
+    }
+  }
+
+  if (intent === "updateUser") {
+    const userId = Number(formData.get("userId"));
+    const email = formData.get("email") as string;
+    const username = formData.get("username") as string;
+    const name = formData.get("name") as string;
+    const role = formData.get("role") as any;
+    const password = formData.get("password") as string;
+
+    if (!userId || !email || !username || !name || !USER_ROLES.includes(role)) {
+      return { error: "Ungültige Daten." };
+    }
+
+    // Role change restriction
+    if (userId === currentUser.id && role !== currentUser.role) {
+      return { error: "Du kannst deine eigene Rolle nicht ändern." };
+    }
+
+    try {
+      await updateUser(userId, { email, username, name, role });
+
+      if (password && password.length >= 8) {
+        await updateUserPassword(userId, password);
+      }
+
+      return { success: "Benutzer erfolgreich aktualisiert." };
+    } catch (e: any) {
+      return { error: e.message || "Fehler beim Aktualisieren des Benutzers." };
+    }
+  }
+
   if (intent === "updateUserRole") {
     const userId = Number(formData.get("userId"));
     const role = formData.get("role") as any;
@@ -165,12 +219,22 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function AdminSettings() {
-  const { users, currencies } = useLoaderData<typeof loader>();
+  const { users, currencies, user: currentUser } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const [editingCurrencyId, setEditingCurrencyId] = useState<number | null>(null);
 
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<PublicUser | null>(null);
+
   const isSubmitting = navigation.state === "submitting";
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setIsUserDialogOpen(false);
+      setEditingUser(null);
+    }
+  }, [isSubmitting]);
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
     dateStyle: "medium",
@@ -210,13 +274,26 @@ export default function AdminSettings() {
 
       {/* User Management */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-            <Shield className="h-6 w-6" />
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              <Shield className="h-6 w-6" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+              Benutzerverwaltung
+            </h2>
           </div>
-          <h2 className="text-xl font-semibold text-foreground dark:text-white">
-            Benutzerverwaltung
-          </h2>
+          <Button
+            onClick={() => {
+              setEditingUser(null);
+              setIsUserDialogOpen(true);
+            }}
+            variant="secondary"
+            size="sm"
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            Benutzer hinzufügen
+          </Button>
         </div>
 
         <div className="overflow-x-auto">
@@ -242,44 +319,24 @@ export default function AdminSettings() {
                   <td suppressHydrationWarning className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
                     {u.lastLoginAt ? dateFormatter.format(new Date(u.lastLoginAt)) : "Nie"}
                   </td>
-                  <td className="px-4 py-3">
-                    <Form method="post" className="flex items-center gap-2">
-                      <input type="hidden" name="intent" value="updateUserRole" />
-                      <input type="hidden" name="userId" value={u.id} />
-                      <select
-                        name="role"
-                        defaultValue={u.role}
-                        onChange={(e) => e.target.form?.requestSubmit()}
-                        className="rounded-lg border-gray-200 bg-white py-1 pl-2 pr-8 text-xs font-medium focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
-                      >
-                        {USER_ROLES.map(role => (
-                          <option key={role} value={role}>{role}</option>
-                        ))}
-                      </select>
-                    </Form>
+                  <td className="px-4 py-3 text-xs font-medium text-foreground dark:text-white capitalize">
+                    {u.role}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Form
-                      method="post"
-                      onSubmit={(e) => {
-                        if (!confirm(`Benutzer "${u.username}" wirklich löschen?`)) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <input type="hidden" name="intent" value="deleteUser" />
-                      <input type="hidden" name="userId" value={u.id} />
+                    <div className="flex justify-end gap-1">
                       <Button
-                        type="submit"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
-                        title="Benutzer löschen"
-                        disabled={isSubmitting}
+                        className="h-8 w-8 text-secondary hover:text-primary dark:text-navy-400 dark:hover:text-white"
+                        onClick={() => {
+                          setEditingUser(u);
+                          setIsUserDialogOpen(true);
+                        }}
+                        title="Benutzer bearbeiten"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                    </Form>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -287,6 +344,16 @@ export default function AdminSettings() {
           </table>
         </div>
       </section>
+
+      <UserDialog
+        isOpen={isUserDialogOpen}
+        onClose={() => {
+          setIsUserDialogOpen(false);
+          setEditingUser(null);
+        }}
+        initialData={editingUser}
+        currentUserId={currentUser.id}
+      />
 
       {/* Currency Management */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
