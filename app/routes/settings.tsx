@@ -17,10 +17,13 @@ import {
   updateUserPassword,
   verifyPassword,
 } from "~/services/auth.server";
+import { authenticators } from "~/db/schema";
+import { eq, and } from "drizzle-orm";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Server } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield, Server, Fingerprint, Key } from "lucide-react";
+import { registerPasskey } from "~/utils/webauthn";
 
 export function meta() {
   return [
@@ -33,7 +36,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
   const db = await getDb();
   const locations = await getLocations(db, user.id);
-  return { locations, user };
+  const userAuthenticators = await db.query.authenticators.findMany({
+    where: eq(authenticators.userId, user.id),
+    orderBy: (authenticators, { desc }) => [desc(authenticators.createdAt)],
+  });
+  return { locations, user, userAuthenticators };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -41,6 +48,15 @@ export async function action({ request }: Route.ActionArgs) {
   const db = await getDb();
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  if (intent === "deleteAuthenticator") {
+    const id = formData.get("id") as string;
+    if (!id) return { error: "ID fehlt." };
+    await db.delete(authenticators).where(
+      and(eq(authenticators.id, id), eq(authenticators.userId, user.id))
+    );
+    return { success: "Passkey gelöscht." };
+  }
 
   if (intent === "changePassword") {
     const currentPassword = formData.get("currentPassword") as string;
@@ -90,7 +106,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings() {
-  const { locations, user } = useLoaderData<typeof loader>();
+  const { locations, user, userAuthenticators } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
@@ -234,6 +250,75 @@ export default function Settings() {
             </Button>
           </div>
         </Form>
+      </section>
+
+      {/* Passkeys Section */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <Fingerprint className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-foreground dark:text-white">Passkeys</h2>
+              <p className="text-sm text-secondary dark:text-navy-300">
+                Logge dich schneller und sicherer mit Biometrie ein.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={async () => {
+              try {
+                await registerPasskey();
+                window.location.reload();
+              } catch (err) {
+                alert("Fehler beim Erstellen des Passkeys: " + (err instanceof Error ? err.message : "Unbekannt"));
+              }
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Hinzufügen
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {userAuthenticators.map((auth) => (
+            <div
+              key={auth.id}
+              className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-navy-700 dark:bg-navy-900"
+            >
+              <div className="flex items-center gap-3">
+                <Key className="h-4 w-4 text-secondary dark:text-navy-400" />
+                <div>
+                  <p className="text-sm font-medium text-foreground dark:text-white">
+                    {auth.deviceType === "single_device" ? "Sicherheitsschlüssel / Gerät" : "Multi-Device Passkey"}
+                  </p>
+                  <p className="text-[10px] text-secondary/60 dark:text-navy-500 uppercase tracking-wider font-bold">
+                    ID: {auth.id.slice(0, 8)}... • Registriert am {new Date(auth.createdAt).toLocaleDateString("de-CH")}
+                  </p>
+                </div>
+              </div>
+              <Form method="post" onSubmit={(e) => !confirm("Passkey wirklich löschen?") && e.preventDefault()}>
+                <input type="hidden" name="intent" value="deleteAuthenticator" />
+                <input type="hidden" name="id" value={auth.id} />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </Form>
+            </div>
+          ))}
+          {userAuthenticators.length === 0 && (
+            <p className="py-4 text-center text-sm text-secondary dark:text-navy-400">
+              Keine Passkeys registriert.
+            </p>
+          )}
+        </div>
       </section>
 
       {/* Storage Locations Section */}

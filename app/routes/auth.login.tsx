@@ -1,6 +1,6 @@
-import { Bike, Mail, User, Lock, ArrowRight } from "lucide-react";
-import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
-import { useEffect } from "react";
+import { Bike, Mail, User, Lock, ArrowRight, Fingerprint } from "lucide-react";
+import { Form, data, redirect, useActionData, useLoaderData, useNavigation, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/auth.login";
 import {
@@ -11,6 +11,7 @@ import {
   mergeHeaders,
   verifyLogin,
 } from "~/services/auth.server";
+import { authenticateWithPasskey } from "~/utils/webauthn";
 
 const EMAIL_REGEX = /.+@.+\..+/i;
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
@@ -177,9 +178,12 @@ export default function Login() {
   const { redirectTo, isFirstUser } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const submittingIntent = navigation.formData?.get("intent");
   const isLoginSubmitting = navigation.state === "submitting" && submittingIntent !== "register";
   const isRegisterSubmitting = navigation.state === "submitting" && submittingIntent === "register";
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
+  const [identifier, setIdentifier] = useState("");
 
   const loginError =
     actionData && !actionData.success && actionData.form === "login" && "message" in actionData
@@ -191,6 +195,19 @@ export default function Login() {
       : null;
 
   const fieldErrors = actionData && !actionData.success && "errors" in actionData ? (actionData as any).errors : null;
+
+  const handlePasskeyLogin = async () => {
+    try {
+      setPasskeyError(null);
+      await authenticateWithPasskey(identifier || undefined);
+      // If successful, the server has set the cookie. We just need to navigate.
+      navigate(redirectTo);
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        setPasskeyError("Passkey-Login fehlgeschlagen. Bitte versuche es erneut oder nutze dein Passwort.");
+      }
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -410,6 +427,8 @@ export default function Login() {
                           id="identifier"
                           name="identifier"
                           autoComplete="username"
+                          value={identifier}
+                          onChange={(e) => setIdentifier(e.target.value)}
                           placeholder="E-Mail / @username"
                           className={clsx(
                             "block w-full rounded-2xl border-gray-100 bg-white/50 py-3.5 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
@@ -449,15 +468,33 @@ export default function Login() {
                     </div>
                   )}
 
-                  <button
-                    type="submit"
-                    disabled={isLoginSubmitting}
-                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
-                  >
-                    <span className="relative z-10">{isLoginSubmitting ? "Authentifizierung..." : "Login"}</span>
-                    {!isLoginSubmitting && <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />}
-                    <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                  </button>
+                  {passkeyError && (
+                    <div className="flex animate-fade-in items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+                      <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                      {passkeyError}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="submit"
+                      disabled={isLoginSubmitting}
+                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
+                    >
+                      <span className="relative z-10">{isLoginSubmitting ? "Authentifizierung..." : "Login"}</span>
+                      {!isLoginSubmitting && <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                      <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handlePasskeyLogin}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 text-sm font-bold text-secondary transition-all hover:bg-white hover:text-primary hover:shadow-md dark:border-navy-700 dark:bg-navy-800/50 dark:text-navy-300 dark:hover:bg-navy-800 dark:hover:text-primary-light"
+                    >
+                      <Fingerprint className="h-4 w-4" />
+                      <span>Passkey-Login</span>
+                    </button>
+                  </div>
                 </Form>
               </div>
             )}
