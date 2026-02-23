@@ -61,6 +61,10 @@ export async function action({ request }: Route.ActionArgs) {
     const engineOilInterval = Number(formData.get("engineOilInterval"));
     const gearboxOilInterval = Number(formData.get("gearboxOilInterval"));
     const finalDriveOilInterval = Number(formData.get("finalDriveOilInterval"));
+    const driveshaftOilInterval = Number(formData.get("driveshaftOilInterval"));
+    const forkOilInterval = Number(formData.get("forkOilInterval"));
+    const brakeFluidInterval = Number(formData.get("brakeFluidInterval"));
+    const coolantInterval = Number(formData.get("coolantInterval"));
 
     await updateUserSettings(db, user.id, {
       tireInterval,
@@ -69,6 +73,10 @@ export async function action({ request }: Route.ActionArgs) {
       engineOilInterval,
       gearboxOilInterval,
       finalDriveOilInterval,
+      driveshaftOilInterval,
+      forkOilInterval,
+      brakeFluidInterval,
+      coolantInterval,
     });
     return { success: "Wartungsintervalle aktualisiert." };
   }
@@ -292,6 +300,62 @@ export default function Settings() {
                   name="finalDriveOilInterval"
                   id="finalDriveOilInterval"
                   defaultValue={settings?.finalDriveOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="driveshaftOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Antriebswellenöl (Jahre)</label>
+                <input
+                  type="number"
+                  name="driveshaftOilInterval"
+                  id="driveshaftOilInterval"
+                  defaultValue={settings?.driveshaftOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="forkOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Gabelöl (Jahre)</label>
+                <input
+                  type="number"
+                  name="forkOilInterval"
+                  id="forkOilInterval"
+                  defaultValue={settings?.forkOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="brakeFluidInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Bremsflüssigkeit (Jahre)</label>
+                <input
+                  type="number"
+                  name="brakeFluidInterval"
+                  id="brakeFluidInterval"
+                  defaultValue={settings?.brakeFluidInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="coolantInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kühlflüssigkeit (Jahre)</label>
+                <input
+                  type="number"
+                  name="coolantInterval"
+                  id="coolantInterval"
+                  defaultValue={settings?.coolantInterval}
                   min="1"
                   max="10"
                   required

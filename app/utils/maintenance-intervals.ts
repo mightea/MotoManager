@@ -10,6 +10,10 @@ export const DEFAULT_MAINTENANCE_INTERVALS = {
     engineoil: 2,
     gearboxoil: 2,
     finaldriveoil: 2,
+    driveshaftoil: 2,
+    forkoil: 4,
+    brakefluid: 2,
+    coolant: 4,
   },
 } as const;
 
@@ -91,6 +95,10 @@ export const getMaintenanceInsights = (
           engineoil: settings.engineOilInterval,
           gearboxoil: settings.gearboxOilInterval,
           finaldriveoil: settings.finalDriveOilInterval,
+          driveshaftoil: settings.driveshaftOilInterval,
+          forkoil: settings.forkOilInterval,
+          brakefluid: settings.brakeFluidInterval,
+          coolant: settings.coolantInterval,
         },
       }
     : DEFAULT_MAINTENANCE_INTERVALS;
@@ -193,6 +201,10 @@ export const getMaintenanceInsights = (
     { type: "engineoil", label: "Motoröl" },
     { type: "gearboxoil", label: "Getriebeöl" },
     { type: "finaldriveoil", label: "Kardanöl" },
+    { type: "driveshaftoil", label: "Antriebswellenöl" },
+    { type: "forkoil", label: "Gabelöl" },
+    { type: "brakefluid", label: "Bremsflüssigkeit" },
+    { type: "coolant", label: "Kühlflüssigkeit" },
   ] as const;
 
   fluidsToCheck.forEach((fluid) => {

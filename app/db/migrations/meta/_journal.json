@@ -43,6 +43,13 @@
       "when": 1771865452898,
       "tag": "0005_gorgeous_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1771865745646,
+      "tag": "0006_light_lily_hollister",
+      "breakpoints": true
     }
   ]
 }

@@ -239,6 +239,10 @@ export const userSettings = sqliteTable("user_settings", {
   engineOilInterval: int("engine_oil_interval").notNull().default(2),
   gearboxOilInterval: int("gearbox_oil_interval").notNull().default(2),
   finalDriveOilInterval: int("final_drive_oil_interval").notNull().default(2),
+  driveshaftOilInterval: int("driveshaft_oil_interval").notNull().default(2),
+  forkOilInterval: int("fork_oil_interval").notNull().default(4),
+  brakeFluidInterval: int("brake_fluid_interval").notNull().default(2),
+  coolantInterval: int("coolant_interval").notNull().default(4),
   updatedAt: text("updated_at")
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),
