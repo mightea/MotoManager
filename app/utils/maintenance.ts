@@ -18,7 +18,6 @@ export const fluidTypeLabels: Record<FluidType, string> = {
   engineoil: "Motoröl",
   gearboxoil: "Getriebeöl",
   finaldriveoil: "Kardanöl",
-  driveshaftoil: "Kardanwellenöl",
   forkoil: "Gabelöl",
   brakefluid: "Bremsflüssigkeit",
   coolant: "Kühlflüssigkeit",
