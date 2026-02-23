@@ -277,7 +277,6 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                                 <option value="engineoil">Motoröl</option>
                                 <option value="gearboxoil">Getriebeöl</option>
                                 <option value="finaldriveoil">Kardanöl</option>
-                                <option value="driveshaftoil">Kardanwellenöl</option>
                                 <option value="forkoil">Gabelöl</option>
                                 <option value="brakefluid">Bremsflüssigkeit</option>
                                 <option value="coolant">Kühlflüssigkeit</option>

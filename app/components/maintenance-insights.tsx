@@ -67,7 +67,7 @@ export function MaintenanceInsightsCard({
   }, {} as Record<InsightCategory, MaintenanceInsight[]>);
 
   // Define display order for categories
-  const categoryOrder: InsightCategory[] = ["Reifen", "Batterie", "Flüssigkeiten"];
+  const categoryOrder: InsightCategory[] = ["Reifen", "Batterie", "Flüssigkeiten", "Wartung"];
 
   return (
     <div

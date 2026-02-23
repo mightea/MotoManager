@@ -74,6 +74,8 @@ export async function action({ request }: Route.ActionArgs) {
     const forkOilInterval = Number(formData.get("forkOilInterval"));
     const brakeFluidInterval = Number(formData.get("brakeFluidInterval"));
     const coolantInterval = Number(formData.get("coolantInterval"));
+    const serviceInterval = Number(formData.get("serviceInterval"));
+    const chainInterval = Number(formData.get("chainInterval"));
 
     await updateUserSettings(db, user.id, {
       tireInterval,
@@ -85,6 +87,8 @@ export async function action({ request }: Route.ActionArgs) {
       forkOilInterval,
       brakeFluidInterval,
       coolantInterval,
+      serviceInterval,
+      chainInterval,
     });
     return { success: "Wartungsintervalle aktualisiert." };
   }
@@ -610,6 +614,40 @@ export default function Settings() {
                   required
                   className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                 />
+              </div>
+            </div>
+
+            <div className="space-y-4 sm:col-span-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Weitere Wartungen</h3>
+              
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label htmlFor="serviceInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Service (Jahre)</label>
+                  <input
+                    type="number"
+                    name="serviceInterval"
+                    id="serviceInterval"
+                    defaultValue={settings?.serviceInterval}
+                    min="1"
+                    max="10"
+                    required
+                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="chainInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kette reinigen/fetten (Jahre)</label>
+                  <input
+                    type="number"
+                    name="chainInterval"
+                    id="chainInterval"
+                    defaultValue={settings?.chainInterval}
+                    min="1"
+                    max="10"
+                    required
+                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                  />
+                </div>
               </div>
             </div>
           </div>

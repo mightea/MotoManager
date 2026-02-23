@@ -14,9 +14,11 @@ export const DEFAULT_MAINTENANCE_INTERVALS = {
     brakefluid: 4,
     coolant: 4,
   },
+  service: 1,
+  chain: 1,
 } as const;
 
-export type InsightCategory = "Reifen" | "Batterie" | "Flüssigkeiten";
+export type InsightCategory = "Reifen" | "Batterie" | "Flüssigkeiten" | "Wartung";
 
 export type MaintenanceInsight = {
   key: string;
@@ -98,6 +100,8 @@ export const getMaintenanceInsights = (
           brakefluid: settings.brakeFluidInterval,
           coolant: settings.coolantInterval,
         },
+        service: settings.serviceInterval,
+        chain: settings.chainInterval,
       }
     : DEFAULT_MAINTENANCE_INTERVALS;
 
@@ -119,13 +123,31 @@ export const getMaintenanceInsights = (
     intervalYears?: number,
     customBaseDate?: Date | null,
   ) => {
-    if (!lastRecord || !intervalYears) {
+    if (!intervalYears) {
+      return;
+    }
+
+    if (!lastRecord && !customBaseDate) {
+      insights.push({
+        key,
+        category,
+        label,
+        status: "unknown",
+      });
       return;
     }
 
     const baseDate =
-      customBaseDate || (lastRecord.date ? new Date(lastRecord.date) : null);
-    if (!baseDate) return;
+      customBaseDate || (lastRecord?.date ? new Date(lastRecord.date) : null);
+    if (!baseDate) {
+      insights.push({
+        key,
+        category,
+        label,
+        status: "unknown",
+      });
+      return;
+    }
 
     const nextDate = addYears(baseDate, intervalYears);
     const today = new Date();
@@ -135,7 +157,7 @@ export const getMaintenanceInsights = (
       (nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 365);
 
     const kmsSinceLast =
-      currentOdo && lastRecord.odo ? currentOdo - lastRecord.odo : undefined;
+      currentOdo && lastRecord?.odo ? currentOdo - lastRecord.odo : undefined;
 
     insights.push({
       key,
@@ -145,7 +167,7 @@ export const getMaintenanceInsights = (
       lastDate: baseDate.toISOString().split("T")[0],
       nextDate: nextDate.toISOString().split("T")[0],
       yearsRemaining: Number(yearsRemaining.toFixed(1)),
-      lastOdo: lastRecord.odo,
+      lastOdo: lastRecord?.odo,
       kmsSinceLast:
         kmsSinceLast !== undefined && kmsSinceLast > 0
           ? kmsSinceLast
@@ -186,13 +208,10 @@ export const getMaintenanceInsights = (
 
   // 2. Battery
   const latestBattery = findLatest((r) => r.type === "battery");
-  if (latestBattery) {
-    const interval =
-      latestBattery.batteryType === "lithium-ion"
-        ? intervals.battery["lithium-ion"]
-        : intervals.battery.default;
-    createInsight("battery", "Batterie", "Batterie", latestBattery, interval);
-  }
+  const batteryInterval = (latestBattery?.batteryType === "lithium-ion")
+    ? intervals.battery["lithium-ion"]
+    : intervals.battery.default;
+  createInsight("battery", "Batterie", "Batterie", latestBattery, batteryInterval);
 
   // 3. Fluids
   const fluidsToCheck = [
@@ -216,6 +235,13 @@ export const getMaintenanceInsights = (
       intervals.fluid[fluid.type],
     );
   });
+
+  // 4. Maintenance
+  const latestService = findLatest((r) => r.type === "service");
+  createInsight("service", "Wartung", "Service", latestService, intervals.service);
+
+  const latestChain = findLatest((r) => r.type === "chain");
+  createInsight("chain", "Wartung", "Kette reinigen/fetten", latestChain, intervals.chain);
 
   return insights;
 };
