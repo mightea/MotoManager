@@ -9,6 +9,7 @@ import {
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
+import { getUserSettings } from "~/db/providers/settings.server";
 import { eq, inArray } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { userPrefs } from "~/services/preferences.server";
@@ -44,9 +45,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { user, headers: authHeaders } = await requireUser(request);
   const db = await getDb();
 
-  const motorcyclesList = await db.query.motorcycles.findMany({
-    where: eq(motorcycles.userId, user.id),
-  });
+  const [motorcyclesList, settings] = await Promise.all([
+    db.query.motorcycles.findMany({
+      where: eq(motorcycles.userId, user.id),
+    }),
+    getUserSettings(db, user.id),
+  ]);
 
   const motoIds = motorcyclesList.map(m => m.id);
 
@@ -69,6 +73,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     maintenance: allMaintenance,
     locationHistory: allLocations,
     year: new Date().getFullYear(),
+    settings,
   });
 
   // Sorting Logic

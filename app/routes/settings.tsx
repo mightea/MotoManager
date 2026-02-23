@@ -9,7 +9,9 @@ import {
   createLocation,
   deleteLocation,
   getLocations,
+  getUserSettings,
   updateLocation,
+  updateUserSettings,
 } from "~/db/providers/settings.server";
 import { getDb } from "~/db";
 import {
@@ -22,7 +24,7 @@ import { eq, and } from "drizzle-orm";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Server, Fingerprint, Key } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield, Server, Fingerprint, Key, Activity } from "lucide-react";
 import { registerPasskey } from "~/utils/webauthn";
 
 export function meta() {
@@ -35,12 +37,15 @@ export function meta() {
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUser(request);
   const db = await getDb();
-  const locations = await getLocations(db, user.id);
-  const userAuthenticators = await db.query.authenticators.findMany({
-    where: eq(authenticators.userId, user.id),
-    orderBy: (authenticators, { desc }) => [desc(authenticators.createdAt)],
-  });
-  return { locations, user, userAuthenticators };
+  const [locations, settings, userAuthenticators] = await Promise.all([
+    getLocations(db, user.id),
+    getUserSettings(db, user.id),
+    db.query.authenticators.findMany({
+      where: eq(authenticators.userId, user.id),
+      orderBy: (authenticators, { desc }) => [desc(authenticators.createdAt)],
+    }),
+  ]);
+  return { locations, user, settings, userAuthenticators };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -49,7 +54,27 @@ export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  if (intent === "updateUserSettings") {
+    const tireInterval = Number(formData.get("tireInterval"));
+    const batteryLithiumInterval = Number(formData.get("batteryLithiumInterval"));
+    const batteryDefaultInterval = Number(formData.get("batteryDefaultInterval"));
+    const engineOilInterval = Number(formData.get("engineOilInterval"));
+    const gearboxOilInterval = Number(formData.get("gearboxOilInterval"));
+    const finalDriveOilInterval = Number(formData.get("finalDriveOilInterval"));
+
+    await updateUserSettings(db, user.id, {
+      tireInterval,
+      batteryLithiumInterval,
+      batteryDefaultInterval,
+      engineOilInterval,
+      gearboxOilInterval,
+      finalDriveOilInterval,
+    });
+    return { success: "Wartungsintervalle aktualisiert." };
+  }
+
   if (intent === "deleteAuthenticator") {
+// ... (rest of the action remains the same)
     const id = formData.get("id") as string;
     if (!id) return { error: "ID fehlt." };
     await db.delete(authenticators).where(
@@ -164,6 +189,125 @@ export default function Settings() {
           {(actionData as any).success}
         </div>
       )}
+
+      {/* Maintenance Intervals Section */}
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+            <Activity className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">Wartungsintervalle</h2>
+            <p className="text-sm text-secondary dark:text-navy-300">
+              Konfiguriere die Zeitabstände (in Jahren) für deine Wartungserinnerungen.
+            </p>
+          </div>
+        </div>
+
+        <Form method="post" className="space-y-6">
+          <input type="hidden" name="intent" value="updateUserSettings" />
+          
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Allgemein</h3>
+              
+              <div className="space-y-1.5">
+                <label htmlFor="tireInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Reifen (Jahre)</label>
+                <input
+                  type="number"
+                  name="tireInterval"
+                  id="tireInterval"
+                  defaultValue={loaderData.settings?.tireInterval}
+                  min="1"
+                  max="20"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="batteryDefaultInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Standard (Jahre)</label>
+                <input
+                  type="number"
+                  name="batteryDefaultInterval"
+                  id="batteryDefaultInterval"
+                  defaultValue={loaderData.settings?.batteryDefaultInterval}
+                  min="1"
+                  max="20"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="batteryLithiumInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Lithium (Jahre)</label>
+                <input
+                  type="number"
+                  name="batteryLithiumInterval"
+                  id="batteryLithiumInterval"
+                  defaultValue={loaderData.settings?.batteryLithiumInterval}
+                  min="1"
+                  max="20"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Öle & Flüssigkeiten</h3>
+              
+              <div className="space-y-1.5">
+                <label htmlFor="engineOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Motoröl (Jahre)</label>
+                <input
+                  type="number"
+                  name="engineOilInterval"
+                  id="engineOilInterval"
+                  defaultValue={loaderData.settings?.engineOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="gearboxOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Getriebeöl (Jahre)</label>
+                <input
+                  type="number"
+                  name="gearboxOilInterval"
+                  id="gearboxOilInterval"
+                  defaultValue={loaderData.settings?.gearboxOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="finalDriveOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kardanöl / Endantrieb (Jahre)</label>
+                <input
+                  type="number"
+                  name="finalDriveOilInterval"
+                  id="finalDriveOilInterval"
+                  defaultValue={loaderData.settings?.finalDriveOilInterval}
+                  min="1"
+                  max="10"
+                  required
+                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button type="submit" disabled={isSubmitting}>
+              Intervalle speichern
+            </Button>
+          </div>
+        </Form>
+      </section>
 
       {/* Password Change Section */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">

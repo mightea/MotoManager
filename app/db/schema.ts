@@ -227,6 +227,23 @@ export const torqueSpecs = sqliteTable("torque_specs", {
     .default(sql`(CURRENT_TIMESTAMP)`),
 });
 
+export const userSettings = sqliteTable("user_settings", {
+  id: int().primaryKey({ autoIncrement: true }),
+  userId: int("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  tireInterval: int("tire_interval").notNull().default(8),
+  batteryLithiumInterval: int("battery_lithium_interval").notNull().default(10),
+  batteryDefaultInterval: int("battery_default_interval").notNull().default(6),
+  engineOilInterval: int("engine_oil_interval").notNull().default(2),
+  gearboxOilInterval: int("gearbox_oil_interval").notNull().default(2),
+  finalDriveOilInterval: int("final_drive_oil_interval").notNull().default(2),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+});
+
 export const sessions = sqliteTable(
   "sessions",
   {
@@ -312,6 +329,9 @@ export type NewDocumentMotorcycle = typeof documentMotorcycles.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type NewUserSettings = typeof userSettings.$inferInsert;
 
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
