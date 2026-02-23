@@ -3,8 +3,10 @@ import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import {
   currencySettings,
   locations,
+  userSettings,
   type NewCurrencySetting,
   type NewLocation,
+  type NewUserSettings,
 } from "~/db/schema";
 import type * as schema from "~/db/schema";
 import {
@@ -59,6 +61,40 @@ export async function ensureDefaultCurrency(db: Database) {
   }
 
   await ensureDefaultCurrencyPromise;
+}
+
+export async function getUserSettings(db: Database, userId: number) {
+  const [record] = await db
+    .select()
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId))
+    .limit(1);
+
+  if (record) {
+    return record;
+  }
+
+  // Create default settings if they don't exist
+  const [newRecord] = await db
+    .insert(userSettings)
+    .values({ userId })
+    .returning();
+
+  return newRecord ?? null;
+}
+
+export async function updateUserSettings(
+  db: Database,
+  userId: number,
+  values: Partial<Omit<NewUserSettings, "id" | "userId" | "updatedAt">>,
+) {
+  const [record] = await db
+    .update(userSettings)
+    .set({ ...values, updatedAt: new Date().toISOString() })
+    .where(eq(userSettings.userId, userId))
+    .returning();
+
+  return record ?? null;
 }
 
 export async function getLocations(db: Database, userId: number) {

@@ -17,6 +17,7 @@ import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo, formatDuration } from "~/utils/inspection";
+import { getUserSettings } from "~/db/providers/settings.server";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
@@ -56,9 +57,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw new Response("Invalid Motorcycle ID", { status: 400 });
   }
 
-  const motorcycle = await db.query.motorcycles.findFirst({
-    where: eq(motorcycles.id, motorcycleId),
-  });
+  const [motorcycle, settings] = await Promise.all([
+    db.query.motorcycles.findFirst({
+      where: eq(motorcycles.id, motorcycleId),
+    }),
+    getUserSettings(db, user.id),
+  ]);
 
   if (!motorcycle) {
     throw new Response("Motorcycle not found", { status: 404 });
@@ -105,7 +109,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     isVeteran: motorcycle.isVeteran ?? false,
   });
 
-  const insights = getMaintenanceInsights(maintenanceHistory, lastKnownOdo ?? 0);
+  const insights = getMaintenanceInsights(maintenanceHistory, lastKnownOdo ?? 0, settings);
 
   const userLocations = await db.query.locations.findMany({
     where: eq(locations.userId, user.id),

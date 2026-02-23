@@ -45,6 +45,7 @@ export type BuildDashboardItemsArgs = {
   maintenance: MaintenanceRecord[];
   locationHistory: CurrentLocation[];
   year: number;
+  settings?: UserSettings | null;
 };
 
 const registerOdoForYear = (
@@ -73,6 +74,7 @@ export function buildDashboardItems({
   maintenance,
   locationHistory,
   year,
+  settings,
 }: BuildDashboardItemsArgs): MotorcycleDashboardItem[] {
   return motorcycles.map((moto) => {
     const relatedIssues = issues.filter((issue) => issue.motorcycleId === moto.id);
@@ -157,7 +159,7 @@ export function buildDashboardItems({
       isVeteran: moto.isVeteran ?? false,
     });
 
-    const insights = getMaintenanceInsights(relatedMaintenance, maxOdometer);
+    const insights = getMaintenanceInsights(relatedMaintenance, maxOdometer, settings);
     const overdueMaintenanceItems = insights
       .filter((i) => i.status === "overdue")
       .map((i) => i.label);

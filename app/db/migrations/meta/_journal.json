@@ -36,6 +36,13 @@
       "when": 1771850185627,
       "tag": "0004_unique_enchantress",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1771865452898,
+      "tag": "0005_gorgeous_lockjaw",
+      "breakpoints": true
     }
   ]
 }
