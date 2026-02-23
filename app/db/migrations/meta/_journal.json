@@ -50,6 +50,13 @@
       "when": 1771865745646,
       "tag": "0006_light_lily_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1771865892570,
+      "tag": "0007_sharp_sugar_man",
+      "breakpoints": true
     }
   ]
 }
