@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.2.6](https://github.com/mightea/MotoManager/compare/2026.2.5...2026.2.6) (2026-02-23)
+
+### Features
+
+* implement comprehensive user management in admin panel ([9561079](https://github.com/mightea/MotoManager/commit/95610796a989bf408f1c8d82d0611c3390e9e90f))
+* move settings to user dropdown in header ([83e74bb](https://github.com/mightea/MotoManager/commit/83e74bbcbe878ae19395f772f90a7eb4802f2427))
+
+### Bug Fixes
+
+* allow user dropdown to be visible by removing overflow-hidden from header ([1d021a0](https://github.com/mightea/MotoManager/commit/1d021a004a5e613ad4cd5d29d1cc8686926222d0))
+* ensure torque spec text is black when printing ([81dcd73](https://github.com/mightea/MotoManager/commit/81dcd739dbe149aec68fa6756a35c387822df63d))
+* further improve print styles for torque specs to ensure visibility ([bda9b0d](https://github.com/mightea/MotoManager/commit/bda9b0d16afda8f18791bb80e06637a993ce0b46))
+
 ## [2026.2.5](https://github.com/mightea/MotoManager/compare/2026.2.4...2026.2.5) (2026-02-23)
 
 ### Features
