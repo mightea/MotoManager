@@ -81,6 +81,7 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                 <div className="space-y-1.5">
                     <label htmlFor="date" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Datum</label>
                     <input
+                        suppressHydrationWarning
                         type="date"
                         name="date"
                         id="date"

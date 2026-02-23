@@ -76,6 +76,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
             Datum
           </label>
           <input
+            suppressHydrationWarning
             type="date"
             name="date"
             id="date"

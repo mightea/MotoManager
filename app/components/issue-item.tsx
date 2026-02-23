@@ -37,7 +37,7 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
         <p className="font-medium text-foreground dark:text-gray-200">
           {issue.description || "Beschreibung fehlt"}
         </p>
-        <p className="text-xs text-secondary dark:text-navy-400">
+        <p suppressHydrationWarning className="text-xs text-secondary dark:text-navy-400">
           {issue.date
             ? dateFormatter.format(new Date(issue.date))
             : "Datum unbekannt"}
