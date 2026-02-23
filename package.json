@@ -24,6 +24,8 @@
     "@libsql/client": "^0.17.0",
     "@react-router/node": "^7.13.0",
     "@react-router/serve": "^7.13.0",
+    "@simplewebauthn/browser": "^13.2.2",
+    "@simplewebauthn/server": "^13.2.3",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.1.18",
     "better-sqlite3": "^12.6.2",

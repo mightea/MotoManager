@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  blob,
   index,
   int,
   integer,
@@ -30,6 +31,27 @@ export const users = sqliteTable(
   (table) => ({
     emailIdx: uniqueIndex("users_email_unique").on(table.email),
     usernameIdx: uniqueIndex("users_username_unique").on(table.username),
+  }),
+);
+
+export const authenticators = sqliteTable(
+  "authenticators",
+  {
+    id: text().primaryKey(), // Credential ID (base64url)
+    userId: int("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    publicKey: blob("public_key", { mode: "buffer" }).notNull(),
+    counter: integer("counter").notNull().default(0),
+    deviceType: text("device_type").notNull(),
+    backedUp: integer("backed_up", { mode: "boolean" }).notNull().default(false),
+    transports: text("transports"), // JSON array of AuthenticatorTransport
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+  },
+  (table) => ({
+    userIdIdx: index("authenticators_user_id_idx").on(table.userId),
   }),
 );
 
@@ -255,6 +277,22 @@ export const documentMotorcycles = sqliteTable(
     pk: primaryKey({ columns: [table.documentId, table.motorcycleId] }),
   }),
 );
+
+export const challenges = sqliteTable(
+  "challenges",
+  {
+    id: text().primaryKey(),
+    userId: int("user_id"),
+    challenge: text().notNull(),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at")
+      .notNull()
+      .default(sql`(CURRENT_TIMESTAMP)`),
+  }
+);
+
+export type Challenge = typeof challenges.$inferSelect;
+export type NewChallenge = typeof challenges.$inferInsert;
 
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;

@@ -22,6 +22,20 @@
       "when": 1771763941567,
       "tag": "0002_wonderful_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1771850160148,
+      "tag": "0003_superb_domino",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1771850185627,
+      "tag": "0004_unique_enchantress",
+      "breakpoints": true
     }
   ]
 }
