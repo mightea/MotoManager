@@ -127,25 +127,10 @@ export const getMaintenanceInsights = (
       return;
     }
 
-    if (!lastRecord && !customBaseDate) {
-      insights.push({
-        key,
-        category,
-        label,
-        status: "unknown",
-      });
-      return;
-    }
-
     const baseDate =
       customBaseDate || (lastRecord?.date ? new Date(lastRecord.date) : null);
+    
     if (!baseDate) {
-      insights.push({
-        key,
-        category,
-        label,
-        status: "unknown",
-      });
       return;
     }
 
