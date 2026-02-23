@@ -213,6 +213,11 @@ export async function destroySessionFromRequest(request: Request) {
   return destroySessionByToken(token);
 }
 
+export async function getUserById(id: number) {
+  const db = await getDb();
+  return db.query.users.findFirst({ where: eq(users.id, id) });
+}
+
 export async function findUserByEmail(email: string) {
   const db = await getDb();
   const normalized = normalizeEmail(email);
@@ -272,6 +277,62 @@ export async function createUser(
     .returning();
 
   return toPublicUser(inserted);
+}
+
+export async function updateUser(
+  userId: number,
+  input: Partial<Pick<NewUser, "email" | "name" | "username" | "role">>,
+): Promise<PublicUser> {
+  const db = await getDb();
+
+  const current = await getUserById(userId);
+  if (!current) {
+    throw new Error("Benutzer nicht gefunden.");
+  }
+
+  const updates: Partial<NewUser> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (input.email) {
+    const normalizedEmail = normalizeEmail(input.email);
+    if (normalizedEmail !== current.email) {
+      const existing = await findUserByEmail(normalizedEmail);
+      if (existing) {
+        throw new Error(
+          "Es existiert bereits ein Benutzer mit dieser E-Mail-Adresse.",
+        );
+      }
+      updates.email = normalizedEmail;
+    }
+  }
+
+  if (input.username) {
+    const normalizedUsername = normalizeUsername(input.username);
+    if (normalizedUsername !== current.username) {
+      const existingByUsername = await findUserByUsername(normalizedUsername);
+      if (existingByUsername) {
+        throw new Error("Benutzername ist bereits vergeben.");
+      }
+      updates.username = normalizedUsername;
+    }
+  }
+
+  if (input.name !== undefined) {
+    updates.name = input.name.trim();
+  }
+
+  if (input.role !== undefined) {
+    updates.role = input.role;
+  }
+
+  const [updated] = await db
+    .update(users)
+    .set(updates)
+    .where(eq(users.id, userId))
+    .returning();
+
+  return toPublicUser(updated);
 }
 
 export async function updateUserPassword(userId: number, password: string) {
