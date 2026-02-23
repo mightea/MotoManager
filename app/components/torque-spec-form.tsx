@@ -106,7 +106,7 @@ export function TorqueSpecForm({
         <label htmlFor="torque" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
           Wert
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={variationType}
             onChange={(e) => setVariationType(e.target.value as VariationType)}
@@ -130,7 +130,7 @@ export function TorqueSpecForm({
 
             {variationType === "plus_minus" && (
               <>
-                <span className="font-bold text-secondary">±</span>
+                <span className="font-bold text-secondary shrink-0">±</span>
                 <input
                   type="number"
                   name="variation"
@@ -145,7 +145,7 @@ export function TorqueSpecForm({
             )}
             {variationType === "range" && (
               <>
-                <span className="font-bold text-secondary">-</span>
+                <span className="font-bold text-secondary shrink-0">-</span>
                 <input
                   type="number"
                   name="torqueEnd"
