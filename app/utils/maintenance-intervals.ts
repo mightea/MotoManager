@@ -14,7 +14,6 @@ export const DEFAULT_MAINTENANCE_INTERVALS = {
     brakefluid: 4,
     coolant: 4,
   },
-  service: 1,
   chain: 1,
 } as const;
 
@@ -100,7 +99,6 @@ export const getMaintenanceInsights = (
           brakefluid: settings.brakeFluidInterval,
           coolant: settings.coolantInterval,
         },
-        service: settings.serviceInterval,
         chain: settings.chainInterval,
       }
     : DEFAULT_MAINTENANCE_INTERVALS;
@@ -222,9 +220,6 @@ export const getMaintenanceInsights = (
   });
 
   // 4. Maintenance
-  const latestService = findLatest((r) => r.type === "service");
-  createInsight("service", "Wartung", "Service", latestService, intervals.service);
-
   const latestChain = findLatest((r) => r.type === "chain");
   createInsight("chain", "Wartung", "Kette reinigen/fetten", latestChain, intervals.chain);
 

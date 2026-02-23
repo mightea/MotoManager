@@ -241,7 +241,6 @@ export const userSettings = sqliteTable("user_settings", {
   forkOilInterval: int("fork_oil_interval").notNull().default(4),
   brakeFluidInterval: int("brake_fluid_interval").notNull().default(4),
   coolantInterval: int("coolant_interval").notNull().default(4),
-  serviceInterval: int("service_interval").notNull().default(1),
   chainInterval: int("chain_interval").notNull().default(1),
   updatedAt: text("updated_at")
     .notNull()
