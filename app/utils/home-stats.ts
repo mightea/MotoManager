@@ -3,6 +3,7 @@ import type {
   Issue,
   MaintenanceRecord,
   Motorcycle,
+  UserSettings,
 } from "~/db/schema";
 import {
   getNextInspectionInfo,
