@@ -11,7 +11,7 @@ export const DEFAULT_MAINTENANCE_INTERVALS = {
     gearboxoil: 2,
     finaldriveoil: 2,
     forkoil: 4,
-    brakefluid: 2,
+    brakefluid: 4,
     coolant: 4,
   },
 } as const;

@@ -57,6 +57,13 @@
       "when": 1771865892570,
       "tag": "0007_sharp_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1771866384567,
+      "tag": "0008_thin_dracula",
+      "breakpoints": true
     }
   ]
 }
