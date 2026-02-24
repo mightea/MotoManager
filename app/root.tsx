@@ -12,6 +12,7 @@ import type { Route } from "./+types/root";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
 import { getTheme } from "~/utils/theme.server";
+import { useEffect } from "react";
 import clsx from "clsx";
 
 import "./app.css";
@@ -23,6 +24,17 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch((error) => {
+          console.error("Service Worker registration failed:", error);
+        });
+      });
+    }
+  }, []);
+
   return (
     <html lang="en" className={clsx(theme)}>
       <head>
@@ -30,6 +42,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
