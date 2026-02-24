@@ -59,7 +59,7 @@ export const motorcycles = sqliteTable("motorcycles", {
   id: int().primaryKey({ autoIncrement: true }),
   make: text().notNull(),
   model: text().notNull(),
-  modelYear: int("model_year"),
+  fabricationDate: text("model_year"),
   userId: int("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

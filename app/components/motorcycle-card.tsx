@@ -58,7 +58,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
                 {moto.make} {moto.model}
               </h3>
               <p className="text-sm font-medium text-gray-200 shadow-sm">
-                {moto.modelYear || "Jahrgang unbekannt"}
+                {moto.fabricationDate || "Fabrikationsdatum unbekannt"}
               </p>
             </div>
             <div className="flex gap-2">

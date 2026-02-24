@@ -86,8 +86,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   cards.sort((a, b) => {
     switch (currentSort) {
       case "age":
-        const dateA = a.firstRegistration ? new Date(a.firstRegistration).getTime() : (a.modelYear ? new Date(`${a.modelYear}-01-01`).getTime() : Number.MAX_SAFE_INTEGER);
-        const dateB = b.firstRegistration ? new Date(b.firstRegistration).getTime() : (b.modelYear ? new Date(`${b.modelYear}-01-01`).getTime() : Number.MAX_SAFE_INTEGER);
+        const dateA = a.firstRegistration ? new Date(a.firstRegistration).getTime() : (a.fabricationDate ? new Date(a.fabricationDate.split("/").reverse().join("-")).getTime() : Number.MAX_SAFE_INTEGER);
+        const dateB = b.firstRegistration ? new Date(b.firstRegistration).getTime() : (b.fabricationDate ? new Date(b.fabricationDate.split("/").reverse().join("-")).getTime() : Number.MAX_SAFE_INTEGER);
         return dateA - dateB;
       case "make":
         return a.make.localeCompare(b.make) || a.model.localeCompare(b.model);
@@ -137,7 +137,7 @@ export async function action({ request }: Route.ActionArgs) {
     make,
     model,
     vin,
-    modelYear,
+    fabricationDate,
     vehicleIdNr,
     numberPlate,
     firstRegistration,
@@ -159,7 +159,7 @@ export async function action({ request }: Route.ActionArgs) {
   const newMotorcycle: NewMotorcycle = {
     make,
     model,
-    ...(modelYear !== undefined ? { modelYear } : {}),
+    fabricationDate,
     userId: user.id,
     vin,
     vehicleIdNr,

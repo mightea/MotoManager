@@ -240,7 +240,7 @@ export async function action({ request }: Route.ActionArgs) {
       make,
       model,
       vin,
-      modelYear,
+      fabricationDate,
       vehicleIdNr,
       numberPlate, // Not in EditorMotorcycle? Wait, let's check schema. EditorMotorcycle usually has similar fields.
       firstRegistration,
@@ -263,6 +263,7 @@ export async function action({ request }: Route.ActionArgs) {
       make,
       model,
       vin,
+      fabricationDate,
       vehicleIdNr: vehicleIdNr ?? null,
       numberPlate: numberPlate ?? null,
       firstRegistration: firstRegistration ?? null,
@@ -274,9 +275,6 @@ export async function action({ request }: Route.ActionArgs) {
       ...(imagePath ? { image: imagePath } : {}),
       normalizedPurchasePrice: (purchasePrice || 0) * getCurrencyFactor(currencyCode),
     };
-
-    updatedMotorcycle.modelYear =
-      typeof modelYear === "number" ? modelYear : null;
 
     const updated = await updateMotorcycle(
       dbClient,
