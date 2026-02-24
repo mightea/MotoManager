@@ -27,11 +27,20 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-      window.addEventListener("load", () => {
+      const registerServiceWorker = () => {
         navigator.serviceWorker.register("/sw.js").catch((error) => {
           console.error("Service Worker registration failed:", error);
         });
-      });
+      };
+
+      if (document.readyState === "complete") {
+        registerServiceWorker();
+      } else {
+        window.addEventListener("load", registerServiceWorker);
+        return () => {
+          window.removeEventListener("load", registerServiceWorker);
+        };
+      }
     }
   }, []);
 
