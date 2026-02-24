@@ -320,8 +320,40 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   };
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 px-4 pb-24 pt-0 md:p-6 md:space-y-8 print:p-0 print:m-0 print:max-w-none print:!bg-white print:!text-black">
-      <style dangerouslySetInnerHTML={{ __html: "@media print { @page { margin: 1.5cm; } * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; } .print-force-black { color: black !important; } .print-force-gray { color: #374151 !important; } .print-force-white { background-color: white !important; } .print-no-blur { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; } }" }} />
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 pb-24 pt-0 md:p-6 md:space-y-8 print:p-0 print:m-0 print:max-w-none print:!bg-white print:!text-black print:pb-0">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { margin: 1.5cm; }
+          * { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+          }
+          body { 
+            background-color: white !important; 
+            color: black !important; 
+          }
+          /* Fix for dark mode backgrounds bleeding into print */
+          .dark, .dark * {
+            background-color: transparent !important;
+            color: black !important;
+            border-color: #d1d5db !important; /* gray-300 */
+            box-shadow: none !important;
+          }
+          .print-force-white, 
+          .dark .print-force-white,
+          .dark [class*="bg-white"] {
+            background-color: white !important;
+          }
+          .print-force-gray,
+          .dark .print-force-gray {
+            background-color: #f3f4f6 !important; /* gray-100 */
+          }
+          .print-no-blur { 
+            backdrop-filter: none !important; 
+            -webkit-backdrop-filter: none !important; 
+          }
+        }
+      ` }} />
 
       {/* Print Only Header */}
       <div className="hidden print:block print:!bg-white print:border-black print:pb-4 print:mb-8">
@@ -443,13 +475,13 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           <div className="grid gap-6 print:block print:gap-0 print:!bg-white">
             {/* Group by category */}
             {Array.from(new Set(specs.map(s => s.category))).map(category => (
-              <div key={category} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:!bg-white print:shadow-none">
-                <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print-no-blur print:!bg-gray-100 print:!text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
+              <div key={category} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:print-force-white print:shadow-none">
+                <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print-no-blur print:print-force-gray print:!text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
                   {category}
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-navy-700 print:divide-gray-300">
                   {specs.filter(s => s.category === category).map(spec => (
-                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:border-b print:border-gray-200 print:!bg-white print:!text-black">
+                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:!bg-white print:!text-black">
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
