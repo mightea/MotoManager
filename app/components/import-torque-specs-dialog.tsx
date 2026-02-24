@@ -10,7 +10,7 @@ interface ImportTorqueSpecsDialogProps {
   isOpen: boolean;
   onClose: () => void;
   targetMotorcycleId: number;
-  otherMotorcycles: { id: number; make: string; model: string; modelYear: number | null }[];
+  otherMotorcycles: { id: number; make: string; model: string; fabricationDate: string | null }[];
   otherSpecs: TorqueSpecification[];
   existingSpecs: TorqueSpecification[];
 }
@@ -96,7 +96,7 @@ export function ImportTorqueSpecsDialog({
             <option value="">-- Fahrzeug wählen --</option>
             {otherMotorcycles.map((moto) => (
               <option key={moto.id} value={moto.id}>
-                {moto.make} {moto.model} {moto.modelYear ? `(${moto.modelYear})` : ""}
+                {moto.make} {moto.model} {moto.fabricationDate ? `(${moto.fabricationDate})` : ""}
               </option>
             ))}
           </select>

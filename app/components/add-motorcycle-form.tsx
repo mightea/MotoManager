@@ -40,7 +40,7 @@ export function AddMotorcycleForm({
       make?: string;
       model?: string;
       vin?: string;
-      modelYear?: string;
+      fabricationDate?: string;
       initialOdo?: string;
       purchasePrice?: string;
     };
@@ -194,16 +194,16 @@ export function AddMotorcycleForm({
             )}
           </div>
           <div className="space-y-1.5">
-            <label htmlFor="modelYear" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Jahrgang</label>
+            <label htmlFor="fabricationDate" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Fabrikationsdatum</label>
             <input
-              type="number"
-              name="modelYear"
-              id="modelYear"
-              placeholder="z.B. 2021"
-              defaultValue={initialValues?.modelYear ?? ""}
+              type="text"
+              name="fabricationDate"
+              id="fabricationDate"
+              placeholder="z.B. 07/1997"
+              defaultValue={initialValues?.fabricationDate ?? ""}
               className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-            {actionData?.errors?.modelYear && (
-              <p className="text-xs text-red-500">{actionData.errors.modelYear}</p>
+            {actionData?.errors?.fabricationDate && (
+              <p className="text-xs text-red-500">{actionData.errors.fabricationDate}</p>
             )}
           </div>
           <div className="space-y-1.5">

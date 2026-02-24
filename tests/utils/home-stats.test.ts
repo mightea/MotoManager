@@ -7,7 +7,7 @@ describe("buildDashboardData", () => {
     id: 1,
     make: "Yamaha",
     model: "MT-07",
-    modelYear: 2021,
+    fabricationDate: "01/2021",
     userId: 1,
     vin: "VIN123",
     initialOdo: 1000,

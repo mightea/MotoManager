@@ -118,7 +118,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         id: true,
         make: true,
         model: true,
-        modelYear: true,
+        fabricationDate: true,
       }
     })
     : [];
@@ -340,7 +340,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
 
         <div className="mt-6 grid grid-cols-2 gap-x-12 gap-y-3 text-sm">
           {[
-            { label: "Jahrgang", value: motorcycle.modelYear || "Unbekannt" },
+            { label: "Fabrikationsdatum", value: motorcycle.fabricationDate || "Unbekannt" },
             { label: "Kennzeichen", value: motorcycle.numberPlate || "-" },
             { label: "VIN", value: motorcycle.vin || "-", mono: true },
             { label: "Stammnummer", value: motorcycle.vehicleIdNr || "-", mono: true },

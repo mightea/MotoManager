@@ -165,7 +165,7 @@ export function MotorcycleDetailHeader({
                 )}
               >
                 <span>
-                  {motorcycle.modelYear ? `Jahrgang ${motorcycle.modelYear}` : "Jahrgang unbekannt"}
+                  {motorcycle.fabricationDate ? `Fabrikationsdatum ${motorcycle.fabricationDate}` : "Fabrikationsdatum unbekannt"}
                 </span>
                 <span className="hidden sm:inline">•</span>
                 <span>{motorcycle.vin}</span>

@@ -31,7 +31,17 @@ export const motorcycleSchema = z.object({
   make: z.string().min(1, "Marke ist erforderlich."),
   model: z.string().min(1, "Modell ist erforderlich."),
   vin: z.preprocess(emptyStringToUndefined, z.string().optional()),
-  modelYear: z.preprocess(preprocessInteger, z.number().min(1900, "Jahrgang muss grösser als 1900 sein.").optional()),
+  fabricationDate: z.preprocess(
+    emptyStringToUndefined,
+    z.string()
+      .regex(/^(0[1-9]|1[0-2])\/\d{4}$|^\d{4}$/, "Ungültiges Format (z.B. 07/1997 oder 1997)")
+      .optional()
+      .transform(val => {
+        if (!val) return val;
+        if (val.length === 4) return `01/${val}`;
+        return val;
+      })
+  ),
   vehicleIdNr: z.preprocess(emptyStringToUndefined, z.string().optional()),
   numberPlate: z.preprocess(emptyStringToUndefined, z.string().optional()),
   firstRegistration: z.preprocess(emptyStringToUndefined, z.string().optional()),
