@@ -6,7 +6,7 @@ export async function getCachedData<T>(request: Request, serverLoader: () => Pro
   const url = new URL(request.url);
   // Remove search params that don't affect data (like version/hash) if any, 
   // but keep important ones like 'sort'.
-  const cacheKey = url.pathname + url.search;
+  const cacheKey = url.toString();
 
   const cache = await caches.open(cacheName);
 
