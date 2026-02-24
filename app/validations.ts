@@ -31,6 +31,7 @@ export const motorcycleSchema = z.object({
   make: z.string().min(1, "Marke ist erforderlich."),
   model: z.string().min(1, "Modell ist erforderlich."),
   vin: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  engineNumber: z.preprocess(emptyStringToUndefined, z.string().optional()),
   fabricationDate: z.preprocess(
     emptyStringToUndefined,
     z.string()

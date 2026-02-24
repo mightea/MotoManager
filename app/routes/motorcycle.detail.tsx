@@ -240,6 +240,7 @@ export async function action({ request }: Route.ActionArgs) {
       make,
       model,
       vin,
+      engineNumber,
       fabricationDate,
       vehicleIdNr,
       numberPlate, // Not in EditorMotorcycle? Wait, let's check schema. EditorMotorcycle usually has similar fields.
@@ -263,6 +264,7 @@ export async function action({ request }: Route.ActionArgs) {
       make,
       model,
       vin,
+      engineNumber: engineNumber ?? null,
       fabricationDate,
       vehicleIdNr: vehicleIdNr ?? null,
       numberPlate: numberPlate ?? null,
@@ -573,6 +575,11 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                     icon={Fingerprint}
                     label="VIN"
                     value={motorcycle.vin}
+                  />
+                  <StatisticEntry
+                    icon={Fingerprint}
+                    label="Motor-Nummer"
+                    value={motorcycle.engineNumber}
                   />
                   <StatisticEntry
                     icon={Calendar}

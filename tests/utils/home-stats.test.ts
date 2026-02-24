@@ -10,6 +10,7 @@ describe("buildDashboardData", () => {
     fabricationDate: "01/2021",
     userId: 1,
     vin: "VIN123",
+    engineNumber: null,
     initialOdo: 1000,
     firstRegistration: "2021-03-01",
     isVeteran: false,
