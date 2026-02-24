@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026.2.7](https://github.com/mightea/MotoManager/compare/2026.2.6...2026.2.7) (2026-02-24)
+
+### Features
+
+* add optional kilometer-based maintenance intervals ([164a203](https://github.com/mightea/MotoManager/commit/164a203fd946c2d43c07bac4b0f3cf5d580778c7))
+* add user-configurable maintenance intervals for fork oil, brake fluid, and coolant ([93a83a7](https://github.com/mightea/MotoManager/commit/93a83a77a22588af6b02ba5020ae348f67f57e4e))
+* ensure all configured maintenance types are listed in insights even without history ([3b29c85](https://github.com/mightea/MotoManager/commit/3b29c85e1ffa39403cde1c793330bd111445a5d7))
+* make maintenance intervals configurable for each user ([ad70a83](https://github.com/mightea/MotoManager/commit/ad70a83a0499e2a058c33ea74ad11e5111ece783))
+* rename model year to fabrication date and support MM/YYYY format ([77f721e](https://github.com/mightea/MotoManager/commit/77f721e9812411372587699ee4b617ee0175a2e8))
+
+### Bug Fixes
+
+* correct kmsSinceLast calculation when odometer data is missing or invalid ([bb7cc4b](https://github.com/mightea/MotoManager/commit/bb7cc4b1080c022aa91b955e6f09d61cf197c578))
+* hide maintenance intervals if no previous data exists ([ca67080](https://github.com/mightea/MotoManager/commit/ca670801fa971b46e6d13c9e00ebacfec3b7ae54))
+* resolve black box issue in torque specifications print layout ([cc4b3e4](https://github.com/mightea/MotoManager/commit/cc4b3e478bb468a0eb9d27fa298154979b6179cb))
+* resolve ReferenceErrors and missing imports in maintenance intervals implementation ([790e1f6](https://github.com/mightea/MotoManager/commit/790e1f6500a485a2dd75c9b959da4816c22401c7))
+
 ## [2026.2.6](https://github.com/mightea/MotoManager/compare/2026.2.5...2026.2.6) (2026-02-23)
 
 ### Features
