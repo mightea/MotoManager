@@ -11,7 +11,15 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .map((cacheName) => caches.delete(cacheName))
+      ).then(() => self.clients.claim())
+    )
+  );
 });
 
 self.addEventListener("fetch", (event) => {
@@ -38,7 +46,15 @@ self.addEventListener("fetch", (event) => {
         return networkResponse;
       }).catch(() => {
         // If fetch fails and no cache, we're truly offline and haven't visited this yet
-        return cachedResponse; 
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        // Provide a clear offline fallback response instead of returning undefined
+        return new Response("You are offline and this resource is not cached.", {
+          status: 503,
+          statusText: "Service Unavailable",
+        });
       });
 
       return cachedResponse || fetchPromise;
