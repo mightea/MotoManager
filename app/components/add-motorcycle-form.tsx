@@ -40,6 +40,7 @@ export function AddMotorcycleForm({
       make?: string;
       model?: string;
       vin?: string;
+      engineNumber?: string;
       fabricationDate?: string;
       initialOdo?: string;
       purchasePrice?: string;
@@ -216,6 +217,18 @@ export function AddMotorcycleForm({
               className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
             {actionData?.errors?.vin && (
               <p className="text-xs text-red-500">{actionData.errors.vin}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="engineNumber" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Motor-Nummer</label>
+            <input
+              type="text"
+              name="engineNumber"
+              id="engineNumber"
+              defaultValue={initialValues?.engineNumber ?? ""}
+              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
+            {actionData?.errors?.engineNumber && (
+              <p className="text-xs text-red-500">{actionData.errors.engineNumber}</p>
             )}
           </div>
           <div className="space-y-1.5">
