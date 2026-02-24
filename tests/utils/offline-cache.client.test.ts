@@ -38,7 +38,7 @@ describe("getCachedData", () => {
     expect(serverLoader).toHaveBeenCalledTimes(1);
     expect(mockCaches.open).toHaveBeenCalledWith(mockCacheName);
     expect(mockCache.put).toHaveBeenCalledWith(
-      "/api/data?foo=bar",
+      "https://example.com/api/data?foo=bar",
       expect.any(Response)
     );
     expect(result).toEqual(mockData);
@@ -57,7 +57,7 @@ describe("getCachedData", () => {
     const result = await getCachedData(mockRequest, serverLoader);
 
     expect(serverLoader).toHaveBeenCalledTimes(1);
-    expect(mockCache.match).toHaveBeenCalledWith("/api/data?foo=bar");
+    expect(mockCache.match).toHaveBeenCalledWith("https://example.com/api/data?foo=bar");
     expect(result).toEqual(mockData);
   });
 
@@ -69,19 +69,20 @@ describe("getCachedData", () => {
     const result = await getCachedData(mockRequest, serverLoader);
 
     expect(serverLoader).not.toHaveBeenCalled();
-    expect(mockCache.match).toHaveBeenCalledWith("/api/data?foo=bar");
+    expect(mockCache.match).toHaveBeenCalledWith("https://example.com/api/data?foo=bar");
     expect(result).toEqual(mockData);
   });
 
-  it("should fall back to server loader if offline and not in cache", async () => {
+  it("should throw an error if offline and not in cache", async () => {
     vi.stubGlobal("navigator", { onLine: false });
-    const serverLoader = vi.fn().mockResolvedValue(mockData);
+    const serverLoader = vi.fn();
     mockCache.match.mockResolvedValue(null);
 
-    const result = await getCachedData(mockRequest, serverLoader);
+    await expect(getCachedData(mockRequest, serverLoader)).rejects.toThrow(
+      "Data is unavailable: you are offline and this page has not been cached yet."
+    );
 
-    expect(serverLoader).toHaveBeenCalledTimes(1);
-    expect(result).toEqual(mockData);
+    expect(serverLoader).not.toHaveBeenCalled();
   });
 
   it("should not cache if server loader returns null/undefined", async () => {
@@ -100,7 +101,7 @@ describe("getCachedData", () => {
     await getCachedData(requestWithSearch, serverLoader);
 
     expect(mockCache.put).toHaveBeenCalledWith(
-      "/list?sort=date&filter=active",
+      "https://example.com/list?sort=date&filter=active",
       expect.any(Response)
     );
   });
