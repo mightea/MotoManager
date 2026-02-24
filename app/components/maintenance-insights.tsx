@@ -104,11 +104,21 @@ export function MaintenanceInsightsCard({
                     const formattedDate = insight.lastDate ? dateFormatter.format(new Date(insight.lastDate)) : "";
                     const relativeDuration = insight.lastDate ? formatRelativeDuration(insight.lastDate) : "";
                     const kmsSince = insight.kmsSinceLast ? `${formatNumber(insight.kmsSinceLast)} km` : "";
+                    
+                    let kmsLeft = "";
+                    if (insight.kmsRemaining !== undefined) {
+                      if (insight.kmsRemaining <= 0) {
+                        kmsLeft = `• ${formatNumber(Math.abs(insight.kmsRemaining))} km überfällig`;
+                      } else {
+                        kmsLeft = `• noch ${formatNumber(insight.kmsRemaining)} km`;
+                      }
+                    }
 
                     const parts = [
                       formattedDate,
                       relativeDuration ? `(${relativeDuration})` : null,
-                      kmsSince ? `• ${kmsSince}` : null
+                      kmsSince ? `• seit ${kmsSince}` : null,
+                      kmsLeft
                     ].filter(Boolean).join(" ");
 
                     return (

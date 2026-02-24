@@ -29,6 +29,7 @@ export type MaintenanceInsight = {
   yearsRemaining?: number;
   lastOdo?: number;
   kmsSinceLast?: number;
+  kmsRemaining?: number;
 };
 
 const addYears = (date: Date, years: number) => {
@@ -37,20 +38,34 @@ const addYears = (date: Date, years: number) => {
   return copy;
 };
 
-const getStatus = (dueDate: Date): MaintenanceInsight["status"] => {
+const getStatus = (dueDate: Date, kmsSinceLast?: number, intervalKms?: number): MaintenanceInsight["status"] => {
   const today = new Date();
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const dueStart = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+  
+  let timeStatus: MaintenanceInsight["status"] = "ok";
+  if (dueStart < todayStart) {
+    timeStatus = "overdue";
+  } else {
+    // Consider "due" if within next 3 months (approx 90 days)
+    const diffTime = dueStart.getTime() - todayStart.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays <= 90) timeStatus = "due";
+  }
 
-  if (dueStart < todayStart) return "overdue";
+  let kmStatus: MaintenanceInsight["status"] = "ok";
+  if (intervalKms && kmsSinceLast !== undefined) {
+    if (kmsSinceLast >= intervalKms) {
+      kmStatus = "overdue";
+    } else if (intervalKms - kmsSinceLast <= 1000 || kmsSinceLast / intervalKms >= 0.9) {
+      // Due if within 1000km or 90% of interval
+      kmStatus = "due";
+    }
+  }
 
-  // Consider "due" if within next 3 months (approx 90 days)
-  const diffTime = dueStart.getTime() - todayStart.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays <= 90) return "due";
-
-  return "ok";
+  // Prioritize more urgent status
+  const priority = { overdue: 0, due: 1, ok: 2, unknown: 3 };
+  return priority[timeStatus] <= priority[kmStatus] ? timeStatus : kmStatus;
 };
 
 /**
@@ -86,22 +101,34 @@ export const getMaintenanceInsights = (
 ): MaintenanceInsight[] => {
   const intervals = settings
     ? {
-        tire: settings.tireInterval,
+        tire: { years: settings.tireInterval, kms: settings.tireKmInterval },
         battery: {
           "lithium-ion": settings.batteryLithiumInterval,
           default: settings.batteryDefaultInterval,
         },
         fluid: {
-          engineoil: settings.engineOilInterval,
-          gearboxoil: settings.gearboxOilInterval,
-          finaldriveoil: settings.finalDriveOilInterval,
-          forkoil: settings.forkOilInterval,
-          brakefluid: settings.brakeFluidInterval,
-          coolant: settings.coolantInterval,
+          engineoil: { years: settings.engineOilInterval, kms: settings.engineOilKmInterval },
+          gearboxoil: { years: settings.gearboxOilInterval, kms: settings.gearboxOilKmInterval },
+          finaldriveoil: { years: settings.finalDriveOilInterval, kms: settings.finalDriveOilKmInterval },
+          forkoil: { years: settings.forkOilInterval, kms: settings.forkOilKmInterval },
+          brakefluid: { years: settings.brakeFluidInterval, kms: settings.brakeFluidKmInterval },
+          coolant: { years: settings.coolantInterval, kms: settings.coolantKmInterval },
         },
-        chain: settings.chainInterval,
+        chain: { years: settings.chainInterval, kms: settings.chainKmInterval },
       }
-    : DEFAULT_MAINTENANCE_INTERVALS;
+    : {
+        tire: { years: DEFAULT_MAINTENANCE_INTERVALS.tire, kms: null },
+        battery: DEFAULT_MAINTENANCE_INTERVALS.battery,
+        fluid: {
+          engineoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.engineoil, kms: null },
+          gearboxoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.gearboxoil, kms: null },
+          finaldriveoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.finaldriveoil, kms: null },
+          forkoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.forkoil, kms: null },
+          brakefluid: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.brakefluid, kms: null },
+          coolant: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.coolant, kms: null },
+        },
+        chain: { years: DEFAULT_MAINTENANCE_INTERVALS.chain, kms: null },
+      };
 
   const insights: MaintenanceInsight[] = [];
 
@@ -119,6 +146,7 @@ export const getMaintenanceInsights = (
     label: string,
     lastRecord?: MaintenanceRecord,
     intervalYears?: number,
+    intervalKms?: number | null,
     customBaseDate?: Date | null,
   ) => {
     if (!intervalYears) {
@@ -140,21 +168,21 @@ export const getMaintenanceInsights = (
       (nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 365);
 
     const kmsSinceLast =
-      currentOdo && lastRecord?.odo ? currentOdo - lastRecord.odo : undefined;
+      currentOdo && lastRecord?.odo ? currentOdo - lastRecord.odo : (currentOdo || 0);
+
+    const kmsRemaining = intervalKms ? intervalKms - kmsSinceLast : undefined;
 
     insights.push({
       key,
       category,
       label,
-      status: getStatus(nextDate),
+      status: getStatus(nextDate, kmsSinceLast, intervalKms || undefined),
       lastDate: baseDate.toISOString().split("T")[0],
       nextDate: nextDate.toISOString().split("T")[0],
       yearsRemaining: Number(yearsRemaining.toFixed(1)),
       lastOdo: lastRecord?.odo,
-      kmsSinceLast:
-        kmsSinceLast !== undefined && kmsSinceLast > 0
-          ? kmsSinceLast
-          : undefined,
+      kmsSinceLast: kmsSinceLast > 0 ? kmsSinceLast : undefined,
+      kmsRemaining: kmsRemaining,
     });
   };
 
@@ -170,7 +198,8 @@ export const getMaintenanceInsights = (
     "Reifen",
     "Vorderreifen",
     latestFrontTire,
-    intervals.tire,
+    intervals.tire.years,
+    intervals.tire.kms,
     frontDotDate,
   );
 
@@ -185,16 +214,17 @@ export const getMaintenanceInsights = (
     "Reifen",
     "Hinterreifen",
     latestRearTire,
-    intervals.tire,
+    intervals.tire.years,
+    intervals.tire.kms,
     rearDotDate,
   );
 
   // 2. Battery
   const latestBattery = findLatest((r) => r.type === "battery");
-  const batteryInterval = (latestBattery?.batteryType === "lithium-ion")
+  const batteryYears = (latestBattery?.batteryType === "lithium-ion")
     ? intervals.battery["lithium-ion"]
     : intervals.battery.default;
-  createInsight("battery", "Batterie", "Batterie", latestBattery, batteryInterval);
+  createInsight("battery", "Batterie", "Batterie", latestBattery, batteryYears);
 
   // 3. Fluids
   const fluidsToCheck = [
@@ -215,13 +245,14 @@ export const getMaintenanceInsights = (
       "Flüssigkeiten",
       fluid.label,
       record,
-      intervals.fluid[fluid.type],
+      intervals.fluid[fluid.type].years,
+      intervals.fluid[fluid.type].kms,
     );
   });
 
   // 4. Maintenance
   const latestChain = findLatest((r) => r.type === "chain");
-  createInsight("chain", "Wartung", "Kette reinigen/fetten", latestChain, intervals.chain);
+  createInsight("chain", "Wartung", "Kette reinigen/fetten", latestChain, intervals.chain.years, intervals.chain.kms);
 
   return insights;
 };
