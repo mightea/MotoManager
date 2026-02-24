@@ -168,9 +168,11 @@ export const getMaintenanceInsights = (
       (nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 365);
 
     const kmsSinceLast =
-      currentOdo && lastRecord?.odo ? currentOdo - lastRecord.odo : (currentOdo || 0);
+      lastRecord?.odo !== undefined && lastRecord?.odo !== null && currentOdo >= lastRecord.odo
+        ? currentOdo - lastRecord.odo
+        : undefined;
 
-    const kmsRemaining = intervalKms ? intervalKms - kmsSinceLast : undefined;
+    const kmsRemaining = (intervalKms && kmsSinceLast !== undefined) ? intervalKms - kmsSinceLast : undefined;
 
     insights.push({
       key,
@@ -181,7 +183,7 @@ export const getMaintenanceInsights = (
       nextDate: nextDate.toISOString().split("T")[0],
       yearsRemaining: Number(yearsRemaining.toFixed(1)),
       lastOdo: lastRecord?.odo,
-      kmsSinceLast: kmsSinceLast > 0 ? kmsSinceLast : undefined,
+      kmsSinceLast: kmsSinceLast,
       kmsRemaining: kmsRemaining,
     });
   };

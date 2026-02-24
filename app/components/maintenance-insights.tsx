@@ -103,7 +103,7 @@ export function MaintenanceInsightsCard({
                   {sortedItems.map((insight) => {
                     const formattedDate = insight.lastDate ? dateFormatter.format(new Date(insight.lastDate)) : "";
                     const relativeDuration = insight.lastDate ? formatRelativeDuration(insight.lastDate) : "";
-                    const kmsSince = insight.kmsSinceLast ? `${formatNumber(insight.kmsSinceLast)} km` : "";
+                    const kmsSince = insight.kmsSinceLast !== undefined ? `${formatNumber(insight.kmsSinceLast)} km` : "";
                     
                     let kmsLeft = "";
                     if (insight.kmsRemaining !== undefined) {
