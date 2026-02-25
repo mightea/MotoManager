@@ -43,7 +43,7 @@ export function MotorcycleInfoCard({
   const [detailsExpanded, setDetailsExpanded] = useState(false);
 
   const summaryItems = [
-    `${formatNumber(kmDriven)} km gefahren`,
+    hasPurchaseDate && kmDriven > 0 ? `${formatNumber(kmDriven)} km gefahren` : null,
     ownerCount !== undefined && ownerCount > 0 ? `${ownerCount}. Hand` : null,
     ownershipLabel ? `${ownershipLabel} im Besitz` : null,
   ].filter((item): item is string => Boolean(item));
@@ -105,12 +105,11 @@ export function MotorcycleInfoCard({
               icon={Info}
               label="Status"
               value={
-                (motorcycle.isArchived || motorcycle.isVeteran) ? (
-                  <span className="flex items-center gap-2">
-                    {motorcycle.isArchived ? "Archiviert" : ""}
-                    {motorcycle.isVeteran && (motorcycle.isArchived ? " • Veteran" : "Veteran")}
-                  </span>
-                ) : null
+                <span className="flex items-center gap-2">
+                  {motorcycle.isArchived && "Archiviert"}
+                  {motorcycle.isVeteran && (motorcycle.isArchived ? " • Veteran" : "Veteran")}
+                  {!motorcycle.isArchived && !motorcycle.isVeteran && "Aktiv"}
+                </span>
               }
             />
           </div>
