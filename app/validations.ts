@@ -63,7 +63,7 @@ export const previousOwnerSchema = z.object({
   postcode: z.preprocess(emptyStringToUndefined, z.string().optional()),
   country: z.preprocess(emptyStringToUndefined, z.string().optional()),
   phoneNumber: z.preprocess(emptyStringToUndefined, z.string().optional()),
-  email: z.preprocess(emptyStringToUndefined, z.string().email("Ungültige E-Mail-Adresse.").optional().or(z.literal(""))),
+  email: z.preprocess(emptyStringToUndefined, z.string().email("Ungültige E-Mail-Adresse.").optional()),
   comments: z.preprocess(emptyStringToUndefined, z.string().optional()),
 });
 
