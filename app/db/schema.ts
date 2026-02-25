@@ -309,6 +309,29 @@ export const documentMotorcycles = sqliteTable(
   }),
 );
 
+export const previousOwners = sqliteTable("previous_owners", {
+  id: int().primaryKey({ autoIncrement: true }),
+  motorcycleId: int("motorcycle_id")
+    .notNull()
+    .references(() => motorcycles.id, { onDelete: "cascade" }),
+  name: text().notNull(),
+  surname: text().notNull(),
+  purchaseDate: text("purchase_date").notNull(),
+  address: text(),
+  city: text(),
+  postcode: text(),
+  country: text(),
+  phoneNumber: text("phone_number"),
+  email: text(),
+  comments: text(),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+});
+
 export const challenges = sqliteTable(
   "challenges",
   {
@@ -340,6 +363,9 @@ export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type DocumentMotorcycle = typeof documentMotorcycles.$inferSelect;
 export type NewDocumentMotorcycle = typeof documentMotorcycles.$inferInsert;
+
+export type PreviousOwner = typeof previousOwners.$inferSelect;
+export type NewPreviousOwner = typeof previousOwners.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

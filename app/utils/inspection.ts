@@ -1,6 +1,6 @@
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-const parseDate = (value?: string | null) => {
+export const parseDate = (value?: string | null) => {
   if (!value) {
     return null;
   }
