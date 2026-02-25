@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.2.8](https://github.com/mightea/MotoManager/compare/2026.2.7...2026.2.8) (2026-02-25)
+
+### Features
+
+* add ability to record and manage previous owners for motorcycles ([a102fda](https://github.com/mightea/MotoManager/commit/a102fda3ca8c42825ab886172e0deb2e97ee467e))
+* implement offline support with PWA manifest, service worker, and real-time status indicator ([603096a](https://github.com/mightea/MotoManager/commit/603096a6f4aca540bd07a5d7d6754faf2cea1515))
+
+### Bug Fixes
+
+* add PNG icons to PWA manifest for better platform compatibility ([a4839c5](https://github.com/mightea/MotoManager/commit/a4839c500e54fad8ee27432c186552a5082672bc))
+* apply PWA review feedback - cache cleanup, error handling, and SW registration ([7d1680d](https://github.com/mightea/MotoManager/commit/7d1680d8d56b1940405c784090aadb2fbce2536c))
+* update tests to match new cache key and offline error behavior ([1bce1ce](https://github.com/mightea/MotoManager/commit/1bce1ce17bccc63b2a1086dea369ea4bb4b2adf5))
+
 ## [2026.2.7](https://github.com/mightea/MotoManager/compare/2026.2.6...2026.2.7) (2026-02-24)
 
 ### Features
