@@ -11,13 +11,13 @@ import {
 import type { Route } from "./+types/motorcycle.detail";
 import { getCachedData } from "~/utils/offline-cache.client";
 import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, locations, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle } from "~/db/schema";
+import { issues, maintenanceRecords, motorcycles, locations, previousOwners, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle, type NewPreviousOwner } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText, Clock } from "lucide-react";
+import { ChevronDown, Plus, Hash, Calendar, DollarSign, Info, Gauge, Fingerprint, FileText, Clock, User } from "lucide-react";
 import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
-import { getNextInspectionInfo, formatDuration } from "~/utils/inspection";
+import { getNextInspectionInfo, formatDuration, parseDate } from "~/utils/inspection";
 import { getUserSettings } from "~/db/providers/settings.server";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
@@ -27,11 +27,12 @@ import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { StatisticEntry } from "~/components/statistic-entry";
-import { motorcycleSchema } from "~/validations";
+import { motorcycleSchema, previousOwnerSchema } from "~/validations";
 import { processImageUpload } from "~/services/images.server";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
+import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -58,11 +59,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw new Response("Invalid Motorcycle ID", { status: 400 });
   }
 
-  const [motorcycle, settings] = await Promise.all([
+  const [motorcycle, settings, previousOwnersList] = await Promise.all([
     db.query.motorcycles.findFirst({
       where: eq(motorcycles.id, motorcycleId),
     }),
     getUserSettings(db, user.id),
+    db.select().from(previousOwners).where(eq(previousOwners.motorcycleId, motorcycleId)).orderBy(desc(previousOwners.purchaseDate)),
   ]);
 
   if (!motorcycle) {
@@ -72,6 +74,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (motorcycle.userId !== user.id) {
     throw new Response("Unauthorized", { status: 403 });
   }
+
+  const ownerCount = (previousOwnersList?.length ?? 0) > 0
+    ? (previousOwnersList?.length ?? 0) + 1
+    : (motorcycle.initialOdo < 100 ? 1 : 0);
 
   const openIssues = await db.query.issues.findMany({
     where: and(eq(issues.motorcycleId, motorcycleId), ne(issues.status, "done")),
@@ -125,7 +131,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const currencies = await db.query.currencySettings.findMany();
 
   // Ownership Calculations
-  const purchaseDate = motorcycle.purchaseDate ? new Date(motorcycle.purchaseDate) : null;
+  const purchaseDate = parseDate(motorcycle.purchaseDate);
   const daysOwned = purchaseDate
     ? Math.max(0, Math.floor((new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
@@ -142,24 +148,28 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     dateStyle: "medium",
   });
 
+  const firstRegistrationDate = parseDate(motorcycle.firstRegistration);
+
   return data(
-    { 
-      motorcycle, 
-      user, 
-      openIssues, 
-      maintenanceHistory, 
-      nextInspection, 
-      lastKnownOdo, 
-      insights, 
-      userLocations, 
-      currentLocationName, 
+    {
+      motorcycle,
+      user,
+      openIssues,
+      maintenanceHistory,
+      previousOwnersList,
+      ownerCount,
+      nextInspection,
+      lastKnownOdo,
+      insights,
+      userLocations,
+      currentLocationName,
       currencies,
       ownershipLabel,
       kmDriven,
       avgKmPerYear,
       yearsOwned,
       formattedPurchaseDate: purchaseDate ? dateFormatter.format(purchaseDate) : null,
-      formattedFirstRegistration: motorcycle.firstRegistration ? dateFormatter.format(new Date(motorcycle.firstRegistration)) : null,
+      formattedFirstRegistration: firstRegistrationDate ? dateFormatter.format(firstRegistrationDate) : null,
       hasPurchaseDate: !!purchaseDate
     },
     { headers: mergeHeaders(headers ?? {}) }
@@ -210,7 +220,10 @@ export async function action({ request }: Route.ActionArgs) {
     createLocation,
     updateMotorcycle,
     deleteMotorcycleCascade,
-    deleteMaintenanceRecord
+    deleteMaintenanceRecord,
+    createPreviousOwner,
+    updatePreviousOwner,
+    deletePreviousOwner
   } = await import("~/db/providers/motorcycles.server");
 
   // Fetch currencies for normalization
@@ -453,19 +466,80 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
 
+  if (intent === "createPreviousOwner" || intent === "updatePreviousOwner") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    if (!Number.isFinite(motorcycleId)) {
+      throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
+    }
+
+    const rawData = Object.fromEntries(formData);
+    const validationResult = previousOwnerSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const formattedErrors: Record<string, string> = {};
+      for (const key in errors) {
+        const fieldErrors = errors[key as keyof typeof errors];
+        if (fieldErrors && fieldErrors.length > 0) {
+          formattedErrors[key] = fieldErrors[0];
+        }
+      }
+      return data({ errors: formattedErrors }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+    }
+
+    const ownerData: NewPreviousOwner = {
+      motorcycleId,
+      ...validationResult.data,
+      address: validationResult.data.address ?? null,
+      city: validationResult.data.city ?? null,
+      postcode: validationResult.data.postcode ?? null,
+      country: validationResult.data.country ?? null,
+      phoneNumber: validationResult.data.phoneNumber ?? null,
+      email: (validationResult.data.email as string | null) ?? null,
+      comments: validationResult.data.comments ?? null,
+    };
+
+    if (intent === "createPreviousOwner") {
+      await createPreviousOwner(dbClient, ownerData);
+    } else {
+      const ownerId = Number(formData.get("ownerId"));
+      if (!Number.isFinite(ownerId)) {
+        throw new Response("Ungültige Vorbesitzer-ID", { status: 400 });
+      }
+      await updatePreviousOwner(dbClient, ownerId, motorcycleId, ownerData);
+    }
+
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
+
+  if (intent === "deletePreviousOwner") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const ownerId = Number(formData.get("ownerId"));
+
+    if (!Number.isFinite(motorcycleId) || !Number.isFinite(ownerId)) {
+      throw new Response("Ungültige Eingabe für Vorbesitzer", { status: 400 });
+    }
+
+    await deletePreviousOwner(dbClient, ownerId, motorcycleId);
+
+    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  }
+
   return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
-  const { 
-    motorcycle, 
-    openIssues, 
-    maintenanceHistory, 
-    nextInspection, 
-    lastKnownOdo, 
-    insights, 
-    userLocations, 
-    currentLocationName, 
+  const {
+    motorcycle,
+    openIssues,
+    maintenanceHistory,
+    previousOwnersList,
+    ownerCount,
+    nextInspection,
+    lastKnownOdo,
+    insights,
+    userLocations,
+    currentLocationName,
     currencies,
     ownershipLabel,
     kmDriven,
@@ -483,8 +557,11 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [previousOwnerDialogOpen, setPreviousOwnerDialogOpen] = useState(false);
+  const [selectedPreviousOwner, setSelectedPreviousOwner] = useState<(typeof previousOwnersList)[number] | null>(null);
+  const [deletePreviousOwnerConfirmationOpen, setDeletePreviousOwnerConfirmationOpen] = useState(false);
   const revalidator = useRevalidator();
-  const actionData = useActionData<{ success?: boolean }>();
+  const actionData = useActionData<{ success?: boolean; errors?: Record<string, string> }>();
   const submit = useSubmit();
   const location = useLocation();
   const params = useParams<{ slug?: string; id?: string }>();
@@ -537,6 +614,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         currentLocationName={currentLocationName}
         navLinks={navLinks}
         overviewLink={overviewLink}
+        ownerCount={ownerCount}
       />
 
       <div className="grid gap-5 md:grid-cols-3 items-start">
@@ -645,20 +723,78 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                     value={hasPurchaseDate && yearsOwned > 0.1 ? `${formatNumber(Math.round(avgKmPerYear))} km` : null}
                   />
                 </div>
+
+                {/* Previous Owners Group */}
+                <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-secondary">
+                      Vorbesitzer
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPreviousOwner(null);
+                        setPreviousOwnerDialogOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-dark transition-colors"
+                    >
+                      <Plus className="h-3 w-3" />
+                      Hinzufügen
+                    </button>
+                  </div>
+                  {previousOwnersList.length > 0 ? (
+                    <div className="space-y-3">
+                      {previousOwnersList.map((owner) => (
+                        <div
+                          key={owner.id}
+                          className="group relative flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:border-primary/20 hover:bg-white dark:border-navy-700 dark:bg-navy-900/50 dark:hover:border-primary/30 dark:hover:bg-navy-900"
+                        >
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-foreground dark:text-white">
+                              {owner.name} {owner.surname}
+                            </p>
+                            <p className="text-xs text-secondary dark:text-navy-300">
+                              Kaufdatum: {owner.purchaseDate}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPreviousOwner(owner);
+                              setPreviousOwnerDialogOpen(true);
+                            }}
+                            className="rounded-md p-1.5 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700"
+                          >
+                            <Info className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-1 text-xs text-secondary italic">
+                      Keine Vorbesitzer eingetragen.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Collapsed Summary */}
             <div hidden={detailsExpanded} className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-secondary dark:text-navy-300">
-              {motorcycle.numberPlate && (
+              <>
+                <span>{formatNumber(kmDriven)} km gefahren</span>
+              </>
+
+              {ownerCount !== undefined && ownerCount > 0 && (
                 <>
-                  <span className="font-medium text-foreground dark:text-gray-100">{motorcycle.numberPlate}</span>
+                  {kmDriven && <span className="text-gray-300 dark:text-navy-600">•</span>}
+                  <span>{ownerCount}er Besitzer</span>
                 </>
               )}
 
               {ownershipLabel && (
                 <>
-                  {motorcycle.numberPlate && <span className="text-gray-300 dark:text-navy-600">•</span>}
+                  {(kmDriven || ownerCount) && <span className="text-gray-300 dark:text-navy-600">•</span>}
                   <span>{ownershipLabel} im Besitz</span>
                 </>
               )}
@@ -666,7 +802,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               {hasPurchaseDate && (
                 <>
                   {(motorcycle.numberPlate || ownershipLabel) && <span className="text-gray-300 dark:text-navy-600">•</span>}
-                  <span>{formatNumber(kmDriven)} km gefahren</span>
                 </>
               )}
             </div>
@@ -799,6 +934,41 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           revalidator.revalidate();
           setSelectedIssue(null);
         }}
+      />
+
+      <PreviousOwnerDialog
+        isOpen={previousOwnerDialogOpen}
+        onClose={() => setPreviousOwnerDialogOpen(false)}
+        motorcycleId={motorcycle.id}
+        initialData={selectedPreviousOwner}
+        onDelete={() => {
+          setPreviousOwnerDialogOpen(false);
+          setDeletePreviousOwnerConfirmationOpen(true);
+        }}
+        errors={actionData?.errors}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={deletePreviousOwnerConfirmationOpen}
+        onCancel={() => {
+          setDeletePreviousOwnerConfirmationOpen(false);
+          setPreviousOwnerDialogOpen(true);
+        }}
+        onConfirm={() => {
+          if (selectedPreviousOwner) {
+            const formData = new FormData();
+            formData.append("intent", "deletePreviousOwner");
+            formData.append("motorcycleId", motorcycle.id.toString());
+            formData.append("ownerId", selectedPreviousOwner.id.toString());
+            submit(formData, { method: "post" });
+          }
+          setDeletePreviousOwnerConfirmationOpen(false);
+          setSelectedPreviousOwner(null);
+        }}
+        title="Vorbesitzer löschen"
+        description="Möchtest du diesen Vorbesitzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Löschen"
+        confirmDisabled={!selectedPreviousOwner}
       />
     </div >
   );

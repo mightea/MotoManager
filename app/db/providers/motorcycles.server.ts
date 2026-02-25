@@ -6,6 +6,7 @@ import {
   locations,
   maintenanceRecords,
   motorcycles,
+  previousOwners,
   torqueSpecs,
   documentMotorcycles,
   type EditorIssue,
@@ -16,6 +17,7 @@ import {
   type NewMaintenanceRecord,
   type NewMotorcycle,
   type NewTorqueSpecification,
+  type NewPreviousOwner,
 } from "~/db/schema";
 import type * as schema from "~/db/schema";
 
@@ -41,6 +43,50 @@ export async function createMaintenanceRecord(
     .values(values)
     .returning();
   return record ?? null;
+}
+
+export async function createPreviousOwner(
+  db: Database,
+  values: NewPreviousOwner,
+) {
+  const [record] = await db.insert(previousOwners).values(values).returning();
+  return record ?? null;
+}
+
+export async function updatePreviousOwner(
+  db: Database,
+  ownerId: number,
+  motorcycleId: number,
+  values: Partial<NewPreviousOwner>,
+) {
+  const [record] = await db
+    .update(previousOwners)
+    .set(values)
+    .where(
+      and(
+        eq(previousOwners.id, ownerId),
+        eq(previousOwners.motorcycleId, motorcycleId),
+      ),
+    )
+    .returning();
+  return record ?? null;
+}
+
+export async function deletePreviousOwner(
+  db: Database,
+  ownerId: number,
+  motorcycleId: number,
+) {
+  const deleted = await db
+    .delete(previousOwners)
+    .where(
+      and(
+        eq(previousOwners.id, ownerId),
+        eq(previousOwners.motorcycleId, motorcycleId),
+      ),
+    )
+    .returning();
+  return deleted.length > 0;
 }
 
 export async function createLocationRecord(
@@ -193,6 +239,9 @@ export async function deleteMotorcycleCascade(
   await db
     .delete(documentMotorcycles)
     .where(eq(documentMotorcycles.motorcycleId, motorcycleId));
+  await db
+    .delete(previousOwners)
+    .where(eq(previousOwners.motorcycleId, motorcycleId));
   await db
     .delete(torqueSpecs)
     .where(eq(torqueSpecs.motorcycleId, motorcycleId));

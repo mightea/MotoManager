@@ -54,4 +54,18 @@ export const motorcycleSchema = z.object({
   isArchived: z.preprocess(preprocessBoolean, z.boolean().default(false)),
 });
 
+export const previousOwnerSchema = z.object({
+  name: z.string().min(1, "Vorname ist erforderlich."),
+  surname: z.string().min(1, "Nachname ist erforderlich."),
+  purchaseDate: z.string().min(1, "Kaufdatum ist erforderlich."),
+  address: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  city: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  postcode: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  country: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  phoneNumber: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  email: z.preprocess(emptyStringToUndefined, z.string().email("Ungültige E-Mail-Adresse.").optional().or(z.literal(""))),
+  comments: z.preprocess(emptyStringToUndefined, z.string().optional()),
+});
+
+export type PreviousOwnerFormValues = z.infer<typeof previousOwnerSchema>;
 export type MotorcycleFormValues = z.infer<typeof motorcycleSchema>;
