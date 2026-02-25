@@ -470,6 +470,14 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
     }
 
+    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
+      where: eq(motorcycles.id, motorcycleId),
+    });
+
+    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
+      throw new Response("Motorrad nicht gefunden.", { status: 404 });
+    }
+
     const rawData = Object.fromEntries(formData);
     const validationResult = previousOwnerSchema.safeParse(rawData);
 
@@ -516,6 +524,14 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (!Number.isFinite(motorcycleId) || !Number.isFinite(ownerId)) {
       throw new Response("Ungültige Eingabe für Vorbesitzer", { status: 400 });
+    }
+
+    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
+      where: eq(motorcycles.id, motorcycleId),
+    });
+
+    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
+      throw new Response("Motorrad nicht gefunden.", { status: 404 });
     }
 
     await deletePreviousOwner(dbClient, ownerId, motorcycleId);

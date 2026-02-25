@@ -147,6 +147,7 @@ export function MotorcycleDetailHeader({
                     : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400"
                 )}
               >
+                {ownerCount}. Hand
               </span>
             )}
             {motorcycle.isVeteran && (

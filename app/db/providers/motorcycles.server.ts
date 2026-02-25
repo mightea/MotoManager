@@ -61,7 +61,7 @@ export async function updatePreviousOwner(
 ) {
   const [record] = await db
     .update(previousOwners)
-    .set(values)
+    .set({ ...values, updatedAt: new Date().toISOString() })
     .where(
       and(
         eq(previousOwners.id, ownerId),
@@ -239,9 +239,6 @@ export async function deleteMotorcycleCascade(
   await db
     .delete(documentMotorcycles)
     .where(eq(documentMotorcycles.motorcycleId, motorcycleId));
-  await db
-    .delete(previousOwners)
-    .where(eq(previousOwners.motorcycleId, motorcycleId));
   await db
     .delete(torqueSpecs)
     .where(eq(torqueSpecs.motorcycleId, motorcycleId));
