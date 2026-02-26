@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Form } from "react-router";
 import clsx from "clsx";
 import type { PreviousOwner } from "~/db/schema";
 import { previousOwnerSchema } from "~/validations";
@@ -7,6 +8,7 @@ interface PreviousOwnerFormProps {
   initialValues?: PreviousOwner | null;
   motorcycleId: number;
   intent: "createPreviousOwner" | "updatePreviousOwner";
+  onSubmit?: () => void;
   onCancel: () => void;
   onDelete?: () => void;
   errors?: Record<string, string>;
@@ -16,6 +18,7 @@ export function PreviousOwnerForm({
   initialValues,
   motorcycleId,
   intent,
+  onSubmit,
   onCancel,
   onDelete,
   errors: serverErrors,
@@ -25,7 +28,7 @@ export function PreviousOwnerForm({
   const errors = { ...serverErrors, ...localErrors };
 
   return (
-    <form
+    <Form
       method="post"
       className="space-y-4"
       onSubmit={(e) => {
@@ -49,6 +52,7 @@ export function PreviousOwnerForm({
 
         setLocalErrors({});
         setIsSubmitting(true);
+        onSubmit?.();
       }}
     >
       <input type="hidden" name="intent" value={intent} />
@@ -238,6 +242,6 @@ export function PreviousOwnerForm({
           {isSubmitting ? "Speichern..." : "Speichern"}
         </button>
       </div>
-    </form>
+    </Form>
   );
 }

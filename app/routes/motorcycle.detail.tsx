@@ -595,8 +595,12 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     if (actionData?.success) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditMotorcycleDialogOpen(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPreviousOwnerDialogOpen(false);
+      setSelectedPreviousOwner(null);
+      revalidator.revalidate();
     }
-  }, [actionData]);
+  }, [actionData, revalidator]);
 
   const openIssueDialog = (issue: Issue | null) => {
     setSelectedIssue(issue);
@@ -786,6 +790,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setDeletePreviousOwnerConfirmationOpen(true);
         }}
         errors={actionData?.errors}
+        onSubmit={() => setPreviousOwnerDialogOpen(false)}
       />
 
       <DeleteConfirmationDialog

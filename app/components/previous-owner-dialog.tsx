@@ -9,6 +9,7 @@ interface PreviousOwnerDialogProps {
   initialData?: PreviousOwner | null;
   onDelete?: () => void;
   errors?: Record<string, string>;
+  onSubmit?: () => void;
 }
 
 export function PreviousOwnerDialog({
@@ -18,6 +19,7 @@ export function PreviousOwnerDialog({
   initialData,
   onDelete,
   errors,
+  onSubmit,
 }: PreviousOwnerDialogProps) {
   return (
     <Modal
@@ -33,6 +35,7 @@ export function PreviousOwnerDialog({
         onCancel={onClose}
         onDelete={onDelete}
         errors={errors}
+        onSubmit={onSubmit}
       />
     </Modal>
   );
