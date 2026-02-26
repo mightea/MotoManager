@@ -1,7 +1,6 @@
 import { Outlet, data, useLocation } from "react-router";
 import type { Route } from "./+types/layout";
 import { Header } from "~/components/header";
-import { OfflineBanner } from "~/components/offline-banner";
 import { requireUser } from "~/services/auth.server";
 import { mergeHeaders } from "~/services/auth.server";
 import clsx from "clsx";
@@ -18,7 +17,6 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased dark:bg-navy-950">
-      <OfflineBanner />
       <Header user={user} />
       <main
         className={clsx(

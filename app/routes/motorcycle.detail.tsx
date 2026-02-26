@@ -15,7 +15,6 @@ import { issues, maintenanceRecords, motorcycles, locations, previousOwners, typ
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { Plus } from "lucide-react";
-import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo, formatDuration, parseDate } from "~/utils/inspection";
 import { getUserSettings } from "~/db/providers/settings.server";
@@ -33,7 +32,6 @@ import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
-import { useIsOffline } from "~/utils/offline-status";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -575,7 +573,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [previousOwnerDialogOpen, setPreviousOwnerDialogOpen] = useState(false);
   const [selectedPreviousOwner, setSelectedPreviousOwner] = useState<(typeof previousOwnersList)[number] | null>(null);
   const [deletePreviousOwnerConfirmationOpen, setDeletePreviousOwnerConfirmationOpen] = useState(false);
-  const isOffline = useIsOffline();
   const revalidator = useRevalidator();
   const actionData = useActionData<{ success?: boolean; errors?: Record<string, string> }>();
   const submit = useSubmit();
@@ -648,7 +645,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               setPreviousOwnerDialogOpen(true);
             }}
             ownerCount={ownerCount}
-            isOffline={isOffline}
           />
           <div className="hidden md:block">
             <MaintenanceInsightsCard insights={insights} />
@@ -661,7 +657,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             dateFormatter={dateFormatter}
             onAddIssue={() => openIssueDialog(null)}
             onIssueSelect={(issue) => openIssueDialog(issue)}
-            isOffline={isOffline}
           />
 
           {/* Maintenance History Card */}
@@ -673,13 +668,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   setSelectedMaintenance(null);
                   setMaintenanceDialogOpen(true);
                 }}
-                disabled={isOffline}
-                className={clsx(
-                  "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
-                  isOffline
-                    ? "cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-navy-700 dark:text-navy-500"
-                    : "bg-primary/10 text-primary hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
-                )}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Eintrag
@@ -693,7 +682,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                 setSelectedMaintenance(record);
                 setMaintenanceDialogOpen(true);
               }}
-              isOffline={isOffline}
             />
           </div>
         </div>

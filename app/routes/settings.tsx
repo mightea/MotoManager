@@ -14,8 +14,6 @@ import {
   updateUserSettings,
 } from "~/db/providers/settings.server";
 import { getDb } from "~/db";
-import { getCachedData } from "~/utils/offline-cache.client";
-import { useIsOffline } from "~/utils/offline-status";
 import {
   requireUser,
   updateUserPassword,
@@ -59,12 +57,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   ]);
   return { locations, user, settings, userAuthenticators };
 }
-
-export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  return getCachedData(request, serverLoader);
-}
-
-clientLoader.hydrate = true;
 
 export async function action({ request }: Route.ActionArgs) {
   const { user } = await requireUser(request);
@@ -183,7 +175,6 @@ export default function Settings() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
-  const isOffline = useIsOffline();
 
   const isSubmitting = navigation.state === "submitting";
 
@@ -197,15 +188,6 @@ export default function Settings() {
           Verwalte deine Kontoeinstellungen und Lagerorte.
         </p>
       </div>
-
-      {isOffline && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
-          <p className="flex items-center gap-2 text-sm font-semibold">
-            <Lock className="h-4 w-4" />
-            Eingeschränkter Modus: Du bist offline. Einstellungen können momentan nur angesehen, aber nicht geändert werden.
-          </p>
-        </div>
-      )}
 
       {/* Server Stats Link */}
       <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-primary/50 hover:shadow-md dark:border-navy-700 dark:bg-navy-800 dark:hover:border-primary/50">
@@ -313,7 +295,7 @@ export default function Settings() {
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={isSubmitting || isOffline}>
+            <Button type="submit" disabled={isSubmitting}>
               Passwort speichern
             </Button>
           </div>
@@ -337,7 +319,6 @@ export default function Settings() {
           <Button
             type="button"
             variant="secondary"
-            disabled={isOffline}
             onClick={async () => {
               try {
                 await registerPasskey();
@@ -369,13 +350,12 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Form method="post" onSubmit={(e) => (isOffline || !confirm("Passkey wirklich löschen?")) && e.preventDefault()}>
+              <Form method="post" onSubmit={(e) => !confirm("Passkey wirklich löschen?") && e.preventDefault()}>
                 <input type="hidden" name="intent" value="deleteAuthenticator" />
                 <input type="hidden" name="id" value={auth.id} />
                 <Button
                   variant="ghost"
                   size="icon"
-                  disabled={isOffline}
                   className="h-8 w-8 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -415,10 +395,9 @@ export default function Settings() {
             name="name"
             placeholder="Neuer Lagerort..."
             required
-            disabled={isOffline}
-            className="block w-full flex-1 rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 disabled:opacity-50"
+            className="block w-full flex-1 rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
           />
-          <Button type="submit" disabled={isSubmitting || isOffline} variant="secondary">
+          <Button type="submit" disabled={isSubmitting} variant="secondary">
             <Plus className="h-5 w-5" />
             <span className="hidden sm:inline">Hinzufügen</span>
           </Button>
@@ -443,10 +422,9 @@ export default function Settings() {
                     name="name"
                     defaultValue={location.name}
                     required
-                    disabled={isOffline}
                     className="block w-full flex-1 rounded-lg border-gray-200 bg-white p-2 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
                   />
-                  <Button type="submit" size="sm" disabled={isSubmitting || isOffline}>
+                  <Button type="submit" size="sm" disabled={isSubmitting}>
                     Speichern
                   </Button>
                   <Button
@@ -467,7 +445,6 @@ export default function Settings() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled={isOffline}
                       onClick={() => setEditingLocationId(location.id)}
                       title="Bearbeiten"
                       className="h-8 w-8"
@@ -477,7 +454,7 @@ export default function Settings() {
                     <Form
                       method="post"
                       onSubmit={(e) => {
-                        if (isOffline || !confirm("Lagerort wirklich löschen?")) {
+                        if (!confirm("Lagerort wirklich löschen?")) {
                           e.preventDefault();
                         }
                       }}
@@ -490,7 +467,7 @@ export default function Settings() {
                         size="icon"
                         className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
                         title="Löschen"
-                        disabled={isSubmitting || isOffline}
+                        disabled={isSubmitting}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -540,7 +517,6 @@ export default function Settings() {
                     min="1"
                     max="20"
                     required
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -554,7 +530,6 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -570,7 +545,6 @@ export default function Settings() {
                   min="1"
                   max="20"
                   required
-                  disabled={isOffline}
                   className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                 />
               </div>
@@ -585,7 +559,6 @@ export default function Settings() {
                   min="1"
                   max="20"
                   required
-                  disabled={isOffline}
                   className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                 />
               </div>
@@ -605,7 +578,6 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -619,7 +591,6 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -636,7 +607,6 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -650,7 +620,6 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -667,7 +636,6 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -681,7 +649,6 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -698,7 +665,6 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -712,7 +678,6 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -729,7 +694,6 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -743,7 +707,6 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -760,7 +723,6 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -774,7 +736,6 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    disabled={isOffline}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
@@ -796,7 +757,6 @@ export default function Settings() {
                       min="1"
                       max="10"
                       required
-                      disabled={isOffline}
                       className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                     />
                   </div>
@@ -810,7 +770,6 @@ export default function Settings() {
                       min="500"
                       step="500"
                       placeholder="Optional"
-                      disabled={isOffline}
                       className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
                     />
                   </div>
@@ -820,7 +779,7 @@ export default function Settings() {
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={isSubmitting || isOffline}>
+            <Button type="submit" disabled={isSubmitting}>
               Intervalle speichern
             </Button>
           </div>

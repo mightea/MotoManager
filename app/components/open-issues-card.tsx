@@ -10,7 +10,6 @@ type OpenIssuesCardProps = {
   onAddIssue?: () => void;
   onIssueSelect?: (issue: Issue) => void;
   className?: string;
-  isOffline?: boolean;
 };
 
 export default function OpenIssuesCard({
@@ -19,7 +18,6 @@ export default function OpenIssuesCard({
   onAddIssue,
   onIssueSelect,
   className,
-  isOffline,
 }: OpenIssuesCardProps) {
   const handleAddIssue = () => {
     onAddIssue?.();
@@ -34,14 +32,7 @@ export default function OpenIssuesCard({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-foreground dark:text-white">Offene Mängel</h2>
-        <Button 
-          type="button" 
-          onClick={handleAddIssue} 
-          variant="secondary" 
-          size="sm" 
-          className="rounded-lg"
-          disabled={isOffline}
-        >
+        <Button type="button" onClick={handleAddIssue} variant="secondary" size="sm" className="rounded-lg">
           <Plus className="h-4 w-4" />
           Mangel hinzufügen
         </Button>
@@ -61,7 +52,6 @@ export default function OpenIssuesCard({
                 issue={issue}
                 dateFormatter={dateFormatter}
                 onSelect={onIssueSelect}
-                isOffline={isOffline}
               />
             </li>
           ))}

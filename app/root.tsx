@@ -11,7 +11,6 @@ import {
 import type { Route } from "./+types/root";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
-import { useIsOffline } from "~/utils/offline-status";
 import { getTheme } from "~/utils/theme.server";
 import { useEffect } from "react";
 import clsx from "clsx";
@@ -98,46 +97,28 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: { error: unknown }) {
-  const isOffline = useIsOffline();
   let message = "Oops!";
   let details = "An unexpected error occurred.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Fehler";
+    message = error.status === 404 ? "404" : "Error";
     details =
       error.status === 404
-        ? "Die angeforderte Seite konnte nicht gefunden werden."
+        ? "The requested page could not be found."
         : error.statusText || details;
   } else if (error instanceof Error) {
     details = error.message;
     stack = error.stack;
-    
-    if (isOffline && (details.includes("offline") || details.includes("cache"))) {
-      message = "Offline-Modus";
-      details = "Diese Seite wurde noch nicht zwischengespeichert und ist daher offline nicht verfügbar. Bitte besuche diese Seite einmal online, um sie später auch offline ansehen zu können.";
-    }
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto text-foreground dark:text-gray-50 flex flex-col items-center justify-center min-h-[60vh] text-center">
-      <div className="bg-white dark:bg-navy-800 p-8 rounded-3xl border border-gray-200 dark:border-navy-700 shadow-xl max-w-lg">
-        <h1 className="text-4xl font-bold mb-4 text-primary">{message}</h1>
-        <p className="text-lg text-secondary dark:text-navy-300">{details}</p>
-        
-        <div className="mt-8">
-          <a 
-            href="/" 
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-95"
-          >
-            Zurück zur Übersicht
-          </a>
-        </div>
-      </div>
-
-      {stack && process.env.NODE_ENV === "development" && (
-        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-navy-800 rounded-md mt-12 text-left max-w-4xl mx-auto">
-          <code className="text-xs text-gray-700 dark:text-gray-200">{stack}</code>
+    <main className="pt-16 p-4 container mx-auto text-foreground dark:text-gray-50">
+      <h1>{message}</h1>
+      <p>{details}</p>
+      {stack && (
+        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-navy-800 rounded-md mt-4">
+          <code className="text-sm text-gray-700 dark:text-gray-200">{stack}</code>
         </pre>
       )}
     </main>

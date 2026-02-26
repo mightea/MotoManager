@@ -19,7 +19,6 @@ type DocumentCardProps = {
   isOwner: boolean;
   onEdit: (doc: DocumentSummary) => void;
   assignedMotorcycleNames?: string[];
-  isOffline?: boolean;
 };
 
 export function DocumentCard({
@@ -28,7 +27,6 @@ export function DocumentCard({
   isOwner,
   onEdit,
   assignedMotorcycleNames = [],
-  isOffline,
 }: DocumentCardProps) {
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
 
@@ -132,13 +130,7 @@ export function DocumentCard({
             <button
               type="button"
               onClick={() => onEdit(document)}
-              disabled={isOffline}
-              className={clsx(
-                "inline-flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
-                isOffline
-                  ? "cursor-not-allowed border-gray-100 text-gray-400 dark:border-navy-700 dark:text-navy-500"
-                  : "border-gray-200 text-secondary hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-              )}
+              className="inline-flex w-full items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
             >
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
               Bearbeiten
