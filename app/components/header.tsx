@@ -4,7 +4,7 @@ import { ThemeToggle } from "./theme-toggle";
 import type { User } from "~/db/schema";
 import clsx from "clsx";
 import { useEffect, useState, useRef } from "react";
-import { useIsOffline } from "~/utils/offline-status.client";
+import { useIsOffline } from "~/utils/offline-status";
 
 export function Header({ user }: { user: User | null }) {
   const location = useLocation();

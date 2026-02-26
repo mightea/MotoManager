@@ -11,7 +11,7 @@ import {
 import type { Route } from "./+types/root";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
-import { useIsOffline } from "~/utils/offline-status.client";
+import { useIsOffline } from "~/utils/offline-status";
 import { getTheme } from "~/utils/theme.server";
 import { useEffect } from "react";
 import clsx from "clsx";

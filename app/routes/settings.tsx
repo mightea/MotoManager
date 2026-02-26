@@ -15,7 +15,7 @@ import {
 } from "~/db/providers/settings.server";
 import { getDb } from "~/db";
 import { getCachedData } from "~/utils/offline-cache.client";
-import { useIsOffline } from "~/utils/offline-status.client";
+import { useIsOffline } from "~/utils/offline-status";
 import {
   requireUser,
   updateUserPassword,

@@ -11,7 +11,7 @@ import type { Route } from "./+types/motorcycle.detail.documents";
 import type { DocumentSummary } from "~/components/document-card";
 import { getDb } from "~/db";
 import { getCachedData } from "~/utils/offline-cache.client";
-import { useIsOffline } from "~/utils/offline-status.client";
+import { useIsOffline } from "~/utils/offline-status";
 
 export type DocumentWithAssignment = DocumentSummary & {
   assignedMotorcycleNames: string[];
