@@ -37,6 +37,7 @@ interface MaintenanceListProps {
   currencyCode?: string | null;
   userLocations?: Location[];
   onEdit: (record: MaintenanceRecord) => void;
+  isOffline?: boolean;
 }
 
 interface GroupedMaintenanceRecord {
@@ -272,16 +273,18 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                           <h4 className="text-sm font-semibold text-foreground dark:text-white">
                             {maintenanceTypeLabels[record.type] || record.type}
                           </h4>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEdit(record);
-                            }}
-                            className="rounded-lg p-2 text-secondary hover:bg-gray-200 hover:text-primary dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-primary-light"
-                            title="Bearbeiten"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
+                          {!isOffline && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(record);
+                              }}
+                              className="rounded-lg p-2 text-secondary hover:bg-gray-200 hover:text-primary dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-primary-light"
+                              title="Bearbeiten"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
 
                         {metadataItems.length > 0 ? (

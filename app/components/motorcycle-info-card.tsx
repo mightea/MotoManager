@@ -19,6 +19,7 @@ interface MotorcycleInfoCardProps {
   onAddPreviousOwner: () => void;
   onEditPreviousOwner: (owner: PreviousOwner) => void;
   ownerCount?: number;
+  isOffline?: boolean;
 }
 
 /**
@@ -39,6 +40,7 @@ export function MotorcycleInfoCard({
   onAddPreviousOwner,
   onEditPreviousOwner,
   ownerCount,
+  isOffline,
 }: MotorcycleInfoCardProps) {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
 
@@ -67,7 +69,13 @@ export function MotorcycleInfoCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+          disabled={isOffline}
+          className={clsx(
+            "inline-flex items-center rounded-lg border px-3 py-1 text-xs font-semibold transition-colors",
+            isOffline
+              ? "cursor-not-allowed border-gray-100 text-gray-400 dark:border-navy-700 dark:text-navy-500"
+              : "border-gray-200 text-secondary hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+          )}
         >
           Bearbeiten
         </button>
@@ -164,7 +172,13 @@ export function MotorcycleInfoCard({
               <button
                 type="button"
                 onClick={onAddPreviousOwner}
-                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-dark transition-colors"
+                disabled={isOffline}
+                className={clsx(
+                  "inline-flex items-center gap-1 text-xs font-bold transition-colors",
+                  isOffline
+                    ? "cursor-not-allowed text-gray-400 dark:text-navy-500"
+                    : "text-primary hover:text-primary-dark"
+                )}
               >
                 <Plus className="h-3 w-3" />
                 Hinzufügen
@@ -185,13 +199,15 @@ export function MotorcycleInfoCard({
                         Kaufdatum: {owner.purchaseDate}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => onEditPreviousOwner(owner)}
-                      className="rounded-md p-1.5 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700"
-                    >
-                      <Info className="h-4 w-4" />
-                    </button>
+                    {!isOffline && (
+                      <button
+                        type="button"
+                        onClick={() => onEditPreviousOwner(owner)}
+                        className="rounded-md p-1.5 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

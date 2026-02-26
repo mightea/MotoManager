@@ -10,6 +10,8 @@ import {
 import type { Route } from "./+types/motorcycle.detail.documents";
 import type { DocumentSummary } from "~/components/document-card";
 import { getDb } from "~/db";
+import { getCachedData } from "~/utils/offline-cache.client";
+import { useIsOffline } from "~/utils/offline-status.client";
 
 export type DocumentWithAssignment = DocumentSummary & {
   assignedMotorcycleNames: string[];
@@ -193,6 +195,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   });
 }
 
+export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  return getCachedData(request, serverLoader);
+}
+
+clientLoader.hydrate = true;
+
 export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentProps) {
   const {
     motorcycle,
@@ -204,6 +212,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
     allMotorcycles,
     docAssignments,
   } = loaderData;
+  const isOffline = useIsOffline();
   const params = useParams<{ slug?: string; id?: string }>();
   const slug = params.slug ?? createMotorcycleSlug(motorcycle.make, motorcycle.model);
   const motorcycleIdParam = params.id ?? motorcycle.id.toString();
@@ -309,6 +318,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
                   setIsEditorOpen(true);
                 }}
                 assignedMotorcycleNames={doc.assignedMotorcycleNames}
+                isOffline={isOffline}
               />
             ))
           )}
