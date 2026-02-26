@@ -14,7 +14,7 @@ import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { deleteDocumentFiles, getFileCategory, saveDocumentFile } from "~/services/documents.server";
-import { useIsOffline } from "~/utils/offline-status.client";
+import { useIsOffline } from "~/utils/offline-status";
 
 export function meta() {
   return [

@@ -34,7 +34,7 @@ import { processImageUpload } from "~/services/images.server";
 
 import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
-import { useIsOffline } from "~/utils/offline-status.client";
+import { useIsOffline } from "~/utils/offline-status";
 
 export function meta() {
   return [

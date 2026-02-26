@@ -1,5 +1,5 @@
 import { WifiOff } from "lucide-react";
-import { useIsOffline } from "~/utils/offline-status.client";
+import { useIsOffline } from "~/utils/offline-status";
 
 /**
  * A banner displayed at the top of the page when the browser is offline.
