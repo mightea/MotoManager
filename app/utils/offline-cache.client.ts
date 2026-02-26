@@ -23,6 +23,13 @@ export async function getCachedData<T>(request: Request, serverLoader: () => Pro
   if (typeof navigator !== "undefined" && navigator.onLine) {
     try {
       const data = await serverLoader();
+      
+      // If serverLoader returns a Response (it might in some RR7 configurations), 
+      // check if it's ok. If not, throw to trigger cache fallback.
+      if (data instanceof Response && !data.ok) {
+        throw new Error(`Server returned ${data.status}`);
+      }
+
       // Only cache if we got data
       if (data) {
         await cache.put(cacheKey, new Response(JSON.stringify(data), {
