@@ -113,7 +113,7 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
 }
 
 
-export function MaintenanceList({ records, currencyCode, userLocations, onEdit }: MaintenanceListProps) {
+export function MaintenanceList({ records, currencyCode, userLocations, onEdit, isOffline }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {

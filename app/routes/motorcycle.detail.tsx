@@ -15,6 +15,7 @@ import { issues, maintenanceRecords, motorcycles, locations, previousOwners, typ
 import { eq, and, ne, desc } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { Plus } from "lucide-react";
+import clsx from "clsx";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { getNextInspectionInfo, formatDuration, parseDate } from "~/utils/inspection";
 import { getUserSettings } from "~/db/providers/settings.server";
