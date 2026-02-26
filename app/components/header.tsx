@@ -4,7 +4,6 @@ import { ThemeToggle } from "./theme-toggle";
 import type { User } from "~/db/schema";
 import clsx from "clsx";
 import { useEffect, useState, useRef } from "react";
-import { useIsOffline } from "~/utils/offline-status";
 
 export function Header({ user }: { user: User | null }) {
   const location = useLocation();
@@ -13,13 +12,31 @@ export function Header({ user }: { user: User | null }) {
   const [isHidden, setIsHidden] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
-  const isOffline = useIsOffline();
 
   const navItems = [
     { label: "Übersicht", href: "/" },
     { label: "Dokumente", href: "/documents" },
     { label: "Statistiken", href: "/fleet-stats" },
   ];
+
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    setIsOffline(!window.navigator.onLine);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 

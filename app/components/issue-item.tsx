@@ -6,14 +6,11 @@ type IssueItemProps = {
   issue: Issue;
   dateFormatter: Intl.DateTimeFormat;
   onSelect?: (issue: Issue) => void;
-  isOffline?: boolean;
 };
 
-export function IssueItem({ issue, dateFormatter, onSelect, isOffline }: IssueItemProps) {
+export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
   const handleClick = () => {
-    if (!isOffline) {
-      onSelect?.(issue);
-    }
+    onSelect?.(issue);
   };
 
   const PriorityIcon = issue.priority === "high"
@@ -26,14 +23,8 @@ export function IssueItem({ issue, dateFormatter, onSelect, isOffline }: IssueIt
     <button
       type="button"
       onClick={handleClick}
-      disabled={isOffline}
-      className={clsx(
-        "flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-        isOffline
-          ? "cursor-default opacity-70"
-          : "hover:bg-gray-50 dark:hover:bg-navy-700/50"
-      )}
-      aria-label={isOffline ? "Mangel (offline)" : "Mangel bearbeiten"}
+      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700/50"
+      aria-label="Mangel bearbeiten"
     >
       <PriorityIcon
         className={clsx("h-5 w-5", {

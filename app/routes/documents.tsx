@@ -2,19 +2,16 @@ import { data, useActionData, useSubmit, useLocation, useNavigate } from "react-
 import { useCallback } from "react";
 import type { Route } from "./+types/documents";
 import { getDb } from "~/db";
-import { getCachedData } from "~/utils/offline-cache.client";
 import { documents, users, motorcycles, documentMotorcycles } from "~/db/schema";
 import { eq, or, desc, inArray, getTableColumns } from "drizzle-orm";
 import { requireUser } from "~/services/auth.server";
 import { FileText, Plus } from "lucide-react";
-import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { deleteDocumentFiles, getFileCategory, saveDocumentFile } from "~/services/documents.server";
-import { useIsOffline } from "~/utils/offline-status";
 
 export function meta() {
   return [
@@ -65,12 +62,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return data({ docs, user, allMotorcycles, assignments });
 }
-
-export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  return getCachedData(request, serverLoader);
-}
-
-clientLoader.hydrate = true;
 
 export async function action({ request }: Route.ActionArgs) {
   const { user } = await requireUser(request);
@@ -210,7 +201,6 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
-  const isOffline = useIsOffline();
 
   const actionData = useActionData<{ success?: boolean }>();
   const submit = useSubmit();
@@ -301,13 +291,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
         </div>
         <button
           onClick={openCreateDialog}
-          disabled={isOffline}
-          className={clsx(
-            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all",
-            isOffline
-              ? "cursor-not-allowed bg-gray-400 opacity-50 dark:bg-navy-700"
-              : "bg-primary hover:bg-primary-dark hover:shadow-md active:scale-95"
-          )}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
         >
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Hochladen</span>
@@ -336,7 +320,6 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
               isOwner={user.id === doc.ownerId}
               onEdit={openEditDialog}
               assignedMotorcycleNames={documentMotorcycleNames[doc.id] ?? []}
-              isOffline={isOffline}
             />
           ))
         )}

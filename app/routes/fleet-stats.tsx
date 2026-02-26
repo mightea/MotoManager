@@ -1,7 +1,6 @@
 import { data, useLoaderData, Link } from "react-router";
 import type { Route } from "./+types/fleet-stats";
 import { getDb } from "~/db";
-import { getCachedData } from "~/utils/offline-cache.client";
 import { motorcycles, issues, maintenanceRecords, locationRecords } from "~/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { requireUser } from "~/services/auth.server";
@@ -44,12 +43,6 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return data({ stats });
 }
-
-export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  return getCachedData(request, serverLoader);
-}
-
-clientLoader.hydrate = true;
 
 function ChartSection({
   title,

@@ -34,7 +34,6 @@ import { processImageUpload } from "~/services/images.server";
 
 import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
-import { useIsOffline } from "~/utils/offline-status";
 
 export function meta() {
   return [
@@ -205,7 +204,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { cards, stats, currentSort, currencies } = loaderData;
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
-  const isOffline = useIsOffline();
 
   useEffect(() => {
     if (actionData?.success) {
@@ -264,13 +262,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
         <button
           onClick={() => setIsAddOpen(true)}
-          disabled={isOffline}
-          className={clsx(
-            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all",
-            isOffline
-              ? "cursor-not-allowed bg-gray-400 opacity-50 dark:bg-navy-700"
-              : "bg-primary hover:bg-primary-dark hover:shadow-md active:scale-95"
-          )}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
         >
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Neues Motorrad</span>
@@ -280,13 +272,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {/* FAB on mobile */}
       <button
         onClick={() => setIsAddOpen(true)}
-        disabled={isOffline}
-        className={clsx(
-          "fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full text-white shadow-lg transition-all sm:hidden",
-          isOffline
-            ? "cursor-not-allowed bg-gray-400 opacity-50 dark:bg-navy-700"
-            : "bg-primary shadow-primary/30 hover:bg-primary-dark hover:shadow-xl active:scale-95"
-        )}
+        className="fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary-dark hover:shadow-xl active:scale-95 sm:hidden"
         aria-label="Neues Motorrad hinzufügen"
       >
         <Plus className="h-6 w-6" />
