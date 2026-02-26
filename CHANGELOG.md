@@ -1,5 +1,19 @@
 # Changelog
 
+## [2026.2.9](https://github.com/mightea/MotoManager/compare/2026.2.8...2026.2.9) (2026-02-26)
+
+### Features
+
+* implement robust offline read-only mode for PWA ([af81bc1](https://github.com/mightea/MotoManager/commit/af81bc1ca3a27eb55fd49fdfc6328f4cd60421f3))
+* remove all PWA and offline mode related code ([3d23f4e](https://github.com/mightea/MotoManager/commit/3d23f4ecfe64a388db9b69c94c44b1fa147f038e))
+
+### Bug Fixes
+
+* ensure previous owners list updates automatically after save ([4d7b693](https://github.com/mightea/MotoManager/commit/4d7b6936422b85e70cc4b0b5f37bae3652713fa1))
+* improve Service Worker and data caching for better offline stability ([a18caf3](https://github.com/mightea/MotoManager/commit/a18caf35c433ac8464bd089a3f7000c61d951ba1))
+* make useIsOffline hook SSR-safe by removing .client suffix ([2743370](https://github.com/mightea/MotoManager/commit/2743370d2a399554c13e7eead25a1f659f4cfd48))
+* resolve missing imports and undefined variables ([60a7121](https://github.com/mightea/MotoManager/commit/60a712135dc6997f10c51143630f0c1b750199fa))
+
 ## [2026.2.8](https://github.com/mightea/MotoManager/compare/2026.2.7...2026.2.8) (2026-02-25)
 
 ### Features
