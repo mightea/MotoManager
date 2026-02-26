@@ -7,6 +7,7 @@ import { documents, users, motorcycles, documentMotorcycles } from "~/db/schema"
 import { eq, or, desc, inArray, getTableColumns } from "drizzle-orm";
 import { requireUser } from "~/services/auth.server";
 import { FileText, Plus } from "lucide-react";
+import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
