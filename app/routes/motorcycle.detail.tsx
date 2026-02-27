@@ -540,14 +540,38 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Motorrad nicht gefunden.", { status: 404 });
     }
 
-    await deletePreviousOwner(dbClient, ownerId, motorcycleId);
-
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
-  }
-
-  return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
-}
-
+        await deletePreviousOwner(dbClient, ownerId, motorcycleId);
+     
+         return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+       }
+     
+          if (intent === "importFuelData") {
+            const motorcycleId = Number(formData.get("motorcycleId"));
+            const recordsJson = formData.get("records") as string;
+            const records = JSON.parse(recordsJson) as any[];
+        
+            await Promise.all(records.map(record => 
+              createMaintenanceRecord(dbClient, {
+                motorcycleId,
+                type: "fuel",
+                date: record.date.split("T")[0], // Store as YYYY-MM-DD
+                odo: record.odo,
+                cost: record.cost,
+                currency: "CHF", // Default from RoadTrip sample
+                fuelType: record.fuelType,
+                fuelAmount: record.fuelAmount,
+                pricePerUnit: record.pricePerUnit,
+                latitude: record.latitude,
+                longitude: record.longitude,
+                normalizedCost: (record.cost || 0) * getCurrencyFactor("CHF"),
+                description: `RoadTrip Import`
+              })
+            ));
+        
+            return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+          }     
+       return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
+     }
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const {
     motorcycle,
@@ -714,6 +738,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           onSubmit={() => setEditMotorcycleDialogOpen(false)}
           onDelete={() => setDeleteConfirmationOpen(true)}
           currencies={currencies}
+          existingMaintenance={maintenanceHistory}
         />
       </Modal>
 
