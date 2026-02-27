@@ -438,6 +438,12 @@ export async function action({ request }: Route.ActionArgs) {
       viscosity: parseString(formData.get("viscosity")),
       inspectionLocation: parseString(formData.get("inspectionLocation")),
       locationId: locationId,
+      fuelType: parseString(formData.get("fuelType")),
+      fuelAmount: parseNumber(formData.get("fuelAmount")),
+      pricePerUnit: parseNumber(formData.get("pricePerUnit")),
+      latitude: parseNumber(formData.get("latitude")),
+      longitude: parseNumber(formData.get("longitude")),
+      locationName: parseString(formData.get("locationName")),
       normalizedCost: (parseNumber(formData.get("cost")) || 0) * getCurrencyFactor(parseString(formData.get("currency"))),
     };
 

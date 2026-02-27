@@ -12,7 +12,8 @@ import {
     Layers,
     CircleDashed,
     ClipboardList,
-    MapPin
+    MapPin,
+    Fuel
 } from "lucide-react";
 
 interface MaintenanceFormProps {
@@ -32,6 +33,7 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
     { value: "service", label: "Service", icon: ClipboardList },
     { value: "repair", label: "Reparatur", icon: Hammer },
     { value: "inspection", label: "MFK", icon: ClipboardCheck },
+    { value: "fuel", label: "Tanken", icon: Fuel },
     { value: "fluid", label: "Flüssigkeit", icon: Droplet },
     { value: "chain", label: "Kette", icon: Link },
     { value: "brakepad", label: "Bremsbeläge", icon: Layers },
@@ -46,6 +48,55 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
 export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, currencies = [], onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
     const [isNewLocation, setIsNewLocation] = useState(false);
+    const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
+    const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
+    const [isLocating, setIsLocating] = useState(false);
+
+    const [fuelAmount, setFuelAmount] = useState<string>(initialData?.fuelAmount?.toString() || "");
+    const [pricePerUnit, setPricePerUnit] = useState<string>(initialData?.pricePerUnit?.toString() || "");
+    const [totalCost, setTotalCost] = useState<string>(initialData?.cost?.toString() || "");
+
+    const handleFuelAmountChange = (val: string) => {
+        setFuelAmount(val);
+        const amount = parseFloat(val);
+        const price = parseFloat(pricePerUnit);
+        if (!isNaN(amount) && !isNaN(price)) {
+            setTotalCost((amount * price).toFixed(2));
+        }
+    };
+
+    const handlePricePerUnitChange = (val: string) => {
+        setPricePerUnit(val);
+        const amount = parseFloat(fuelAmount);
+        const price = parseFloat(val);
+        if (!isNaN(amount) && !isNaN(price)) {
+            setTotalCost((amount * price).toFixed(2));
+        }
+    };
+
+    const handleTotalCostChange = (val: string) => {
+        setTotalCost(val);
+        const cost = parseFloat(val);
+        const amount = parseFloat(fuelAmount);
+        if (!isNaN(cost) && !isNaN(amount) && amount !== 0) {
+            setPricePerUnit((cost / amount).toFixed(3));
+        }
+    };
+
+    const handleGetLocation = () => {
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setLat(position.coords.latitude);
+                setLng(position.coords.longitude);
+                setIsLocating(false);
+            },
+            (error) => {
+                console.error(error);
+                setIsLocating(false);
+            }
+        );
+    };
 
     // Fallback if no currencies provided
 
@@ -102,7 +153,7 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                     />
                 </div>
 
-                {type !== "location" && (
+                {type !== "location" && type !== "fuel" && (
                     <div className="space-y-1.5">
                         <label htmlFor="cost" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kosten</label>
                         <div className="flex rounded-xl shadow-sm">
@@ -113,6 +164,35 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                                 step="0.05"
                                 placeholder="0.00"
                                 defaultValue={initialData?.cost || ""}
+                                className="block w-full rounded-l-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            />
+                            <select
+                                name="currency"
+                                className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
+                                defaultValue={initialData?.currency || currencyCode || "CHF"}
+                            >
+                                {currencies?.map((c) => (
+                                    <option key={c.code} value={c.code}>
+                                        {c.code}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
+
+                {type === "fuel" && (
+                    <div className="space-y-1.5">
+                        <label htmlFor="cost" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Gesamtkosten</label>
+                        <div className="flex rounded-xl shadow-sm">
+                            <input
+                                type="number"
+                                name="cost"
+                                id="cost"
+                                step="0.05"
+                                placeholder="0.00"
+                                value={totalCost}
+                                onChange={(e) => handleTotalCostChange(e.target.value)}
                                 className="block w-full rounded-l-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                             <select
@@ -342,6 +422,81 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                             className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         />
                     </div>
+                )}
+
+                {/* Fuel Specifics */}
+                {type === "fuel" && (
+                    <>
+                        <div className="space-y-1.5">
+                            <label htmlFor="fuelType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kraftstoffart</label>
+                            <select
+                                name="fuelType"
+                                id="fuelType"
+                                defaultValue={initialData?.fuelType || "95E10 Bleifrei 95"}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            >
+                                <option value="95E10 Bleifrei 95">95E10 Bleifrei 95</option>
+                                <option value="98E5 Super Plus">98E5 Super Plus</option>
+                                <option value="Diesel">Diesel</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label htmlFor="fuelAmount" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Menge (Liter)</label>
+                            <input
+                                type="number"
+                                name="fuelAmount"
+                                id="fuelAmount"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={fuelAmount}
+                                onChange={(e) => handleFuelAmountChange(e.target.value)}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label htmlFor="pricePerUnit" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Preis pro Liter</label>
+                            <input
+                                type="number"
+                                name="pricePerUnit"
+                                id="pricePerUnit"
+                                step="0.001"
+                                placeholder="0.000"
+                                value={pricePerUnit}
+                                onChange={(e) => handlePricePerUnitChange(e.target.value)}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label htmlFor="locationName" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Tankstelle / Ort</label>
+                            <input
+                                type="text"
+                                name="locationName"
+                                id="locationName"
+                                placeholder="z.B. Shell Zürich"
+                                defaultValue={initialData?.locationName || ""}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            />
+                        </div>
+                        <div className="space-y-1.5 sm:col-span-2">
+                            <span className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Koordinaten</span>
+                            <div className="flex gap-2">
+                                <div className="flex-1 rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm text-secondary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-400">
+                                    {lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : "Kein Standort erfasst"}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleGetLocation}
+                                    disabled={isLocating}
+                                    className="flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-secondary-dark disabled:opacity-50"
+                                >
+                                    <MapPin className="h-4 w-4" />
+                                    {isLocating ? "Ortet..." : "Ort abrufen"}
+                                </button>
+                            </div>
+                            <input type="hidden" name="latitude" value={lat || ""} />
+                            <input type="hidden" name="longitude" value={lng || ""} />
+                        </div>
+                    </>
                 )}
             </div>
 

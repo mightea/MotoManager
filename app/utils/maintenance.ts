@@ -12,6 +12,7 @@ export const maintenanceTypeLabels: Record<MaintenanceType, string> = {
   service: "Service",
   inspection: "MFK",
   location: "Standort",
+  fuel: "Tanken",
 };
 
 export const fluidTypeLabels: Record<FluidType, string> = {
@@ -87,6 +88,19 @@ export function summarizeMaintenanceRecord(record: MaintenanceRecord, userLocati
     case "location": {
       const loc = userLocations?.find(l => l.id === record.locationId);
       return loc ? `Standortwechsel nach ${loc.name}` : "Standortwechsel";
+    }
+
+    case "fuel": {
+      if (record.fuelAmount) {
+        parts.push(`${record.fuelAmount}L`);
+      }
+      if (record.fuelType) {
+        parts.push(record.fuelType);
+      }
+      if (record.locationName) {
+        parts.push(`@ ${record.locationName}`);
+      }
+      return parts.length > 0 ? parts.join(" ") : "Tanken";
     }
 
     case "brakepad":
