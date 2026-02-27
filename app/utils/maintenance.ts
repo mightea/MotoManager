@@ -94,8 +94,11 @@ export function summarizeMaintenanceRecord(record: MaintenanceRecord, userLocati
       if (record.fuelAmount) {
         parts.push(`${record.fuelAmount}L`);
       }
-      if (record.fuelType) {
-        parts.push(record.fuelType);
+      if (record.fuelConsumption) {
+        parts.push(`(${record.fuelConsumption.toFixed(2)} L/100km)`);
+      }
+      if (record.tripDistance) {
+        parts.push(`nach ${record.tripDistance} km`);
       }
       if (record.locationName) {
         parts.push(`@ ${record.locationName}`);

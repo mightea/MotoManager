@@ -19,6 +19,8 @@ interface MotorcycleInfoCardProps {
   onAddPreviousOwner: () => void;
   onEditPreviousOwner: (owner: PreviousOwner) => void;
   ownerCount?: number;
+  avgFuelConsumption?: number | null;
+  avgTripDistance?: number | null;
 }
 
 /**
@@ -39,6 +41,8 @@ export function MotorcycleInfoCard({
   onAddPreviousOwner,
   onEditPreviousOwner,
   ownerCount,
+  avgFuelConsumption,
+  avgTripDistance,
 }: MotorcycleInfoCardProps) {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
 
@@ -46,6 +50,7 @@ export function MotorcycleInfoCard({
     hasPurchaseDate && kmDriven > 0 ? `${formatNumber(kmDriven)} km gefahren` : null,
     ownerCount !== undefined && ownerCount > 0 ? `${ownerCount}. Hand` : null,
     ownershipLabel ? `${ownershipLabel} im Besitz` : null,
+    avgFuelConsumption ? `${avgFuelConsumption.toFixed(2)} L/100km` : null,
   ].filter((item): item is string => Boolean(item));
 
   return (
@@ -113,6 +118,25 @@ export function MotorcycleInfoCard({
               }
             />
           </div>
+
+          {/* Fuel Consumption Group */}
+          {(avgFuelConsumption || avgTripDistance) && (
+            <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-secondary mb-3 px-1">
+                Treibstoff & Verbrauch
+              </h3>
+              <StatisticEntry
+                icon={Gauge}
+                label="Ø Verbrauch"
+                value={avgFuelConsumption ? `${avgFuelConsumption.toFixed(2)} L/100km` : null}
+              />
+              <StatisticEntry
+                icon={Gauge}
+                label="Ø Distanz / Tank"
+                value={avgTripDistance ? `${Math.round(avgTripDistance)} km` : null}
+              />
+            </div>
+          )}
 
           {/* Purchase & Usage Group */}
           <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">

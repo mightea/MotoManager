@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, asc } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import {
   issues,
@@ -23,6 +23,42 @@ import type * as schema from "~/db/schema";
 
 type Database = LibSQLDatabase<typeof schema>;
 
+export async function recalculateFuelConsumption(
+  db: Database,
+  motorcycleId: number,
+) {
+  const fuelRecords = await db.query.maintenanceRecords.findMany({
+    where: and(
+      eq(maintenanceRecords.motorcycleId, motorcycleId),
+      eq(maintenanceRecords.type, "fuel"),
+    ),
+    orderBy: [asc(maintenanceRecords.date), asc(maintenanceRecords.odo)],
+  });
+
+  for (let i = 0; i < fuelRecords.length; i++) {
+    const current = fuelRecords[i];
+    const previous = i > 0 ? fuelRecords[i - 1] : null;
+
+    let tripDistance = null;
+    let fuelConsumption = null;
+
+    if (previous) {
+      tripDistance = current.odo - previous.odo;
+      if (tripDistance > 0 && current.fuelAmount) {
+        fuelConsumption = (current.fuelAmount / tripDistance) * 100;
+      }
+    }
+
+    await db
+      .update(maintenanceRecords)
+      .set({
+        tripDistance,
+        fuelConsumption,
+      })
+      .where(eq(maintenanceRecords.id, current.id));
+  }
+}
+
 export async function createMotorcycle(
   db: Database,
   values: NewMotorcycle,
@@ -42,6 +78,11 @@ export async function createMaintenanceRecord(
     .insert(maintenanceRecords)
     .values(values)
     .returning();
+
+  if (record?.type === "fuel") {
+    await recalculateFuelConsumption(db, record.motorcycleId);
+  }
+
   return record ?? null;
 }
 
@@ -169,6 +210,11 @@ export async function updateMaintenanceRecord(
       ),
     )
     .returning();
+
+  if (record?.type === "fuel" || values.type === "fuel") {
+    await recalculateFuelConsumption(db, motorcycleId);
+  }
+
   return record ?? null;
 }
 
@@ -177,6 +223,11 @@ export async function deleteMaintenanceRecord(
   maintenanceId: number,
   motorcycleId: number,
 ) {
+  const [record] = await db
+    .select({ type: maintenanceRecords.type })
+    .from(maintenanceRecords)
+    .where(eq(maintenanceRecords.id, maintenanceId));
+
   const deleted = await db
     .delete(maintenanceRecords)
     .where(
@@ -186,6 +237,11 @@ export async function deleteMaintenanceRecord(
       ),
     )
     .returning();
+
+  if (record?.type === "fuel") {
+    await recalculateFuelConsumption(db, motorcycleId);
+  }
+
   return deleted.length > 0;
 }
 

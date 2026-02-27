@@ -18,7 +18,8 @@ import {
   Coins,
   Info,
   Hash,
-  Fuel
+  Fuel,
+  Activity
 } from "lucide-react";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
@@ -268,6 +269,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       ...(record.type === "fuel" ? [
                         { label: "Kraftstoffart", value: record.fuelType, icon: Droplet },
                         { label: "Menge", value: record.fuelAmount ? `${record.fuelAmount} L` : null, icon: Maximize2 },
+                        { label: "Verbrauch", value: record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null, icon: Activity },
+                        { label: "Trip", value: record.tripDistance ? `${record.tripDistance} km` : null, icon: Hash },
                         { label: "Preis/Liter", value: record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null, icon: Coins },
                         { label: "Tankstelle", value: record.locationName, icon: MapPin },
                       ] : []),
