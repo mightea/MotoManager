@@ -143,7 +143,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
   if (groupedRecords.length === 0) {
     return (
       <p className="text-sm text-secondary dark:text-navy-400">
-        Keine Wartungseinträge vorhanden.
+        Keine Einträge vorhanden.
       </p>
     );
   }

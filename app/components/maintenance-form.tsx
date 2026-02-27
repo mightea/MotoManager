@@ -107,15 +107,14 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
         <Form method="post" className="space-y-6" onSubmit={onSubmit}>
             <input type="hidden" name="intent" value={initialData ? "updateMaintenance" : "createMaintenance"} />
             {initialData && <input type="hidden" name="maintenanceId" value={initialData.id} />}
-            <input type="hidden" name="motorcycleId" value={motorcycleId} />
-
-            {/* Type Selection */}
-            <div className="space-y-1.5">
-                <label htmlFor="type" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Wartungstyp</label>
-                <select
-                    name="type"
-                    id="type"
-                    value={type}
+                        <input type="hidden" name="motorcycleId" value={motorcycleId} />
+             
+                         {/* Type Selection */}
+                         <div className="space-y-1.5">
+                             <label htmlFor="type" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Typ</label>
+                             <select
+                                 name="type"
+                                 id="type"                    value={type}
                     onChange={(e) => setType(e.target.value as MaintenanceType)}
                     className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 >

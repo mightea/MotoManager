@@ -110,7 +110,7 @@ export async function action({ request }: Route.ActionArgs) {
       coolantKmInterval,
       chainKmInterval,
     });
-    return { success: "Wartungsintervalle aktualisiert." };
+    return { success: "Service-Intervalle aktualisiert." };
   }
 
   if (intent === "deleteAuthenticator") {
@@ -492,9 +492,9 @@ export default function Settings() {
             <Activity className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">Wartungsintervalle</h2>
+            <h2 className="text-xl font-semibold text-foreground dark:text-white">Service-Intervalle</h2>
             <p className="text-sm text-secondary dark:text-navy-300">
-              Konfiguriere die Zeitabstände (in Jahren) für deine Wartungserinnerungen.
+              Konfiguriere die Zeitabstände (in Jahren) für deine Service-Erinnerungen.
             </p>
           </div>
         </div>

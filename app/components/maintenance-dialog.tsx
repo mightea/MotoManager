@@ -19,8 +19,8 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? "Eintrag bearbeiten" : "Neuer Wartungseintrag"}
-      description={initialData ? "Details zum Wartungseintrag anpassen." : "Füge einen neuen Service oder eine Reparatur hinzu."}
+      title={initialData ? "Eintrag bearbeiten" : "Neuer Eintrag"}
+      description={initialData ? "Details zum Eintrag anpassen." : "Füge einen neuen Service, eine Reparatur oder Tankstopp hinzu."}
     >
       <MaintenanceForm
         motorcycleId={motorcycleId}

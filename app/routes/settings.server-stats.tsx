@@ -163,9 +163,9 @@ export default function ServerStats() {
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <StatCard
                             icon={Wrench}
-                            label="Wartungen"
+                            label="Historie"
                             value={formatNumber(stats.maintenance)}
-                            description="Gespeicherte Wartungseinträge"
+                            description="Einträge in der Historie"
                             color="violet"
                         />
                         <StatCard

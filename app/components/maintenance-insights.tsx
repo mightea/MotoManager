@@ -77,13 +77,13 @@ export function MaintenanceInsightsCard({
       )}
     >
       <h2 className="mb-4 text-base font-semibold text-foreground dark:text-white">
-        Wartungsintervalle
+        Service-Intervalle
       </h2>
 
       {Object.keys(groupedInsights).length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-200 px-4 py-6 text-center text-secondary dark:border-navy-600 dark:text-navy-300">
           <p className="text-sm font-medium">
-            Keine wartungsrelevanten Daten gefunden.
+            Keine service-relevanten Daten gefunden.
           </p>
         </div>
       ) : (
