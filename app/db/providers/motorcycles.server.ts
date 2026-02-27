@@ -41,6 +41,7 @@ export async function recalculateFuelConsumption(
 
     let tripDistance = null;
     let fuelConsumption = null;
+    let description = current.description;
 
     if (previous) {
       tripDistance = current.odo - previous.odo;
@@ -49,11 +50,21 @@ export async function recalculateFuelConsumption(
       }
     }
 
+    // Auto-populate description if it's empty or looks like an auto-description
+    if (!description || description.startsWith("Verbrauch:") || description === "RoadTrip Import") {
+      const parts = [];
+      if (description === "RoadTrip Import") parts.push("RoadTrip Import");
+      if (fuelConsumption) parts.push(`Verbrauch: ${fuelConsumption.toFixed(2)} L/100km`);
+      if (tripDistance) parts.push(`Trip: ${tripDistance} km`);
+      if (parts.length > 0) description = parts.join(" | ");
+    }
+
     await db
       .update(maintenanceRecords)
       .set({
         tripDistance,
         fuelConsumption,
+        description,
       })
       .where(eq(maintenanceRecords.id, current.id));
   }

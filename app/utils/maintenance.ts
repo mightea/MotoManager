@@ -94,15 +94,27 @@ export function summarizeMaintenanceRecord(record: MaintenanceRecord, userLocati
       if (record.fuelAmount) {
         parts.push(`${record.fuelAmount}L`);
       }
-      if (record.fuelConsumption) {
-        parts.push(`(${record.fuelConsumption.toFixed(2)} L/100km)`);
-      }
-      if (record.tripDistance) {
-        parts.push(`nach ${record.tripDistance} km`);
+      if (record.fuelType) {
+        // Extract the first part (e.g., "95E10" from "95E10 Bleifrei 95")
+        const typeShort = record.fuelType.split(" ")[0];
+        parts.push(typeShort);
       }
       if (record.locationName) {
         parts.push(`@ ${record.locationName}`);
       }
+
+      const stats = [];
+      if (record.fuelConsumption) {
+        stats.push(`${record.fuelConsumption.toFixed(2)} L/100km`);
+      }
+      if (record.tripDistance) {
+        stats.push(`${record.tripDistance} km`);
+      }
+
+      if (stats.length > 0) {
+        parts.push(`(${stats.join(", ")})`);
+      }
+
       return parts.length > 0 ? parts.join(" ") : "Tanken";
     }
 
