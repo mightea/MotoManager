@@ -356,20 +356,9 @@ export function AddMotorcycleForm({
               Archiviert
             </label>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-2">
-            {onDelete && (
-              <button
-                type="button"
-                onClick={onDelete}
-                className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/30"
-              >
-                Motorrad löschen
-              </button>
-            )}
-            {initialValues?.id && (
+          {initialValues?.id && (
+            <div className="pt-2 border-t border-gray-100 dark:border-navy-700">
               <button
                 type="button"
                 onClick={() => setImportDialogOpen(true)}
@@ -378,8 +367,25 @@ export function AddMotorcycleForm({
                 <Fuel className="h-4 w-4" />
                 RoadTrip Import
               </button>
-            )}
-          </div>
+              <p className="mt-1.5 text-[10px] text-secondary/70 dark:text-navy-400">
+                Importiere historische Tankdaten aus der RoadTrip App (.csv Export).
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between mt-4">
+          {onDelete ? (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/30"
+            >
+              Motorrad löschen
+            </button>
+          ) : (
+            <div></div>
+          )}
           <div className="flex items-center gap-3">
             <button
               type="button"
