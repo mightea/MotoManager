@@ -1,9 +1,11 @@
 import { Form, useSubmit, useActionData } from "react-router";
-import type { EditorMotorcycle, CurrencySetting } from "~/db/schema";
+import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/db/schema";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
 import { Modal } from "./modal";
+import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
+import { Fuel } from "lucide-react";
 
 interface AddMotorcycleFormProps {
   onSubmit?: () => void;
@@ -12,6 +14,7 @@ interface AddMotorcycleFormProps {
   submitLabel?: string;
   currencies?: CurrencySetting[];
   onDelete?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  existingMaintenance?: MaintenanceRecord[];
 }
 
 
@@ -30,9 +33,20 @@ export function AddMotorcycleForm({
   submitLabel = "Speichern",
   currencies = [],
   onDelete,
+  existingMaintenance = [],
 }: AddMotorcycleFormProps) {
   const submit = useSubmit();
-  // Fallback
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+  const handleRoadTripImport = (selectedEntries: any[]) => {
+    if (initialValues?.id) {
+      const formData = new FormData();
+      formData.append("intent", "importFuelData");
+      formData.append("motorcycleId", initialValues.id.toString());
+      formData.append("records", JSON.stringify(selectedEntries));
+      submit(formData, { method: "post" });
+    }
+  };
 
 
   const actionData = useActionData<{
@@ -345,15 +359,27 @@ export function AddMotorcycleForm({
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          {onDelete && (
-            <button
-              type="button"
-              onClick={onDelete}
-              className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/30"
-            >
-              Motorrad löschen
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/30"
+              >
+                Motorrad löschen
+              </button>
+            )}
+            {initialValues?.id && (
+              <button
+                type="button"
+                onClick={() => setImportDialogOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-secondary/30 px-4 py-2.5 text-sm font-semibold text-secondary transition-colors hover:bg-gray-50 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-700"
+              >
+                <Fuel className="h-4 w-4" />
+                RoadTrip Import
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -420,6 +446,13 @@ export function AddMotorcycleForm({
           </button>
         </div>
       </Modal>
+
+      <ImportRoadTripDialog
+        isOpen={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onImport={handleRoadTripImport}
+        existingMaintenance={existingMaintenance}
+      />
     </>
   );
 }
