@@ -40,7 +40,7 @@ export function meta({ data }: Route.MetaArgs) {
   const { make, model } = data.motorcycle;
   return [
     { title: `${make} ${model} - Moto Manager` },
-    { name: "description", content: `Details, Wartungshistorie und Mängel für ${make} ${model}.` },
+    { name: "description", content: `Details, Historie und Mängel für ${make} ${model}.` },
   ];
 }
 
@@ -672,7 +672,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           {/* Maintenance History Card */}
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-foreground dark:text-white">Wartungshistorie</h2>
+              <h2 className="text-base font-semibold text-foreground dark:text-white">Historie</h2>
               <button
                 onClick={() => {
                   setSelectedMaintenance(null);
@@ -770,7 +770,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setSelectedMaintenance(null);
         }}
         title="Eintrag löschen"
-        description="Möchtest du diesen Wartungseintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        description="Möchtest du diesen Eintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
         confirmLabel="Löschen"
         confirmDisabled={!selectedMaintenance}
       />

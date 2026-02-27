@@ -43,9 +43,9 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
                     accent={stats.totalActiveIssues > 0 ? "warning" : undefined}
                 />
 
-                {/* Wartungskosten */}
+                {/* Gesamtkosten */}
                 <StatCard
-                    label={`WARTUNGSKOSTEN ${stats.year}`}
+                    label={`GESAMTKOSTEN ${stats.year}`}
                     value={formatCurrency(stats.totalMaintenanceCostThisYear)}
                     description="Summe der erfassten Kosten im aktuellen Jahr."
                 />
