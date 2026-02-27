@@ -102,7 +102,8 @@ export type MaintenanceType =
   | "repair"
   | "service"
   | "inspection"
-  | "location";
+  | "location"
+  | "fuel";
 
 export type FluidType =
   | "engineoil"
@@ -151,6 +152,14 @@ export const maintenanceRecords = sqliteTable("maintenance_records", {
 
   // Location-specific fields
   locationId: int("location_id").references(() => locations.id),
+
+  // Fuel-specific fields
+  fuelType: text("fuel_type"),
+  fuelAmount: real("fuel_amount"),
+  pricePerUnit: real("price_per_unit"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+  locationName: text("location_name"),
 }, (table) => ({
   motoIdIdx: index("maintenance_motorcycle_id_idx").on(table.motorcycleId),
 }));

@@ -74,7 +74,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       }
     ];
 
@@ -117,7 +123,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       },
       {
         id: 2,
@@ -139,7 +151,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       }
     ];
 
@@ -181,7 +199,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       }
     ];
 
@@ -219,7 +243,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       }
     ];
 
@@ -257,7 +287,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       },
       {
         id: 2,
@@ -279,7 +315,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       }
     ];
 
@@ -317,7 +359,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       }
     ];
 
@@ -355,7 +403,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       },
       {
         id: 2,
@@ -377,7 +431,13 @@ describe("buildDashboardData", () => {
         viscosity: null,
         oilType: null,
         inspectionLocation: null,
-        locationId: null
+        locationId: null,
+        fuelType: null,
+        fuelAmount: null,
+        pricePerUnit: null,
+        latitude: null,
+        longitude: null,
+        locationName: null,
       }
     ];
 

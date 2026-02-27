@@ -17,7 +17,8 @@ import {
   Calendar,
   Coins,
   Info,
-  Hash
+  Hash,
+  Fuel
 } from "lucide-react";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
@@ -31,6 +32,7 @@ import {
   batteryTypeLabels,
   summarizeMaintenanceRecord 
 } from "~/utils/maintenance";
+import { MapView } from "./map-view";
 
 interface MaintenanceListProps {
   records: MaintenanceRecord[];
@@ -63,6 +65,7 @@ const getIconForType = (type: MaintenanceType) => {
     case "service": return ClipboardList;
     case "inspection": return ClipboardCheck;
     case "location": return MapPin;
+    case "fuel": return Fuel;
     case "general": default: return Wrench;
   }
 };
@@ -262,6 +265,12 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       ...(record.type === "location" ? [
                         { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name, icon: MapPin },
                       ] : []),
+                      ...(record.type === "fuel" ? [
+                        { label: "Kraftstoffart", value: record.fuelType, icon: Droplet },
+                        { label: "Menge", value: record.fuelAmount ? `${record.fuelAmount} L` : null, icon: Maximize2 },
+                        { label: "Preis/Liter", value: record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null, icon: Coins },
+                        { label: "Tankstelle", value: record.locationName, icon: MapPin },
+                      ] : []),
 
                       { label: "Kosten", value: record.cost && record.cost > 0 ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null, icon: Coins },
                     ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
@@ -285,24 +294,35 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                         </div>
 
                         {metadataItems.length > 0 ? (
-                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2 text-sm">
-                            {metadataItems.map((item) => {
-                              const ItemIcon = item.icon;
-                              return (
-                                <div key={item.label} className="flex items-center justify-between gap-4 border-b border-gray-50 py-1 dark:border-navy-700/50">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <ItemIcon className="h-3.5 w-3.5 text-secondary/60 dark:text-navy-500 shrink-0" />
-                                    <dt className="text-xs font-medium text-secondary dark:text-navy-400 truncate">
-                                      {item.label}
-                                    </dt>
+                          <div className="space-y-4">
+                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2 text-sm">
+                              {metadataItems.map((item) => {
+                                const ItemIcon = item.icon;
+                                return (
+                                  <div key={item.label} className="flex items-center justify-between gap-4 border-b border-gray-50 py-1 dark:border-navy-700/50">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <ItemIcon className="h-3.5 w-3.5 text-secondary/60 dark:text-navy-500 shrink-0" />
+                                      <dt className="text-xs font-medium text-secondary dark:text-navy-400 truncate">
+                                        {item.label}
+                                      </dt>
+                                    </div>
+                                    <dd suppressHydrationWarning className="text-xs font-semibold text-foreground dark:text-gray-200 text-right shrink-0">
+                                      {item.value}
+                                    </dd>
                                   </div>
-                                  <dd suppressHydrationWarning className="text-xs font-semibold text-foreground dark:text-gray-200 text-right shrink-0">
-                                    {item.value}
-                                  </dd>
-                                </div>
-                              );
-                            })}
-                          </dl>
+                                );
+                              })}
+                            </dl>
+                            {record.latitude && record.longitude && (
+                              <div className="mt-2">
+                                <MapView 
+                                  latitude={record.latitude} 
+                                  longitude={record.longitude} 
+                                  title={record.locationName || "Tankstelle"}
+                                />
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <p className="text-sm text-secondary dark:text-navy-400">
                             Keine weiteren Details verfügbar.
@@ -323,4 +343,3 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
     </div>
   );
 }
-
