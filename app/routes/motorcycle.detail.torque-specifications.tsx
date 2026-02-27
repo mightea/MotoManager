@@ -6,7 +6,6 @@ import {
   useSubmit,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.torque-specifications";
-import { getCachedData } from "~/utils/offline-cache.client";
 import { getDb } from "~/db";
 import {
   motorcycles,
@@ -142,12 +141,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     printDate,
   });
 }
-
-export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  return getCachedData(request, serverLoader);
-}
-
-clientLoader.hydrate = true;
 
 export async function action({ request }: Route.ActionArgs) {
   const { user, headers } = await requireUser(request);

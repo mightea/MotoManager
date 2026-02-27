@@ -9,7 +9,6 @@ import {
   useParams,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
-import { getCachedData } from "~/utils/offline-cache.client";
 import { getDb } from "~/db";
 import { issues, maintenanceRecords, motorcycles, locations, previousOwners, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle, type NewPreviousOwner } from "~/db/schema";
 import { eq, and, ne, desc } from "drizzle-orm";
@@ -159,8 +158,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
        ? tripValues.reduce((a, b) => a + b, 0) / tripValues.length
        : null;
   
-     const dateFormatter = new Intl.DateTimeFormat("de-CH", {    dateStyle: "medium",
-  });
+     const dateFormatter = new Intl.DateTimeFormat("de-CH", {
+       dateStyle: "medium",
+     });
 
   const firstRegistrationDate = parseDate(motorcycle.firstRegistration);
 
@@ -191,12 +191,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
-
-export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  return getCachedData(request, serverLoader);
-}
-
-clientLoader.hydrate = true;
 
 export async function action({ request }: Route.ActionArgs) {
   const { user, headers } = await requireUser(request);
@@ -597,8 +591,11 @@ export async function action({ request }: Route.ActionArgs) {
      }
  
      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
-   }       return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
-     }
+   }
+
+   return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
+}
+
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const {
     motorcycle,

@@ -1,7 +1,6 @@
 import { Link, data, useActionData } from "react-router";
 import type { Route } from "./+types/home";
 import { getDb } from "~/db";
-import { getCachedData } from "~/utils/offline-cache.client";
 import {
   motorcycles,
   issues,
@@ -114,12 +113,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     { headers },
   );
 }
-
-export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  return getCachedData(request, serverLoader);
-}
-
-clientLoader.hydrate = true;
 
 export async function action({ request }: Route.ActionArgs) {
   const { user, headers } = await requireUser(request);
