@@ -81,6 +81,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       }
     ];
 
@@ -130,6 +132,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       },
       {
         id: 2,
@@ -158,6 +162,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       }
     ];
 
@@ -206,6 +212,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       }
     ];
 
@@ -250,6 +258,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       }
     ];
 
@@ -294,6 +304,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       },
       {
         id: 2,
@@ -322,6 +334,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       }
     ];
 
@@ -366,6 +380,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       }
     ];
 
@@ -410,6 +426,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       },
       {
         id: 2,
@@ -438,6 +456,8 @@ describe("buildDashboardData", () => {
         latitude: null,
         longitude: null,
         locationName: null,
+        fuelConsumption: null,
+        tripDistance: null,
       }
     ];
 

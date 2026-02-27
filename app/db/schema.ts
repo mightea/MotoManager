@@ -160,6 +160,8 @@ export const maintenanceRecords = sqliteTable("maintenance_records", {
   latitude: real("latitude"),
   longitude: real("longitude"),
   locationName: text("location_name"),
+  fuelConsumption: real("fuel_consumption"),
+  tripDistance: real("trip_distance"),
 }, (table) => ({
   motoIdIdx: index("maintenance_motorcycle_id_idx").on(table.motorcycleId),
 }));

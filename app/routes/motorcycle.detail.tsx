@@ -137,13 +137,29 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const currentOdo = lastKnownOdo ?? motorcycle.initialOdo;
   const kmDriven = Math.max(0, currentOdo - motorcycle.initialOdo);
-  const avgKmPerYear = yearsOwned > 0.1 ? kmDriven / yearsOwned : 0;
-
-  const ownershipDuration = purchaseDate ? formatDuration(daysOwned) : null;
-  const ownershipLabel = ownershipDuration ? `${ownershipDuration.value} ${ownershipDuration.unit}` : null;
-
-  const dateFormatter = new Intl.DateTimeFormat("de-CH", {
-    dateStyle: "medium",
+    const avgKmPerYear = yearsOwned > 0.1 ? kmDriven / yearsOwned : 0;
+   
+     const ownershipDuration = purchaseDate ? formatDuration(daysOwned) : null;
+     const ownershipLabel = ownershipDuration ? `${ownershipDuration.value} ${ownershipDuration.unit}` : null;
+   
+     const fuelRecords = maintenanceHistory.filter(r => r.type === "fuel");
+     const fuelConsumptionValues = fuelRecords
+       .map(r => r.fuelConsumption)
+       .filter((v): v is number => v !== null && v > 0);
+     
+     const avgFuelConsumption = fuelConsumptionValues.length > 0
+       ? fuelConsumptionValues.reduce((a, b) => a + b, 0) / fuelConsumptionValues.length
+       : null;
+  
+     const tripValues = fuelRecords
+       .map(r => r.tripDistance)
+       .filter((v): v is number => v !== null && v > 0);
+  
+     const avgTripDistance = tripValues.length > 0
+       ? tripValues.reduce((a, b) => a + b, 0) / tripValues.length
+       : null;
+  
+     const dateFormatter = new Intl.DateTimeFormat("de-CH", {    dateStyle: "medium",
   });
 
   const firstRegistrationDate = parseDate(motorcycle.firstRegistration);
@@ -166,6 +182,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       kmDriven,
       avgKmPerYear,
       yearsOwned,
+      avgFuelConsumption,
+      avgTripDistance,
       formattedPurchaseDate: purchaseDate ? dateFormatter.format(purchaseDate) : null,
       formattedFirstRegistration: firstRegistrationDate ? dateFormatter.format(firstRegistrationDate) : null,
       hasPurchaseDate: !!purchaseDate
@@ -221,7 +239,8 @@ export async function action({ request }: Route.ActionArgs) {
     deleteMaintenanceRecord,
     createPreviousOwner,
     updatePreviousOwner,
-    deletePreviousOwner
+    deletePreviousOwner,
+    recalculateFuelConsumption
   } = await import("~/db/providers/motorcycles.server");
 
   // Fetch currencies for normalization
@@ -545,35 +564,40 @@ export async function action({ request }: Route.ActionArgs) {
          return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
        }
      
-             if (intent === "importFuelData") {
-               const motorcycleId = Number(formData.get("motorcycleId"));
-               const recordsJson = formData.get("records") as string;
-               const records = JSON.parse(recordsJson) as any[];
-           
-               await Promise.all(records.map(record => {
-                 const currency = record.currency || "CHF";
-                 const rate = record.currencyRate || getCurrencyFactor(currency);
-                 
-                 return createMaintenanceRecord(dbClient, {
-                   motorcycleId,
-                   type: "fuel",
-                   date: record.date.split("T")[0], // Store as YYYY-MM-DD
-                   odo: record.odo,
-                   cost: record.cost,
-                   currency: currency,
-                   fuelType: record.fuelType,
-                   fuelAmount: record.fuelAmount,
-                   pricePerUnit: record.pricePerUnit,
-                   latitude: record.latitude,
-                   longitude: record.longitude,
-                   locationName: record.locationName,
-                   normalizedCost: (record.cost || 0) * rate,
-                   description: `RoadTrip Import`
-                 });
-               }));
-           
-               return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
-             }       return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
+   if (intent === "importFuelData") {
+     const motorcycleId = Number(formData.get("motorcycleId"));
+     const recordsJson = formData.get("records") as string;
+     const records = JSON.parse(recordsJson) as any[];
+ 
+     const values = records.map(record => {
+       const currency = record.currency || "CHF";
+       const rate = record.currencyRate || getCurrencyFactor(currency);
+       
+       return {
+         motorcycleId,
+         type: "fuel" as const,
+         date: record.date.split("T")[0],
+         odo: record.odo,
+         cost: record.cost,
+         currency: currency,
+         fuelType: record.fuelType,
+         fuelAmount: record.fuelAmount,
+         pricePerUnit: record.pricePerUnit,
+         latitude: record.latitude,
+         longitude: record.longitude,
+         locationName: record.locationName,
+         normalizedCost: (record.cost || 0) * rate,
+         description: `RoadTrip Import`
+       };
+     });
+
+     if (values.length > 0) {
+       await dbClient.insert(maintenanceRecords).values(values);
+       await recalculateFuelConsumption(dbClient, motorcycleId);
+     }
+ 
+     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+   }       return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
      }
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const {
@@ -592,6 +616,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     kmDriven,
     avgKmPerYear,
     yearsOwned,
+    avgFuelConsumption,
+    avgTripDistance,
     formattedPurchaseDate,
     formattedFirstRegistration,
     hasPurchaseDate
@@ -671,6 +697,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             avgKmPerYear={avgKmPerYear}
             yearsOwned={yearsOwned}
             hasPurchaseDate={hasPurchaseDate}
+            avgFuelConsumption={avgFuelConsumption}
+            avgTripDistance={avgTripDistance}
             onEdit={() => setEditMotorcycleDialogOpen(true)}
             previousOwnersList={previousOwnersList}
             onAddPreviousOwner={() => {
