@@ -33,12 +33,37 @@ Description,Date,Odometer (km),Cost,Note,Location,Type,Subtype,Payment,Categorie
         latitude: 47.041214,
         longitude: 9.432396,
         fuelType: "95E10 Bleifrei 95",
-        externalId: "2"
+        externalId: "2",
+        currency: null,
+        currencyRate: 1,
+        locationName: null
       });
 
       // Second entry (checking date padding)
       expect(result[1].date).toBe("2019-07-06T15:20:00");
       expect(result[1].fuelAmount).toBe(18);
+    });
+
+    it("should parse currency and conversion rate correctly", () => {
+      const csvContent = `FUEL RECORDS
+Odometer (km),Trip Distance,Date,Fill Amount,Fill Units,Price per Unit,Total Price,Partial Fill,L/100 km,Note,Octane,Location,Payment,Conditions,Reset,Categories,Flags,Currency Code,Currency Rate,Latitude,Longitude,ID,Trip Comp Fuel Economy,Trip Comp Avg. Speed,Trip Comp Temperature,Trip Comp Drive Time,Tank Number
+3982,273,"2017-7-18 18:43",14.6,L,1.304,19.04,,5.348,,,,,,,,0,EUR,0.832141,48.026022,10.327992,32,,,,,0`;
+      
+      const result = parseRoadTripCsv(csvContent);
+      expect(result[0]).toMatchObject({
+        currency: "EUR",
+        currencyRate: 0.832141,
+        cost: 19.04
+      });
+    });
+
+    it("should parse location name correctly", () => {
+      const csvContent = `FUEL RECORDS
+Odometer (km),Trip Distance,Date,Fill Amount,Fill Units,Price per Unit,Total Price,Partial Fill,L/100 km,Note,Octane,Location,Payment,Conditions,Reset,Categories,Flags,Currency Code,Currency Rate,Latitude,Longitude,ID,Trip Comp Fuel Economy,Trip Comp Avg. Speed,Trip Comp Temperature,Trip Comp Drive Time,Tank Number
+2239,247,"2017-5-6 14:21",13.28,L,1.49,19.79,,5.3765,,,"Stiefenhofer Motos",,,,,0,,1,47.381289,8.531055,18,,,,,0`;
+      
+      const result = parseRoadTripCsv(csvContent);
+      expect(result[0].locationName).toBe("Stiefenhofer Motos");
     });
 
     it("should handle single digit months and days correctly", () => {
@@ -78,7 +103,10 @@ Odometer (km),Trip Distance,Date,Fill Amount,Fill Units,Price per Unit,Total Pri
       latitude: null,
       longitude: null,
       fuelType: "95E10 Bleifrei 95",
-      externalId: "1"
+      externalId: "1",
+      currency: null,
+      currencyRate: null,
+      locationName: null
     };
 
     it("should return true for an exact match", () => {

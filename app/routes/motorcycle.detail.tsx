@@ -545,32 +545,35 @@ export async function action({ request }: Route.ActionArgs) {
          return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
        }
      
-          if (intent === "importFuelData") {
-            const motorcycleId = Number(formData.get("motorcycleId"));
-            const recordsJson = formData.get("records") as string;
-            const records = JSON.parse(recordsJson) as any[];
-        
-            await Promise.all(records.map(record => 
-              createMaintenanceRecord(dbClient, {
-                motorcycleId,
-                type: "fuel",
-                date: record.date.split("T")[0], // Store as YYYY-MM-DD
-                odo: record.odo,
-                cost: record.cost,
-                currency: "CHF", // Default from RoadTrip sample
-                fuelType: record.fuelType,
-                fuelAmount: record.fuelAmount,
-                pricePerUnit: record.pricePerUnit,
-                latitude: record.latitude,
-                longitude: record.longitude,
-                normalizedCost: (record.cost || 0) * getCurrencyFactor("CHF"),
-                description: `RoadTrip Import`
-              })
-            ));
-        
-            return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
-          }     
-       return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
+             if (intent === "importFuelData") {
+               const motorcycleId = Number(formData.get("motorcycleId"));
+               const recordsJson = formData.get("records") as string;
+               const records = JSON.parse(recordsJson) as any[];
+           
+               await Promise.all(records.map(record => {
+                 const currency = record.currency || "CHF";
+                 const rate = record.currencyRate || getCurrencyFactor(currency);
+                 
+                 return createMaintenanceRecord(dbClient, {
+                   motorcycleId,
+                   type: "fuel",
+                   date: record.date.split("T")[0], // Store as YYYY-MM-DD
+                   odo: record.odo,
+                   cost: record.cost,
+                   currency: currency,
+                   fuelType: record.fuelType,
+                   fuelAmount: record.fuelAmount,
+                   pricePerUnit: record.pricePerUnit,
+                   latitude: record.latitude,
+                   longitude: record.longitude,
+                   locationName: record.locationName,
+                   normalizedCost: (record.cost || 0) * rate,
+                   description: `RoadTrip Import`
+                 });
+               }));
+           
+               return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+             }       return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
      }
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const {

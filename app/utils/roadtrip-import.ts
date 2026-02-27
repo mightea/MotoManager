@@ -8,6 +8,9 @@ export interface RoadTripFuelEntry {
   longitude: number | null;
   fuelType: string;
   externalId: string | null;
+  currency: string | null;
+  currencyRate: number | null;
+  locationName: string | null;
 }
 
 /**
@@ -51,6 +54,9 @@ export function parseRoadTripCsv(content: string): RoadTripFuelEntry[] {
       const fuelAmount = parseFloat(parts[3]);
       const pricePerUnit = parseFloat(parts[5]);
       const cost = parseFloat(parts[6]);
+      const locationName = parts[11] || null;
+      const currency = parts[17] || null;
+      const currencyRate = parts[18] ? parseFloat(parts[18]) : null;
       const latitude = parts[19] ? parseFloat(parts[19]) : null;
       const longitude = parts[20] ? parseFloat(parts[20]) : null;
       const externalId = parts[21] || null;
@@ -66,7 +72,10 @@ export function parseRoadTripCsv(content: string): RoadTripFuelEntry[] {
           latitude,
           longitude,
           fuelType: octane.includes("98") ? "98E5 Super Plus" : "95E10 Bleifrei 95",
-          externalId
+          externalId,
+          currency,
+          currencyRate,
+          locationName
         });
       }
     }
