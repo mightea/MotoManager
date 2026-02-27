@@ -21,6 +21,7 @@ interface MotorcycleInfoCardProps {
   ownerCount?: number;
   avgFuelConsumption?: number | null;
   avgTripDistance?: number | null;
+  estimatedRange?: number | null;
 }
 
 /**
@@ -43,6 +44,7 @@ export function MotorcycleInfoCard({
   ownerCount,
   avgFuelConsumption,
   avgTripDistance,
+  estimatedRange,
 }: MotorcycleInfoCardProps) {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
 
@@ -120,11 +122,16 @@ export function MotorcycleInfoCard({
           </div>
 
           {/* Fuel Consumption Group */}
-          {(avgFuelConsumption || avgTripDistance) && (
+          {(avgFuelConsumption || avgTripDistance || motorcycle.fuelTankSize) && (
             <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-secondary mb-3 px-1">
                 Treibstoff & Verbrauch
               </h3>
+              <StatisticEntry
+                icon={Gauge}
+                label="Tankgrösse"
+                value={motorcycle.fuelTankSize ? `${motorcycle.fuelTankSize} L` : null}
+              />
               <StatisticEntry
                 icon={Gauge}
                 label="Ø Verbrauch"
@@ -134,6 +141,11 @@ export function MotorcycleInfoCard({
                 icon={Gauge}
                 label="Ø Distanz / Tank"
                 value={avgTripDistance ? `${Math.round(avgTripDistance)} km` : null}
+              />
+              <StatisticEntry
+                icon={Gauge}
+                label="Theoretische Reichweite"
+                value={estimatedRange ? `~ ${Math.round(estimatedRange)} km` : null}
               />
             </div>
           )}

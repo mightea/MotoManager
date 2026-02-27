@@ -52,6 +52,7 @@ export const motorcycleSchema = z.object({
   currencyCode: z.preprocess(emptyStringToUndefined, z.string().optional()),
   isVeteran: z.preprocess(preprocessBoolean, z.boolean().default(false)),
   isArchived: z.preprocess(preprocessBoolean, z.boolean().default(false)),
+  fuelTankSize: z.preprocess(preprocessNumber, z.number().min(0, "Tankgrösse muss grösser oder gleich 0 sein.").optional()),
 });
 
 export const previousOwnerSchema = z.object({

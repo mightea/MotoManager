@@ -329,6 +329,17 @@ export function AddMotorcycleForm({
               <p className="text-xs text-red-500">{actionData.errors.purchasePrice}</p>
             )}
           </div>
+          <div className="space-y-1.5">
+            <label htmlFor="fuelTankSize" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Tankgrösse (Liter)</label>
+            <input
+              type="number"
+              name="fuelTankSize"
+              id="fuelTankSize"
+              step="0.1"
+              placeholder="z.B. 18.5"
+              defaultValue={initialValues?.fuelTankSize ?? ""}
+              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
+          </div>
         </div>
 
         <div className="col-span-full space-y-3 pt-2">

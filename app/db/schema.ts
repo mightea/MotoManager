@@ -87,6 +87,7 @@ export const motorcycles = sqliteTable("motorcycles", {
   purchasePrice: real("purchase_price"), // decimal‐friendly REAL column
   normalizedPurchasePrice: real("normalized_purchase_price"), // Converted to base currency (CHF)
   currencyCode: text("currency_code"),
+  fuelTankSize: real("fuel_tank_size"),
 }, (table) => ({
   userIdIdx: index("motorcycles_user_id_idx").on(table.userId),
 }));
