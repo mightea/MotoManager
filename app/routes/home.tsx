@@ -147,7 +147,8 @@ export async function action({ request }: Route.ActionArgs) {
     purchasePrice,
     currencyCode,
     isVeteran,
-    isArchived
+    isArchived,
+    fuelTankSize
   } = validationResult.data;
 
   const imageEntry = formData.get("image");
@@ -174,6 +175,7 @@ export async function action({ request }: Route.ActionArgs) {
     purchasePrice: purchasePrice ?? 0,
     currencyCode,
     image: imagePath,
+    fuelTankSize,
   };
 
   const dbClient = await getDb();

@@ -155,8 +155,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
        .filter((v): v is number => v !== null && v > 0);
   
      const avgTripDistance = tripValues.length > 0
-       ? tripValues.reduce((a, b) => a + b, 0) / tripValues.length
-       : null;
+     ? tripValues.reduce((a, b) => a + b, 0) / tripValues.length
+     : null;
+
+   const estimatedRange = (avgFuelConsumption && avgFuelConsumption > 0 && motorcycle.fuelTankSize && motorcycle.fuelTankSize > 0)
+     ? (motorcycle.fuelTankSize / avgFuelConsumption) * 100
+     : null;
   
      const dateFormatter = new Intl.DateTimeFormat("de-CH", {
        dateStyle: "medium",
@@ -184,6 +188,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       yearsOwned,
       avgFuelConsumption,
       avgTripDistance,
+      estimatedRange,
       formattedPurchaseDate: purchaseDate ? dateFormatter.format(purchaseDate) : null,
       formattedFirstRegistration: firstRegistrationDate ? dateFormatter.format(firstRegistrationDate) : null,
       hasPurchaseDate: !!purchaseDate
@@ -281,6 +286,8 @@ export async function action({ request }: Route.ActionArgs) {
       purchasePrice,
       currencyCode,
       isVeteran,
+      isArchived,
+      fuelTankSize,
       // isArchived is not usually editable here or maybe it is? The form doesn't show it but schema might support it.
     } = validationResult.data;
 
@@ -305,6 +312,8 @@ export async function action({ request }: Route.ActionArgs) {
       purchasePrice: purchasePrice ?? null,
       currencyCode: currencyCode ?? null,
       isVeteran: isVeteran,
+      isArchived: isArchived,
+      fuelTankSize: fuelTankSize ?? null,
       ...(imagePath ? { image: imagePath } : {}),
       normalizedPurchasePrice: (purchasePrice || 0) * getCurrencyFactor(currencyCode),
     };
@@ -615,6 +624,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     yearsOwned,
     avgFuelConsumption,
     avgTripDistance,
+    estimatedRange,
     formattedPurchaseDate,
     formattedFirstRegistration,
     hasPurchaseDate
@@ -696,6 +706,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             hasPurchaseDate={hasPurchaseDate}
             avgFuelConsumption={avgFuelConsumption}
             avgTripDistance={avgTripDistance}
+            estimatedRange={estimatedRange}
             onEdit={() => setEditMotorcycleDialogOpen(true)}
             previousOwnersList={previousOwnersList}
             onAddPreviousOwner={() => {

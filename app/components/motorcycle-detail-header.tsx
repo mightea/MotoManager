@@ -138,18 +138,6 @@ export function MotorcycleDetailHeader({
             >
               {motorcycle.make} {motorcycle.model}
             </h1>
-            {ownerCount !== undefined && ownerCount > 0 && (
-              <span
-                className={clsx(
-                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                  hasHeroImage
-                    ? "border-white/30 bg-white/20 text-white backdrop-blur-sm"
-                    : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400"
-                )}
-              >
-                {ownerCount}. Hand
-              </span>
-            )}
             {motorcycle.isVeteran && (
               <span
                 className={clsx(

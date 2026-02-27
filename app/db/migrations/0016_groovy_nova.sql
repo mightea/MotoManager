@@ -1,0 +1,1 @@
+ALTER TABLE `motorcycles` ADD `fuel_tank_size` real;

@@ -23,6 +23,7 @@ describe("buildDashboardData", () => {
     purchasePrice: null,
     normalizedPurchasePrice: null,
     currencyCode: null,
+    fuelTankSize: null,
   };
 
   it("should return empty stats when no data", () => {
