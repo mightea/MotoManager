@@ -46,19 +46,7 @@ export function parseRoadTripCsv(content: string): RoadTripFuelEntry[] {
       if (parts.length < 7) continue;
 
       const odo = parseInt(parts[0], 10);
-      const dateRaw = parts[2].replace(/"/g, ""); // "2019-6-15 9:51"
-      
-      // RoadTrip date format: "YYYY-M-D H:mm" -> ISO "YYYY-MM-DDTHH:mm:00"
-      const dateParts = dateRaw.split(/[ -:]/);
-      if (dateParts.length < 5) continue;
-      
-      const year = dateParts[0];
-      const month = dateParts[1].padStart(2, '0');
-      const day = dateParts[2].padStart(2, '0');
-      const hour = dateParts[3].padStart(2, '0');
-      const minute = dateParts[4].padStart(2, '0');
-      
-      const date = `${year}-${month}-${day}T${hour}:${minute}:00`;
+      const date = parseRoadTripDate(parts[2]);
       
       const fuelAmount = parseFloat(parts[3]);
       const pricePerUnit = parseFloat(parts[5]);
@@ -85,6 +73,22 @@ export function parseRoadTripCsv(content: string): RoadTripFuelEntry[] {
   }
 
   return fuelRecords;
+}
+
+/**
+ * Robustly parses a RoadTrip date string into a padded ISO-like string.
+ * Format: "2019-6-15 9:51" -> "2019-06-15T09:51:00"
+ */
+function parseRoadTripDate(raw: string): string | null {
+  if (!raw) return null;
+  const cleaned = raw.replace(/"/g, "").trim();
+  
+  // Match YYYY-MM-DD or YYYY-M-D with optional time H:mm or HH:mm
+  const match = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2}))?/);
+  if (!match) return null;
+
+  const [_, y, m, d, h = "0", min = "0"] = match;
+  return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T${h.padStart(2, '0')}:${min.padStart(2, '0')}:00`;
 }
 
 function parseCsvLine(line: string): string[] {

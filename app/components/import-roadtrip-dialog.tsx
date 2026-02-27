@@ -145,7 +145,10 @@ export function ImportRoadTripDialog({
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 font-semibold text-foreground dark:text-white">
                           <Calendar className="h-3 w-3 text-secondary" />
-                          {new Date(entry.date).toLocaleDateString('de-CH')}
+                          {(() => {
+                            const d = new Date(entry.date);
+                            return isNaN(d.getTime()) ? "Ungültiges Datum" : d.toLocaleDateString('de-CH');
+                          })()}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-secondary dark:text-navy-400">
                           <Hash className="h-3 w-3" />
