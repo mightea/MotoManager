@@ -322,7 +322,18 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                 { label: "Tankstelle", value: record.locationName, icon: MapPin },
                               ] : []),
 
-                              { label: "Kosten", value: record.cost && record.cost > 0 ? formatCurrency(record.cost, record.currency || currencyCode || "CHF") : null, icon: Coins },
+                              { 
+                        label: "Kosten", 
+                        value: record.cost && record.cost > 0 ? (
+                          record.currency && currencyCode && record.currency !== currencyCode ? (
+                            <span className="flex flex-col items-end">
+                              <span>{formatCurrency(record.cost, record.currency)}</span>
+                              <span className="text-[10px] text-secondary/70">({formatCurrency(record.normalizedCost || 0, currencyCode)})</span>
+                            </span>
+                          ) : formatCurrency(record.cost, record.currency || currencyCode || "CHF")
+                        ) : null, 
+                        icon: Coins 
+                      },
                             ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 
                             return (
