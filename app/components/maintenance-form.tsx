@@ -431,11 +431,11 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                             <select
                                 name="fuelType"
                                 id="fuelType"
-                                defaultValue={initialData?.fuelType || "95E10 Bleifrei 95"}
+                                defaultValue={initialData?.fuelType || "95E10"}
                                 className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             >
-                                <option value="95E10 Bleifrei 95">95E10 Bleifrei 95</option>
-                                <option value="98E5 Super Plus">98E5 Super Plus</option>
+                                <option value="95E10">Bleifrei 95</option>
+                                <option value="98E5">Super Plus</option>
                                 <option value="Diesel">Diesel</option>
                             </select>
                         </div>

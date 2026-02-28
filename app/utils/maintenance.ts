@@ -38,6 +38,12 @@ export const batteryTypeLabels: Record<BatteryType, string> = {
   other: "Andere",
 };
 
+export const fuelTypeLabels: Record<string, string> = {
+  "95E10": "Bleifrei 95",
+  "98E5": "Super Plus",
+  "Diesel": "Diesel",
+};
+
 /**
  * Summarizes a maintenance record into a concise German text.
  */
@@ -95,9 +101,8 @@ export function summarizeMaintenanceRecord(record: MaintenanceRecord, userLocati
         parts.push(`${record.fuelAmount}L`);
       }
       if (record.fuelType) {
-        // Extract the first part (e.g., "95E10" from "95E10 Bleifrei 95")
-        const typeShort = record.fuelType.split(" ")[0];
-        parts.push(typeShort);
+        const label = fuelTypeLabels[record.fuelType] || record.fuelType;
+        parts.push(label);
       }
       if (record.locationName) {
         parts.push(`@ ${record.locationName}`);

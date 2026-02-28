@@ -60,7 +60,7 @@ export function parseRoadTripCsv(content: string): RoadTripFuelEntry[] {
       const latitude = parts[19] ? parseFloat(parts[19]) : null;
       const longitude = parts[20] ? parseFloat(parts[20]) : null;
       const externalId = parts[21] || null;
-      const octane = parts[10] || "95E10 Bleifrei 95"; // Default if missing
+      const octane = parts[10] || "95"; // Default if missing
 
       if (!isNaN(odo) && date) {
         fuelRecords.push({
@@ -71,7 +71,7 @@ export function parseRoadTripCsv(content: string): RoadTripFuelEntry[] {
           cost,
           latitude,
           longitude,
-          fuelType: octane.includes("98") ? "98E5 Super Plus" : "95E10 Bleifrei 95",
+          fuelType: octane.includes("98") ? "98E5" : "95E10",
           externalId,
           currency,
           currencyRate,
