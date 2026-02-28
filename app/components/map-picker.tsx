@@ -85,14 +85,11 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
       });
     }
 
-    if (isOpen) {
-      // Small delay to ensure the DOM is fully painted inside the modal
-      const initTimer = setTimeout(initMap, 50);
-      return () => clearTimeout(initTimer);
-    }
+    const initTimer = isOpen ? setTimeout(initMap, 50) : null;
 
     return () => {
       isMounted = false;
+      if (initTimer) clearTimeout(initTimer);
       clearTimeout(timer);
       if (leafletMap.current) {
         leafletMap.current.remove();
