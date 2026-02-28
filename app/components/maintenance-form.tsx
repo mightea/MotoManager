@@ -13,8 +13,10 @@ import {
     CircleDashed,
     ClipboardList,
     MapPin,
-    Fuel
+    Fuel,
+    Map
 } from "lucide-react";
+import { MapPicker } from "./map-picker";
 
 interface MaintenanceFormProps {
     motorcycleId: number;
@@ -22,6 +24,7 @@ interface MaintenanceFormProps {
     currencyCode?: string | null;
     defaultOdo?: number | null;
     userLocations?: Location[];
+    locationNames?: string[];
     currencies?: CurrencySetting[];
     onSubmit: () => void;
     onCancel: () => void;
@@ -45,12 +48,13 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
 
 
 
-export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, currencies = [], onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
+export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, locationNames = [], currencies = [], onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
     const [isNewLocation, setIsNewLocation] = useState(false);
     const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
     const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
     const [isLocating, setIsLocating] = useState(false);
+    const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
 
     const [fuelAmount, setFuelAmount] = useState<string>(initialData?.fuelAmount?.toString() || "");
     const [pricePerUnit, setPricePerUnit] = useState<string>(initialData?.pricePerUnit?.toString() || "");
@@ -98,12 +102,18 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
         );
     };
 
+    const handleMapSelect = (newLat: number, newLng: number) => {
+        setLat(newLat);
+        setLng(newLng);
+    };
+
     // Fallback if no currencies provided
 
 
     const today = new Date().toISOString().split('T')[0];
 
     return (
+        <>
         <Form method="post" className="space-y-6" onSubmit={onSubmit}>
             <input type="hidden" name="intent" value={initialData ? "updateMaintenance" : "createMaintenance"} />
             {initialData && <input type="hidden" name="maintenanceId" value={initialData.id} />}
@@ -471,26 +481,42 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                                 type="text"
                                 name="locationName"
                                 id="locationName"
+                                list="location-names"
                                 placeholder="z.B. Shell Zürich"
                                 defaultValue={initialData?.locationName || ""}
                                 className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
+                            <datalist id="location-names">
+                                {locationNames.map(name => (
+                                    <option key={name} value={name} />
+                                ))}
+                            </datalist>
                         </div>
                         <div className="space-y-1.5 sm:col-span-2">
                             <span className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Koordinaten</span>
-                            <div className="flex gap-2">
-                                <div className="flex-1 rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm text-secondary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-400">
+                            <div className="flex flex-wrap gap-2">
+                                <div className="flex-1 min-w-[200px] rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm text-secondary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-400">
                                     {lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : "Kein Standort erfasst"}
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={handleGetLocation}
-                                    disabled={isLocating}
-                                    className="flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-secondary-dark disabled:opacity-50"
-                                >
-                                    <MapPin className="h-4 w-4" />
-                                    {isLocating ? "Ortet..." : "Ort abrufen"}
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleGetLocation}
+                                        disabled={isLocating}
+                                        className="flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-secondary-dark disabled:opacity-50"
+                                    >
+                                        <MapPin className="h-4 w-4" />
+                                        {isLocating ? "Ortet..." : "Ort abrufen"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsMapPickerOpen(true)}
+                                        className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-primary-dark"
+                                    >
+                                        <Map className="h-4 w-4" />
+                                        Auf Karte wählen
+                                    </button>
+                                </div>
                             </div>
                             <input type="hidden" name="latitude" value={lat || ""} />
                             <input type="hidden" name="longitude" value={lng || ""} />
@@ -528,5 +554,14 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                 </div>
             </div>
         </Form>
+
+        <MapPicker
+            isOpen={isMapPickerOpen}
+            onClose={() => setIsMapPickerOpen(false)}
+            onSelect={handleMapSelect}
+            initialLat={lat}
+            initialLng={lng}
+        />
+    </>
     );
 }
