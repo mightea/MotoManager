@@ -15,9 +15,13 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
-  const [currentPos, setCurrentPos] = useState<{ lat: number; lng: number } | null>(
-    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
-  );
+  const [currentPos, setCurrentPos] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentPos(initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null);
+    }
+  }, [isOpen, initialLat, initialLng]);
 
   useEffect(() => {
     let isMounted = true;
@@ -57,6 +61,13 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
       if (initialLat && initialLng) {
         markerRef.current = Leaflet.marker([initialLat, initialLng]).addTo(leafletMap.current);
       }
+
+      // Small delay to let modal transition finish, then invalidate size
+      setTimeout(() => {
+        if (leafletMap.current) {
+          leafletMap.current.invalidateSize();
+        }
+      }, 100);
 
       leafletMap.current.on("click", (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;

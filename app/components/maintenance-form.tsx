@@ -17,6 +17,7 @@ import {
     Map
 } from "lucide-react";
 import { MapPicker } from "./map-picker";
+import { MapView } from "./map-view";
 
 interface MaintenanceFormProps {
     motorcycleId: number;
@@ -521,6 +522,16 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                             <input type="hidden" name="latitude" value={lat || ""} />
                             <input type="hidden" name="longitude" value={lng || ""} />
                         </div>
+
+                        {lat && lng && (
+                            <div className="sm:col-span-2">
+                                <MapView 
+                                    latitude={lat} 
+                                    longitude={lng} 
+                                    title="Vorschau Standort" 
+                                />
+                            </div>
+                        )}
                     </>
                 )}
             </div>
