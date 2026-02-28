@@ -162,12 +162,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
      ? (motorcycle.fuelTankSize / avgFuelConsumption) * 100
      : null;
 
-   const allKnownLocationNames = Array.from(new Set([
-     ...userLocations.map(l => l.name),
-     ...maintenanceHistory
+   const fuelStationNames = Array.from(new Set(
+     maintenanceHistory
        .filter(r => r.type === "fuel" && r.locationName)
        .map(r => r.locationName as string)
-   ])).sort();
+   )).sort();
   
      const dateFormatter = new Intl.DateTimeFormat("de-CH", {
        dateStyle: "medium",
@@ -196,7 +195,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       avgFuelConsumption,
       avgTripDistance,
       estimatedRange,
-      allKnownLocationNames,
+      fuelStationNames,
       formattedPurchaseDate: purchaseDate ? dateFormatter.format(purchaseDate) : null,
       formattedFirstRegistration: firstRegistrationDate ? dateFormatter.format(firstRegistrationDate) : null,
       hasPurchaseDate: !!purchaseDate
@@ -633,7 +632,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     avgFuelConsumption,
     avgTripDistance,
     estimatedRange,
-    allKnownLocationNames,
+    fuelStationNames,
     formattedPurchaseDate,
     formattedFirstRegistration,
     hasPurchaseDate
@@ -819,7 +818,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setDeleteMaintenanceConfirmationOpen(true);
         }}
         userLocations={userLocations}
-        locationNames={allKnownLocationNames}
+        locationNames={fuelStationNames}
         currencies={currencies}
       />
 
