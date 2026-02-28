@@ -50,7 +50,7 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
 
 
 export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, locationNames = [], currencies = [], onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
-    const [type, setType] = useState<MaintenanceType>(initialData?.type || "service");
+    const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
     const [isNewLocation, setIsNewLocation] = useState(false);
     const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
     const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
