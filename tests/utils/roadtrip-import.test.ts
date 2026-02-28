@@ -32,7 +32,7 @@ Description,Date,Odometer (km),Cost,Note,Location,Type,Subtype,Payment,Categorie
         cost: 17.26,
         latitude: 47.041214,
         longitude: 9.432396,
-        fuelType: "95E10 Bleifrei 95",
+        fuelType: "95E10",
         externalId: "2",
         currency: null,
         currencyRate: 1,
@@ -82,7 +82,7 @@ Odometer (km),Trip Distance,Date,Fill Amount,Fill Units,Price per Unit,Total Pri
 1000,,"2020-01-01 12:00",10,L,1.5,15,,,,98,,,,,,,,1,47,8,1,,,,,0`;
       
       const result = parseRoadTripCsv(csvContent);
-      expect(result[0].fuelType).toBe("98E5 Super Plus");
+      expect(result[0].fuelType).toBe("98E5");
     });
 
     it("should return an empty array if no FUEL RECORDS section is found", () => {
@@ -102,7 +102,7 @@ Odometer (km),Trip Distance,Date,Fill Amount,Fill Units,Price per Unit,Total Pri
       cost: 27.9,
       latitude: null,
       longitude: null,
-      fuelType: "95E10 Bleifrei 95",
+      fuelType: "95E10",
       externalId: "1",
       currency: null,
       currencyRate: null,

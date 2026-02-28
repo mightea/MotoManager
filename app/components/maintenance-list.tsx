@@ -31,6 +31,7 @@ import {
   fluidTypeLabels, 
   tirePositionLabels, 
   batteryTypeLabels,
+  fuelTypeLabels,
   summarizeMaintenanceRecord 
 } from "~/utils/maintenance";
 import { MapView } from "./map-view";
@@ -310,13 +311,12 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                               ...(record.type === "inspection" ? [
                                 { label: "Prüfstelle", value: record.inspectionLocation, icon: MapPin },
                               ] : []),
-                              ...(record.type === "location" ? [
-                                { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name, icon: MapPin },
-                              ] : []),
-                              ...(record.type === "fuel" ? [
-                                { label: "Kraftstoffart", value: record.fuelType, icon: Droplet },
-                                { label: "Menge", value: record.fuelAmount ? `${record.fuelAmount} L` : null, icon: Maximize2 },
-                                { label: "Verbrauch", value: record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null, icon: Activity },
+                                                    ...(record.type === "location" ? [
+                                                      { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name, icon: MapPin },
+                                                    ] : []),
+                                                    ...(record.type === "fuel" ? [
+                                                      { label: "Kraftstoffart", value: record.fuelType ? fuelTypeLabels[record.fuelType] || record.fuelType : null, icon: Droplet },
+                                                      { label: "Menge", value: record.fuelAmount ? `${record.fuelAmount} L` : null, icon: Maximize2 },                                { label: "Verbrauch", value: record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null, icon: Activity },
                                 { label: "Trip", value: record.tripDistance ? `${record.tripDistance} km` : null, icon: Hash },
                                 { label: "Preis/Liter", value: record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null, icon: Coins },
                                 { label: "Tankstelle", value: record.locationName, icon: MapPin },
