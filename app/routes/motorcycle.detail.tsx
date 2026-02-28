@@ -576,6 +576,18 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "importFuelData") {
     const motorcycleId = Number(formData.get("motorcycleId"));
+
+    if (!Number.isFinite(motorcycleId)) {
+      throw new Response("Ungültige Eingabe für Motorrad", { status: 400 });
+    }
+
+    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
+      where: eq(motorcycles.id, motorcycleId),
+    });
+
+    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
+      throw new Response("Motorrad nicht gefunden.", { status: 404 });
+    }
     const recordsJson = formData.get("records") as string;
     const records = JSON.parse(recordsJson) as any[];
 
