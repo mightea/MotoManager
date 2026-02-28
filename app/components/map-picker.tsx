@@ -1,19 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import { Modal } from "./modal";
 import { Check, MapPin } from "lucide-react";
-
-// Fix for default marker icons in Leaflet with Vite
-const fixLeafletIcons = () => {
-  // @ts-ignore
-  delete L.Icon.Default.prototype._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  });
-};
+import type L from "leaflet";
 
 interface MapPickerProps {
   isOpen: boolean;
@@ -32,21 +20,42 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
   );
 
   useEffect(() => {
-    if (isOpen && mapRef.current && !leafletMap.current) {
-      fixLeafletIcons();
-      
+    let isMounted = true;
+
+    async function initMap() {
+      if (!isOpen || !mapRef.current || leafletMap.current) return;
+
+      // Dynamically import Leaflet only on the client
+      const Leaflet = (await import("leaflet")).default;
+      try {
+        await import("leaflet/dist/leaflet.css");
+      } catch {
+        // CSS import might fail in some SSR environments, but we only need it on client
+      }
+
+      if (!isMounted || !mapRef.current) return;
+
+      // Fix for default marker icons in Leaflet with Vite
+      // @ts-ignore
+      delete Leaflet.Icon.Default.prototype._getIconUrl;
+      Leaflet.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
+
       const startLat = initialLat || 47.3769; // Zurich default
       const startLng = initialLng || 8.5417;
       const startZoom = initialLat && initialLng ? 16 : 13;
 
-      leafletMap.current = L.map(mapRef.current).setView([startLat, startLng], startZoom);
+      leafletMap.current = Leaflet.map(mapRef.current).setView([startLat, startLng], startZoom);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(leafletMap.current);
 
       if (initialLat && initialLng) {
-        markerRef.current = L.marker([initialLat, initialLng]).addTo(leafletMap.current);
+        markerRef.current = Leaflet.marker([initialLat, initialLng]).addTo(leafletMap.current);
       }
 
       leafletMap.current.on("click", (e: L.LeafletMouseEvent) => {
@@ -56,12 +65,15 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
         if (markerRef.current) {
           markerRef.current.setLatLng(e.latlng);
         } else if (leafletMap.current) {
-          markerRef.current = L.marker(e.latlng).addTo(leafletMap.current);
+          markerRef.current = Leaflet.marker(e.latlng).addTo(leafletMap.current);
         }
       });
     }
 
+    initMap();
+
     return () => {
+      isMounted = false;
       if (leafletMap.current) {
         leafletMap.current.remove();
         leafletMap.current = null;
