@@ -17,6 +17,7 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
   const markerRef = useRef<L.Marker | null>(null);
   const [currentPos, setCurrentPos] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Sync currentPos when modal opens or initial values change
   useEffect(() => {
     if (isOpen) {
       setCurrentPos(initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null);
@@ -25,17 +26,19 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
 
   useEffect(() => {
     let isMounted = true;
+    let timer: NodeJS.Timeout;
 
     async function initMap() {
-      if (!isOpen || !mapRef.current || leafletMap.current) return;
+      if (!isOpen || !mapRef.current) return;
+
+      // Ensure cleanup of previous instance if it exists
+      if (leafletMap.current) {
+        leafletMap.current.remove();
+        leafletMap.current = null;
+      }
 
       // Dynamically import Leaflet only on the client
       const Leaflet = (await import("leaflet")).default;
-      try {
-        await import("leaflet/dist/leaflet.css");
-      } catch {
-        // CSS import might fail in some SSR environments, but we only need it on client
-      }
 
       if (!isMounted || !mapRef.current) return;
 
@@ -52,39 +55,45 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
       const startLng = initialLng || 8.5417;
       const startZoom = initialLat && initialLng ? 16 : 13;
 
-      leafletMap.current = Leaflet.map(mapRef.current).setView([startLat, startLng], startZoom);
+      const map = Leaflet.map(mapRef.current).setView([startLat, startLng], startZoom);
+      leafletMap.current = map;
 
       Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(leafletMap.current);
+      }).addTo(map);
 
       if (initialLat && initialLng) {
-        markerRef.current = Leaflet.marker([initialLat, initialLng]).addTo(leafletMap.current);
+        markerRef.current = Leaflet.marker([initialLat, initialLng]).addTo(map);
       }
 
-      // Small delay to let modal transition finish, then invalidate size
-      setTimeout(() => {
-        if (leafletMap.current) {
-          leafletMap.current.invalidateSize();
+      // Use a slightly longer delay and repeat invalidateSize to handle modal transitions
+      timer = setTimeout(() => {
+        if (map) {
+          map.invalidateSize();
         }
-      }, 100);
+      }, 250);
 
-      leafletMap.current.on("click", (e: L.LeafletMouseEvent) => {
+      map.on("click", (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         setCurrentPos({ lat, lng });
 
         if (markerRef.current) {
           markerRef.current.setLatLng(e.latlng);
-        } else if (leafletMap.current) {
-          markerRef.current = Leaflet.marker(e.latlng).addTo(leafletMap.current);
+        } else {
+          markerRef.current = Leaflet.marker(e.latlng).addTo(map);
         }
       });
     }
 
-    initMap();
+    if (isOpen) {
+      // Small delay to ensure the DOM is fully painted inside the modal
+      const initTimer = setTimeout(initMap, 50);
+      return () => clearTimeout(initTimer);
+    }
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
       if (leafletMap.current) {
         leafletMap.current.remove();
         leafletMap.current = null;
@@ -110,8 +119,8 @@ export function MapPicker({ isOpen, onClose, onSelect, initialLat, initialLng }:
       <div className="space-y-4">
         <div 
           ref={mapRef} 
-          className="h-96 w-full rounded-xl border border-gray-200 shadow-inner dark:border-navy-600"
-          style={{ zIndex: 1 }}
+          className="h-96 w-full rounded-xl border border-gray-200 shadow-inner dark:border-navy-600 relative overflow-hidden"
+          style={{ minHeight: '384px' }}
         ></div>
         
         <div className="flex items-center justify-between">

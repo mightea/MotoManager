@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/forms";
+@import "leaflet/dist/leaflet.css";
 
 @variant dark (&:where(.dark, .dark *));
 
