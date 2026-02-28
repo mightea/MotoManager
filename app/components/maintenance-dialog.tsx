@@ -10,11 +10,12 @@ interface MaintenanceDialogProps {
   currencyCode?: string | null;
   defaultOdo?: number | null;
   userLocations?: Location[];
+  locationNames?: string[];
   currencies?: CurrencySetting[];
   onDelete?: () => void;
 }
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo, userLocations, currencies, onDelete }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo, userLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
   return (
     <Modal
       isOpen={isOpen}
@@ -28,6 +29,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         currencyCode={currencyCode}
         defaultOdo={defaultOdo}
         userLocations={userLocations}
+        locationNames={locationNames}
         currencies={currencies}
         onSubmit={onClose}
         onCancel={onClose}
