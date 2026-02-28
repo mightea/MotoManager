@@ -35,28 +35,35 @@ export async function recalculateFuelConsumption(
     orderBy: [asc(maintenanceRecords.date), asc(maintenanceRecords.odo)],
   });
 
-  for (let i = 0; i < fuelRecords.length; i++) {
-    const current = fuelRecords[i];
-    const previous = i > 0 ? fuelRecords[i - 1] : null;
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < fuelRecords.length; i++) {
+      const current = fuelRecords[i];
+      const previous = i > 0 ? fuelRecords[i - 1] : null;
 
-    let tripDistance = null;
-    let fuelConsumption = null;
+      let tripDistance = null;
+      let fuelConsumption = null;
 
-    if (previous) {
-      tripDistance = current.odo - previous.odo;
-      if (tripDistance > 0 && current.fuelAmount) {
-        fuelConsumption = (current.fuelAmount / tripDistance) * 100;
+      if (previous) {
+        tripDistance = current.odo - previous.odo;
+        if (tripDistance > 0 && current.fuelAmount) {
+          fuelConsumption = (current.fuelAmount / tripDistance) * 100;
+        }
+      }
+
+      if (
+        current.tripDistance !== tripDistance ||
+        current.fuelConsumption !== fuelConsumption
+      ) {
+        await tx
+          .update(maintenanceRecords)
+          .set({
+            tripDistance,
+            fuelConsumption,
+          })
+          .where(eq(maintenanceRecords.id, current.id));
       }
     }
-
-    await db
-      .update(maintenanceRecords)
-      .set({
-        tripDistance,
-        fuelConsumption,
-      })
-      .where(eq(maintenanceRecords.id, current.id));
-  }
+  });
 }
 
 export async function createMotorcycle(
