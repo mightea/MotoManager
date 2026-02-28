@@ -328,7 +328,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                           record.currency && currencyCode && record.currency !== currencyCode ? (
                             <span className="flex flex-col items-end">
                               <span>{formatCurrency(record.cost, record.currency)}</span>
-                              <span className="text-[10px] text-secondary/70">({formatCurrency(record.normalizedCost || 0, currencyCode)})</span>
+                              {record.normalizedCost !== null && (
+                                <span className="text-[10px] text-secondary/70">({formatCurrency(record.normalizedCost, currencyCode)})</span>
+                              )}
                             </span>
                           ) : formatCurrency(record.cost, record.currency || currencyCode || "CHF")
                         ) : null, 
