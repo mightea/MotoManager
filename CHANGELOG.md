@@ -1,5 +1,38 @@
 # Changelog
 
+## [2026.2.10](https://github.com/mightea/MotoManager/compare/2026.2.9...2026.2.10) (2026-02-28)
+
+### Features
+
+* add filtering to maintenance list ([948cdc7](https://github.com/mightea/MotoManager/commit/948cdc79975a07ef845e2387cc040a827c82c5e6))
+* add fuel recording to maintenance history with map integration ([e73c846](https://github.com/mightea/MotoManager/commit/e73c846164a0eb665bb0fc1936703b232800f486))
+* add fuel tank size and estimated range calculation ([490e421](https://github.com/mightea/MotoManager/commit/490e421221ef9da7db41afb2ef1f5c869274a79d))
+* add interactive map picker and location autocomplete for fuel entries ([850aa82](https://github.com/mightea/MotoManager/commit/850aa82349fce881b327a83e515b2c069a8838cc))
+* add RoadTrip fuel data import ([fb16a80](https://github.com/mightea/MotoManager/commit/fb16a80dfaa9e45fa7aefbd6fc1c6ea2590e9628))
+* automatic fuel consumption and trip calculations ([ff52244](https://github.com/mightea/MotoManager/commit/ff522440a19685873685761fb248721249b375be))
+* display dual currencies for international maintenance items ([3d9b49a](https://github.com/mightea/MotoManager/commit/3d9b49ac4113aea88ac202aa9338df8bdd56e76c))
+* enhance RoadTrip import with currency and location support ([d44e4b4](https://github.com/mightea/MotoManager/commit/d44e4b47b7f89996cd54b98f3c056f58d26d01bb))
+* improve fuel entry descriptions and auto-populate metadata ([945ed5e](https://github.com/mightea/MotoManager/commit/945ed5e09356bb7f2029edc334e43fbd550d49b3))
+* set fuel as default type in maintenance form ([bd0eda4](https://github.com/mightea/MotoManager/commit/bd0eda44b6203970f6612681a5a0bcb23be5a285))
+* use short identifiers for fuel types and display verbose labels ([74b695f](https://github.com/mightea/MotoManager/commit/74b695fde2a68410af6014a313ff906fe51a73a5))
+
+### Bug Fixes
+
+* correctly format currency in RoadTrip import preview ([e5aacb8](https://github.com/mightea/MotoManager/commit/e5aacb8de1a73965c042c85ea78ffd3b12028671))
+* ensure Leaflet map is removed in MapPicker cleanup ([690b733](https://github.com/mightea/MotoManager/commit/690b733c0272774ee0054e21df2f313e45d980b3))
+* ensure map visibility in edit dialog and improve picker robustness ([fd38624](https://github.com/mightea/MotoManager/commit/fd3862451408fa8e0bc85963b48f3549b1a8d257))
+* improve RoadTrip CSV date parsing ([e0f13bc](https://github.com/mightea/MotoManager/commit/e0f13bc9ff40bc7c1cca4a2c3187d88a002db045))
+* make MapPicker SSR-safe by using dynamic imports for Leaflet ([4548773](https://github.com/mightea/MotoManager/commit/45487737d9fef2ee9721c420adca992841867a28))
+* only show normalized cost in maintenance list when available ([ee5b349](https://github.com/mightea/MotoManager/commit/ee5b3496d325e1d036e401120634dfc291dd0cc0))
+* prevent recalculateFuelConsumption from modifying descriptions ([a1d13fb](https://github.com/mightea/MotoManager/commit/a1d13fb5403e76212b21294cf8173c1e32682d5a))
+* resolve empty map rendering in MapPicker modal ([79946d8](https://github.com/mightea/MotoManager/commit/79946d8814b80a874e96024206b3c1ca84f9ecdc))
+* resolve hydration crash and fix mangled action logic ([36ce815](https://github.com/mightea/MotoManager/commit/36ce8150a566d8730b36fc174cee7e6b119045f6))
+* restrict location autocomplete to fuel entries only ([128af5d](https://github.com/mightea/MotoManager/commit/128af5d7c36e0a551e6af12b3a70c5e6eb3546e9))
+
+### Performance Improvements
+
+* optimize fuel consumption recalculation with transaction and change check ([a9e166f](https://github.com/mightea/MotoManager/commit/a9e166fbdc801f4012843703237dfb1354aac09f))
+
 ## [2026.2.9](https://github.com/mightea/MotoManager/compare/2026.2.8...2026.2.9) (2026-02-26)
 
 ### Features
