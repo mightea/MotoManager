@@ -172,7 +172,7 @@ export function ImportRoadTripDialog({
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
                         <div className="text-foreground dark:text-white font-semibold">
-                          {formatCurrency(entry.cost)}
+                          {formatCurrency(entry.cost, entry.currency ?? "CHF")}
                         </div>
                         <div className="text-[10px] text-secondary dark:text-navy-500">
                           {entry.pricePerUnit.toFixed(3)} / L
