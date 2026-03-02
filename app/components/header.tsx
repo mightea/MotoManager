@@ -19,25 +19,6 @@ export function Header({ user }: { user: User | null }) {
     { label: "Statistiken", href: "/fleet-stats" },
   ];
 
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    setIsOffline(!window.navigator.onLine);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
-
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   // Close dropdown when clicking outside
@@ -137,11 +118,6 @@ export function Header({ user }: { user: User | null }) {
                   <span className="text-[0.65rem] font-bold uppercase tracking-widest text-secondary dark:text-navy-400">
                     MotoManager
                   </span>
-                  {isOffline && (
-                    <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[0.5rem] font-extrabold uppercase tracking-tight text-white animate-pulse">
-                      Offline
-                    </span>
-                  )}
                 </div>
                 <span className="text-lg font-bold leading-none tracking-tight text-foreground dark:text-white">
                   Garagenverwaltung

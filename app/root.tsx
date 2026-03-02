@@ -22,30 +22,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data({ theme });
 }
 
-function AppContent({ children }: { children: React.ReactNode }) {
-  const { theme } = useTheme();
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-      const registerServiceWorker = () => {
-        navigator.serviceWorker.register("/sw.js").catch((error) => {
-          console.error("Service Worker registration failed:", error);
-        });
-      };
-
-      if (document.readyState === "complete") {
-        registerServiceWorker();
-      } else {
-        window.addEventListener("load", registerServiceWorker);
-        return () => {
-          window.removeEventListener("load", registerServiceWorker);
-        };
-      }
-    }
-  }, []);
-
+export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={clsx(theme)}>
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -58,7 +37,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans antialiased text-foreground dark:bg-navy-950 dark:text-gray-50">
-        <LoadingIndicator />
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -67,33 +45,29 @@ function AppContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  // We need to access the loader data here, but Layout doesn't receive it directly as props in React Router 7 same way.
-  // However, we can use useLoaderData() inside a component.
-  // But Layout wraps everything.
-  // The issue is that `Layout` is used by `root.tsx`'s default export which is `App`.
-  // Wait, in RR7, root.tsx exports Layout.
-  
-  // We can't use useLoaderData inside Layout if it's the root layout wrapper for the whole document structure
-  // unless we move the html/body inside a component that is a child of ThemeProvider.
-  // But ThemeProvider needs to wrap the content.
+export default function App() {
+  const { theme } = useLoaderData<typeof loader>();
   
   return (
-      <AppWrapper>{children}</AppWrapper>
-  );
-}
-
-function AppWrapper({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<typeof loader>();
-  return (
-    <ThemeProvider specifiedTheme={data?.theme ?? null}>
-      <AppContent>{children}</AppContent>
+    <ThemeProvider specifiedTheme={theme}>
+      <AppWithTheme>
+        <LoadingIndicator />
+        <Outlet />
+      </AppWithTheme>
     </ThemeProvider>
   );
 }
 
-export default function App() {
-  return <Outlet />;
+function AppWithTheme({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.className = clsx(theme);
+    }
+  }, [theme]);
+
+  return <>{children}</>;
 }
 
 export function ErrorBoundary({ error }: { error: unknown }) {
