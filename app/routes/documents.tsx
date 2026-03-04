@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import type { Route } from "./+types/documents";
 import { getDb } from "~/db";
 import { documents, users, motorcycles, documentMotorcycles } from "~/db/schema";
-import { eq, or, desc, inArray, getTableColumns } from "drizzle-orm";
+import { eq, or, and, desc, inArray, getTableColumns } from "drizzle-orm";
 import { requireUser } from "~/services/auth.server";
 import { FileText, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -112,58 +112,96 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "update") {
     const id = Number(formData.get("id"));
-    const title = String(formData.get("title"));
-    const isPrivate = formData.get("isPrivate") === "true";
     const motorcycleIds = formData.getAll("motorcycleIds").map(Number);
-    const file = formData.get("file") as File | null;
 
     const db = await getDb();
 
-    // Verify ownership
+    // Verify ownership or public status
     const [doc] = await db
       .select()
       .from(documents)
       .where(eq(documents.id, id))
       .limit(1);
 
-    if (!doc || doc.ownerId !== user.id) {
+    if (!doc) {
+      throw new Response("Not Found", { status: 404 });
+    }
+
+    const isOwner = doc.ownerId === user.id;
+    const isPublic = !doc.isPrivate;
+
+    if (!isOwner && !isPublic) {
       throw new Response("Unauthorized", { status: 403 });
     }
 
-    // Handle File Replacement
-    let newPaths = {};
-    if (file && file.size > 0) {
-      if (!getFileCategory(file)) {
-        return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
-      }
-
-      // Delete old files
-      await deleteDocumentFiles(doc.filePath, doc.previewPath);
-
-      newPaths = await saveDocumentFile(file);
-    }
-
     await db.transaction(async (tx) => {
-      await tx
-        .update(documents)
-        .set({
-          title,
-          isPrivate,
-          updatedAt: new Date().toISOString(),
-          ...newPaths
-        })
-        .where(eq(documents.id, id));
+      if (isOwner) {
+        const title = String(formData.get("title"));
+        const isPrivate = formData.get("isPrivate") === "true";
+        const file = formData.get("file") as File | null;
 
-      // Update assignments
-      await tx.delete(documentMotorcycles).where(eq(documentMotorcycles.documentId, id));
+        // Handle File Replacement
+        let newPaths = {};
+        if (file && file.size > 0) {
+          if (!getFileCategory(file)) {
+            return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
+          }
 
-      if (motorcycleIds.length > 0) {
-        await tx.insert(documentMotorcycles).values(
-          motorcycleIds.map(mid => ({
-            documentId: id,
-            motorcycleId: mid
-          }))
-        );
+          // Delete old files
+          await deleteDocumentFiles(doc.filePath, doc.previewPath);
+          newPaths = await saveDocumentFile(file);
+        }
+
+        await tx
+          .update(documents)
+          .set({
+            title,
+            isPrivate,
+            updatedAt: new Date().toISOString(),
+            ...newPaths
+          })
+          .where(eq(documents.id, id));
+
+        // Owner can manage ALL assignments
+        await tx.delete(documentMotorcycles).where(eq(documentMotorcycles.documentId, id));
+
+        if (motorcycleIds.length > 0) {
+          await tx.insert(documentMotorcycles).values(
+            motorcycleIds.map(mid => ({
+              documentId: id,
+              motorcycleId: mid
+            }))
+          );
+        }
+      } else {
+        // Non-owner, but doc is public.
+        // Can only manage assignments for OWN motorcycles.
+        const myMotorcycles = await tx
+          .select({ id: motorcycles.id })
+          .from(motorcycles)
+          .where(eq(motorcycles.userId, user.id));
+        const myMotoIds = myMotorcycles.map(m => m.id);
+
+        if (myMotoIds.length > 0) {
+          // 1. Remove existing assignments for this document belonging to MY motorcycles
+          await tx.delete(documentMotorcycles).where(
+            and(
+              eq(documentMotorcycles.documentId, id),
+              inArray(documentMotorcycles.motorcycleId, myMotoIds)
+            )
+          );
+
+          // 2. Add new assignments for MY motorcycles (filter input to only include mine)
+          const myNewAssignments = motorcycleIds.filter(mid => myMotoIds.includes(mid));
+          if (myNewAssignments.length > 0) {
+            await tx.insert(documentMotorcycles).values(
+              myNewAssignments.map(mid => ({
+                documentId: id,
+                motorcycleId: mid
+              }))
+            );
+          }
+        }
       }
     });
 
@@ -336,6 +374,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
           key={editingDocument ? editingDocument.id : "new"}
           document={editingDocument}
           motorcycles={allMotorcycles}
+          currentUserId={user.id}
           assignedMotorcycleIds={getAssignedMotorcycleIds(editingDocument?.id)}
           onSubmit={() => {
             if (!editingDocument) setIsEditorOpen(false); // Close on cancel for create

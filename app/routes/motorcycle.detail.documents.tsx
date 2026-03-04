@@ -330,6 +330,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
             key={editingDocument.id}
             document={editingDocument}
             motorcycles={allMotorcycles}
+            currentUserId={userId}
             assignedMotorcycleIds={assignedIdsForEditing}
             onSubmit={() => {
               setIsEditorOpen(false);
