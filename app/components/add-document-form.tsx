@@ -8,13 +8,14 @@ import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 
 interface AddDocumentFormProps {
-  document?: Pick<Document, "id" | "title" | "isPrivate" | "previewPath" | "filePath">;
+  document?: Pick<Document, "id" | "title" | "isPrivate" | "previewPath" | "filePath" | "ownerId">;
   motorcycles: (Motorcycle & { ownerName: string | null })[];
   assignedMotorcycleIds?: number[];
   onSubmit: () => void;
   onDelete?: () => void;
   onSubmitFormData?: (formData: FormData, options: SubmitOptions) => void;
   isSubmittingOverride?: boolean;
+  currentUserId: number;
 }
 
 export function AddDocumentForm({
@@ -25,6 +26,7 @@ export function AddDocumentForm({
   onDelete,
   onSubmitFormData,
   isSubmittingOverride,
+  currentUserId,
 }: AddDocumentFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -39,6 +41,14 @@ export function AddDocumentForm({
   const stripExtension = (name: string) => name.replace(/\.[^/.]+$/, "");
 
   const isEditMode = !!document;
+  const isOwner = !document || document.ownerId === currentUserId;
+
+  // Filter motorcycles: 
+  // If owner: show all (to allow assigning to others)
+  // If not owner: show only mine (to allow assigning to myself)
+  const visibleMotorcycles = isOwner 
+    ? motorcycles 
+    : motorcycles.filter(m => m.userId === currentUserId);
 
   const onDrop = (acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0];
@@ -123,9 +133,9 @@ export function AddDocumentForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       
       {/* File Upload / Preview Section */}
-      <div>
+      <div className={clsx(!isOwner && "opacity-60 grayscale-[50%] pointer-events-none")}>
         <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Datei
+          Datei {!isOwner && "(Nur Besitzer)"}
         </span>
 
         {/* Existing Document Preview (if in edit mode and no new file selected) */}
@@ -221,12 +231,12 @@ export function AddDocumentForm({
         )}
       </div>
 
-      <div>
+      <div className={clsx(!isOwner && "opacity-60 pointer-events-none")}>
         <label
           htmlFor="title"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Titel
+          Titel {!isOwner && "(Nur Besitzer)"}
         </label>
         <div className="mt-1">
           <input
@@ -235,22 +245,23 @@ export function AddDocumentForm({
             id="title"
             defaultValue={document?.title ?? (file ? stripExtension(file.name) : "")}
             required
+            readOnly={!isOwner}
             placeholder="Dokumenten Titel"
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white sm:text-sm"
           />
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className={clsx("flex items-center justify-between", !isOwner && "opacity-60 pointer-events-none")}>
         <label
           htmlFor="isPrivate"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Privat (nur für mich sichtbar)
+          Privat (nur für mich sichtbar) {!isOwner && "(Nur Besitzer)"}
         </label>
         <Switch
             checked={isPrivate}
-            onChange={setIsPrivate}
+            onChange={isOwner ? setIsPrivate : undefined}
             className={clsx(
                 isPrivate ? 'bg-primary' : 'bg-gray-200 dark:bg-navy-700',
                 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
@@ -269,13 +280,13 @@ export function AddDocumentForm({
 
       <div>
         <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Zugeordnete Fahrzeuge
+          {isOwner ? "Zugeordnete Fahrzeuge" : "Meinen Fahrzeugen zuordnen"}
         </span>
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-          {motorcycles.length === 0 ? (
+          {visibleMotorcycles.length === 0 ? (
             <p className="text-xs text-secondary dark:text-navy-400">Keine Fahrzeuge verfügbar.</p>
           ) : (
-            motorcycles.map((moto) => (
+            visibleMotorcycles.map((moto) => (
               <div key={moto.id} className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -322,7 +333,7 @@ export function AddDocumentForm({
             disabled={isSubmitting || (!isEditMode && !file)}
             className="w-full sm:w-auto"
         >
-            {isSubmitting ? "Speichern..." : (isEditMode ? "Speichern" : "Hochladen")}
+            {isSubmitting ? "Speichern..." : (isEditMode ? (isOwner ? "Speichern" : "Zuordnungen speichern") : "Hochladen")}
         </Button>
       </div>
     </form>

@@ -125,7 +125,7 @@ export function DocumentCard({
           )}
         </div>
 
-        {isOwner && (
+        {(isOwner || !document.isPrivate) && (
           <div className="mt-auto pt-3">
             <button
               type="button"
@@ -133,7 +133,7 @@ export function DocumentCard({
               className="inline-flex w-full items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
             >
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
-              Bearbeiten
+              {isOwner ? "Bearbeiten" : "Zuordnen"}
             </button>
           </div>
         )}
