@@ -1,6 +1,7 @@
 import type {
   CurrentLocation,
   Issue,
+  Location,
   MaintenanceRecord,
   Motorcycle,
   UserSettings,
@@ -22,6 +23,9 @@ export type MotorcycleDashboardItem = (Motorcycle & {
   image: string | null;
   hasOverdueMaintenance: boolean;
   overdueMaintenanceItems: string[];
+  currentLocationId: number | null;
+  currentLocationName: string | null;
+  currentLocationCountryCode: string | null;
 };
 
 export type DashboardStats = {
@@ -45,6 +49,7 @@ export type BuildDashboardItemsArgs = {
   issues: Issue[];
   maintenance: MaintenanceRecord[];
   locationHistory: CurrentLocation[];
+  locations: Location[];
   year: number;
   settings?: UserSettings | null;
 };
@@ -74,6 +79,7 @@ export function buildDashboardItems({
   issues,
   maintenance,
   locationHistory,
+  locations,
   year,
   settings,
 }: BuildDashboardItemsArgs): MotorcycleDashboardItem[] {
@@ -166,17 +172,28 @@ export function buildDashboardItems({
       .map((i) => i.label);
     const hasOverdueMaintenance = overdueMaintenanceItems.length > 0;
 
+    const currentLocationId = relatedMaintenance
+      .filter(r => r.type === "location")
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ?? null;
+
+    const location = locations.find(l => l.id === currentLocationId);
+    const currentLocationName = location?.name ?? null;
+    const currentLocationCountryCode = location?.countryCode ?? null;
+
     return {
       ...moto,
       lastInspection,
       numberOfIssues: openIssuesCount,
       odometer: maxOdometer,
-      odometerThisYear,
-      nextInspection,
-      lastActivity,
+      odometerThisYear: odometerThisYear,
+      nextInspection: nextInspection,
+      lastActivity: lastActivity,
       image: moto.image,
       hasOverdueMaintenance,
       overdueMaintenanceItems,
+      currentLocationId,
+      currentLocationName,
+      currentLocationCountryCode,
     };
   });
 }

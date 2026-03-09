@@ -32,6 +32,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance: [],
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -45,6 +46,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance: [],
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -92,6 +94,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance,
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -173,6 +176,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance,
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -223,6 +227,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance,
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -269,6 +274,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance,
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -345,6 +351,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance,
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -391,6 +398,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance,
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 
@@ -467,6 +475,7 @@ describe("buildDashboardData", () => {
       issues: [],
       maintenance,
       locationHistory: [],
+      locations: [],
       year: 2025,
     });
 

@@ -9,7 +9,7 @@ import {
   type NewMotorcycle,
 } from "~/db/schema";
 import { createMotorcycle } from "~/db/providers/motorcycles.server";
-import { getUserSettings } from "~/db/providers/settings.server";
+import { getUserSettings, getLocations } from "~/db/providers/settings.server";
 import { eq, inArray } from "drizzle-orm";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { userPrefs } from "~/services/preferences.server";
@@ -21,7 +21,8 @@ import {
   Clock,
   Tag,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  Map as MapIcon
 } from "lucide-react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
@@ -45,16 +46,17 @@ export async function loader({ request }: Route.LoaderArgs) {
   const { user, headers: authHeaders } = await requireUser(request);
   const db = await getDb();
 
-  const [motorcyclesList, settings] = await Promise.all([
+  const [motorcyclesList, settings, userLocations] = await Promise.all([
     db.query.motorcycles.findMany({
       where: eq(motorcycles.userId, user.id),
     }),
     getUserSettings(db, user.id),
+    getLocations(db, user.id),
   ]);
 
   const motoIds = motorcyclesList.map(m => m.id);
 
-  const [allIssues, allMaintenance, allLocations, currencies] = await Promise.all([
+  const [allIssues, allMaintenance, allLocationRecords, currencies] = await Promise.all([
     motoIds.length > 0
       ? db.query.issues.findMany({ where: inArray(issues.motorcycleId, motoIds) })
       : Promise.resolve([]),
@@ -71,7 +73,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     motorcycles: motorcyclesList,
     issues: allIssues,
     maintenance: allMaintenance,
-    locationHistory: allLocations,
+    locationHistory: allLocationRecords,
+    locations: userLocations,
     year: new Date().getFullYear(),
     settings,
   });
@@ -85,6 +88,28 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   cards.sort((a, b) => {
     switch (currentSort) {
+      case "location":
+        const codeA = a.currentLocationCountryCode || "ZZ";
+        const codeB = b.currentLocationCountryCode || "ZZ";
+        
+        // CH first
+        if (codeA === "CH" && codeB !== "CH") return -1;
+        if (codeA !== "CH" && codeB === "CH") return 1;
+        
+        // Then by country code
+        const codeCompare = codeA.localeCompare(codeB);
+        if (codeCompare !== 0) return codeCompare;
+
+        // Then by location name
+        const locA = a.currentLocationName || "Unknown";
+        const locB = b.currentLocationName || "Unknown";
+        const locCompare = locA.localeCompare(locB);
+        if (locCompare !== 0) return locCompare;
+        
+        // Then by age descending (newest first)
+        const ageA = a.firstRegistration ? new Date(a.firstRegistration).getTime() : (a.fabricationDate ? new Date(a.fabricationDate.split("/").reverse().join("-")).getTime() : Number.MAX_SAFE_INTEGER);
+        const ageB = b.firstRegistration ? new Date(b.firstRegistration).getTime() : (b.fabricationDate ? new Date(b.fabricationDate.split("/").reverse().join("-")).getTime() : Number.MAX_SAFE_INTEGER);
+        return ageB - ageA;
       case "age":
         const dateA = a.firstRegistration ? new Date(a.firstRegistration).getTime() : (a.fabricationDate ? new Date(a.fabricationDate.split("/").reverse().join("-")).getTime() : Number.MAX_SAFE_INTEGER);
         const dateB = b.firstRegistration ? new Date(b.firstRegistration).getTime() : (b.fabricationDate ? new Date(b.fabricationDate.split("/").reverse().join("-")).getTime() : Number.MAX_SAFE_INTEGER);
@@ -211,6 +236,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     { id: "updated", label: "Aktualität", icon: Clock },
     { id: "make", label: "Marke", icon: Tag },
     { id: "age", label: "Alter", icon: Calendar },
+    { id: "location", label: "Standort", icon: MapIcon },
     { id: "inspection", label: "MFK", icon: CalendarDays },
   ];
 

@@ -188,6 +188,7 @@ export const issues = sqliteTable("issues", {
 export const locations = sqliteTable("locations", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
+  countryCode: text("country_code").notNull().default("CH"),
   userId: int("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

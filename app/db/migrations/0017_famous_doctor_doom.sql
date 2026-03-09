@@ -1,0 +1,1 @@
+ALTER TABLE `locations` ADD `country_code` text DEFAULT 'CH' NOT NULL;

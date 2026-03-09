@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useState } from "react";
-import { Gauge, Route as RouteIcon, Wrench, CalendarDays } from "lucide-react";
+import { Gauge, Route as RouteIcon, Wrench, CalendarDays, Map as MapIcon } from "lucide-react";
 import clsx from "clsx";
 import type { MotorcycleDashboardItem as DashboardCard } from "~/utils/home-stats";
 import { StatisticEntry } from "./statistic-entry";
@@ -102,6 +102,13 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
             icon={Gauge}
             label="Aktuell"
             value={`${formatNumber(moto.odometer)} km`}
+          />
+
+          <StatisticEntry
+            icon={MapIcon}
+            label="Standort"
+            value={moto.currentLocationName ? `[${moto.currentLocationCountryCode}] ${moto.currentLocationName}` : "Unbekannt"}
+            checkValue={moto.currentLocationName}
           />
 
           <StatisticEntry

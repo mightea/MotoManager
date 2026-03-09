@@ -18,13 +18,15 @@ async function verify() {
     const allMotos = await db.query.motorcycles.findMany();
     const allIssues = await db.query.issues.findMany();
     const allMaintenance = await db.query.maintenanceRecords.findMany();
-    const allLocations = await db.query.locationRecords.findMany();
+    const allLocationRecords = await db.query.locationRecords.findMany();
+    const allLocations = await db.query.locations.findMany();
 
     const { stats } = buildDashboardData({
         motorcycles: allMotos,
         issues: allIssues,
         maintenance: allMaintenance,
-        locationHistory: allLocations,
+        locationHistory: allLocationRecords,
+        locations: allLocations,
         year: new Date().getFullYear(),
     });
 

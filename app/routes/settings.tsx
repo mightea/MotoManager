@@ -147,16 +147,18 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "createLocation") {
     const name = formData.get("name") as string;
+    const countryCode = formData.get("countryCode") as string;
     if (!name) return { error: "Name ist erforderlich." };
-    await createLocation(db, { name, userId: user.id });
+    await createLocation(db, { name, countryCode: countryCode || "CH", userId: user.id });
     return { success: "Lagerort erstellt." };
   }
 
   if (intent === "updateLocation") {
     const id = Number(formData.get("id"));
     const name = formData.get("name") as string;
+    const countryCode = formData.get("countryCode") as string;
     if (!id || !name) return { error: "Ungültige Daten." };
-    await updateLocation(db, id, user.id, { name });
+    await updateLocation(db, id, user.id, { name, countryCode: countryCode || "CH" });
     return { success: "Lagerort aktualisiert." };
   }
 
@@ -395,7 +397,15 @@ export default function Settings() {
             name="name"
             placeholder="Neuer Lagerort..."
             required
-            className="block w-full flex-1 rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+            className="block w-full flex-[3] rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          />
+          <input
+            type="text"
+            name="countryCode"
+            placeholder="CH"
+            defaultValue="CH"
+            maxLength={2}
+            className="block w-20 rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-center font-bold text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 uppercase"
           />
           <Button type="submit" disabled={isSubmitting} variant="secondary">
             <Plus className="h-5 w-5" />
@@ -422,7 +432,14 @@ export default function Settings() {
                     name="name"
                     defaultValue={location.name}
                     required
-                    className="block w-full flex-1 rounded-lg border-gray-200 bg-white p-2 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                    className="block w-full flex-[3] rounded-lg border-gray-200 bg-white p-2 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                  />
+                  <input
+                    type="text"
+                    name="countryCode"
+                    defaultValue={location.countryCode}
+                    maxLength={2}
+                    className="block w-16 rounded-lg border-gray-200 bg-white p-2 text-sm text-center font-bold text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white uppercase"
                   />
                   <Button type="submit" size="sm" disabled={isSubmitting}>
                     Speichern
@@ -438,9 +455,14 @@ export default function Settings() {
                 </Form>
               ) : (
                 <>
-                  <span className="font-medium text-foreground dark:text-white">
-                    {location.name}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-6 w-8 items-center justify-center rounded bg-gray-200 text-[10px] font-bold text-secondary dark:bg-navy-700 dark:text-navy-300 uppercase">
+                      {location.countryCode}
+                    </span>
+                    <span className="font-medium text-foreground dark:text-white">
+                      {location.name}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
