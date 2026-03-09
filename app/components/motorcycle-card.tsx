@@ -24,6 +24,16 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
     >
       {/* Header with Background Image */}
       <div className="relative aspect-[16/9] w-full overflow-hidden">
+        {/* Location Badge */}
+        {moto.currentLocationName && (
+          <div className="absolute top-3 left-3 z-10">
+            <div className="flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md border border-white/20 shadow-lg">
+              <MapIcon className="h-3.5 w-3.5 text-blue-400" />
+              <span className="tracking-wide uppercase">{moto.currentLocationName}</span>
+            </div>
+          </div>
+        )}
+
         {/* Background Image */}
         <img
           src={
@@ -102,13 +112,6 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
             icon={Gauge}
             label="Aktuell"
             value={`${formatNumber(moto.odometer)} km`}
-          />
-
-          <StatisticEntry
-            icon={MapIcon}
-            label="Standort"
-            value={moto.currentLocationName ? `[${moto.currentLocationCountryCode}] ${moto.currentLocationName}` : "Unbekannt"}
-            checkValue={moto.currentLocationName}
           />
 
           <StatisticEntry
