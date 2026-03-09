@@ -37,11 +37,6 @@ export const motorcycleSchema = z.object({
     z.string()
       .regex(/^(0[1-9]|1[0-2])\/\d{4}$|^\d{4}$/, "Ungültiges Format (z.B. 07/1997 oder 1997)")
       .optional()
-      .transform(val => {
-        if (!val) return val;
-        if (val.length === 4) return `01/${val}`;
-        return val;
-      })
   ),
   vehicleIdNr: z.preprocess(emptyStringToUndefined, z.string().optional()),
   numberPlate: z.preprocess(emptyStringToUndefined, z.string().optional()),
