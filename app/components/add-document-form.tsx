@@ -252,7 +252,7 @@ export function AddDocumentForm({
         </div>
       </div>
 
-      <div className={clsx("flex items-center justify-between", !isOwner && "opacity-60 pointer-events-none")}>
+      <div className={clsx("flex items-center justify-between", !isOwner && "opacity-60")}>
         <label
           htmlFor="isPrivate"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -261,7 +261,8 @@ export function AddDocumentForm({
         </label>
         <Switch
             checked={isPrivate}
-            onChange={isOwner ? setIsPrivate : undefined}
+            onChange={setIsPrivate}
+            disabled={!isOwner}
             className={clsx(
                 isPrivate ? 'bg-primary' : 'bg-gray-200 dark:bg-navy-700',
                 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
@@ -310,6 +311,7 @@ export function AddDocumentForm({
 
       <div className="mt-6 flex justify-between gap-3 pt-2">
         {isEditMode ? (
+            isOwner && (
             <button
                 type="button"
                 onClick={onDelete}
@@ -318,6 +320,7 @@ export function AddDocumentForm({
             >
                 <Trash2 className="h-5 w-5" />
             </button>
+            )
         ) : (
             <button
                 type="button"

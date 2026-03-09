@@ -144,7 +144,7 @@ export async function action({ request }: Route.ActionArgs) {
         let newPaths = {};
         if (file && file.size > 0) {
           if (!getFileCategory(file)) {
-            return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
+            throw data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
           }
 
           // Delete old files
