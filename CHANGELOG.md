@@ -1,5 +1,41 @@
 # Changelog
 
+## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.9...2026.3.0) (2026-03-09)
+
+### Features
+
+* add filtering to maintenance list ([d89ad64](https://github.com/mightea/MotoManager/commit/d89ad64a196dac49e63aefe3e335622671a9ab55))
+* add fuel recording to maintenance history with map integration ([b88ff4d](https://github.com/mightea/MotoManager/commit/b88ff4de3106293dbbd8679102d168d6813f9ac7))
+* add fuel tank size and estimated range calculation ([8bbe69f](https://github.com/mightea/MotoManager/commit/8bbe69f3dff86a19256841d26f870dbb11e717df))
+* add interactive map picker and location autocomplete for fuel entries ([332ab43](https://github.com/mightea/MotoManager/commit/332ab4305a665d1824b6099071b2df9b37a4ebef))
+* add RoadTrip fuel data import ([a06e820](https://github.com/mightea/MotoManager/commit/a06e82067e3cc270eff21f752898a7d8e5fcb3ca))
+* automatic fuel consumption and trip calculations ([7ae2f74](https://github.com/mightea/MotoManager/commit/7ae2f742b8281cc80cb55c80201dff38de36230c))
+* display dual currencies for international maintenance items ([1845207](https://github.com/mightea/MotoManager/commit/184520727b5e7475c50cc3898e0d2872373ae320))
+* enable cross-user document assignment ([479fef0](https://github.com/mightea/MotoManager/commit/479fef0d0dba68b7cc72e1f521fd17c4aedeffdd))
+* enhance RoadTrip import with currency and location support ([628c430](https://github.com/mightea/MotoManager/commit/628c4303c0bdd6be4e237f0ac6857acd261e4ea7))
+* improve fuel entry descriptions and auto-populate metadata ([0a46a16](https://github.com/mightea/MotoManager/commit/0a46a165c5f31abfbb80cdea9a6c960d411bb6f0))
+* set fuel as default type in maintenance form ([78428f4](https://github.com/mightea/MotoManager/commit/78428f42b5ac69830a131acf60538de495b17964))
+* use short identifiers for fuel types and display verbose labels ([aabb961](https://github.com/mightea/MotoManager/commit/aabb96115b48d605a116ec22731c2cfd3deea9f9))
+
+### Bug Fixes
+
+* address PR review comments on accessibility, delete button, and transaction error handling ([7b81d8b](https://github.com/mightea/MotoManager/commit/7b81d8bc26397978d1e840e62922e93902beb6da))
+* correctly format currency in RoadTrip import preview ([9b1a2a5](https://github.com/mightea/MotoManager/commit/9b1a2a5a832bc046a6af0d09f2b393d9a04f8024))
+* ensure Leaflet map is removed in MapPicker cleanup ([3c20b54](https://github.com/mightea/MotoManager/commit/3c20b5429b0b8c14a26d0484947b72937df9771d))
+* ensure map visibility in edit dialog and improve picker robustness ([e1fcfa7](https://github.com/mightea/MotoManager/commit/e1fcfa71432630e6135b1046260a730c1824d108))
+* improve RoadTrip CSV date parsing ([49e0345](https://github.com/mightea/MotoManager/commit/49e0345197fe7b90d0e2fa97d584690caadebc3b))
+* make MapPicker SSR-safe by using dynamic imports for Leaflet ([3a201a3](https://github.com/mightea/MotoManager/commit/3a201a39ac57d277992c024fef1eeb5ddfdf9b1d))
+* only show normalized cost in maintenance list when available ([d66178c](https://github.com/mightea/MotoManager/commit/d66178cd9c96531f37214b0f4cb8c9e87592ce1b))
+* prevent recalculateFuelConsumption from modifying descriptions ([725980f](https://github.com/mightea/MotoManager/commit/725980f9f09547b45f355ecfe277c538d503e76b))
+* prevent theme flash by applying class on server-side ([bd25dfd](https://github.com/mightea/MotoManager/commit/bd25dfd97390c50d590d8a4471fc596dd172e2b9))
+* resolve empty map rendering in MapPicker modal ([e012a7d](https://github.com/mightea/MotoManager/commit/e012a7d0a7b61108da310d9592c5db81e5a29ed1))
+* resolve hydration crash and fix mangled action logic ([ce74e0d](https://github.com/mightea/MotoManager/commit/ce74e0d47f625fa7159d973033b6970936655997))
+* restrict location autocomplete to fuel entries only ([e82bf43](https://github.com/mightea/MotoManager/commit/e82bf43f9cd48a8c376564732815c3aaf7f7b2b7))
+
+### Performance Improvements
+
+* optimize fuel consumption recalculation with transaction and change check ([66ae460](https://github.com/mightea/MotoManager/commit/66ae460654669f6c2b43c1716fe5f6536a458e58))
+
 ## [2026.2.9](https://github.com/mightea/MotoManager/compare/2026.2.8...2026.2.9) (2026-02-26)
 
 ### Features
