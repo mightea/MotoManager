@@ -7,19 +7,23 @@ import {
   ScrollRestoration,
   data,
   useLoaderData,
+  useFetcher,
 } from "react-router";
 import type { Route } from "./+types/root";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
+import { Modal } from "~/components/modal";
 import { getTheme } from "~/utils/theme.server";
-import { useEffect } from "react";
+import { getNewChangelog } from "~/services/changelog.server";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 import "./app.css";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = await getTheme(request);
-  return data({ theme });
+  const changelog = await getNewChangelog(request);
+  return data({ theme, changelog });
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -49,16 +53,117 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { theme } = useLoaderData<typeof loader>();
-  
+  const { theme, changelog } = useLoaderData<typeof loader>();
+  const [isChangelogOpen, setIsChangelogOpen] = useState(!!changelog);
+  const fetcher = useFetcher();
+
+  const handleCloseChangelog = () => {
+    setIsChangelogOpen(false);
+    if (changelog) {
+      const formData = new FormData();
+      formData.append("version", changelog.version);
+      fetcher.submit(formData, {
+        method: "post",
+        action: "/api/mark-changelog-seen",
+      });
+    }
+  };
+
   return (
     <ThemeProvider specifiedTheme={theme}>
       <AppWithTheme>
         <LoadingIndicator />
         <Outlet />
+        {changelog && (
+          <Modal
+            isOpen={isChangelogOpen}
+            onClose={handleCloseChangelog}
+            title={`Was ist neu in v${changelog.version}`}
+          >
+            <div className="space-y-4">
+              <ChangelogRenderer content={changelog.content} />
+              <div className="pt-4 flex justify-end">
+                <button
+                  onClick={handleCloseChangelog}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Verstanden
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </AppWithTheme>
     </ThemeProvider>
   );
+}
+
+function ChangelogRenderer({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+  let currentList: React.ReactNode[] = [];
+
+  const flushList = () => {
+    if (currentList.length > 0) {
+      elements.push(
+        <ul key={`list-${elements.length}`} className="list-disc list-inside space-y-1 ml-2 text-secondary dark:text-navy-300">
+          {currentList}
+        </ul>
+      );
+      currentList = [];
+    }
+  };
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("### ")) {
+      flushList();
+      elements.push(
+        <h3 key={`changelog-title-${index}`} className="text-lg font-semibold mt-4 mb-2 first:mt-0">
+          {trimmed.replace("### ", "")}
+        </h3>
+      );
+    } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+      // Basic link parsing [text](url) -> <a>
+      const parts = trimmed.substring(2).split(/(\[.*?\]\(.*?\))/g);
+      const content = parts.map((part, pIndex) => {
+        const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+        if (linkMatch) {
+          return (
+            <a
+              key={`changelog-link-${index}-${pIndex}`}
+              href={linkMatch[2]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              {linkMatch[1]}
+            </a>
+          );
+        }
+        return part;
+      });
+
+      currentList.push(
+        <li key={`changelog-item-${index}`} className="leading-relaxed">
+          {content}
+        </li>
+      );
+    } else if (trimmed === "") {
+      flushList();
+    } else {
+      flushList();
+      elements.push(
+        <p key={`changelog-p-${index}`} className="text-secondary dark:text-navy-300">
+          {trimmed}
+        </p>
+      );
+    }
+  });
+
+  flushList();
+
+  return <div className="changelog-content">{elements}</div>;
 }
 
 function AppWithTheme({ children }: { children: React.ReactNode }) {

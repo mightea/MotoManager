@@ -9,6 +9,7 @@ export default [
   route("/auth/login", "routes/auth.login.tsx"),
   route("/auth/logout", "routes/auth.logout.tsx"),
   route("/api/set-theme", "routes/api.set-theme.ts"),
+  route("/api/mark-changelog-seen", "routes/api.mark-changelog-seen.ts"),
   route("/api/auth/passkey/:action", "routes/api.auth.passkey.$action.ts"),
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/.well-known.appspecific.com.chrome.devtools.json.ts"),
   route("/data/images/:filename", "routes/images.$filename.ts"),

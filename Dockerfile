@@ -25,7 +25,7 @@ RUN mkdir -p $PNPM_HOME \
   && apk add --no-cache poppler-utils
 WORKDIR /app
 ENV APP_VERSION=$APP_VERSION
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml CHANGELOG.md ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
 
