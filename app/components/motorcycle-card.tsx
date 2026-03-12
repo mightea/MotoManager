@@ -1,11 +1,9 @@
 import { Link } from "react-router";
 import { useState } from "react";
-import { Gauge, Route as RouteIcon, Wrench, CalendarDays, Map as MapIcon } from "lucide-react";
+import { Gauge, Route as RouteIcon, CalendarDays, MapPin, Wrench } from "lucide-react";
 import clsx from "clsx";
 import type { MotorcycleDashboardItem as DashboardCard } from "~/utils/home-stats";
-import { StatisticEntry } from "./statistic-entry";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-
 import { formatNumber } from "~/utils/numberUtils";
 
 interface MotorcycleCardProps {
@@ -14,33 +12,46 @@ interface MotorcycleCardProps {
 
 export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   const [imageError, setImageError] = useState(false);
-
   const slug = createMotorcycleSlug(moto.make, moto.model);
+  const currentYear = new Date().getFullYear();
+
+  const inspectionDateShort = moto.nextInspection?.dueDateISO
+    ? new Intl.DateTimeFormat("de-CH", { month: "short", year: "numeric" }).format(
+        new Date(moto.nextInspection.dueDateISO)
+      )
+    : null;
 
   return (
     <Link
       to={`/motorcycle/${slug}/${moto.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-navy-700 dark:bg-navy-800"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-navy-700 dark:bg-navy-800"
     >
-      {/* Header with Background Image */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden">
-        {/* Location Badge */}
+      {/* Image banner */}
+      <div className="relative h-36 w-full overflow-hidden">
+        {/* Location badge */}
         {moto.currentLocationName && (
-          <div className="absolute top-3 left-3 z-10">
-            <div className="flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md border border-white/20 shadow-lg">
-              <MapIcon className="h-3.5 w-3.5 text-blue-400" />
-              <span className="tracking-wide uppercase">{moto.currentLocationName}</span>
-            </div>
+          <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full border border-white/20 bg-black/40 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-md">
+            <MapPin className="h-3 w-3 text-blue-300" />
+            <span className="uppercase tracking-wide">{moto.currentLocationName}</span>
           </div>
         )}
 
-        {/* Background Image */}
+        {/* Status badges */}
+        <div className="absolute right-2.5 top-2.5 z-10 flex flex-col items-end gap-1">
+          {moto.hasOverdueMaintenance && (
+            <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white ring-1 ring-white/20">
+              Wartung fällig
+            </span>
+          )}
+          {moto.isVeteran && (
+            <span className="rounded-full border border-white/30 bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+              Veteran
+            </span>
+          )}
+        </div>
+
         <img
-          src={
-            !imageError && moto.image
-              ? `${moto.image}?width=800`
-              : "/favicon.svg"
-          }
+          src={!imageError && moto.image ? `${moto.image}?width=800` : "/favicon.svg"}
           srcSet={
             !imageError && moto.image
               ? `${moto.image}?width=400 400w, ${moto.image}?width=800 800w`
@@ -49,115 +60,98 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           alt={`${moto.make} ${moto.model}`}
           className={clsx(
-            "h-full w-full object-cover transition-transform duration-300 group-hover:scale-105",
-            (imageError || !moto.image) &&
-            "p-8 object-scale-down opacity-50 grayscale dark:invert"
+            "h-full w-full object-cover transition-transform duration-500 group-hover:scale-105",
+            (imageError || !moto.image) && "p-8 object-scale-down opacity-40 grayscale dark:invert"
           )}
           loading="lazy"
           onError={() => setImageError(true)}
         />
 
-        {/* Overlay Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10"></div>
-
-        {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-          <div className="flex items-end justify-between">
-            <div>
-              <h3 className="text-xl font-bold tracking-tight text-white shadow-sm group-hover:underline decoration-white/50 underline-offset-4">
-                {moto.make} {moto.model}
-              </h3>
-              <p className="text-sm font-medium text-gray-200 shadow-sm">
-                {moto.fabricationDate || "Fabrikationsdatum unbekannt"}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {moto.hasOverdueMaintenance && (
-                <span className="inline-flex items-center rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-lg shadow-red-900/20 ring-1 ring-white/20">
-                  Wartung fällig
-                </span>
-              )}
-              {moto.isVeteran && (
-                <span className="inline-flex items-center rounded-full border border-white/30 bg-white/20 px-2.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-                  Veteran
-                </span>
-              )}
-            </div>
-          </div>
+        {/* Gradient + name overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5">
+          <h3 className="text-base font-bold leading-tight text-white decoration-white/40 underline-offset-2 group-hover:underline">
+            {moto.make} {moto.model}
+          </h3>
+          <p className="text-[11px] font-medium text-white/70">
+            {moto.fabricationDate ?? "—"}
+          </p>
         </div>
       </div>
 
-      {/* Card Stats Grid */}
-      <div className="flex-1 p-4">
-        <div className="space-y-3">
-          {moto.hasOverdueMaintenance && (
-            <div className="mb-4 space-y-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
-                Überfällige Wartung
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {moto.overdueMaintenanceItems.map((item) => (
-                  <span
-                    key={item}
-                    className="inline-flex items-center rounded-md bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-inset ring-red-600/10 dark:bg-red-900/30 dark:text-red-300 dark:ring-red-400/20"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+      {/* 3-column stats */}
+      <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-navy-700">
+        {/* Odometer */}
+        <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
+          <Gauge className="mb-0.5 h-3.5 w-3.5 text-secondary/40 dark:text-navy-500" />
+          <span className="text-sm font-bold tabular-nums leading-none text-foreground dark:text-white">
+            {formatNumber(moto.odometer)}
+          </span>
+          <span className="text-[10px] font-medium text-secondary dark:text-navy-400">km gesamt</span>
+        </div>
 
-          <StatisticEntry
-            icon={Gauge}
-            label="Aktuell"
-            value={`${formatNumber(moto.odometer)} km`}
-          />
-
-          <StatisticEntry
-            icon={RouteIcon}
-            label="Dieses Jahr"
-            value={`${formatNumber(moto.odometerThisYear)} km`}
-            valueClassName={
+        {/* This year */}
+        <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
+          <RouteIcon className="mb-0.5 h-3.5 w-3.5 text-secondary/40 dark:text-navy-500" />
+          <span
+            className={clsx(
+              "text-sm font-bold tabular-nums leading-none",
               moto.odometerThisYear > 0
-                ? "text-foreground dark:text-gray-100"
-                : "text-secondary/70 dark:text-navy-500"
-            }
-            checkValue={moto.odometerThisYear}
-          />
+                ? "text-foreground dark:text-white"
+                : "text-secondary/30 dark:text-navy-600"
+            )}
+          >
+            {moto.odometerThisYear > 0 ? `+${formatNumber(moto.odometerThisYear)}` : "—"}
+          </span>
+          <span suppressHydrationWarning className="text-[10px] font-medium text-secondary dark:text-navy-400">
+            km {currentYear}
+          </span>
+        </div>
 
-          <StatisticEntry
-            icon={Wrench}
-            label="Offene Mängel"
-            value={
-              moto.numberOfIssues > 0
-                ? `${moto.numberOfIssues} Ausstehend`
-                : "Alles gut"
-            }
-            valueClassName={
-              moto.numberOfIssues > 0
-                ? "text-orange-600 dark:text-orange-400"
-                : "text-green-600 dark:text-green-400"
-            }
-            checkValue={moto.numberOfIssues}
-          />
-
-          {moto.nextInspection?.relativeLabel && (
-            <StatisticEntry
-              icon={CalendarDays}
-              label="Nächste MFK"
-              value={moto.nextInspection.relativeLabel}
-              valueClassName={
-                moto.nextInspection.isOverdue
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-foreground dark:text-gray-100"
-              }
-              checkValue={moto.nextInspection.relativeLabel}
-            />
+        {/* Next inspection */}
+        <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
+          <CalendarDays className="mb-0.5 h-3.5 w-3.5 text-secondary/40 dark:text-navy-500" />
+          {moto.nextInspection ? (
+            <>
+              <span
+                className={clsx(
+                  "text-xs font-bold leading-none",
+                  moto.nextInspection.isOverdue
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-foreground dark:text-white"
+                )}
+              >
+                {moto.nextInspection.isOverdue ? "Überfällig" : moto.nextInspection.relativeLabel}
+              </span>
+              <span
+                className={clsx(
+                  "text-[10px] font-medium",
+                  moto.nextInspection.isOverdue
+                    ? "text-red-500/70 dark:text-red-400/70"
+                    : "text-secondary dark:text-navy-400"
+                )}
+              >
+                {inspectionDateShort}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-sm font-bold leading-none text-secondary/30 dark:text-navy-600">—</span>
+              <span className="text-[10px] font-medium text-secondary/50 dark:text-navy-500">MFK</span>
+            </>
           )}
-
         </div>
       </div>
+
+      {/* Open issues strip */}
+      {moto.numberOfIssues > 0 && (
+        <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-2 dark:border-navy-700">
+          <Wrench className="h-3.5 w-3.5 shrink-0 text-orange-500" />
+          <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
+            {moto.numberOfIssues} offene{moto.numberOfIssues === 1 ? "r Mangel" : " Mängel"}
+          </span>
+        </div>
+      )}
     </Link>
   );
 }
