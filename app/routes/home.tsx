@@ -34,6 +34,7 @@ import { processImageUpload } from "~/services/images.server";
 
 import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
+import { Button } from "~/components/button";
 
 export function meta() {
   return [
@@ -283,13 +284,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </MenuItems>
         </Menu>
 
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
-        >
+        <Button onClick={() => setIsAddOpen(true)}>
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Neues Motorrad</span>
-        </button>
+        </Button>
       </div>
 
       {/* FAB on mobile */}
@@ -313,13 +311,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
               Deine Garage ist leer. Füge dein erstes Motorrad hinzu, um Wartungen und Kilometerstände zu verwalten.
             </p>
-            <button
-              onClick={() => setIsAddOpen(true)}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-white transition-all hover:bg-primary-dark active:scale-95"
-            >
+            <Button onClick={() => setIsAddOpen(true)} size="lg" className="mt-6">
               <Plus className="h-4 w-4" />
               Motorrad hinzufügen
-            </button>
+            </Button>
           </div>
         ) : (
           cards.map((moto) => (

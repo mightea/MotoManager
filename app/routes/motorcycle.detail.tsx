@@ -758,7 +758,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                   setSelectedMaintenance(null);
                   setMaintenanceDialogOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Eintrag

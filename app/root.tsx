@@ -13,6 +13,7 @@ import type { Route } from "./+types/root";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
 import { Modal } from "~/components/modal";
+import { Button } from "~/components/button";
 import { getTheme } from "~/utils/theme.server";
 import { getNewChangelog } from "~/services/changelog.server";
 import { useEffect, useState } from "react";
@@ -83,12 +84,9 @@ export default function App() {
             <div className="space-y-4">
               <ChangelogRenderer content={changelog.content} />
               <div className="pt-4 flex justify-end">
-                <button
-                  onClick={handleCloseChangelog}
-                  className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors"
-                >
+                <Button onClick={handleCloseChangelog}>
                   Verstanden
-                </button>
+                </Button>
               </div>
             </div>
           </Modal>

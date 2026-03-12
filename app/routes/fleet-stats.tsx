@@ -182,7 +182,7 @@ export default function FleetStatsPage() {
       <div className="flex items-center gap-4">
         <Link
           to="/"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-secondary shadow-sm transition-all hover:border-primary hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>

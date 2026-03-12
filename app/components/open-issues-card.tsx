@@ -32,7 +32,7 @@ export default function OpenIssuesCard({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-foreground dark:text-white">Offene Mängel</h2>
-        <Button type="button" onClick={handleAddIssue} variant="secondary" size="sm" className="rounded-lg">
+        <Button type="button" onClick={handleAddIssue} variant="secondary" size="sm">
           <Plus className="h-4 w-4" />
           Mangel hinzufügen
         </Button>
