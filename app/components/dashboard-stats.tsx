@@ -2,113 +2,103 @@ import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 import type { DashboardStats as DashboardStatsType } from "~/utils/home-stats";
 import clsx from "clsx";
 
-
 interface DashboardStatsProps {
-    stats: DashboardStatsType;
+  stats: DashboardStatsType;
 }
 
 export function DashboardStats({ stats }: DashboardStatsProps) {
-    return (
-        <div className="space-y-4">
-            <div className="space-y-1">
-                <h2 className="text-2xl font-bold text-foreground dark:text-white">
-                    Jahresstatistiken
-                </h2>
-                <p className="text-secondary dark:text-navy-300">
-                    Aggregierte Kennzahlen deiner Flotte {stats.year}.
-                </p>
-            </div>
+  return (
+    <div className="space-y-4">
+      <h2 className="text-sm font-semibold text-foreground dark:text-white">
+        Flotte {stats.year}
+      </h2>
 
-            {/* Stacked on mobile, grid on larger */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Kilometer dieses Jahr */}
-                <StatCard
-                    label="KILOMETER DIESES JAHR"
-                    value={`${formatNumber(stats.totalKmThisYear)} km`}
-                    description={`Summe aller registrierten Fahrten ${stats.year}.`}
-                    accent="primary"
-                />
-
-                {/* Kilometer insgesamt */}
-                <StatCard
-                    label="KILOMETER INSGESAMT"
-                    value={`${formatNumber(stats.totalKmOverall)} km`}
-                    description="Gesamter gemessener Kilometerstand aller Bikes."
-                />
-
-                {/* Aktive To-Dos */}
-                <StatCard
-                    label="AKTIVE TO-DOS"
-                    value={stats.totalActiveIssues.toString()}
-                    description="Noch offene Issues über alle Motorräder hinweg."
-                    accent={stats.totalActiveIssues > 0 ? "warning" : undefined}
-                />
-
-                {/* Gesamtkosten */}
-                <StatCard
-                    label={`GESAMTKOSTEN ${stats.year}`}
-                    value={formatCurrency(stats.totalMaintenanceCostThisYear)}
-                    description="Summe der erfassten Kosten im aktuellen Jahr."
-                />
-
-                {/* Veteranen-Bikes */}
-                <StatCard
-                    label="VETERANEN-BIKES"
-                    value={stats.veteranCount.toString()}
-                    description="Anzahl Motorräder mit Veteranen-Status."
-                />
-
-                {/* Fleissigstes Bike */}
-                <StatCard
-                    label="FLEISSIGSTES BIKE"
-                    value={
-                        stats.topRider
-                            ? `${stats.topRider.make} ${stats.topRider.model}`
-                            : "-"
-                    }
-                    description={
-                        stats.topRider
-                            ? `${formatNumber(stats.topRider.odometerThisYear)} km in ${stats.year}`
-                            : "Keine Fahrten in diesem Jahr."
-                    }
-                    accent="primary"
-                />
-            </div>
-        </div>
-    );
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          label="Kilometer dieses Jahr"
+          value={`${formatNumber(stats.totalKmThisYear)} km`}
+          description={`Registrierte Fahrten ${stats.year}`}
+          accent="primary"
+        />
+        <StatCard
+          label="Kilometer insgesamt"
+          value={`${formatNumber(stats.totalKmOverall)} km`}
+          description="Gesamtkilometer aller Bikes"
+        />
+        <StatCard
+          label="Offene Mängel"
+          value={stats.totalActiveIssues.toString()}
+          description="Ausstehend über alle Motorräder"
+          accent={stats.totalActiveIssues > 0 ? "warning" : undefined}
+        />
+        <StatCard
+          label={`Kosten ${stats.year}`}
+          value={formatCurrency(stats.totalMaintenanceCostThisYear)}
+          description="Erfasste Wartungskosten"
+        />
+        <StatCard
+          label="Veteranen-Bikes"
+          value={stats.veteranCount.toString()}
+          description="Motorräder mit Veteranen-Status"
+        />
+        <StatCard
+          label="Fleissigstes Bike"
+          value={stats.topRider ? `${stats.topRider.make} ${stats.topRider.model}` : "—"}
+          description={
+            stats.topRider
+              ? `${formatNumber(stats.topRider.odometerThisYear)} km in ${stats.year}`
+              : "Keine Fahrten in diesem Jahr"
+          }
+          accent={stats.topRider ? "primary" : undefined}
+        />
+      </div>
+    </div>
+  );
 }
 
 function StatCard({
-    label,
-    value,
-    description,
-    accent,
+  label,
+  value,
+  description,
+  accent,
 }: {
-    label: string;
-    value: string;
-    description: string;
-    accent?: "primary" | "warning";
+  label: string;
+  value: string;
+  description: string;
+  accent?: "primary" | "warning";
 }) {
-    const accentBorder =
-        accent === "primary"
-            ? "border-t-primary dark:border-t-primary-light"
-            : accent === "warning"
-                ? "border-t-orange-500 dark:border-t-orange-400"
-                : "border-t-transparent";
+  const accentBorder =
+    accent === "primary"
+      ? "border-t-primary dark:border-t-primary-light"
+      : accent === "warning"
+      ? "border-t-orange-500 dark:border-t-orange-400"
+      : "border-t-transparent";
 
-    return (
-        <div className={clsx("flex flex-col justify-between rounded-xl border border-gray-200 dark:border-navy-700 border-t-2 bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:bg-navy-800/50", accentBorder)}>
-            <div>
-                <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
-                    {label}
-                </dt>
-                <dd className="mt-3 text-2xl font-bold text-foreground dark:text-gray-100">
-                    {value}
-                </dd>
-            </div>
-            <p className="mt-3 text-xs text-secondary dark:text-navy-300">
-                {description}
-            </p>
-        </div>
-    );
+  const valueColor =
+    accent === "primary"
+      ? "text-primary dark:text-primary-light"
+      : accent === "warning"
+      ? "text-orange-600 dark:text-orange-400"
+      : "text-foreground dark:text-white";
+
+  return (
+    <div
+      className={clsx(
+        "flex flex-col justify-between rounded-2xl border border-gray-200 border-t-2 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-navy-700 dark:bg-navy-800",
+        accentBorder
+      )}
+    >
+      <div>
+        <dt className="text-xs font-semibold text-secondary dark:text-navy-400">
+          {label}
+        </dt>
+        <dd className={clsx("mt-2 text-2xl font-bold tabular-nums", valueColor)}>
+          {value}
+        </dd>
+      </div>
+      <p className="mt-3 text-xs text-secondary/70 dark:text-navy-500">
+        {description}
+      </p>
+    </div>
+  );
 }
