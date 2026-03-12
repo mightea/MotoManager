@@ -31,7 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const theme = data?.theme;
 
   return (
-    <html lang="en" className={clsx(theme)}>
+    <html lang="de" className={clsx(theme)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -43,7 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-sans antialiased text-foreground dark:bg-navy-950 dark:text-gray-50">
+      <body className="bg-background font-sans antialiased text-foreground dark:bg-navy-950 dark:text-gray-50">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -85,7 +85,7 @@ export default function App() {
               <div className="pt-4 flex justify-end">
                 <button
                   onClick={handleCloseChangelog}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors"
                 >
                   Verstanden
                 </button>

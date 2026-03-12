@@ -45,6 +45,7 @@ export function Modal({ isOpen, onClose, title, children, description }: ModalPr
                             </div>
                             <button
                                 onClick={onClose}
+                                aria-label="Schließen"
                                 className="grid h-9 w-9 place-items-center rounded-xl text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700 transition-colors"
                             >
                                 <X className="h-5 w-5" />
