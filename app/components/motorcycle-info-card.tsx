@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Plus } from "lucide-react";
+import { ChevronDown, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Plus, Fuel, Route, Navigation2 } from "lucide-react";
 import clsx from "clsx";
 import type { Motorcycle, PreviousOwner } from "~/db/schema";
 import { StatisticEntry } from "./statistic-entry";
@@ -74,13 +74,20 @@ export function MotorcycleInfoCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+          className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
         >
           Bearbeiten
         </button>
       </div>
 
-      <div hidden={!detailsExpanded} className="mt-3 space-y-2">
+      <div
+        className={clsx(
+          "grid transition-all duration-300 ease-in-out",
+          detailsExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        )}
+      >
+        <div className="overflow-hidden">
+        <div className="mt-3 space-y-2">
         <div className="mt-4 space-y-6">
           <div className="space-y-2">
             <StatisticEntry
@@ -128,7 +135,7 @@ export function MotorcycleInfoCard({
                 Treibstoff & Verbrauch
               </h3>
               <StatisticEntry
-                icon={Gauge}
+                icon={Fuel}
                 label="Tankgrösse"
                 value={motorcycle.fuelTankSize ? `${motorcycle.fuelTankSize} L` : null}
               />
@@ -138,12 +145,12 @@ export function MotorcycleInfoCard({
                 value={avgFuelConsumption ? `${avgFuelConsumption.toFixed(2)} L/100km` : null}
               />
               <StatisticEntry
-                icon={Gauge}
+                icon={Route}
                 label="Ø Distanz / Tank"
                 value={avgTripDistance ? `${Math.round(avgTripDistance)} km` : null}
               />
               <StatisticEntry
-                icon={Gauge}
+                icon={Navigation2}
                 label="Theoretische Reichweite"
                 value={estimatedRange ? `~ ${Math.round(estimatedRange)} km` : null}
               />
@@ -238,19 +245,27 @@ export function MotorcycleInfoCard({
             )}
           </div>
         </div>
+        </div>
+        </div>
       </div>
 
       {/* Collapsed Summary */}
       <div
-        hidden={detailsExpanded}
-        className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-secondary dark:text-navy-300"
+        className={clsx(
+          "grid transition-all duration-300 ease-in-out",
+          !detailsExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        )}
       >
-        {summaryItems.map((item, index) => (
-          <div key={item} className="flex items-center gap-x-2">
-            {index > 0 && <span className="text-gray-300 dark:text-navy-600">•</span>}
-            <span>{item}</span>
+        <div className="overflow-hidden">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-secondary dark:text-navy-300">
+            {summaryItems.map((item, index) => (
+              <div key={item} className="flex items-center gap-x-2">
+                {index > 0 && <span className="text-gray-300 dark:text-navy-600">•</span>}
+                <span>{item}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

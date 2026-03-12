@@ -714,7 +714,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       />
 
       <div className="grid gap-5 md:grid-cols-3 items-start">
-        <div className="space-y-5 md:sticky md:top-6">
+        <div className="space-y-5 md:sticky" style={{ top: "calc(var(--app-header-offset, 0px) + 1.5rem)" }}>
           <MotorcycleInfoCard
             motorcycle={motorcycle}
             formattedFirstRegistration={formattedFirstRegistration}
