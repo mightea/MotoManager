@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.3.1](https://github.com/mightea/MotoManager/compare/2026.3.0...2026.3.1) (2026-03-12)
+
+### Features
+
+* add country code to locations and use for homepage sorting ([1cf48b8](https://github.com/mightea/MotoManager/commit/1cf48b88446b178892a49b271e0c211af015b83c))
+* display changelog on new release ([583329b](https://github.com/mightea/MotoManager/commit/583329bf9e263de2ecc82fdc14e9beb1c593cf35))
+
+### Bug Fixes
+
+* allow saving 4-digit year as fabrication date ([7e93ef7](https://github.com/mightea/MotoManager/commit/7e93ef7a3dcdd9ce59dd9ddf2e9dbf818d736d33))
+* fix badge z-index and positioning on motorcycle card ([01b0d94](https://github.com/mightea/MotoManager/commit/01b0d94a546656105d2ff19a9973d9d7536e9ac8))
+
 ## [2026.3.0](https://github.com/mightea/MotoManager/compare/2026.2.9...2026.3.0) (2026-03-09)
 
 ### Features
