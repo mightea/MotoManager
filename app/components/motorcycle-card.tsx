@@ -28,27 +28,27 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
     >
       {/* Image banner */}
       <div className="relative h-36 w-full overflow-hidden">
-        {/* Location badge */}
+        {/* Veteran badge — top left */}
+        {moto.isVeteran && (
+          <span className="absolute left-2.5 top-2.5 z-[1] rounded-full border border-white/30 bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+            Veteran
+          </span>
+        )}
+
+        {/* Maintenance badge — top right */}
+        {moto.hasOverdueMaintenance && (
+          <span className="absolute right-2.5 top-2.5 z-[1] rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white ring-1 ring-white/20">
+            Wartung fällig
+          </span>
+        )}
+
+        {/* Location badge — bottom right */}
         {moto.currentLocationName && (
-          <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full border border-white/20 bg-black/40 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-md">
+          <div className="absolute bottom-2.5 right-2.5 z-[1] flex items-center gap-1 rounded-full border border-white/20 bg-black/40 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-md">
             <MapPin className="h-3 w-3 text-blue-300" />
             <span className="uppercase tracking-wide">{moto.currentLocationName}</span>
           </div>
         )}
-
-        {/* Status badges */}
-        <div className="absolute right-2.5 top-2.5 z-10 flex flex-col items-end gap-1">
-          {moto.hasOverdueMaintenance && (
-            <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white ring-1 ring-white/20">
-              Wartung fällig
-            </span>
-          )}
-          {moto.isVeteran && (
-            <span className="rounded-full border border-white/30 bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-              Veteran
-            </span>
-          )}
-        </div>
 
         <img
           src={!imageError && moto.image ? `${moto.image}?width=800` : "/favicon.svg"}
