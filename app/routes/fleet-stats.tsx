@@ -131,7 +131,7 @@ function ChartSection({
 
 function YearlyDetails({ yearStats }: { yearStats: any }) {
   return (
-    <div className="p-6 bg-gray-50/50 dark:bg-navy-900/30 border-t border-gray-100 dark:border-navy-700 space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="p-6 bg-gray-50/50 dark:bg-navy-900/30 border-t border-gray-100 dark:border-navy-700 space-y-8 animate-fade-in">
       {/* Motorcycles Summary */}
       <div className="space-y-4">
         <h4 className="text-xs font-bold uppercase tracking-wider text-secondary dark:text-navy-500">Fahrzeuge in {yearStats.year}</h4>
@@ -195,7 +195,7 @@ export default function FleetStatsPage() {
       {/* Overall Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-          <div className="flex items-center gap-3 text-indigo-500 mb-2">
+          <div className="flex items-center gap-3 text-primary dark:text-primary-light mb-2">
             <TrendingUp className="h-5 w-5" />
             <span className="text-xs font-bold uppercase tracking-wider">Gesamtdistanz</span>
           </div>

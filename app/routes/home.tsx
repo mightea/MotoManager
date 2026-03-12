@@ -241,6 +241,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   ];
 
   const activeSortLabel = sortOptions.find(o => o.id === currentSort)?.label || "Sortieren";
+  const ActiveSortIcon = sortOptions.find(o => o.id === currentSort)?.icon;
 
   return (
     <div className="container mx-auto p-4 space-y-10 pb-28 sm:pb-24 animate-fade-in">
@@ -250,6 +251,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         {/* Sort Dropdown */}
         <Menu as="div" className="relative inline-block text-left">
           <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus:outline-none dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
+            {ActiveSortIcon && <ActiveSortIcon className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />}
             {activeSortLabel}
             <ChevronDown className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />
           </MenuButton>
