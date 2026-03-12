@@ -116,6 +116,35 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
   });
 }
 
+function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: string | null): string | null {
+  if (group.type === "fuel") {
+    const totalLiters = group.originalRecords.reduce((sum, r) => sum + (r.fuelAmount || 0), 0);
+    const consumptionValues = group.originalRecords
+      .map(r => r.fuelConsumption)
+      .filter((v): v is number => v !== null && v !== undefined);
+    if (totalLiters > 0 && consumptionValues.length > 0) {
+      const avg = consumptionValues.reduce((a, b) => a + b, 0) / consumptionValues.length;
+      return `${totalLiters.toFixed(1)} L · ${avg.toFixed(1)} L/100`;
+    }
+    if (totalLiters > 0) return `${totalLiters.toFixed(1)} L`;
+    return null;
+  }
+
+  if (group.type === "tire") {
+    const positions = group.originalRecords
+      .map(r => r.tirePosition ? tirePositionLabels[r.tirePosition] : null)
+      .filter((v): v is string => v !== null);
+    const unique = [...new Set(positions)];
+    if (unique.length > 0) return unique.join(" & ");
+    return null;
+  }
+
+  if (group.cost > 0) {
+    return formatCurrency(group.cost, group.currency || currencyCode || "CHF");
+  }
+
+  return null;
+}
 
 export function MaintenanceList({ records, currencyCode, userLocations, onEdit }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
@@ -220,6 +249,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                   summary = maintenanceTypeLabels[group.type] || group.type;
                 }
 
+                const metric = getCollapsedMetric(group, currencyCode);
+
                 return (
                   <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
                     <button
@@ -227,27 +258,29 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       onClick={() => toggleExpand(group.id)}
                       aria-expanded={isExpanded}
                       aria-controls={`maintenance-details-${group.id}`}
-                      className="group flex w-full cursor-pointer items-start gap-3 py-3 pl-0 text-left"
+                      className="group flex w-full cursor-pointer items-start gap-3 py-2.5 pl-0 text-left"
                     >
                       <div className="mt-0.5 grid h-11 w-11 place-items-center rounded-xl bg-gray-50 text-secondary transition-colors group-hover:bg-primary/10 group-hover:text-primary dark:bg-navy-700 dark:text-navy-300 dark:group-hover:bg-navy-600 dark:group-hover:text-primary-light shrink-0">
                         <Icon className="h-5 w-5" />
                       </div>
 
                       <div className="flex-1 min-w-0 pt-0.5">
-                        <div className="flex items-center justify-between">
-                          <h3 suppressHydrationWarning className="font-bold text-foreground dark:text-white">
+                        {/* Row 1: date left, odo + chevron right */}
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white">
                             {dateFormatter.format(new Date(group.date))}
                           </h3>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-foreground dark:text-white tabular-nums">
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
                               {formatNumber(group.odo)} km
                             </span>
                             <ChevronDown className={clsx("h-4 w-4 text-secondary transition-transform dark:text-navy-400", isExpanded && "rotate-180")} />
                           </div>
                         </div>
 
-                        <div className="flex items-start justify-between gap-4 mt-0.5">
-                          <p className="text-sm text-secondary dark:text-navy-400 line-clamp-2">
+                        {/* Row 2: Context — summary left, metric right */}
+                        <div className="flex items-center justify-between gap-3 mt-0.5">
+                          <p className="min-w-0 text-xs text-secondary dark:text-navy-400 line-clamp-1">
                             {group.count > 1 && (
                               <span className="mr-1.5 inline-flex items-center justify-center rounded-md bg-secondary/10 px-1.5 py-0.5 text-[10px] font-bold text-secondary dark:bg-navy-600 dark:text-navy-200 align-middle">
                                 {group.count}x
@@ -255,10 +288,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                             )}
                             {summary}
                           </p>
-
-                          <span className="shrink-0 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
-                            {maintenanceTypeLabels[group.type] || group.type}
-                          </span>
+                          {metric && (
+                            <span className="shrink-0 text-xs font-medium tabular-nums text-secondary/70 dark:text-navy-500">
+                              {metric}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </button>
