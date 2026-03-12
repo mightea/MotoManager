@@ -245,7 +245,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const ActiveSortIcon = sortOptions.find(o => o.id === currentSort)?.icon;
 
   return (
-    <div className="container mx-auto p-4 space-y-10 pb-28 sm:pb-24 animate-fade-in">
+    <div className="container mx-auto p-4 space-y-6 pb-28 sm:pb-24 animate-fade-in">
 
       {/* Header Actions */}
       <div className="flex items-center justify-between">
@@ -301,17 +301,17 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         {cards.length === 0 ? (
-          <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
-            <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">
-              <Gauge className="h-8 w-8 text-gray-400 dark:text-navy-300" />
+          <div className="col-span-full flex min-h-[220px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-10 text-center dark:border-navy-700 dark:bg-navy-800/50">
+            <div className="mb-3 grid h-12 w-12 place-items-center rounded-xl bg-gray-100 dark:bg-navy-700">
+              <Gauge className="h-6 w-6 text-gray-400 dark:text-navy-300" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground dark:text-white">
+            <h3 className="text-base font-semibold text-foreground dark:text-white">
               Keine Motorräder gefunden
             </h3>
-            <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
-              Deine Garage ist leer. Füge dein erstes Motorrad hinzu, um Wartungen und Kilometerstände zu verwalten.
+            <p className="mt-1.5 max-w-sm text-sm text-secondary dark:text-navy-400">
+              Deine Garage ist leer. Füge dein erstes Motorrad hinzu.
             </p>
-            <Button onClick={() => setIsAddOpen(true)} size="lg" className="mt-6">
+            <Button onClick={() => setIsAddOpen(true)} className="mt-5">
               <Plus className="h-4 w-4" />
               Motorrad hinzufügen
             </Button>
@@ -324,7 +324,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       </div>
 
       {cards.length > 0 && (
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-navy-700">
+        <div className="pt-2 border-t border-gray-100 dark:border-navy-700">
           <DashboardStats stats={stats} />
         </div>
       )}
