@@ -215,7 +215,7 @@ export function Header({ user }: { user: User | null }) {
             ) : (
               <Link
                 to="/auth/login"
-                className="hidden rounded-full bg-primary px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark md:block"
+                className="hidden rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 md:block"
               >
                 Login
               </Link>
@@ -312,7 +312,7 @@ export function Header({ user }: { user: User | null }) {
                 <Link
                   to="/auth/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="mt-4 block w-full rounded-lg bg-primary px-4 py-3 text-center text-base font-medium text-white hover:bg-primary-dark"
+                  className="mt-4 block w-full rounded-xl bg-primary px-4 py-3 text-center text-base font-semibold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-[0.98]"
                 >
                   Login
                 </Link>
