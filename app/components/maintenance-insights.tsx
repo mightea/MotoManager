@@ -72,13 +72,15 @@ export function MaintenanceInsightsCard({
   return (
     <div
       className={clsx(
-        "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800",
+        "rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800",
         className,
       )}
     >
-      <h2 className="mb-4 text-base font-semibold text-foreground dark:text-white">
-        Service-Intervalle
-      </h2>
+      <div className="pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
+        <h2 className="text-sm font-semibold text-foreground dark:text-white">
+          Service-Intervalle
+        </h2>
+      </div>
 
       {Object.keys(groupedInsights).length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-200 px-4 py-6 text-center text-secondary dark:border-navy-600 dark:text-navy-300">

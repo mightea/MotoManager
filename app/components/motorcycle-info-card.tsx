@@ -56,12 +56,12 @@ export function MotorcycleInfoCard({
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-      <div className="mb-1 flex items-center gap-2">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <div className="flex items-center gap-2 pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
         <button
           type="button"
           onClick={() => setDetailsExpanded((prev) => !prev)}
-          className="flex flex-1 items-center justify-between text-left text-base font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
+          className="flex flex-1 items-center justify-between text-left text-sm font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
           aria-expanded={detailsExpanded}
         >
           <span>Fahrzeugdaten</span>
