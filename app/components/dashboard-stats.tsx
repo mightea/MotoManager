@@ -1,5 +1,6 @@
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 import type { DashboardStats as DashboardStatsType } from "~/utils/home-stats";
+import clsx from "clsx";
 
 
 interface DashboardStatsProps {
@@ -96,7 +97,7 @@ function StatCard({
                 : "border-t-transparent";
 
     return (
-        <div className={`flex flex-col justify-between rounded-xl border border-gray-200 dark:border-navy-700 border-t-2 ${accentBorder} bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:bg-navy-800/50`}>
+        <div className={clsx("flex flex-col justify-between rounded-xl border border-gray-200 dark:border-navy-700 border-t-2 bg-gray-50/50 p-5 transition-shadow hover:shadow-md dark:bg-navy-800/50", accentBorder)}>
             <div>
                 <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
                     {label}

@@ -313,7 +313,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             </p>
             <button
               onClick={() => setIsAddOpen(true)}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-white transition-all hover:bg-primary-dark active:scale-95"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-medium text-white transition-all hover:bg-primary-dark active:scale-95"
             >
               <Plus className="h-4 w-4" />
               Motorrad hinzufügen

@@ -233,8 +233,15 @@ export function Header({ user }: { user: User | null }) {
         </div>
 
         {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="border-t border-gray-100 p-4 rounded-b-2xl md:hidden dark:border-navy-700">
+        <div
+          className={clsx(
+            "overflow-hidden rounded-b-2xl transition-all duration-300 ease-in-out md:hidden",
+            isMobileMenuOpen
+              ? "max-h-[600px] border-t border-gray-100 opacity-100 dark:border-navy-700"
+              : "max-h-0 opacity-0"
+          )}
+        >
+          <div className="p-4">
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
@@ -312,7 +319,7 @@ export function Header({ user }: { user: User | null }) {
               )}
             </nav>
           </div>
-        )}
+        </div>
       </header>
     </div>
   );
