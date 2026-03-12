@@ -739,19 +739,16 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             }}
             ownerCount={ownerCount}
           />
-          <div className="hidden md:block">
-            <MaintenanceInsightsCard insights={insights} />
-          </div>
-        </div>
-
-        <div className="space-y-5 md:col-span-2">
+          <MaintenanceInsightsCard insights={insights} />
           <OpenIssuesCard
             issues={openIssues}
             dateFormatter={dateFormatter}
             onAddIssue={() => openIssueDialog(null)}
             onIssueSelect={(issue) => openIssueDialog(issue)}
           />
+        </div>
 
+        <div className="space-y-5 md:col-span-2">
           {/* Maintenance History Card */}
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
             <div className="mb-4 flex items-center justify-between">
@@ -778,10 +775,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             />
           </div>
         </div>
-      </div>
-
-      <div className="md:hidden">
-        <MaintenanceInsightsCard insights={insights} />
       </div>
 
       <Modal
