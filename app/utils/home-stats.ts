@@ -5,7 +5,7 @@ import type {
   MaintenanceRecord,
   Motorcycle,
   UserSettings,
-} from "~/db/schema";
+} from "~/types/db";
 import {
   getNextInspectionInfo,
   type NextInspectionInfo,
@@ -74,127 +74,145 @@ const registerOdoForYear = (
   }
 };
 
-export function buildDashboardItems({
-  motorcycles,
-  issues,
-  maintenance,
-  locationHistory,
-  locations,
-  year,
-  settings,
-}: BuildDashboardItemsArgs): MotorcycleDashboardItem[] {
-  return motorcycles.map((moto) => {
-    const relatedIssues = issues.filter((issue) => issue.motorcycleId === moto.id);
-    const relatedMaintenance = maintenance.filter(
-      (entry) => entry.motorcycleId === moto.id,
-    );
-    const relatedLocations = locationHistory.filter(
-      (entry) =>
-        entry.motorcycleId === moto.id && entry.odometer !== null,
-    );
+export function buildDashboardItems(args: BuildDashboardItemsArgs): MotorcycleDashboardItem[] {
+  const safeMotos = Array.isArray(args.motorcycles) ? args.motorcycles : [];
+  const safeIssues = Array.isArray(args.issues) ? args.issues : [];
+  const safeMaintenance = Array.isArray(args.maintenance) ? args.maintenance : [];
+  const safeHistory = Array.isArray(args.locationHistory) ? args.locationHistory : [];
+  const safeLocations = Array.isArray(args.locations) ? args.locations : [];
+  const year = args.year;
+  const settings = args.settings;
 
-    // Calculate last activity
-    const allDates = [
-      moto.purchaseDate,
-      ...relatedIssues.map((i) => i.date),
-      ...relatedMaintenance.map((m) => m.date),
-      ...relatedLocations.map((l) => l.date),
-    ].filter((d): d is string => typeof d === "string" && d.length > 0);
+  return safeMotos.map((moto) => {
+    try {
+      const relatedIssues = safeIssues.filter((issue) => issue.motorcycleId === moto.id);
+      const relatedMaintenance = safeMaintenance.filter(
+        (entry) => entry.motorcycleId === moto.id,
+      );
+      const relatedLocations = safeHistory.filter(
+        (entry) =>
+          entry.motorcycleId === moto.id && entry.odometer !== null,
+      );
 
-    const lastActivity = allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).at(0) ?? null;
+      // Calculate last activity
+      const allDates = [
+        moto.purchaseDate,
+        ...relatedIssues.map((i) => i.date),
+        ...relatedMaintenance.map((m) => m.date),
+        ...relatedLocations.map((l) => l.date),
+      ].filter((d): d is string => typeof d === "string" && d.length > 0);
 
-    const openIssuesCount = relatedIssues.filter(
-      (issue) => issue.status !== "done",
-    ).length;
+      const lastActivity = allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime()).at(0) ?? null;
 
-    const odometerCandidates: Array<number | undefined> = [
-      moto.initialOdo,
-      moto.manualOdo ?? undefined,
-      ...relatedMaintenance.map((entry) => entry.odo),
-      ...relatedIssues.map((entry) => entry.odo),
-      ...relatedLocations.map((entry) => entry.odometer ?? undefined),
-    ];
+      const openIssuesCount = relatedIssues.filter(
+        (issue) => issue.status !== "done",
+      ).length;
 
-    const odometerValues = odometerCandidates.filter(
-      (value): value is number =>
-        typeof value === "number" && Number.isFinite(value),
-    );
+      const odometerCandidates: Array<number | undefined> = [
+        moto.initialOdo,
+        moto.manualOdo ?? undefined,
+        ...relatedMaintenance.map((entry) => entry.odo),
+        ...relatedIssues.map((entry) => entry.odo),
+        ...relatedLocations.map((entry) => entry.odometer ?? undefined),
+      ];
 
-    const maxOdometer = odometerValues.reduce(
-      (max, value) => (value > max ? value : max),
-      moto.initialOdo,
-    );
+      const odometerValues = odometerCandidates.filter(
+        (value): value is number =>
+          typeof value === "number" && Number.isFinite(value),
+      );
 
-    const odometerByYear = new Map<number, number>();
+      const maxOdometer = odometerValues.reduce(
+        (max, value) => (value > max ? value : max),
+        moto.initialOdo,
+      );
 
-    relatedIssues.forEach((issue) =>
-      registerOdoForYear(odometerByYear, issue.date ?? null, issue.odo),
-    );
-    relatedMaintenance.forEach((entry) =>
-      registerOdoForYear(odometerByYear, entry.date, entry.odo),
-    );
-    relatedLocations.forEach((entry) =>
-      registerOdoForYear(odometerByYear, entry.date, entry.odometer),
-    );
+      const odometerByYear = new Map<number, number>();
 
-    // If we have a manual odometer reading, attribute it to the last known activity date
-    // This prevents it from being treated as "today's" reading if the bike hasn't been ridden this year.
-    if (moto.manualOdo && lastActivity) {
-      registerOdoForYear(odometerByYear, lastActivity, moto.manualOdo);
+      relatedIssues.forEach((issue) =>
+        registerOdoForYear(odometerByYear, issue.date ?? null, issue.odo),
+      );
+      relatedMaintenance.forEach((entry) =>
+        registerOdoForYear(odometerByYear, entry.date, entry.odo),
+      );
+      relatedLocations.forEach((entry) =>
+        registerOdoForYear(odometerByYear, entry.date, entry.odometer),
+      );
+
+      // If we have a manual odometer reading, attribute it to the last known activity date
+      // This prevents it from being treated as "today's" reading if the bike hasn't been ridden this year.
+      if (moto.manualOdo && lastActivity) {
+        registerOdoForYear(odometerByYear, lastActivity, moto.manualOdo);
+      }
+
+      const previousYearEntries = Array.from(odometerByYear.entries())
+        .filter(([entryYear]) => entryYear < year)
+        .sort((a, b) => b[0] - a[0]);
+
+      const baselineOdometer = Math.max(
+        previousYearEntries.at(0)?.[1] ?? moto.initialOdo ?? 0,
+        moto.initialOdo ?? 0,
+      );
+
+      const odometerThisYear = Math.max(0, maxOdometer - baselineOdometer);
+
+      const lastInspection = relatedMaintenance
+        .filter((entry) => entry.type === "inspection" && entry.date)
+        .map((entry) => entry.date as string)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+        .at(0) ?? null;
+
+      const nextInspection = getNextInspectionInfo({
+        firstRegistration: moto.firstRegistration,
+        lastInspection,
+        isVeteran: moto.isVeteran ?? false,
+      });
+
+      const insights = getMaintenanceInsights(relatedMaintenance, maxOdometer, settings);
+      const overdueMaintenanceItems = insights
+        .filter((i) => i.status === "overdue")
+        .map((i) => i.label);
+      const hasOverdueMaintenance = overdueMaintenanceItems.length > 0;
+
+      const currentLocationId = relatedMaintenance
+        .filter(r => r.type === "location")
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ?? null;
+
+      const location = safeLocations.find(l => l.id === currentLocationId);
+      const currentLocationName = location?.name ?? null;
+      const currentLocationCountryCode = location?.countryCode ?? null;
+
+      return {
+        ...moto,
+        lastInspection,
+        numberOfIssues: openIssuesCount,
+        odometer: maxOdometer,
+        odometerThisYear: odometerThisYear,
+        nextInspection: nextInspection,
+        lastActivity: lastActivity,
+        image: moto.image,
+        hasOverdueMaintenance,
+        overdueMaintenanceItems,
+        currentLocationId,
+        currentLocationName,
+        currentLocationCountryCode,
+      };
+    } catch (e) {
+      console.error(`Error processing motorcycle ${moto.id}:`, e);
+      return {
+        ...moto,
+        lastInspection: null,
+        numberOfIssues: 0,
+        odometer: moto.initialOdo,
+        odometerThisYear: 0,
+        nextInspection: null,
+        lastActivity: null,
+        hasOverdueMaintenance: false,
+        overdueMaintenanceItems: [],
+        currentLocationId: null,
+        currentLocationName: null,
+        currentLocationCountryCode: null,
+      };
     }
-
-    const previousYearEntries = Array.from(odometerByYear.entries())
-      .filter(([entryYear]) => entryYear < year)
-      .sort((a, b) => b[0] - a[0]);
-
-    const baselineOdometer = Math.max(
-      previousYearEntries.at(0)?.[1] ?? moto.initialOdo ?? 0,
-      moto.initialOdo ?? 0,
-    );
-
-    const odometerThisYear = Math.max(0, maxOdometer - baselineOdometer);
-
-    const lastInspection = relatedMaintenance
-      .filter((entry) => entry.type === "inspection" && entry.date)
-      .map((entry) => entry.date as string)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-      .at(0) ?? null;
-
-    const nextInspection = getNextInspectionInfo({
-      firstRegistration: moto.firstRegistration,
-      lastInspection,
-      isVeteran: moto.isVeteran ?? false,
-    });
-
-    const insights = getMaintenanceInsights(relatedMaintenance, maxOdometer, settings);
-    const overdueMaintenanceItems = insights
-      .filter((i) => i.status === "overdue")
-      .map((i) => i.label);
-    const hasOverdueMaintenance = overdueMaintenanceItems.length > 0;
-
-    const currentLocationId = relatedMaintenance
-      .filter(r => r.type === "location")
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ?? null;
-
-    const location = locations.find(l => l.id === currentLocationId);
-    const currentLocationName = location?.name ?? null;
-    const currentLocationCountryCode = location?.countryCode ?? null;
-
-    return {
-      ...moto,
-      lastInspection,
-      numberOfIssues: openIssuesCount,
-      odometer: maxOdometer,
-      odometerThisYear: odometerThisYear,
-      nextInspection: nextInspection,
-      lastActivity: lastActivity,
-      image: moto.image,
-      hasOverdueMaintenance,
-      overdueMaintenanceItems,
-      currentLocationId,
-      currentLocationName,
-      currentLocationCountryCode,
-    };
   });
 }
 
@@ -209,12 +227,16 @@ export function buildDashboardStats({
   motorcycles: Motorcycle[];
   year: number;
 }): DashboardStats {
-  const totalKmThisYear = items.reduce(
+  const safeItems = Array.isArray(items) ? items : [];
+  const safeMaintenance = Array.isArray(maintenance) ? maintenance : [];
+  const safeMotorcycles = Array.isArray(motorcycles) ? motorcycles : [];
+
+  const totalKmThisYear = safeItems.reduce(
     (sum, moto) => sum + (moto.odometerThisYear ?? 0),
     0,
   );
 
-  const totalKmOverall = items.reduce((sum, moto) => {
+  const totalKmOverall = safeItems.reduce((sum, moto) => {
     const distance = Math.max(
       0,
       (moto.odometer ?? 0) - (moto.initialOdo ?? 0),
@@ -222,12 +244,12 @@ export function buildDashboardStats({
     return sum + distance;
   }, 0);
 
-  const totalActiveIssues = items.reduce(
+  const totalActiveIssues = safeItems.reduce(
     (sum, moto) => sum + (moto.numberOfIssues ?? 0),
     0,
   );
 
-  const totalMaintenanceCostThisYear = maintenance.reduce((sum, entry) => {
+  const totalMaintenanceCostThisYear = safeMaintenance.reduce((sum, entry) => {
     if (!entry.date) {
       return sum;
     }
@@ -240,9 +262,9 @@ export function buildDashboardStats({
     return sum + costValue;
   }, 0);
 
-  const veteranCount = motorcycles.filter((moto) => moto.isVeteran).length;
+  const veteranCount = safeMotorcycles.filter((moto) => moto.isVeteran).length;
 
-  const topRider = items.reduce<DashboardStats["topRider"]>((current, moto) => {
+  const topRider = safeItems.reduce<DashboardStats["topRider"]>((current, moto) => {
     if (moto.odometerThisYear <= 0) {
       return current;
     }
@@ -262,7 +284,7 @@ export function buildDashboardStats({
 
   return {
     year,
-    totalMotorcycles: motorcycles.length,
+    totalMotorcycles: safeMotorcycles.length,
     totalKmThisYear,
     totalKmOverall,
     totalActiveIssues,
@@ -276,11 +298,25 @@ export function buildDashboardData(args: BuildDashboardItemsArgs): {
   items: MotorcycleDashboardItem[];
   stats: DashboardStats;
 } {
-  const items = buildDashboardItems(args);
+  const safeMotorcycles = Array.isArray(args.motorcycles) ? args.motorcycles : [];
+  const safeMaintenance = Array.isArray(args.maintenance) ? args.maintenance : [];
+  const safeIssues = Array.isArray(args.issues) ? args.issues : [];
+  const safeLocationHistory = Array.isArray(args.locationHistory) ? args.locationHistory : [];
+  const safeLocations = Array.isArray(args.locations) ? args.locations : [];
+
+  const items = buildDashboardItems({
+    ...args,
+    motorcycles: safeMotorcycles,
+    maintenance: safeMaintenance,
+    issues: safeIssues,
+    locationHistory: safeLocationHistory,
+    locations: safeLocations,
+  });
+
   const stats = buildDashboardStats({
     items,
-    maintenance: args.maintenance,
-    motorcycles: args.motorcycles,
+    maintenance: safeMaintenance,
+    motorcycles: safeMotorcycles,
     year: args.year,
   });
   return { items, stats };

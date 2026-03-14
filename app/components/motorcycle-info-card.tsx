@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Plus, Fuel, Route, Navigation2 } from "lucide-react";
 import clsx from "clsx";
-import type { Motorcycle, PreviousOwner } from "~/db/schema";
+import type { Motorcycle, PreviousOwner } from "~/types/db";
 import { StatisticEntry } from "./statistic-entry";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 

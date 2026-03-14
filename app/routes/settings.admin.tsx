@@ -10,18 +10,14 @@ import {
   deleteCurrencySetting,
   getCurrencies,
   updateCurrencySetting,
-  updateCurrencyByCode,
-} from "~/db/providers/settings.server";
-import { getDb } from "~/db";
+} from "~/services/settings.server";
 import {
   createUser,
-  deleteUser,
   listUsers,
   requireAdmin,
   requireUser,
   updateUser,
   updateUserPassword,
-  updateUserRole,
 } from "~/services/auth.server";
 import { USER_ROLES } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
@@ -30,6 +26,7 @@ import { useEffect, useState } from "react";
 import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
+import { fetchFromBackend } from "~/utils/backend.server";
 
 export function meta() {
   return [
@@ -39,23 +36,21 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user } = await requireUser(request);
+  const { user, token } = await requireUser(request);
   requireAdmin(user);
 
-  const db = await getDb();
   const [users, currencies] = await Promise.all([
-    listUsers(),
-    getCurrencies(db),
+    listUsers(token),
+    getCurrencies(),
   ]);
 
   return { users, currencies, user };
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { user: currentUser } = await requireUser(request);
+  const { user: currentUser, token } = await requireUser(request);
   requireAdmin(currentUser);
 
-  const db = await getDb();
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -97,32 +92,16 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     try {
-      await updateUser(userId, { email, username, name, role });
+      await updateUser(userId, { email, username, name, role }, token);
 
       if (password && password.length >= 8) {
-        await updateUserPassword(userId, password);
+        await updateUserPassword(userId, password, token);
       }
 
       return { success: "Benutzer erfolgreich aktualisiert." };
     } catch (e: any) {
       return { error: e.message || "Fehler beim Aktualisieren des Benutzers." };
     }
-  }
-
-  if (intent === "updateUserRole") {
-    const userId = Number(formData.get("userId"));
-    const role = formData.get("role") as any;
-
-    if (!userId || !USER_ROLES.includes(role)) {
-      return { error: "Ungültige Daten." };
-    }
-
-    if (userId === currentUser.id) {
-      return { error: "Du kannst deine eigene Rolle nicht ändern." };
-    }
-
-    await updateUserRole(userId, role);
-    return { success: "Benutzerrolle aktualisiert." };
   }
 
   if (intent === "deleteUser") {
@@ -136,7 +115,7 @@ export async function action({ request }: Route.ActionArgs) {
       return { error: "Du kannst dich nicht selbst löschen." };
     }
 
-    await deleteUser(userId);
+    await fetchFromBackend(`/auth/users/${userId}`, { method: "DELETE" }, token);
     return { success: "Benutzer gelöscht." };
   }
 
@@ -149,43 +128,11 @@ export async function action({ request }: Route.ActionArgs) {
       return { error: "Ungültige Eingaben für Währung." };
     }
 
-    const upperCode = code.toUpperCase();
-
-    // Fetch rates from API
     try {
-      const response = await fetch("https://api.frankfurter.app/latest?from=CHF");
-      if (!response.ok) {
-        throw new Error("Fehler beim Abrufen der Wechselkurse.");
-      }
-      const data = await response.json() as { rates: Record<string, number> };
-      const rates = data.rates;
-
-      // Check if new currency exists in rates
-      const rate = rates[upperCode];
-      if (!rate) {
-        return { error: `Währungscode "${upperCode}" nicht von der API unterstützt.` };
-      }
-
-      // Frankfurter returns rates relative to base (1 CHF = X Currency).
-      // We need the factor to convert FROM Currency TO CHF (1 Currency = Y CHF).
-      // So we invert the rate: 1 / rate.
-      await createCurrencySetting(db, { code: upperCode, symbol, conversionFactor: 1 / rate });
-
-      // Update all other currencies if they exist in the rates
-      const existingCurrencies = await getCurrencies(db);
-      const updatePromises = existingCurrencies.map(async (currency) => {
-        const newRate = rates[currency.code];
-        if (newRate) {
-          await updateCurrencyByCode(db, currency.code, 1 / newRate);
-        }
-      });
-      await Promise.all(updatePromises);
-
-      return { success: `Währung ${upperCode} erstellt und Kurse aktualisiert.` };
-
-    } catch (error) {
-      console.error("Currency API Error:", error);
-      return { error: "Fehler bei der Kommunikation mit der Wechselkurs-API." };
+      await createCurrencySetting(token, { code: code.toUpperCase(), symbol, conversionFactor: 1 });
+      return { success: `Währung ${code.toUpperCase()} erstellt.` };
+    } catch (error: any) {
+      return { error: error.message || "Fehler beim Erstellen der Währung." };
     }
   }
 
@@ -199,20 +146,19 @@ export async function action({ request }: Route.ActionArgs) {
       return { error: "Ungültige Eingaben." };
     }
 
-    await updateCurrencySetting(db, id, { code, symbol, conversionFactor });
+    await updateCurrencySetting(token, id, { code, symbol, conversionFactor });
     return { success: "Währung aktualisiert." };
   }
 
   if (intent === "deleteCurrency") {
     const id = Number(formData.get("id"));
-    await deleteCurrencySetting(db, id);
+    await deleteCurrencySetting(token, id);
     return { success: "Währung gelöscht." };
   }
 
   if (intent === "regeneratePreviews") {
-    const { regenerateAllDocumentPreviews } = await import("~/services/documents.server");
-    const count = await regenerateAllDocumentPreviews(db);
-    return { success: `${count} Vorschauen erfolgreich neu generiert.` };
+    await fetchFromBackend("/admin/regenerate-previews", { method: "POST" }, token);
+    return { success: `Vorschauen erfolgreich neu generiert.` };
   }
 
   return null;

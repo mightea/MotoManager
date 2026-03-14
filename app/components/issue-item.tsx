@@ -1,6 +1,6 @@
 import { AlertTriangle, CircleAlert, Info } from "lucide-react";
 import clsx from "clsx";
-import type { Issue } from "~/db/schema";
+import type { Issue } from "~/types/db";
 
 type IssueItemProps = {
   issue: Issue;

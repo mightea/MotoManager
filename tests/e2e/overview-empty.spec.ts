@@ -1,7 +1,6 @@
 import { expect, test } from "./fixtures";
-import { testUserCredentials } from "./utils/test-db";
 
-const { identifier, password } = testUserCredentials;
+const { identifier, password } = { identifier: "test@example.com", password: "password123" };
 
 test("shows the empty garage state when no motorcycles exist", async ({ page }) => {
   await page.goto("/");

@@ -1,5 +1,13 @@
 import { Bike, Mail, User, Lock, ArrowRight, Fingerprint } from "lucide-react";
-import { Form, data, redirect, useActionData, useLoaderData, useNavigation, useNavigate } from "react-router";
+import {
+  Form,
+  data,
+  redirect,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useNavigate,
+} from "react-router";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/auth.login";
@@ -38,7 +46,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const userCount = await getUserCount();
-  const isFirstUser = userCount === 0;
+  const isFirstUser = false; // userCount === 0;
 
   return data(
     {
@@ -94,21 +102,24 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     if (Object.keys(errors).length > 0) {
-      return data(
-        { success: false, errors, form: "register" },
-        { status: 400 },
-      );
+      return data({ success: false, errors, form: "register" }, { status: 400 });
     }
 
     try {
-      const newUser = await createUser({
+      const _newUser = await createUser({
         email,
         username,
         name,
         password,
       });
 
-      const session = await createSession(newUser.id);
+      // After registration, we need to login to get the token
+      const loginResult = await verifyLogin(username, password);
+      if (!loginResult) {
+        return redirect("/auth/login");
+      }
+
+      const session = await createSession(loginResult.token);
 
       const redirectTo = redirectToRaw.startsWith("/") ? redirectToRaw : "/";
       const response = redirect(redirectTo);
@@ -121,10 +132,7 @@ export async function action({ request }: Route.ActionArgs) {
         error instanceof Error
           ? error.message
           : "Registrierung fehlgeschlagen. Bitte versuche es erneut.";
-      return data(
-        { success: false, message, form: "register" },
-        { status: 400 },
-      );
+      return data({ success: false, message, form: "register" }, { status: 400 });
     }
   }
 
@@ -140,8 +148,7 @@ export async function action({ request }: Route.ActionArgs) {
       errors.identifier = "Bitte gib eine gültige E-Mail-Adresse ein.";
     }
   } else if (!USERNAME_REGEX.test(identifier)) {
-    errors.identifier =
-      "Der Benutzername muss 3-32 Zeichen lang sein.";
+    errors.identifier = "Der Benutzername muss 3-32 Zeichen lang sein.";
   }
 
   if (password.length === 0) {
@@ -149,22 +156,19 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (Object.keys(errors).length > 0) {
-    return data(
-      { success: false, errors, form: "login" },
-      { status: 400 },
-    );
+    return data({ success: false, errors, form: "login" }, { status: 400 });
   }
 
-  const user = await verifyLogin(identifier, password);
+  const loginResult = await verifyLogin(identifier, password);
 
-  if (!user) {
+  if (!loginResult) {
     return data(
       { success: false, message: "E-Mail oder Passwort ist falsch.", form: "login" },
       { status: 400 },
     );
   }
 
-  const session = await createSession(user.id);
+  const session = await createSession(loginResult.token);
 
   const redirectTo = redirectToRaw.startsWith("/") ? redirectToRaw : "/";
   const response = redirect(redirectTo);
@@ -194,7 +198,8 @@ export default function Login() {
       ? (actionData as any).message
       : null;
 
-  const fieldErrors = actionData && !actionData.success && "errors" in actionData ? (actionData as any).errors : null;
+  const fieldErrors =
+    actionData && !actionData.success && "errors" in actionData ? (actionData as any).errors : null;
 
   const handlePasskeyLogin = async () => {
     try {
@@ -204,7 +209,9 @@ export default function Login() {
       navigate(redirectTo);
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
-        setPasskeyError("Passkey-Login fehlgeschlagen. Bitte versuche es erneut oder nutze dein Passwort.");
+        setPasskeyError(
+          "Passkey-Login fehlgeschlagen. Bitte versuche es erneut oder nutze dein Passwort.",
+        );
       }
     }
   };
@@ -280,7 +287,8 @@ export default function Login() {
                     Administrator Setup
                   </h2>
                   <p className="mt-1 text-xs leading-relaxed text-secondary dark:text-navy-300">
-                    Willkommen! Erstelle das erste Administrationskonto, um deine Garage zu verwalten.
+                    Willkommen! Erstelle das erste Administrationskonto, um deine Garage zu
+                    verwalten.
                   </p>
                 </div>
 
@@ -290,7 +298,10 @@ export default function Login() {
 
                   <div className="space-y-4">
                     <div className="group relative">
-                      <label htmlFor="name" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                      <label
+                        htmlFor="name"
+                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                      >
                         Vollständiger Name
                       </label>
                       <div className="relative">
@@ -302,15 +313,23 @@ export default function Login() {
                           placeholder="Max Mustermann"
                           className={clsx(
                             "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
-                            fieldErrors?.name && "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50"
+                            fieldErrors?.name &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
                           )}
                         />
                       </div>
-                      {fieldErrors?.name && <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">{fieldErrors.name}</p>}
+                      {fieldErrors?.name && (
+                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          {fieldErrors.name}
+                        </p>
+                      )}
                     </div>
 
                     <div className="group relative">
-                      <label htmlFor="email" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                      <label
+                        htmlFor="email"
+                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                      >
                         E-Mail Adresse
                       </label>
                       <div className="relative">
@@ -323,19 +342,29 @@ export default function Login() {
                           placeholder="email@beispiel.ch"
                           className={clsx(
                             "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
-                            fieldErrors?.email && "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50"
+                            fieldErrors?.email &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
                           )}
                         />
                       </div>
-                      {fieldErrors?.email && <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">{fieldErrors.email}</p>}
+                      {fieldErrors?.email && (
+                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          {fieldErrors.email}
+                        </p>
+                      )}
                     </div>
 
                     <div className="group relative">
-                      <label htmlFor="username" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                      <label
+                        htmlFor="username"
+                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                      >
                         Benutzername
                       </label>
                       <div className="relative">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-secondary/40 transition-colors group-focus-within:text-primary">@</div>
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-secondary/40 transition-colors group-focus-within:text-primary">
+                          @
+                        </div>
                         <input
                           id="username"
                           name="username"
@@ -343,16 +372,24 @@ export default function Login() {
                           placeholder="benutzername"
                           className={clsx(
                             "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
-                            fieldErrors?.username && "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50"
+                            fieldErrors?.username &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
                           )}
                         />
                       </div>
-                      {fieldErrors?.username && <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">{fieldErrors.username}</p>}
+                      {fieldErrors?.username && (
+                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          {fieldErrors.username}
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="group relative">
-                        <label htmlFor="new-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                        <label
+                          htmlFor="new-password"
+                          className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                        >
                           Passwort
                         </label>
                         <div className="relative">
@@ -364,14 +401,22 @@ export default function Login() {
                             autoComplete="new-password"
                             className={clsx(
                               "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
-                              fieldErrors?.password && "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50"
+                              fieldErrors?.password &&
+                                "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
                             )}
                           />
                         </div>
-                        {fieldErrors?.password && <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">{fieldErrors.password}</p>}
+                        {fieldErrors?.password && (
+                          <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                            {fieldErrors.password}
+                          </p>
+                        )}
                       </div>
                       <div className="group relative">
-                        <label htmlFor="confirm-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                        <label
+                          htmlFor="confirm-password"
+                          className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                        >
                           Bestätigen
                         </label>
                         <div className="relative">
@@ -383,11 +428,16 @@ export default function Login() {
                             autoComplete="new-password"
                             className={clsx(
                               "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
-                              fieldErrors?.confirmPassword && "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50"
+                              fieldErrors?.confirmPassword &&
+                                "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
                             )}
                           />
                         </div>
-                        {fieldErrors?.confirmPassword && <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">{fieldErrors.confirmPassword}</p>}
+                        {fieldErrors?.confirmPassword && (
+                          <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                            {fieldErrors.confirmPassword}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -404,8 +454,12 @@ export default function Login() {
                     disabled={isRegisterSubmitting}
                     className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
                   >
-                    <span className="relative z-10">{isRegisterSubmitting ? "Wird erstellt..." : "System initialisieren"}</span>
-                    {!isRegisterSubmitting && <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                    <span className="relative z-10">
+                      {isRegisterSubmitting ? "Wird erstellt..." : "System initialisieren"}
+                    </span>
+                    {!isRegisterSubmitting && (
+                      <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    )}
                     <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                   </button>
                 </Form>
@@ -418,7 +472,10 @@ export default function Login() {
 
                   <div className="space-y-4">
                     <div className="group relative">
-                      <label htmlFor="identifier" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                      <label
+                        htmlFor="identifier"
+                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                      >
                         E-Mail oder Benutzername
                       </label>
                       <div className="relative">
@@ -432,15 +489,23 @@ export default function Login() {
                           placeholder="E-Mail / @username"
                           className={clsx(
                             "block w-full rounded-2xl border-gray-100 bg-white/50 py-3.5 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
-                            fieldErrors?.identifier && "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50"
+                            fieldErrors?.identifier &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
                           )}
                         />
                       </div>
-                      {fieldErrors?.identifier && <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">{fieldErrors.identifier}</p>}
+                      {fieldErrors?.identifier && (
+                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          {fieldErrors.identifier}
+                        </p>
+                      )}
                     </div>
 
                     <div className="group relative">
-                      <label htmlFor="password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400">
+                      <label
+                        htmlFor="password"
+                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                      >
                         Passwort
                       </label>
                       <div className="relative">
@@ -453,11 +518,16 @@ export default function Login() {
                           placeholder="••••••••"
                           className={clsx(
                             "block w-full rounded-2xl border-gray-100 bg-white/50 py-3.5 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
-                            fieldErrors?.password && "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50"
+                            fieldErrors?.password &&
+                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
                           )}
                         />
                       </div>
-                      {fieldErrors?.password && <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">{fieldErrors.password}</p>}
+                      {fieldErrors?.password && (
+                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          {fieldErrors.password}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -481,8 +551,12 @@ export default function Login() {
                       disabled={isLoginSubmitting}
                       className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
                     >
-                      <span className="relative z-10">{isLoginSubmitting ? "Authentifizierung..." : "Login"}</span>
-                      {!isLoginSubmitting && <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                      <span className="relative z-10">
+                        {isLoginSubmitting ? "Authentifizierung..." : "Login"}
+                      </span>
+                      {!isLoginSubmitting && (
+                        <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      )}
                       <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
 

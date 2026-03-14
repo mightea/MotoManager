@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildDashboardData } from "~/utils/home-stats";
-import type { Motorcycle, MaintenanceRecord } from "~/db/schema";
+import type { Motorcycle, MaintenanceRecord } from "~/types/db";
 
 describe("buildDashboardData", () => {
   const mockMotorcycle: Motorcycle = {

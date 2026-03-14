@@ -1,6 +1,6 @@
 import { Modal } from "~/components/modal";
 import { IssueForm } from "~/components/issue-form";
-import type { Issue } from "~/db/schema";
+import type { Issue } from "~/types/db";
 
 interface IssueDialogProps {
   isOpen: boolean;

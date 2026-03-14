@@ -1,6 +1,6 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm } from "~/components/maintenance-form";
-import type { MaintenanceRecord, Location, CurrencySetting } from "~/db/schema";
+import type { MaintenanceRecord, Location, CurrencySetting } from "~/types/db";
 
 interface MaintenanceDialogProps {
   isOpen: boolean;

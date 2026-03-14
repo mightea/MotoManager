@@ -1,6 +1,6 @@
 import { Modal } from "./modal";
 import { PreviousOwnerForm } from "./previous-owner-form";
-import type { PreviousOwner } from "~/db/schema";
+import type { PreviousOwner } from "~/types/db";
 
 interface PreviousOwnerDialogProps {
   isOpen: boolean;
