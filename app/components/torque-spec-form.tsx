@@ -1,7 +1,7 @@
 import { Form, useSubmit } from "react-router";
 import { useState } from "react";
 import { Button } from "./button";
-import type { TorqueSpecification } from "~/db/schema";
+import type { TorqueSpecification } from "~/types/db";
 
 import { Trash2 } from "lucide-react";
 

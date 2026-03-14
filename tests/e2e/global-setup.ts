@@ -1,5 +1,3 @@
-import { prepareTestDatabase } from "./utils/test-db";
-
 export default async function globalSetup() {
-  await prepareTestDatabase();
+  // Global setup skipped in client-only mode
 }

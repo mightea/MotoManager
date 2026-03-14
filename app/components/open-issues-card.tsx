@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import clsx from "clsx";
-import type { Issue } from "~/db/schema";
+import type { Issue } from "~/types/db";
 import { IssueItem } from "~/components/issue-item";
 
 type OpenIssuesCardProps = {

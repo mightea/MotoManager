@@ -1,4 +1,4 @@
-import { type MaintenanceRecord, type UserSettings } from "~/db/schema";
+import { type MaintenanceRecord, type UserSettings } from "~/types/db";
 
 export const DEFAULT_MAINTENANCE_INTERVALS = {
   tire: 8,

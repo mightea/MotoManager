@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSubmit } from "react-router";
 import { Modal } from "./modal";
 import { Button } from "./button";
-import type { TorqueSpecification } from "~/db/schema";
+import type { TorqueSpecification } from "~/types/db";
 import { AlertTriangle } from "lucide-react";
 import clsx from "clsx";
 

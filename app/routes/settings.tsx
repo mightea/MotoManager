@@ -12,15 +12,11 @@ import {
   getUserSettings,
   updateLocation,
   updateUserSettings,
-} from "~/db/providers/settings.server";
-import { getDb } from "~/db";
+} from "~/services/settings.server";
 import {
   requireUser,
-  updateUserPassword,
-  verifyPassword,
 } from "~/services/auth.server";
-import { authenticators } from "~/db/schema";
-import { eq, and } from "drizzle-orm";
+import { fetchFromBackend } from "~/utils/backend.server";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { useState } from "react";
@@ -45,22 +41,17 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user } = await requireUser(request);
-  const db = await getDb();
+  const { user, token } = await requireUser(request);
   const [locations, settings, userAuthenticators] = await Promise.all([
-    getLocations(db, user.id),
-    getUserSettings(db, user.id),
-    db.query.authenticators.findMany({
-      where: eq(authenticators.userId, user.id),
-      orderBy: (authenticators, { desc }) => [desc(authenticators.createdAt)],
-    }),
+    getLocations(token, user.id),
+    getUserSettings(token, user.id),
+    fetchFromBackend<any[]>("/settings/authenticators", {}, token),
   ]);
   return { locations, user, settings, userAuthenticators };
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { user } = await requireUser(request);
-  const db = await getDb();
+  const { user, token } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -90,7 +81,7 @@ export async function action({ request }: Route.ActionArgs) {
     const coolantKmInterval = parseKm(formData.get("coolantKmInterval"));
     const chainKmInterval = parseKm(formData.get("chainKmInterval"));
 
-    await updateUserSettings(db, user.id, {
+    await updateUserSettings(token, user.id, {
       tireInterval,
       batteryLithiumInterval,
       batteryDefaultInterval,
@@ -114,12 +105,9 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   if (intent === "deleteAuthenticator") {
-// ... (rest of the action remains the same)
     const id = formData.get("id") as string;
     if (!id) return { error: "ID fehlt." };
-    await db.delete(authenticators).where(
-      and(eq(authenticators.id, id), eq(authenticators.userId, user.id))
-    );
+    await fetchFromBackend(`/settings/authenticators/${id}`, { method: "DELETE" }, token);
     return { success: "Passkey gelöscht." };
   }
 
@@ -136,20 +124,22 @@ export async function action({ request }: Route.ActionArgs) {
       return { error: "Die neuen Passwörter stimmen nicht überein." };
     }
 
-    const isCorrect = await verifyPassword(currentPassword, user.passwordHash);
-    if (!isCorrect) {
-      return { error: "Das aktuelle Passwort ist falsch." };
+    try {
+      await fetchFromBackend("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      }, token);
+      return { success: "Passwort erfolgreich geändert." };
+    } catch (err: any) {
+      return { error: err.message || "Passwortänderung fehlgeschlagen." };
     }
-
-    await updateUserPassword(user.id, newPassword);
-    return { success: "Passwort erfolgreich geändert." };
   }
 
   if (intent === "createLocation") {
     const name = formData.get("name") as string;
     const countryCode = formData.get("countryCode") as string;
     if (!name) return { error: "Name ist erforderlich." };
-    await createLocation(db, { name, countryCode: countryCode || "CH", userId: user.id });
+    await createLocation(token, { name, countryCode: countryCode || "CH", userId: user.id });
     return { success: "Lagerort erstellt." };
   }
 
@@ -158,14 +148,14 @@ export async function action({ request }: Route.ActionArgs) {
     const name = formData.get("name") as string;
     const countryCode = formData.get("countryCode") as string;
     if (!id || !name) return { error: "Ungültige Daten." };
-    await updateLocation(db, id, user.id, { name, countryCode: countryCode || "CH" });
+    await updateLocation(token, id, user.id, { name, countryCode: countryCode || "CH" });
     return { success: "Lagerort aktualisiert." };
   }
 
   if (intent === "deleteLocation") {
     const id = Number(formData.get("id"));
     if (!id) return { error: "Ungültige ID." };
-    await deleteLocation(db, id, user.id);
+    await deleteLocation(token, id, user.id);
     return { success: "Lagerort gelöscht." };
   }
 

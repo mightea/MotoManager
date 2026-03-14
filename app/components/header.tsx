@@ -1,11 +1,11 @@
 import { Form, Link, useLocation } from "react-router";
 import { Bike, LogOut, Menu, X, Settings, Shield, ChevronDown } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
-import type { User } from "~/db/schema";
+import { type PublicUser } from "~/types/auth";
 import clsx from "clsx";
 import { useEffect, useState, useRef } from "react";
 
-export function Header({ user }: { user: User | null }) {
+export function Header({ user }: { user: PublicUser | null }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);

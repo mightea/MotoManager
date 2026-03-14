@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
-import type { Motorcycle } from "~/db/schema";
+import type { Motorcycle } from "~/types/db";
 
 type NextInspectionInfo = {
   relativeLabel: string;
@@ -39,7 +39,7 @@ export function MotorcycleDetailHeader({
   navLinks,
   backTo = "/",
   overviewLink,
-  ownerCount,
+  ownerCount: _ownerCount,
 }: MotorcycleDetailHeaderProps) {
   const [imageError, setImageError] = useState(false);
   const [isCompact, setIsCompact] = useState(false);

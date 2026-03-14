@@ -1,4 +1,4 @@
-import type { Issue, MaintenanceRecord, Motorcycle, CurrentLocation } from "~/db/schema";
+import type { Issue, MaintenanceRecord, Motorcycle, CurrentLocation } from "~/types/db";
 
 export type YearlyFleetStats = {
   year: number;
@@ -24,11 +24,16 @@ export type FleetStats = {
  * Calculates fleet statistics over the years.
  */
 export function calculateFleetStats(
-  motorcycles: Motorcycle[],
-  maintenance: MaintenanceRecord[],
-  issues: Issue[],
-  locationHistory: CurrentLocation[]
+  motorcyclesRaw: Motorcycle[],
+  maintenanceRaw: MaintenanceRecord[],
+  issuesRaw: Issue[],
+  locationHistoryRaw: CurrentLocation[]
 ): FleetStats {
+  const motorcycles = Array.isArray(motorcyclesRaw) ? motorcyclesRaw : [];
+  const maintenance = Array.isArray(maintenanceRaw) ? maintenanceRaw : [];
+  const issues = Array.isArray(issuesRaw) ? issuesRaw : [];
+  const locationHistory = Array.isArray(locationHistoryRaw) ? locationHistoryRaw : [];
+
   const yearsMap = new Map<number, YearlyFleetStats>();
   const currentYear = new Date().getFullYear();
   

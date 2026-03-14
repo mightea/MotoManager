@@ -1,5 +1,5 @@
 import { Form, useSubmit, useActionData } from "react-router";
-import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/db/schema";
+import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/types/db";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";

@@ -1,71 +1,22 @@
-import {
-  randomBytes,
-  timingSafeEqual,
-  scrypt as nodeScrypt,
-} from "node:crypto";
-import { promisify } from "node:util";
-import { eq, sql } from "drizzle-orm";
-import { getDb } from "~/db";
-import {
-  sessions,
-  users,
-  motorcycles,
-  locations,
-  type Session,
-  type User,
-  type NewUser,
-  type NewSession,
-} from "~/db/schema";
 import { type PublicUser, type UserRole } from "~/types/auth";
-
-const scrypt = promisify(nodeScrypt);
+import { fetchFromBackend } from "~/utils/backend.server";
 
 const SESSION_COOKIE_NAME = "mb_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
 const SECURE_COOKIE = process.env.NODE_ENV === "production";
 
-export function toPublicUser(user: User): PublicUser {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash: _passwordHash, ...rest } = user;
+export function toPublicUser(user: any): PublicUser {
   return {
-    ...rest,
-    username: rest.username,
-    role: (rest.role as UserRole) ?? "user",
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    name: user.name,
+    role: (user.role as UserRole) ?? "user",
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    lastLoginAt: user.lastLoginAt,
   } satisfies PublicUser;
-}
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-function normalizeUsername(username: string): string {
-  return username.trim().toLowerCase();
-}
-
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-  const derivedKey = (await scrypt(password, salt, 64)) as Buffer;
-  return `${salt}:${derivedKey.toString("hex")}`;
-}
-
-export async function verifyPassword(
-  password: string,
-  hashed: string,
-): Promise<boolean> {
-  const [salt, key] = hashed.split(":");
-  if (!salt || !key) {
-    return false;
-  }
-
-  const derivedKey = (await scrypt(password, salt, 64)) as Buffer;
-  const keyBuffer = Buffer.from(key, "hex");
-
-  if (derivedKey.length !== keyBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(derivedKey, keyBuffer);
 }
 
 function buildCookie(token: string, maxAgeSeconds: number) {
@@ -106,8 +57,8 @@ function parseCookieHeader(request: Request): string | null {
 }
 
 export type AuthSession = {
-  user: User | null;
-  session: Session | null;
+  user: PublicUser | null;
+  token: string | null;
   headers: Record<string, string>;
 };
 
@@ -117,80 +68,27 @@ export async function getCurrentSession(
   const token = parseCookieHeader(request);
 
   if (!token) {
-    return { user: null, session: null, headers: {} };
+    return { user: null, token: null, headers: {} };
   }
 
-  const db = await getDb();
+  try {
+    const response = await fetchFromBackend<any>("/auth/me", {}, token);
 
-  const session = await db.query.sessions.findFirst({
-    where: eq(sessions.token, token),
-  });
-
-  if (!session) {
+    return {
+      user: toPublicUser(response.user),
+      token,
+      headers: { "Set-Cookie": buildCookie(token, SESSION_DURATION_MS / 1000) },
+    };
+  } catch (_error) {
     return {
       user: null,
-      session: null,
+      token: null,
       headers: { "Set-Cookie": clearCookie() },
     };
   }
-
-  const expiresAt = new Date(session.expiresAt);
-  if (Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
-    await db.delete(sessions).where(eq(sessions.id, session.id));
-    return {
-      user: null,
-      session: null,
-      headers: { "Set-Cookie": clearCookie() },
-    };
-  }
-
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, session.userId),
-  });
-
-  if (!user) {
-    await db.delete(sessions).where(eq(sessions.id, session.id));
-    return {
-      user: null,
-      session: null,
-      headers: { "Set-Cookie": clearCookie() },
-    };
-  }
-
-  const renewedExpiresAt = new Date(
-    Date.now() + SESSION_DURATION_MS,
-  ).toISOString();
-  await db
-    .update(sessions)
-    .set({ expiresAt: renewedExpiresAt })
-    .where(eq(sessions.id, session.id));
-
-  return {
-    user,
-    session: { ...session, expiresAt: renewedExpiresAt },
-    headers: { "Set-Cookie": buildCookie(token, SESSION_DURATION_MS / 1000) },
-  };
 }
 
-export async function createSession(userId: number) {
-  const db = await getDb();
-  const token = randomBytes(40).toString("hex");
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
-
-  const newSession: NewSession = {
-    token,
-    userId,
-    expiresAt,
-  };
-
-  await db.transaction(async (tx) => {
-    await tx.insert(sessions).values(newSession);
-    await tx
-      .update(users)
-      .set({ lastLoginAt: new Date().toISOString() })
-      .where(eq(users.id, userId));
-  });
-
+export async function createSession(token: string) {
   return {
     token,
     headers: { "Set-Cookie": buildCookie(token, SESSION_DURATION_MS / 1000) },
@@ -198,12 +96,13 @@ export async function createSession(userId: number) {
 }
 
 export async function destroySessionByToken(token: string | null | undefined) {
-  if (!token) {
-    return { headers: { "Set-Cookie": clearCookie() } };
+  if (token) {
+    try {
+      await fetchFromBackend("/auth/logout", { method: "POST" }, token);
+    } catch (_error) {
+      // Ignore logout errors on backend
+    }
   }
-
-  const db = await getDb();
-  await db.delete(sessions).where(eq(sessions.token, token));
 
   return { headers: { "Set-Cookie": clearCookie() } };
 }
@@ -213,164 +112,68 @@ export async function destroySessionFromRequest(request: Request) {
   return destroySessionByToken(token);
 }
 
-export async function getUserById(id: number) {
-  const db = await getDb();
-  return db.query.users.findFirst({ where: eq(users.id, id) });
-}
-
-export async function findUserByEmail(email: string) {
-  const db = await getDb();
-  const normalized = normalizeEmail(email);
-  return db.query.users.findFirst({ where: eq(users.email, normalized) });
-}
-
-export async function findUserByUsername(username: string) {
-  const db = await getDb();
-  const normalized = normalizeUsername(username);
-  return db.query.users.findFirst({ where: eq(users.username, normalized) });
-}
-
 export async function getUserCount() {
-  const db = await getDb();
-  const [result] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(users);
-
-  return result?.count ?? 0;
+  try {
+    const result = await fetchFromBackend<{ userCount: number }>("/auth/status");
+    return result.userCount;
+  } catch (_e) {
+    return 0;
+  }
 }
 
 export async function createUser(
-  input: Pick<NewUser, "email" | "name" | "username"> & {
-    password: string;
-    role?: UserRole;
-  },
+  input: any,
 ): Promise<PublicUser> {
-  const db = await getDb();
+  const user = await fetchFromBackend<any>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 
-  const normalizedEmail = normalizeEmail(input.email);
-  const existing = await findUserByEmail(normalizedEmail);
-  if (existing) {
-    throw new Error(
-      "Es existiert bereits ein Benutzer mit dieser E-Mail-Adresse.",
-    );
-  }
-
-  const normalizedUsername = normalizeUsername(input.username);
-  const existingByUsername = await findUserByUsername(normalizedUsername);
-  if (existingByUsername) {
-    throw new Error("Benutzername ist bereits vergeben.");
-  }
-
-  const passwordHash = await hashPassword(input.password);
-
-  const role: UserRole = input.role ?? "user";
-
-  const [inserted] = await db
-    .insert(users)
-    .values({
-      email: normalizedEmail,
-      username: normalizedUsername,
-      name: input.name.trim(),
-      passwordHash,
-      role,
-    })
-    .returning();
-
-  return toPublicUser(inserted);
+  return toPublicUser(user);
 }
 
 export async function updateUser(
   userId: number,
-  input: Partial<Pick<NewUser, "email" | "name" | "username" | "role">>,
+  input: any,
+  token: string,
 ): Promise<PublicUser> {
-  const db = await getDb();
+  const user = await fetchFromBackend<any>(`/admin/users/${userId}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  }, token);
 
-  const current = await getUserById(userId);
-  if (!current) {
-    throw new Error("Benutzer nicht gefunden.");
-  }
-
-  const updates: Partial<NewUser> = {
-    updatedAt: new Date().toISOString(),
-  };
-
-  if (input.email) {
-    const normalizedEmail = normalizeEmail(input.email);
-    if (normalizedEmail !== current.email) {
-      const existing = await findUserByEmail(normalizedEmail);
-      if (existing) {
-        throw new Error(
-          "Es existiert bereits ein Benutzer mit dieser E-Mail-Adresse.",
-        );
-      }
-      updates.email = normalizedEmail;
-    }
-  }
-
-  if (input.username) {
-    const normalizedUsername = normalizeUsername(input.username);
-    if (normalizedUsername !== current.username) {
-      const existingByUsername = await findUserByUsername(normalizedUsername);
-      if (existingByUsername) {
-        throw new Error("Benutzername ist bereits vergeben.");
-      }
-      updates.username = normalizedUsername;
-    }
-  }
-
-  if (input.name !== undefined) {
-    updates.name = input.name.trim();
-  }
-
-  if (input.role !== undefined) {
-    updates.role = input.role;
-  }
-
-  const [updated] = await db
-    .update(users)
-    .set(updates)
-    .where(eq(users.id, userId))
-    .returning();
-
-  return toPublicUser(updated);
+  return toPublicUser(user);
 }
 
-export async function updateUserPassword(userId: number, password: string) {
-  const db = await getDb();
-  const passwordHash = await hashPassword(password);
-
-  await db
-    .update(users)
-    .set({
-      passwordHash,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(eq(users.id, userId));
+export async function updateUserPassword(userId: number, password: string, token: string) {
+  await fetchFromBackend(`/admin/users/${userId}`, {
+    method: "PUT",
+    body: JSON.stringify({ password }),
+  }, token);
 }
 
 export async function verifyLogin(
   identifier: string,
   password: string,
-): Promise<User | null> {
-  const normalized = identifier.trim().toLowerCase();
+): Promise<{ user: PublicUser; token: string } | null> {
+  try {
+    const response = await fetchFromBackend<{ user: any; token: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ identifier, password }),
+    });
 
-  let user = await findUserByEmail(normalized);
-
-  if (!user) {
-    user = await findUserByUsername(normalized);
-  }
-
-  if (!user) {
+    return {
+      user: toPublicUser(response.user),
+      token: response.token,
+    };
+  } catch {
     return null;
   }
-
-  const match = await verifyPassword(password, user.passwordHash);
-  return match ? user : null;
 }
 
 export async function requireUser(request: Request) {
-  const { user, headers } = await getCurrentSession(request);
-  if (!user) {
+  const { user, token, headers } = await getCurrentSession(request);
+  if (!user || !token) {
     const url = new URL(request.url);
     const redirectTo = encodeURIComponent(url.pathname + url.search + url.hash);
     throw new Response(null, {
@@ -382,58 +185,22 @@ export async function requireUser(request: Request) {
     });
   }
 
-  return { user, headers };
+  return { user, token, headers };
 }
 
-export function requireAdmin(user: User) {
+export function requireAdmin(user: PublicUser) {
   if (user.role !== "admin") {
     throw new Response("Nicht erlaubt", { status: 403 });
   }
 }
 
-export async function updateUserRole(userId: number, role: UserRole) {
-  const db = await getDb();
-  const [updated] = await db
-    .update(users)
-    .set({
-      role,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(eq(users.id, userId))
-    .returning();
-
-  if (!updated) {
-    throw new Response("Benutzer nicht gefunden", { status: 404 });
-  }
-
-  return toPublicUser(updated);
+export async function listUsers(token: string): Promise<PublicUser[]> {
+  const users = await fetchFromBackend<any[]>("/admin/users", {}, token);
+  return users.map(toPublicUser);
 }
 
-export async function deleteUser(userId: number) {
-  const db = await getDb();
-  await db.delete(users).where(eq(users.id, userId));
-}
-
-export async function listUsers(): Promise<PublicUser[]> {
-  const db = await getDb();
-  const rows = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      username: users.username,
-      name: users.name,
-      role: users.role,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-      lastLoginAt: users.lastLoginAt,
-    })
-    .from(users)
-    .orderBy(users.name);
-
-  return rows.map((row) => ({
-    ...row,
-    role: (row.role as UserRole) ?? "user",
-  }));
+export async function deleteUser(userId: number, token: string) {
+  await fetchFromBackend(`/admin/users/${userId}`, { method: "DELETE" }, token);
 }
 
 export function mergeHeaders(...headerRecords: Array<Record<string, string>>) {
@@ -453,25 +220,3 @@ export function isPublicPath(pathname: string) {
 }
 
 export { USER_ROLES, type UserRole, type PublicUser } from "~/types/auth";
-
-export async function adoptOrphanedRecords(ownerUserId: number) {
-  const db = await getDb();
-
-  const placeholder = await db.query.users.findFirst({
-    where: eq(users.username, "system"),
-  });
-
-  if (!placeholder) {
-    return;
-  }
-
-  await db
-    .update(motorcycles)
-    .set({ userId: ownerUserId })
-    .where(eq(motorcycles.userId, placeholder.id));
-
-  await db
-    .update(locations)
-    .set({ userId: ownerUserId })
-    .where(eq(locations.userId, placeholder.id));
-}

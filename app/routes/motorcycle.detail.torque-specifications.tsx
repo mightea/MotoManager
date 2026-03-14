@@ -6,17 +6,10 @@ import {
   useSubmit,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.torque-specifications";
-import { getDb } from "~/db";
 import {
-  motorcycles,
-  torqueSpecs,
-  locations,
-  maintenanceRecords,
   type TorqueSpecification,
-} from "~/db/schema";
-import { eq, desc, ne, inArray } from "drizzle-orm";
+} from "~/types/db";
 import { requireUser, mergeHeaders } from "~/services/auth.server";
-import { getNextInspectionInfo } from "~/utils/inspection";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { Wrench, Plus, Pencil, Import, Printer } from "lucide-react";
@@ -30,7 +23,8 @@ import {
   createTorqueSpecification,
   updateTorqueSpecification,
   deleteTorqueSpecification
-} from "~/db/providers/motorcycles.server";
+} from "~/services/motorcycles.server";
+import { fetchFromBackend } from "~/utils/backend.server";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -44,8 +38,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { user } = await requireUser(request);
-  const db = await getDb();
+  const { user: _user, token, headers } = await requireUser(request);
 
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
@@ -55,117 +48,27 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw new Response("Invalid motorcycle ID", { status: 400 });
   }
 
-  const motorcycle = await db.query.motorcycles.findFirst({
-    where: eq(motorcycles.id, motorcycleId),
-  });
-
-  if (!motorcycle) {
-    throw new Response("Motorcycle not found", { status: 404 });
-  }
-
-  if (motorcycle.userId !== user.id) {
-    throw new Response("Unauthorized", { status: 403 });
-  }
-
-  const maintenanceHistory = await db.query.maintenanceRecords.findMany({
-    where: eq(maintenanceRecords.motorcycleId, motorcycleId),
-    orderBy: [desc(maintenanceRecords.date)],
-  });
-
-  const lastInspection =
-    maintenanceHistory
-      .filter((entry) => entry.type === "inspection" && entry.date)
-      .map((entry) => entry.date as string)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-      .at(0) ?? null;
-
-  const nextInspection = getNextInspectionInfo({
-    firstRegistration: motorcycle.firstRegistration,
-    lastInspection,
-    isVeteran: motorcycle.isVeteran ?? false,
-  });
-
-  const userLocations = await db.query.locations.findMany({
-    where: eq(locations.userId, user.id),
-  });
-
-  const currentLocationId = maintenanceHistory
-    .filter((record) => record.type === "location")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
-    ?.locationId;
-
-  const currentLocationName =
-    userLocations.find((loc) => loc.id === currentLocationId)?.name ?? null;
-
-  const specs = await db.query.torqueSpecs.findMany({
-    where: eq(torqueSpecs.motorcycleId, motorcycleId),
-    orderBy: [torqueSpecs.category, torqueSpecs.name],
-  });
-
-  // 1. Find all torque specs that belong to *other* motorcycles
-  const otherSpecs = await db.query.torqueSpecs.findMany({
-    where: ne(torqueSpecs.motorcycleId, motorcycleId),
-  });
-
-  // 2. Extract unique motorcycle IDs that actually have specs
-  const otherMotorcycleIds = Array.from(new Set(otherSpecs.map(s => s.motorcycleId)));
-
-  // 3. Fetch only those motorcycles
-  const otherMotorcycles = otherMotorcycleIds.length > 0
-    ? await db.query.motorcycles.findMany({
-      where: inArray(motorcycles.id, otherMotorcycleIds),
-      columns: {
-        id: true,
-        make: true,
-        model: true,
-        fabricationDate: true,
-      }
-    })
-    : [];
-
-  const allCategories = Array.from(new Set([
-    ...specs.map(s => s.category),
-    ...otherSpecs.map(s => s.category),
-  ])).sort();
-
-  const printDate = new Date().toLocaleDateString("de-CH");
+  const response = await fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token);
 
   return data({
-    motorcycle,
-    nextInspection,
-    currentLocationName,
-    specs,
-    otherMotorcycles,
-    otherSpecs,
-    allCategories,
-    printDate,
-  });
+    ...response,
+  }, { headers: mergeHeaders(headers ?? {}) });
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { user, headers } = await requireUser(request);
+  const { user: _user, token, headers } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
-  const db = await getDb();
 
   if (intent === "createTorqueSpec" || intent === "updateTorqueSpec" || intent === "importTorqueSpecs" || intent === "deleteTorqueSpec") {
     const motorcycleId = Number(formData.get("motorcycleId"));
-
-    // Security check: Ensure user owns the target motorcycle
-    const motorcycle = await db.query.motorcycles.findFirst({
-      where: eq(motorcycles.id, motorcycleId),
-    });
-
-    if (!motorcycle || motorcycle.userId !== user.id) {
-      return data({ error: "Nicht autorisiert." }, { status: 403, headers: mergeHeaders(headers) });
-    }
 
     if (intent === "deleteTorqueSpec") {
       const torqueId = Number(formData.get("torqueId"));
       if (!torqueId) {
         return data({ error: "ID fehlt für Löschen." }, { status: 400, headers: mergeHeaders(headers) });
       }
-      const deleted = await deleteTorqueSpecification(db, torqueId, motorcycleId);
+      const deleted = await deleteTorqueSpecification(token, torqueId, motorcycleId);
       if (!deleted) {
         return data(
           { error: "Drehmoment-Spezifikation nicht gefunden oder gehört nicht zu diesem Motorrad." },
@@ -181,38 +84,11 @@ export async function action({ request }: Route.ActionArgs) {
         return data({ success: true }, { headers: mergeHeaders(headers) });
       }
 
-      const sourceSpecs = await db.query.torqueSpecs.findMany({
-        where: inArray(torqueSpecs.id, sourceSpecIds),
-      });
+      await fetchFromBackend(`/motorcycles/${motorcycleId}/torque-specs/import`, {
+        method: "POST",
+        body: JSON.stringify({ sourceSpecIds }),
+      }, token);
 
-      const existingSpecs = await db.query.torqueSpecs.findMany({
-        where: eq(torqueSpecs.motorcycleId, motorcycleId),
-      });
-
-      const importPromises = sourceSpecs.map(async (src) => {
-        // Check for existing by category + name (case insensitive ideally, but exact for now)
-        const existing = existingSpecs.find(
-          e => e.category === src.category && e.name === src.name
-        );
-
-        const newValues = {
-          motorcycleId,
-          category: src.category,
-          name: src.name,
-          torque: src.torque,
-          torqueEnd: src.torqueEnd,
-          variation: src.variation,
-          toolSize: src.toolSize,
-          description: src.description,
-        };
-
-        if (existing) {
-          await updateTorqueSpecification(db, existing.id, motorcycleId, newValues);
-        } else {
-          await createTorqueSpecification(db, newValues);
-        }
-      });
-      await Promise.all(importPromises);
       return data({ success: true }, { headers: mergeHeaders(headers) });
     }
 
@@ -220,7 +96,6 @@ export async function action({ request }: Route.ActionArgs) {
     const name = formData.get("name") as string;
     const torque = Number(formData.get("torque"));
 
-    // Optional fields
     const torqueEndRaw = formData.get("torqueEnd");
     const torqueEnd = torqueEndRaw ? Number(torqueEndRaw) : undefined;
 
@@ -235,7 +110,7 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     if (intent === "createTorqueSpec") {
-      await createTorqueSpecification(db, {
+      await createTorqueSpecification(token, {
         motorcycleId,
         category,
         name,
@@ -250,7 +125,7 @@ export async function action({ request }: Route.ActionArgs) {
       if (!torqueId) {
         return data({ error: "ID fehlt für Update." }, { status: 400, headers: mergeHeaders(headers) });
       }
-      await updateTorqueSpecification(db, torqueId, motorcycleId, {
+      await updateTorqueSpecification(token, torqueId, motorcycleId, {
         category,
         name,
         torque,
@@ -472,15 +347,15 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 print:block print:gap-0 print:!bg-white">
+          <div className="grid gap-6 print:block print:block print:gap-0 print:!bg-white">
             {/* Group by category */}
-            {Array.from(new Set(specs.map(s => s.category))).map(category => (
-              <div key={category} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:print-force-white print:shadow-none">
+            {Array.from(new Set((specs as any[]).map((s: any) => s.category))).map((category: any) => (
+              <div key={category as string} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:print-force-white print:shadow-none">
                 <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print-no-blur print:print-force-gray print:!text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
-                  {category}
+                  {category as string}
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-navy-700 print:divide-gray-300">
-                  {specs.filter(s => s.category === category).map(spec => (
+                  {(specs as any[]).filter((s: any) => s.category === category).map((spec: any) => (
                     <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:!bg-white print:!text-black">
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2">

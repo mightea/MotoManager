@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/button";
-import type { Issue } from "~/db/schema";
+import type { Issue } from "~/types/db";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 
 interface IssueFormProps {

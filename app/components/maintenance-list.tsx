@@ -22,7 +22,7 @@ import {
   Activity
 } from "lucide-react";
 import { useState } from "react";
-import type { MaintenanceRecord, MaintenanceType, Location } from "~/db/schema";
+import type { MaintenanceRecord, MaintenanceType, Location } from "~/types/db";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { parseDotCode } from "~/utils/maintenance-intervals";

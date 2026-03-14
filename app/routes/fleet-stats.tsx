@@ -1,14 +1,11 @@
 import { data, useLoaderData, Link } from "react-router";
 import type { Route } from "./+types/fleet-stats";
-import { getDb } from "~/db";
-import { motorcycles, issues, maintenanceRecords, locationRecords } from "~/db/schema";
-import { eq, inArray } from "drizzle-orm";
-import { requireUser } from "~/services/auth.server";
-import { calculateFleetStats } from "~/utils/fleet-stats";
+import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import { useState, Fragment, useRef, useEffect } from "react";
+import { fetchFromBackend } from "~/utils/backend.server";
 
 export function meta() {
   return [
@@ -18,30 +15,9 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user } = await requireUser(request);
-  const db = await getDb();
-
-  const motorcyclesList = await db.query.motorcycles.findMany({
-    where: eq(motorcycles.userId, user.id),
-  });
-
-  const motoIds = motorcyclesList.map(m => m.id);
-
-  const [allIssues, allMaintenance, allLocations] = await Promise.all([
-    motoIds.length > 0
-      ? db.query.issues.findMany({ where: inArray(issues.motorcycleId, motoIds) })
-      : Promise.resolve([]),
-    motoIds.length > 0
-      ? db.query.maintenanceRecords.findMany({ where: inArray(maintenanceRecords.motorcycleId, motoIds) })
-      : Promise.resolve([]),
-    motoIds.length > 0
-      ? db.query.locationRecords.findMany({ where: inArray(locationRecords.motorcycleId, motoIds) })
-      : Promise.resolve([]),
-  ]);
-
-  const stats = calculateFleetStats(motorcyclesList, allMaintenance, allIssues, allLocations);
-
-  return data({ stats });
+  const { token, headers } = await requireUser(request);
+  const stats = await fetchFromBackend<any>("/stats", {}, token);
+  return data({ stats }, { headers: mergeHeaders(headers ?? {}) });
 }
 
 function ChartSection({
@@ -165,7 +141,7 @@ export default function FleetStatsPage() {
     setExpandedYear(expandedYear === year ? null : year);
   };
 
-  const activeYearlyStats = stats.yearly.filter(y => y.distance > 0 || y.cost > 0);
+  const activeYearlyStats = (Array.isArray(stats?.yearly) ? stats.yearly : []).filter((y: any) => y.distance > 0 || y.cost > 0);
 
   if (activeYearlyStats.length === 0) {
     return (
@@ -276,7 +252,7 @@ export default function FleetStatsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-navy-700">
-                  {activeYearlyStats.map((year) => {
+                  {activeYearlyStats.map((year: any) => {
                     const avgCostPerKm = year.distance > 0 ? year.cost / year.distance : 0;
                     const isExpanded = expandedYear === year.year;
                     return (

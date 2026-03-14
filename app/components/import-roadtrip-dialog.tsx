@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Modal } from "./modal";
 import { isDuplicate, type RoadTripFuelEntry, parseRoadTripCsv } from "~/utils/roadtrip-import";
-import type { MaintenanceRecord } from "~/db/schema";
+import type { MaintenanceRecord } from "~/types/db";
 import { Upload, Check, AlertTriangle, Fuel, Calendar, Hash } from "lucide-react";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import clsx from "clsx";

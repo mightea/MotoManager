@@ -9,7 +9,15 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.documents";
 import type { DocumentSummary } from "~/components/document-card";
-import { getDb } from "~/db";
+import { requireUser, mergeHeaders } from "~/services/auth.server";
+import { DocumentCard } from "~/components/document-card";
+import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
+import { createMotorcycleSlug } from "~/utils/motorcycle";
+import { FileText } from "lucide-react";
+import { Modal } from "~/components/modal";
+import { AddDocumentForm } from "~/components/add-document-form";
+import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
+import { fetchFromBackend } from "~/utils/backend.server";
 
 export type DocumentWithAssignment = DocumentSummary & {
   assignedMotorcycleNames: string[];
@@ -19,25 +27,6 @@ export type DocumentAssignment = {
   documentId: number;
   motorcycleId: number;
 };
-
-import {
-  motorcycles,
-  maintenanceRecords,
-  documents,
-  documentMotorcycles,
-  locations,
-  users,
-} from "~/db/schema";
-import { and, desc, eq, getTableColumns, inArray, isNull, or } from "drizzle-orm";
-import { requireUser } from "~/services/auth.server";
-import { getNextInspectionInfo } from "~/utils/inspection";
-import { DocumentCard } from "~/components/document-card";
-import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
-import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { FileText } from "lucide-react";
-import { Modal } from "~/components/modal";
-import { AddDocumentForm } from "~/components/add-document-form";
-import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -51,8 +40,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { user } = await requireUser(request);
-  const db = await getDb();
+  const { user, token, headers } = await requireUser(request);
 
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
@@ -62,135 +50,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw new Response("Invalid motorcycle ID", { status: 400 });
   }
 
-  const motorcycle = await db.query.motorcycles.findFirst({
-    where: eq(motorcycles.id, motorcycleId),
-  });
-
-  if (!motorcycle) {
-    throw new Response("Motorcycle not found", { status: 404 });
-  }
-
-  if (motorcycle.userId !== user.id) {
-    throw new Response("Unauthorized", { status: 403 });
-  }
-
-  const maintenanceHistory = await db.query.maintenanceRecords.findMany({
-    where: eq(maintenanceRecords.motorcycleId, motorcycleId),
-    orderBy: [desc(maintenanceRecords.date)],
-  });
-
-  const lastInspection =
-    maintenanceHistory
-      .filter((entry) => entry.type === "inspection" && entry.date)
-      .map((entry) => entry.date as string)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-      .at(0) ?? null;
-
-  const nextInspection = getNextInspectionInfo({
-    firstRegistration: motorcycle.firstRegistration,
-    lastInspection,
-    isVeteran: motorcycle.isVeteran ?? false,
-  });
-
-  const userLocations = await db.query.locations.findMany({
-    where: eq(locations.userId, user.id),
-  });
-
-  const currentLocationId = maintenanceHistory
-    .filter((record) => record.type === "location")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
-    ?.locationId;
-
-  const currentLocationName =
-    userLocations.find((loc) => loc.id === currentLocationId)?.name ?? null;
-
-  const baseDocumentSelect = {
-    id: documents.id,
-    title: documents.title,
-    filePath: documents.filePath,
-    previewPath: documents.previewPath,
-    uploadedBy: documents.uploadedBy,
-    ownerId: documents.ownerId,
-    isPrivate: documents.isPrivate,
-    createdAt: documents.createdAt,
-    ownerName: users.username,
-  };
-
-  const privacyFilter = or(
-    eq(documents.isPrivate, false),
-    eq(documents.ownerId, user.id)
-  );
-
-  const docsAssignedRows = await db
-    .select(baseDocumentSelect)
-    .from(documents)
-    .innerJoin(documentMotorcycles, eq(documentMotorcycles.documentId, documents.id))
-    .leftJoin(users, eq(users.id, documents.ownerId))
-    .where(
-      and(eq(documentMotorcycles.motorcycleId, motorcycleId), privacyFilter)
-    );
-
-  const docsUnassignedRows = await db
-    .select(baseDocumentSelect)
-    .from(documents)
-    .leftJoin(documentMotorcycles, eq(documentMotorcycles.documentId, documents.id))
-    .leftJoin(users, eq(users.id, documents.ownerId))
-    .where(and(isNull(documentMotorcycles.documentId), privacyFilter));
-
-  const assignedName = `${motorcycle.make} ${motorcycle.model}`.trim();
-
-  const assignedDocs: DocumentWithAssignment[] = docsAssignedRows.map((doc) => ({
-    ...doc,
-    assignedMotorcycleNames: assignedName ? [assignedName] : [],
-  }));
-
-  const unassignedDocs: DocumentWithAssignment[] = docsUnassignedRows.map((doc) => ({
-    ...doc,
-    assignedMotorcycleNames: ["Nicht zugeordnet"],
-  }));
-
-  assignedDocs.sort(
-    (a, b) => new Date(b.createdAt ?? "").getTime() - new Date(a.createdAt ?? "").getTime()
-  );
-  unassignedDocs.sort(
-    (a, b) => new Date(b.createdAt ?? "").getTime() - new Date(a.createdAt ?? "").getTime()
-  );
-
-  const allMotorcycles = await db
-    .select({
-      ...getTableColumns(motorcycles),
-      ownerName: users.username,
-    })
-    .from(motorcycles)
-    .leftJoin(users, eq(motorcycles.userId, users.id));
-
-  const allDocIds = Array.from(
-    new Set([...assignedDocs, ...unassignedDocs].map((doc) => doc.id))
-  );
-
-  const rawAssignments = allDocIds.length
-    ? await db
-      .select({
-        documentId: documentMotorcycles.documentId,
-        motorcycleId: documentMotorcycles.motorcycleId,
-      })
-      .from(documentMotorcycles)
-      .where(inArray(documentMotorcycles.documentId, allDocIds))
-    : [];
+  const response = await fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token);
 
   return data({
-    motorcycle,
-    nextInspection,
-    currentLocationName,
-    assignedDocs,
-    unassignedDocs,
+    ...response,
     userId: user.id,
-    allMotorcycles: allMotorcycles.map((moto) => ({
-      ...moto,
-      ownerName: moto.ownerName ?? null,
-    })),
-    docAssignments: rawAssignments,
-  });
+  }, { headers: mergeHeaders(headers ?? {}) });
 }
 
 export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentProps) {

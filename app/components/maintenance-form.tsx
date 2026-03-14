@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Form } from "react-router";
-import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting } from "~/db/schema";
+import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting } from "~/types/db";
 import {
     Wrench,
     Battery,

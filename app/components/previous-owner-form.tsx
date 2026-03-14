@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form } from "react-router";
 import clsx from "clsx";
-import type { PreviousOwner } from "~/db/schema";
+import type { PreviousOwner } from "~/types/db";
 import { previousOwnerSchema } from "~/validations";
 
 interface PreviousOwnerFormProps {

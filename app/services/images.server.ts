@@ -1,17 +1,13 @@
-import fs from "fs";
-import path from "path";
-import sharp from "sharp";
-import { v4 as uuidv4 } from "uuid";
+import { fetchFromBackend } from "~/utils/backend.server";
 
-export async function processImageUpload(file: File): Promise<string> {
-    const newFilename = `${uuidv4()}.webp`;
-    const uploadPath = path.join(process.cwd(), "data", "images", newFilename);
+export async function processImageUpload(file: File, token: string): Promise<string> {
+    const formData = new FormData();
+    formData.append("image", file);
 
-    // Ensure directory exists
-    await fs.promises.mkdir(path.dirname(uploadPath), { recursive: true });
+    const response = await fetchFromBackend<{ url: string }>("/images/upload", {
+        method: "POST",
+        body: formData,
+    }, token);
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await sharp(buffer).webp({ quality: 80 }).toFile(uploadPath);
-
-    return `/data/images/${newFilename}`;
+    return response.url;
 }

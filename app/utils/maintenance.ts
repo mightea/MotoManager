@@ -1,4 +1,4 @@
-import type { MaintenanceRecord, MaintenanceType, Location, FluidType, TirePosition, BatteryType } from "~/db/schema";
+import type { MaintenanceRecord, MaintenanceType, Location, FluidType, TirePosition, BatteryType } from "~/types/db";
 
 export const maintenanceTypeLabels: Record<MaintenanceType, string> = {
   tire: "Reifenwechsel",

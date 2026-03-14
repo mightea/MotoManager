@@ -1,17 +1,14 @@
 import { data, useActionData, useSubmit, useLocation, useNavigate } from "react-router";
 import { useCallback } from "react";
 import type { Route } from "./+types/documents";
-import { getDb } from "~/db";
-import { documents, users, motorcycles, documentMotorcycles } from "~/db/schema";
-import { eq, or, and, desc, inArray, getTableColumns } from "drizzle-orm";
-import { requireUser } from "~/services/auth.server";
+import { requireUser, mergeHeaders } from "~/services/auth.server";
 import { FileText, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
-import { deleteDocumentFiles, getFileCategory, saveDocumentFile } from "~/services/documents.server";
+import { fetchFromBackend } from "~/utils/backend.server";
 
 export function meta() {
   return [
@@ -20,215 +17,55 @@ export function meta() {
   ];
 }
 
-const UNSUPPORTED_FILE_MESSAGE = "Nur PDF- oder Bilddateien sind erlaubt.";
-
-
-
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user } = await requireUser(request);
-  const db = await getDb();
+  const { user, token, headers } = await requireUser(request);
 
-  const docs = await db
-    .select({
-      id: documents.id,
-      title: documents.title,
-      filePath: documents.filePath,
-      previewPath: documents.previewPath,
-      uploadedBy: documents.uploadedBy,
-      ownerId: documents.ownerId,
-      isPrivate: documents.isPrivate,
-      createdAt: documents.createdAt,
-      ownerName: users.username,
-    })
-    .from(documents)
-    .leftJoin(users, eq(documents.ownerId, users.id))
-    .where(or(eq(documents.isPrivate, false), eq(documents.ownerId, user.id)))
-    .orderBy(desc(documents.createdAt));
+  const response = await fetchFromBackend<any>("/documents", {}, token);
 
-  const allMotorcycles = await db
-    .select({
-      ...getTableColumns(motorcycles),
-      ownerName: users.username,
-    })
-    .from(motorcycles)
-    .leftJoin(users, eq(motorcycles.userId, users.id));
-
-  // Get assignments for visible documents
-  const docIds = docs.map(d => d.id);
-  const assignments = docIds.length > 0 ? await db
-    .select()
-    .from(documentMotorcycles)
-    .where(inArray(documentMotorcycles.documentId, docIds)) : [];
-
-  return data({ docs, user, allMotorcycles, assignments });
+  return data({ ...response, user }, { headers: mergeHeaders(headers ?? {}) });
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { user } = await requireUser(request);
+  const { token, headers } = await requireUser(request);
 
   const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (intent === "create") {
-    const title = String(formData.get("title"));
-    const isPrivate = formData.get("isPrivate") === "true";
-    const file = formData.get("file") as File;
-    const motorcycleIds = formData.getAll("motorcycleIds").map(Number);
-
-    if (!file || file.size === 0) {
-      return data({ error: "Keine Datei ausgewählt." }, { status: 400 });
+    try {
+      await fetchFromBackend("/documents", {
+        method: "POST",
+        body: formData,
+      }, token);
+      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    } catch (e: any) {
+      return data({ error: e.message }, { status: 400, headers: mergeHeaders(headers ?? {}) });
     }
-
-    if (!getFileCategory(file)) {
-      return data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
-    }
-
-    const { filePath, previewPath } = await saveDocumentFile(file);
-
-    const db = await getDb();
-
-    await db.transaction(async (tx) => {
-      const [inserted] = await tx.insert(documents).values({
-        title,
-        filePath,
-        previewPath,
-        uploadedBy: user.username,
-        ownerId: user.id,
-        isPrivate,
-      }).returning({ id: documents.id });
-
-      if (motorcycleIds.length > 0) {
-        await tx.insert(documentMotorcycles).values(
-          motorcycleIds.map(mid => ({
-            documentId: inserted.id,
-            motorcycleId: mid
-          }))
-        );
-      }
-    });
-
-    return data({ success: true });
   }
 
   if (intent === "update") {
-    const id = Number(formData.get("id"));
-    const motorcycleIds = formData.getAll("motorcycleIds").map(Number);
-
-    const db = await getDb();
-
-    // Verify ownership or public status
-    const [doc] = await db
-      .select()
-      .from(documents)
-      .where(eq(documents.id, id))
-      .limit(1);
-
-    if (!doc) {
-      throw new Response("Not Found", { status: 404 });
+    const id = formData.get("id");
+    try {
+      await fetchFromBackend(`/documents/${id}`, {
+        method: "PUT",
+        body: formData,
+      }, token);
+      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    } catch (e: any) {
+      return data({ error: e.message }, { status: 400, headers: mergeHeaders(headers ?? {}) });
     }
-
-    const isOwner = doc.ownerId === user.id;
-    const isPublic = !doc.isPrivate;
-
-    if (!isOwner && !isPublic) {
-      throw new Response("Unauthorized", { status: 403 });
-    }
-
-    await db.transaction(async (tx) => {
-      if (isOwner) {
-        const title = String(formData.get("title"));
-        const isPrivate = formData.get("isPrivate") === "true";
-        const file = formData.get("file") as File | null;
-
-        // Handle File Replacement
-        let newPaths = {};
-        if (file && file.size > 0) {
-          if (!getFileCategory(file)) {
-            throw data({ error: UNSUPPORTED_FILE_MESSAGE }, { status: 400 });
-          }
-
-          // Delete old files
-          await deleteDocumentFiles(doc.filePath, doc.previewPath);
-          newPaths = await saveDocumentFile(file);
-        }
-
-        await tx
-          .update(documents)
-          .set({
-            title,
-            isPrivate,
-            updatedAt: new Date().toISOString(),
-            ...newPaths
-          })
-          .where(eq(documents.id, id));
-
-        // Owner can manage ALL assignments
-        await tx.delete(documentMotorcycles).where(eq(documentMotorcycles.documentId, id));
-
-        if (motorcycleIds.length > 0) {
-          await tx.insert(documentMotorcycles).values(
-            motorcycleIds.map(mid => ({
-              documentId: id,
-              motorcycleId: mid
-            }))
-          );
-        }
-      } else {
-        // Non-owner, but doc is public.
-        // Can only manage assignments for OWN motorcycles.
-        const myMotorcycles = await tx
-          .select({ id: motorcycles.id })
-          .from(motorcycles)
-          .where(eq(motorcycles.userId, user.id));
-        const myMotoIds = myMotorcycles.map(m => m.id);
-
-        if (myMotoIds.length > 0) {
-          // 1. Remove existing assignments for this document belonging to MY motorcycles
-          await tx.delete(documentMotorcycles).where(
-            and(
-              eq(documentMotorcycles.documentId, id),
-              inArray(documentMotorcycles.motorcycleId, myMotoIds)
-            )
-          );
-
-          // 2. Add new assignments for MY motorcycles (filter input to only include mine)
-          const myNewAssignments = motorcycleIds.filter(mid => myMotoIds.includes(mid));
-          if (myNewAssignments.length > 0) {
-            await tx.insert(documentMotorcycles).values(
-              myNewAssignments.map(mid => ({
-                documentId: id,
-                motorcycleId: mid
-              }))
-            );
-          }
-        }
-      }
-    });
-
-    return data({ success: true });
   }
 
   if (intent === "delete") {
-    const id = Number(formData.get("id"));
-    const db = await getDb();
-
-    // Verify ownership
-    const [doc] = await db
-      .select()
-      .from(documents)
-      .where(eq(documents.id, id))
-      .limit(1);
-
-    if (!doc || doc.ownerId !== user.id) {
-      throw new Response("Unauthorized", { status: 403 });
+    const id = formData.get("id");
+    try {
+      await fetchFromBackend(`/documents/${id}`, {
+        method: "DELETE",
+      }, token);
+      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    } catch (e: any) {
+      return data({ error: e.message }, { status: 400, headers: mergeHeaders(headers ?? {}) });
     }
-
-    // Delete files
-    await deleteDocumentFiles(doc.filePath, doc.previewPath);
-
-    await db.delete(documents).where(eq(documents.id, id));
-
-    return data({ success: true });
   }
 
   return null;
@@ -265,20 +102,20 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
 
   const getAssignedMotorcycleIds = (docId?: number) => {
     if (!docId) return [];
-    return assignments
-      .filter(a => a.documentId === docId)
-      .map(a => a.motorcycleId);
+    return (assignments as any[])
+      .filter((a: any) => a.documentId === docId)
+      .map((a: any) => a.motorcycleId);
   };
 
   const motorcycleNameMap = new Map(
-    allMotorcycles.map((moto) => {
+    (allMotorcycles as any[]).map((moto: any) => {
       const nameParts = [moto.make, moto.model].filter(Boolean);
       const label = nameParts.length > 0 ? nameParts.join(" ") : `Motorrad #${moto.id}`;
       return [moto.id, label];
     })
   );
 
-  const documentMotorcycleNames = assignments.reduce<Record<number, string[]>>((acc, assignment) => {
+  const documentMotorcycleNames = (assignments as any[]).reduce<Record<number, string[]>>((acc, assignment: any) => {
     const label = motorcycleNameMap.get(assignment.motorcycleId);
     if (!label) return acc;
     if (!acc[assignment.documentId]) {
@@ -304,7 +141,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     const searchParams = new URLSearchParams(location.search);
     const docIdParam = searchParams.get("doc");
     if (!docIdParam) return;
-    const docToEdit = docs.find((d) => d.id === Number(docIdParam));
+    const docToEdit = (docs as any[]).find((d: any) => d.id === Number(docIdParam));
     if (!docToEdit) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     openEditDialog(docToEdit);
@@ -350,7 +187,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
             </p>
           </div>
         ) : (
-          docs.map((doc) => (
+          (docs as any[]).map((doc: any) => (
             <DocumentCard
               key={doc.id}
               document={doc}

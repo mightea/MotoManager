@@ -1,1 +1,0 @@
-ALTER TABLE `user_settings` DROP COLUMN `service_interval`;

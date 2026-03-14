@@ -1,19 +1,11 @@
 import { Link, data, useActionData } from "react-router";
 import type { Route } from "./+types/home";
-import { getDb } from "~/db";
-import {
-  motorcycles,
-  issues,
-  maintenanceRecords,
-  locationRecords,
-  type NewMotorcycle,
-} from "~/db/schema";
-import { createMotorcycle } from "~/db/providers/motorcycles.server";
-import { getUserSettings, getLocations } from "~/db/providers/settings.server";
-import { eq, inArray } from "drizzle-orm";
+import { createMotorcycle } from "~/services/motorcycles.server";
+import { getCurrencies } from "~/services/settings.server";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { userPrefs } from "~/services/preferences.server";
 import { buildDashboardData } from "~/utils/home-stats";
+import { fetchFromBackend } from "~/utils/backend.server";
 import {
   CalendarDays,
   Gauge,
@@ -30,7 +22,6 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { motorcycleSchema } from "~/validations";
-import { processImageUpload } from "~/services/images.server";
 
 import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
@@ -44,40 +35,21 @@ export function meta() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user, headers: authHeaders } = await requireUser(request);
-  const db = await getDb();
+  const { user, token, headers: authHeaders } = await requireUser(request);
 
-  const [motorcyclesList, settings, userLocations] = await Promise.all([
-    db.query.motorcycles.findMany({
-      where: eq(motorcycles.userId, user.id),
-    }),
-    getUserSettings(db, user.id),
-    getLocations(db, user.id),
-  ]);
-
-  const motoIds = motorcyclesList.map(m => m.id);
-
-  const [allIssues, allMaintenance, allLocationRecords, currencies] = await Promise.all([
-    motoIds.length > 0
-      ? db.query.issues.findMany({ where: inArray(issues.motorcycleId, motoIds) })
-      : Promise.resolve([]),
-    motoIds.length > 0
-      ? db.query.maintenanceRecords.findMany({ where: inArray(maintenanceRecords.motorcycleId, motoIds) })
-      : Promise.resolve([]),
-    motoIds.length > 0
-      ? db.query.locationRecords.findMany({ where: inArray(locationRecords.motorcycleId, motoIds) })
-      : Promise.resolve([]),
-    db.query.currencySettings.findMany(),
+  const [dashboardData, currencies] = await Promise.all([
+    fetchFromBackend<any>("/stats", {}, token),
+    getCurrencies(),
   ]);
 
   const { items: cards, stats } = buildDashboardData({
-    motorcycles: motorcyclesList,
-    issues: allIssues,
-    maintenance: allMaintenance,
-    locationHistory: allLocationRecords,
-    locations: userLocations,
+    motorcycles: dashboardData?.motorcycles ?? [],
+    issues: dashboardData?.issues ?? [],
+    maintenance: dashboardData?.maintenance ?? [],
+    locationHistory: dashboardData?.locationHistory ?? [],
+    locations: dashboardData?.locations ?? [],
     year: new Date().getFullYear(),
-    settings,
+    settings: dashboardData?.settings,
   });
 
   // Sorting Logic
@@ -141,7 +113,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { user, headers } = await requireUser(request);
+  const { user: _user, token, headers } = await requireUser(request);
   const formData = await request.formData();
 
   const rawData = Object.fromEntries(formData);
@@ -160,63 +132,22 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const {
-    make,
-    model,
-    vin,
-    engineNumber,
-    fabricationDate,
-    vehicleIdNr,
-    numberPlate,
-    firstRegistration,
-    initialOdo,
-    purchaseDate,
     purchasePrice,
     currencyCode,
-    isVeteran,
-    isArchived,
-    fuelTankSize
   } = validationResult.data;
 
-  const imageEntry = formData.get("image");
-  let imagePath: string | null = null;
-
-  if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
-    imagePath = await processImageUpload(imageEntry);
-  }
-
-  const newMotorcycle: NewMotorcycle = {
-    make,
-    model,
-    fabricationDate,
-    userId: user.id,
-    vin,
-    engineNumber,
-    vehicleIdNr,
-    numberPlate,
-    isVeteran,
-    isArchived,
-    firstRegistration,
-    initialOdo,
-    purchaseDate,
-    purchasePrice: purchasePrice ?? 0,
-    currencyCode,
-    image: imagePath,
-    fuelTankSize,
-  };
-
-  const dbClient = await getDb();
-
   // Normalize Purchase Price
-  const currencies = await dbClient.query.currencySettings.findMany();
+  const currencies = await getCurrencies();
   const getCurrencyFactor = (code: string | null | undefined) => {
     if (!code) return 1;
     const currency = currencies.find(c => c.code === code);
     return currency ? currency.conversionFactor : 1;
   };
 
-  newMotorcycle.normalizedPurchasePrice = (newMotorcycle.purchasePrice || 0) * getCurrencyFactor(currencyCode);
+  const normalizedPurchasePrice = (purchasePrice || 0) * getCurrencyFactor(currencyCode);
+  formData.set("normalizedPurchasePrice", normalizedPurchasePrice.toString());
 
-  await createMotorcycle(dbClient, newMotorcycle);
+  await createMotorcycle(token, formData);
 
   return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
 }

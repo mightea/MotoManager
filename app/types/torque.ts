@@ -1,4 +1,4 @@
-import type { TorqueSpecification } from "~/db/schema";
+import type { TorqueSpecification } from "~/types/db";
 
 export type TorqueImportCandidate = {
   id: number;

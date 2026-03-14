@@ -9,28 +9,23 @@ import {
   useParams,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
-import { getDb } from "~/db";
-import { issues, maintenanceRecords, motorcycles, locations, previousOwners, type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type EditorMotorcycle, type NewPreviousOwner } from "~/db/schema";
-import { eq, and, ne, desc } from "drizzle-orm";
+import { type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type NewPreviousOwner } from "~/types/db";
 import { mergeHeaders, requireUser } from "~/services/auth.server";
 import { Plus } from "lucide-react";
 import OpenIssuesCard from "~/components/open-issues-card";
-import { getNextInspectionInfo, formatDuration, parseDate } from "~/utils/inspection";
-import { getUserSettings } from "~/db/providers/settings.server";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
-import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { motorcycleSchema, previousOwnerSchema } from "~/validations";
-import { processImageUpload } from "~/services/images.server";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
+import { fetchFromBackend } from "~/utils/backend.server";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -44,8 +39,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { user, headers } = await requireUser(request);
-  const db = await getDb();
+  const { user, token, headers } = await requireUser(request);
 
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
@@ -56,128 +50,96 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     throw new Response("Invalid Motorcycle ID", { status: 400 });
   }
 
-  const [motorcycle, settings, previousOwnersList] = await Promise.all([
-    db.query.motorcycles.findFirst({
-      where: eq(motorcycles.id, motorcycleId),
-    }),
-    getUserSettings(db, user.id),
-    db.select().from(previousOwners).where(eq(previousOwners.motorcycleId, motorcycleId)).orderBy(desc(previousOwners.purchaseDate)),
-  ]);
+  const response = await fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token);
+  const motorcycle = response?.motorcycle;
+  const issues = Array.isArray(response?.issues) ? response.issues : [];
+  const maintenanceRecords = Array.isArray(response?.maintenanceRecords) ? response.maintenanceRecords : [];
+  const previousOwners = Array.isArray(response?.previousOwners) ? response.previousOwners : [];
 
   if (!motorcycle) {
-    throw new Response("Motorcycle not found", { status: 404 });
+    throw new Response("Motorrad nicht gefunden.", { status: 404 });
   }
 
-  if (motorcycle.userId !== user.id) {
-    throw new Response("Unauthorized", { status: 403 });
-  }
+  const openIssues = issues.filter((i: any) => i.status !== "done");
+  const maintenanceHistory = maintenanceRecords;
+  const previousOwnersList = previousOwners;
+  const ownerCount = previousOwners.length + 1;
 
-  const ownerCount = (previousOwnersList?.length ?? 0) > 0
-    ? (previousOwnersList?.length ?? 0) + 1
-    : (motorcycle.initialOdo < 100 ? 1 : 0);
+  // Calculate last known ODO
+  const odometerCandidates = [
+    motorcycle.initialOdo,
+    motorcycle.manualOdo,
+    ...maintenanceRecords.map((r: any) => r.odo),
+    ...issues.map((i: any) => i.odo),
+  ].filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  const lastKnownOdo = Math.max(0, ...odometerCandidates);
 
-  const openIssues = await db.query.issues.findMany({
-    where: and(eq(issues.motorcycleId, motorcycleId), ne(issues.status, "done")),
-    orderBy: [desc(issues.priority), desc(issues.date)],
-  });
+  // Get maintenance insights
+  const settingsResponse = await fetchFromBackend<any>("/settings", {}, token);
+  const settings = settingsResponse?.settings;
+  const { getMaintenanceInsights } = await import("~/utils/maintenance-intervals");
+  const insights = getMaintenanceInsights(maintenanceRecords, lastKnownOdo, settings);
 
-  const maintenanceHistory = await db.query.maintenanceRecords.findMany({
-    where: eq(maintenanceRecords.motorcycleId, motorcycleId),
-    orderBy: [desc(maintenanceRecords.date)],
-  });
+  // Other metadata
+  const { getLocations } = await import("~/services/settings.server");
+  const userLocations = await getLocations(token, user.id);
+  const currentLocationId = maintenanceRecords
+    .filter((r: any) => r.type === "location")
+    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ?? null;
+  const currentLocationName = userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
 
-  const lastKnownOdo = [
-    motorcycle.manualOdo ?? undefined,
-    motorcycle.initialOdo ?? undefined,
-    ...maintenanceHistory.map((record) => record.odo),
-    ...openIssues.map((issue) => issue.odo),
-  ].reduce<number | null>((max, value) => {
-    if (typeof value !== "number" || Number.isNaN(value)) {
-      return max;
-    }
-    if (max === null) {
-      return value;
-    }
-    return value > max ? value : max;
-  }, null);
+  const currencies = await fetchFromBackend<any[]>("/currencies");
 
-  const lastInspection = maintenanceHistory
-    .filter((entry) => entry.type === "inspection" && entry.date)
-    .map((entry) => entry.date as string)
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+  // Fuel stats
+  const fuelRecords = maintenanceRecords.filter((r: any) => r.type === "fuel" && r.fuelAmount && r.tripDistance);
+  const avgFuelConsumption = fuelRecords.length > 0 
+    ? fuelRecords.reduce((sum: number, r: any) => sum + (r.fuelConsumption || 0), 0) / fuelRecords.length 
+    : null;
+  const avgTripDistance = fuelRecords.length > 0
+    ? fuelRecords.reduce((sum: number, r: any) => sum + (r.tripDistance || 0), 0) / fuelRecords.length
+    : null;
+  const estimatedRange = avgFuelConsumption && motorcycle.fuelTankSize 
+    ? (motorcycle.fuelTankSize / avgFuelConsumption) * 100 
+    : null;
+
+  const fuelStationNames = Array.from(new Set(
+    maintenanceRecords
+      .filter((r: any) => r.type === "fuel" && r.locationName)
+      .map((r: any) => r.locationName)
+  )) as string[];
+
+  // Ownership stats
+  const hasPurchaseDate = !!motorcycle.purchaseDate;
+  const yearsOwned = motorcycle.purchaseDate 
+    ? (new Date().getTime() - new Date(motorcycle.purchaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+    : 0;
+  const kmDriven = lastKnownOdo - (motorcycle.initialOdo || 0);
+  const avgKmPerYear = yearsOwned > 0.1 ? kmDriven / yearsOwned : null;
+  const ownershipLabel = yearsOwned > 0 ? `${yearsOwned.toFixed(1)} Jahre` : null;
+
+  const formattedPurchaseDate = motorcycle.purchaseDate 
+    ? new Date(motorcycle.purchaseDate).toLocaleDateString("de-CH") 
+    : null;
+  const formattedFirstRegistration = motorcycle.firstRegistration 
+    ? new Date(motorcycle.firstRegistration).toLocaleDateString("de-CH") 
+    : null;
+
+  const lastInspection = maintenanceRecords
+    .filter((entry: any) => entry.type === "inspection" && entry.date)
+    .map((entry: any) => entry.date as string)
+    .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime())
     .at(0) ?? null;
 
+  const { getNextInspectionInfo } = await import("~/utils/inspection");
   const nextInspection = getNextInspectionInfo({
     firstRegistration: motorcycle.firstRegistration,
     lastInspection,
     isVeteran: motorcycle.isVeteran ?? false,
   });
 
-  const insights = getMaintenanceInsights(maintenanceHistory, lastKnownOdo ?? 0, settings);
-
-  const userLocations = await db.query.locations.findMany({
-    where: eq(locations.userId, user.id),
-  });
-
-  const currentLocationId = maintenanceHistory
-    .filter(r => r.type === "location")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId;
-
-  const currentLocationName = userLocations.find(l => l.id === currentLocationId)?.name ?? null;
-
-  const currencies = await db.query.currencySettings.findMany();
-
-  // Ownership Calculations
-  const purchaseDate = parseDate(motorcycle.purchaseDate);
-  const daysOwned = purchaseDate
-    ? Math.max(0, Math.floor((new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
-  const yearsOwned = daysOwned / 365.25;
-
-  const currentOdo = lastKnownOdo ?? motorcycle.initialOdo;
-  const kmDriven = Math.max(0, currentOdo - motorcycle.initialOdo);
-  const avgKmPerYear = yearsOwned > 0.1 ? kmDriven / yearsOwned : 0;
-
-  const ownershipDuration = purchaseDate ? formatDuration(daysOwned) : null;
-  const ownershipLabel = ownershipDuration ? `${ownershipDuration.value} ${ownershipDuration.unit}` : null;
-
-  const fuelRecords = maintenanceHistory.filter(r => r.type === "fuel");
-  const fuelConsumptionValues = fuelRecords
-    .map(r => r.fuelConsumption)
-    .filter((v): v is number => v !== null && v > 0);
-
-  const avgFuelConsumption = fuelConsumptionValues.length > 0
-    ? fuelConsumptionValues.reduce((a, b) => a + b, 0) / fuelConsumptionValues.length
-    : null;
-
-  const tripValues = fuelRecords
-    .map(r => r.tripDistance)
-    .filter((v): v is number => v !== null && v > 0);
-
-  const avgTripDistance = tripValues.length > 0
-    ? tripValues.reduce((a, b) => a + b, 0) / tripValues.length
-    : null;
-
-  const estimatedRange = (avgFuelConsumption && avgFuelConsumption > 0 && motorcycle.fuelTankSize && motorcycle.fuelTankSize > 0)
-    ? (motorcycle.fuelTankSize / avgFuelConsumption) * 100
-    : null;
-
-  const fuelStationNames = Array.from(new Set(
-    maintenanceHistory
-      .filter(r => r.type === "fuel" && r.locationName)
-      .map(r => r.locationName as string)
-  )).sort();
-
-  const dateFormatter = new Intl.DateTimeFormat("de-CH", {
-    dateStyle: "medium",
-  });
-
-  const firstRegistrationDate = parseDate(motorcycle.firstRegistration);
-
   return data(
     {
       motorcycle,
-      user,
       openIssues,
       maintenanceHistory,
       previousOwnersList,
@@ -196,16 +158,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       avgTripDistance,
       estimatedRange,
       fuelStationNames,
-      formattedPurchaseDate: purchaseDate ? dateFormatter.format(purchaseDate) : null,
-      formattedFirstRegistration: firstRegistrationDate ? dateFormatter.format(firstRegistrationDate) : null,
-      hasPurchaseDate: !!purchaseDate
+      formattedPurchaseDate,
+      formattedFirstRegistration,
+      hasPurchaseDate,
+      user,
     },
     { headers: mergeHeaders(headers ?? {}) }
   );
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { user, headers } = await requireUser(request);
+  const { user, token, headers } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -232,7 +195,6 @@ export async function action({ request }: Route.ActionArgs) {
     return "new";
   };
 
-  const dbClient = await getDb();
   const {
     createIssue,
     createMaintenanceRecord,
@@ -246,11 +208,10 @@ export async function action({ request }: Route.ActionArgs) {
     createPreviousOwner,
     updatePreviousOwner,
     deletePreviousOwner,
-    recalculateFuelConsumption
-  } = await import("~/db/providers/motorcycles.server");
+  } = await import("~/services/motorcycles.server");
 
-  // Fetch currencies for normalization
-  const currencies = await dbClient.query.currencySettings.findMany();
+  // Fetch currencies for normalization via backend
+  const currencies = await fetchFromBackend<any[]>("/settings/currencies", {}, token);
   const getCurrencyFactor = (code: string | null | undefined) => {
     if (!code) return 1;
     const currency = currencies.find(c => c.code === code);
@@ -280,56 +241,18 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     const {
-      make,
-      model,
-      vin,
-      engineNumber,
-      fabricationDate,
-      vehicleIdNr,
-      numberPlate, // Not in EditorMotorcycle? Wait, let's check schema. EditorMotorcycle usually has similar fields.
-      firstRegistration,
-      initialOdo,
-      purchaseDate,
       purchasePrice,
       currencyCode,
-      isVeteran,
-      isArchived,
-      fuelTankSize,
-      // isArchived is not usually editable here or maybe it is? The form doesn't show it but schema might support it.
     } = validationResult.data;
 
-    const imageEntry = formData.get("image");
-    let imagePath: string | undefined = undefined;
-
-    if (imageEntry && imageEntry instanceof File && imageEntry.size > 0) {
-      imagePath = await processImageUpload(imageEntry);
-    }
-
-    const updatedMotorcycle: EditorMotorcycle = {
-      make,
-      model,
-      vin,
-      engineNumber: engineNumber ?? null,
-      fabricationDate,
-      vehicleIdNr: vehicleIdNr ?? null,
-      numberPlate: numberPlate ?? null,
-      firstRegistration: firstRegistration ?? null,
-      initialOdo: initialOdo ?? 0,
-      purchaseDate: purchaseDate ?? null,
-      purchasePrice: purchasePrice ?? null,
-      currencyCode: currencyCode ?? null,
-      isVeteran: isVeteran,
-      isArchived: isArchived,
-      fuelTankSize: fuelTankSize ?? null,
-      ...(imagePath ? { image: imagePath } : {}),
-      normalizedPurchasePrice: (purchasePrice || 0) * getCurrencyFactor(currencyCode),
-    };
+    const normalizedPurchasePrice = (purchasePrice || 0) * getCurrencyFactor(currencyCode);
+    formData.set("normalizedPurchasePrice", normalizedPurchasePrice.toString());
 
     const updated = await updateMotorcycle(
-      dbClient,
+      token,
       motorcycleId,
       user.id,
-      updatedMotorcycle,
+      formData,
     );
 
     if (!updated) {
@@ -346,15 +269,7 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
     }
 
-    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
-      where: eq(motorcycles.id, motorcycleId),
-    });
-
-    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
-      throw new Response("Motorrad nicht gefunden.", { status: 404 });
-    }
-
-    await deleteMotorcycleCascade(dbClient, motorcycleId);
+    await deleteMotorcycleCascade(token, motorcycleId);
 
     const response = redirect("/");
     mergeHeaders(headers ?? {}).forEach((value, key) => {
@@ -381,7 +296,7 @@ export async function action({ request }: Route.ActionArgs) {
       date: parseString(formData.get("date")),
     };
 
-    await createIssue(dbClient, issueData);
+    await createIssue(token, issueData);
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
@@ -401,7 +316,7 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Ungültige Eingabe für den Mangel", { status: 400 });
     }
 
-    await updateIssue(dbClient, issueId, motorcycleId, {
+    await updateIssue(token, issueId, motorcycleId, {
       odo,
       description,
       priority: isValidPriority(formData.get("priority")),
@@ -420,7 +335,7 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Ungültige Eingabe für den Mangel", { status: 400 });
     }
 
-    await deleteIssue(dbClient, issueId, motorcycleId);
+    await deleteIssue(token, issueId, motorcycleId);
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
@@ -440,7 +355,7 @@ export async function action({ request }: Route.ActionArgs) {
     const newLocationName = parseString(formData.get("newLocationName"));
 
     if (type === "location" && newLocationName) {
-      const newLoc = await createLocation(dbClient, {
+      const newLoc = await createLocation(token, {
         name: newLocationName,
         userId: user.id
       });
@@ -477,10 +392,10 @@ export async function action({ request }: Route.ActionArgs) {
     };
 
     if (intent === "createMaintenance") {
-      await createMaintenanceRecord(dbClient, recordData as NewMaintenanceRecord);
+      await createMaintenanceRecord(token, recordData as NewMaintenanceRecord);
     } else {
       const maintenanceId = Number(formData.get("maintenanceId"));
-      await updateMaintenanceRecord(dbClient, maintenanceId, motorcycleId, recordData);
+      await updateMaintenanceRecord(token, maintenanceId, motorcycleId, recordData);
     }
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
@@ -494,7 +409,7 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Ungültige Fahrzeug- oder Wartungs-ID", { status: 400 });
     }
 
-    await deleteMaintenanceRecord(dbClient, maintenanceId, motorcycleId);
+    await deleteMaintenanceRecord(token, maintenanceId, motorcycleId);
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
@@ -503,14 +418,6 @@ export async function action({ request }: Route.ActionArgs) {
     const motorcycleId = Number(formData.get("motorcycleId"));
     if (!Number.isFinite(motorcycleId)) {
       throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
-    }
-
-    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
-      where: eq(motorcycles.id, motorcycleId),
-    });
-
-    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
-      throw new Response("Motorrad nicht gefunden.", { status: 404 });
     }
 
     const rawData = Object.fromEntries(formData);
@@ -541,13 +448,13 @@ export async function action({ request }: Route.ActionArgs) {
     };
 
     if (intent === "createPreviousOwner") {
-      await createPreviousOwner(dbClient, ownerData);
+      await createPreviousOwner(token, ownerData);
     } else {
       const ownerId = Number(formData.get("ownerId"));
       if (!Number.isFinite(ownerId)) {
         throw new Response("Ungültige Vorbesitzer-ID", { status: 400 });
       }
-      await updatePreviousOwner(dbClient, ownerId, motorcycleId, ownerData);
+      await updatePreviousOwner(token, ownerId, motorcycleId, ownerData);
     }
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
@@ -561,15 +468,7 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Ungültige Eingabe für Vorbesitzer", { status: 400 });
     }
 
-    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
-      where: eq(motorcycles.id, motorcycleId),
-    });
-
-    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
-      throw new Response("Motorrad nicht gefunden.", { status: 404 });
-    }
-
-    await deletePreviousOwner(dbClient, ownerId, motorcycleId);
+    await deletePreviousOwner(token, ownerId, motorcycleId);
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
   }
@@ -581,13 +480,6 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Ungültige Eingabe für Motorrad", { status: 400 });
     }
 
-    const motorcycleRecord = await dbClient.query.motorcycles.findFirst({
-      where: eq(motorcycles.id, motorcycleId),
-    });
-
-    if (!motorcycleRecord || motorcycleRecord.userId !== user.id) {
-      throw new Response("Motorrad nicht gefunden.", { status: 404 });
-    }
     const recordsJson = formData.get("records") as string;
     const records = JSON.parse(recordsJson) as any[];
 
@@ -614,8 +506,10 @@ export async function action({ request }: Route.ActionArgs) {
     });
 
     if (values.length > 0) {
-      await dbClient.insert(maintenanceRecords).values(values);
-      await recalculateFuelConsumption(dbClient, motorcycleId);
+      await fetchFromBackend(`/motorcycles/${motorcycleId}/fuel-import`, {
+        method: "POST",
+        body: JSON.stringify({ records: values }),
+      }, token);
     }
 
     return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
@@ -721,7 +615,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             formattedPurchaseDate={formattedPurchaseDate}
             ownershipLabel={ownershipLabel}
             kmDriven={kmDriven}
-            avgKmPerYear={avgKmPerYear}
+            avgKmPerYear={avgKmPerYear ?? 0}
             yearsOwned={yearsOwned}
             hasPurchaseDate={hasPurchaseDate}
             avgFuelConsumption={avgFuelConsumption}

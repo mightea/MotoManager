@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigation, useSubmit, type SubmitOptions } from "react-router";
 import { Button } from "./button";
 import clsx from "clsx";
-import type { Document, Motorcycle } from "~/db/schema";
+import type { Document, Motorcycle } from "~/types/db";
 import { Switch } from "@headlessui/react";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
