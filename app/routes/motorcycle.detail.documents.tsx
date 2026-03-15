@@ -63,11 +63,11 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
     motorcycle,
     nextInspection,
     currentLocationName,
-    assignedDocs,
-    unassignedDocs,
+    assignedDocs = [],
+    unassignedDocs = [],
     userId,
-    allMotorcycles,
-    docAssignments,
+    allMotorcycles = [],
+    docAssignments = [],
   } = loaderData;
   const params = useParams<{ slug?: string; id?: string }>();
   const slug = params.slug ?? createMotorcycleSlug(motorcycle.make, motorcycle.model);

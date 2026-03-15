@@ -147,12 +147,13 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     motorcycle,
     nextInspection,
     currentLocationName,
-    specs,
-    otherMotorcycles,
-    otherSpecs,
-    allCategories,
+    torqueSpecs: specs = [],
+    allMotorcycles: otherMotorcycles = [],
+    otherSpecs = [],
     printDate,
   } = loaderData;
+
+  const allCategories = Array.from(new Set(specs.map((s: any) => s.category as string))).sort() as string[];
   const actionData = useActionData<typeof clientAction>();
   const submit = useSubmit();
   const params = useParams<{ slug?: string; id?: string }>();
