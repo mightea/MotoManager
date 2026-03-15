@@ -10,7 +10,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type NewPreviousOwner } from "~/types/db";
-import { mergeHeaders, requireUser } from "~/services/auth.server";
+import { requireUser } from "~/services/auth";
 import { Plus } from "lucide-react";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { MaintenanceList } from "~/components/maintenance-list";
@@ -25,7 +25,7 @@ import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -38,8 +38,8 @@ export function meta({ data }: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { user, token, headers } = await requireUser(request);
+export async function clientLoader({ request, params }: Route.ClientLoaderArgs) {
+  const { user, token } = await requireUser(request);
 
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
@@ -81,7 +81,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const insights = getMaintenanceInsights(maintenanceRecords, lastKnownOdo, settings);
 
   // Other metadata
-  const { getLocations } = await import("~/services/settings.server");
+  const { getLocations } = await import("~/services/settings");
   const userLocations = await getLocations(token, user.id);
   const currentLocationId = maintenanceRecords
     .filter((r: any) => r.type === "location")
@@ -162,13 +162,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       formattedFirstRegistration,
       hasPurchaseDate,
       user,
-    },
-    { headers: mergeHeaders(headers ?? {}) }
+    }
   );
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const { user, token, headers } = await requireUser(request);
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const { user, token } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -208,7 +207,7 @@ export async function action({ request }: Route.ActionArgs) {
     createPreviousOwner,
     updatePreviousOwner,
     deletePreviousOwner,
-  } = await import("~/services/motorcycles.server");
+  } = await import("~/services/motorcycles");
 
   // Fetch currencies for normalization via backend
   const currencies = await fetchFromBackend<any[]>("/settings/currencies", {}, token);
@@ -235,13 +234,12 @@ export async function action({ request }: Route.ActionArgs) {
         const fieldKey = key as keyof typeof errors;
         if (errors[fieldKey]) {
           formattedErrors[key] = errors[fieldKey]![0];
-        }
-      }
-      return data({ errors: formattedErrors }, { status: 400, headers: mergeHeaders(headers ?? {}) });
-    }
+          }
+          }
+          return data({ errors: formattedErrors }, { status: 400 });
+          }
 
-    const {
-      purchasePrice,
+          const {      purchasePrice,
       currencyCode,
     } = validationResult.data;
 
@@ -259,7 +257,7 @@ export async function action({ request }: Route.ActionArgs) {
       throw new Response("Motorrad nicht gefunden.", { status: 404 });
     }
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "deleteMotorcycle") {
@@ -271,11 +269,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     await deleteMotorcycleCascade(token, motorcycleId);
 
-    const response = redirect("/");
-    mergeHeaders(headers ?? {}).forEach((value, key) => {
-      response.headers.set(key, value);
-    });
-    return response;
+    return redirect("/");
   }
 
   if (intent === "createIssue") {
@@ -298,7 +292,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     await createIssue(token, issueData);
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "updateIssue") {
@@ -324,7 +318,7 @@ export async function action({ request }: Route.ActionArgs) {
       date: parseString(formData.get("date")),
     });
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "deleteIssue") {
@@ -337,7 +331,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     await deleteIssue(token, issueId, motorcycleId);
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "createMaintenance" || intent === "updateMaintenance") {
@@ -398,7 +392,7 @@ export async function action({ request }: Route.ActionArgs) {
       await updateMaintenanceRecord(token, maintenanceId, motorcycleId, recordData);
     }
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "deleteMaintenance") {
@@ -411,7 +405,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     await deleteMaintenanceRecord(token, maintenanceId, motorcycleId);
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "createPreviousOwner" || intent === "updatePreviousOwner") {
@@ -432,7 +426,7 @@ export async function action({ request }: Route.ActionArgs) {
           formattedErrors[key] = fieldErrors[0];
         }
       }
-      return data({ errors: formattedErrors }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+      return data({ errors: formattedErrors }, { status: 400 });
     }
 
     const ownerData: NewPreviousOwner = {
@@ -457,7 +451,7 @@ export async function action({ request }: Route.ActionArgs) {
       await updatePreviousOwner(token, ownerId, motorcycleId, ownerData);
     }
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "deletePreviousOwner") {
@@ -470,7 +464,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     await deletePreviousOwner(token, ownerId, motorcycleId);
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
   if (intent === "importFuelData") {
@@ -512,10 +506,10 @@ export async function action({ request }: Route.ActionArgs) {
       }, token);
     }
 
-    return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+    return data({ success: true });
   }
 
-  return data({ success: false }, { headers: mergeHeaders(headers ?? {}) });
+  return data({ success: false });
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {

@@ -10,6 +10,7 @@ ENV APP_VERSION=$APP_VERSION
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
+RUN cp CHANGELOG.md public/CHANGELOG.md
 RUN pnpm build
 RUN pnpm prune --prod
 

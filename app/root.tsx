@@ -7,28 +7,26 @@ import {
   ScrollRestoration,
   data,
   useLoaderData,
-  useFetcher,
 } from "react-router";
-import type { Route } from "./+types/root";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
 import { Modal } from "~/components/modal";
 import { Button } from "~/components/button";
-import { getTheme } from "~/utils/theme.server";
-import { getNewChangelog } from "~/services/changelog.server";
+import { getTheme } from "~/utils/theme.client";
+import { getNewChangelog, markChangelogSeen } from "~/services/changelog.client";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 import "./app.css";
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const theme = await getTheme(request);
-  const changelog = await getNewChangelog(request);
+export async function clientLoader() {
+  const theme = getTheme();
+  const changelog = await getNewChangelog();
   return data({ theme, changelog });
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof clientLoader>();
   const theme = data?.theme;
 
   return (
@@ -54,19 +52,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { theme, changelog } = useLoaderData<typeof loader>();
+  const { theme, changelog } = useLoaderData<typeof clientLoader>();
   const [isChangelogOpen, setIsChangelogOpen] = useState(!!changelog);
-  const fetcher = useFetcher();
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then((registration) => {
+          console.log('SW registered: ', registration);
+        }).catch((registrationError) => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+  }, []);
 
   const handleCloseChangelog = () => {
     setIsChangelogOpen(false);
     if (changelog) {
-      const formData = new FormData();
-      formData.append("version", changelog.version);
-      fetcher.submit(formData, {
-        method: "post",
-        action: "/api/mark-changelog-seen",
-      });
+      markChangelogSeen(changelog.version);
     }
   };
 

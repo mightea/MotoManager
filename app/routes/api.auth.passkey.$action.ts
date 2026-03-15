@@ -1,9 +1,9 @@
 import { data } from "react-router";
 import type { Route } from "./+types/api.auth.passkey.$action";
-import { requireUser, createSession } from "~/services/auth.server";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { requireUser, createSession } from "~/services/auth";
+import { fetchFromBackend } from "~/utils/backend";
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
   const action = params.action;
 
   if (action === "register-options") {
@@ -22,7 +22,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   throw new Response("Not Found", { status: 404 });
 }
 
-export async function action({ params, request }: Route.ActionArgs) {
+export async function clientAction({ params, request }: Route.ClientActionArgs) {
   const action = params.action;
   const body = await request.json();
 
@@ -42,8 +42,8 @@ export async function action({ params, request }: Route.ActionArgs) {
     });
     
     if (response.verified && response.token) {
-      const { headers } = await createSession(response.token);
-      return data({ verified: true }, { headers });
+      await createSession(response.token);
+      return data({ verified: true });
     }
     
     return data({ verified: false }, { status: 400 });

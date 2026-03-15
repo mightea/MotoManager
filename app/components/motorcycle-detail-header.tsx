@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Motorcycle } from "~/types/db";
+import { getBackendAssetUrl } from "~/utils/backend";
 
 type NextInspectionInfo = {
   relativeLabel: string;
@@ -45,6 +46,7 @@ export function MotorcycleDetailHeader({
   const [isCompact, setIsCompact] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const hasHeroImage = true;
+  const imageUrl = getBackendAssetUrl(motorcycle.image);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -81,20 +83,20 @@ export function MotorcycleDetailHeader({
         <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
           <img
             src={
-              !imageError && motorcycle.image
-                ? `${motorcycle.image}?width=1200`
+              !imageError && imageUrl
+                ? `${imageUrl}?width=1200`
                 : "/favicon.svg"
             }
             srcSet={
-              !imageError && motorcycle.image
-                ? `${motorcycle.image}?width=800 800w, ${motorcycle.image}?width=1600 1600w`
+              !imageError && imageUrl
+                ? `${imageUrl}?width=800 800w, ${imageUrl}?width=1600 1600w`
                 : undefined
             }
             sizes="(max-width: 768px) 100vw, 1200px"
             alt={`${motorcycle.make} ${motorcycle.model}`}
             className={clsx(
               "h-full w-full object-cover",
-              (imageError || !motorcycle.image) &&
+              (imageError || !imageUrl) &&
               "p-32 object-contain opacity-50 grayscale dark:invert"
             )}
             onError={() => setImageError(true)}

@@ -1,11 +1,11 @@
 import { Link, data, useActionData } from "react-router";
 import type { Route } from "./+types/home";
-import { createMotorcycle } from "~/services/motorcycles.server";
-import { getCurrencies } from "~/services/settings.server";
-import { mergeHeaders, requireUser } from "~/services/auth.server";
-import { userPrefs } from "~/services/preferences.server";
+import { createMotorcycle } from "~/services/motorcycles";
+import { getCurrencies } from "~/services/settings";
+import { requireUser } from "~/services/auth";
+import { getUserPrefs, setUserPrefs } from "~/services/preferences";
 import { buildDashboardData } from "~/utils/home-stats";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 import {
   CalendarDays,
   Gauge,
@@ -34,8 +34,8 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { user, token, headers: authHeaders } = await requireUser(request);
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  const { user, token } = await requireUser(request);
 
   const [dashboardData, currencies] = await Promise.all([
     fetchFromBackend<any>("/stats", {}, token),
@@ -55,9 +55,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Sorting Logic
   const url = new URL(request.url);
   const sortParam = url.searchParams.get("sort");
-  const cookieHeader = request.headers.get("Cookie");
-  const cookie = (await userPrefs.parse(cookieHeader)) || {};
-  const currentSort = sortParam || cookie.sort || "updated";
+  const prefs = getUserPrefs();
+  const currentSort = sortParam || prefs.sort || "updated";
+
+  if (sortParam && sortParam !== prefs.sort) {
+    setUserPrefs({ ...prefs, sort: sortParam });
+  }
 
   cards.sort((a, b) => {
     switch (currentSort) {
@@ -101,19 +104,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
   });
 
-  const headers = new Headers(authHeaders);
-  if (sortParam) {
-    headers.append("Set-Cookie", await userPrefs.serialize({ ...cookie, sort: sortParam }));
-  }
-
-  return data(
-    { cards, stats, user, currentSort, currencies },
-    { headers },
-  );
+  return data({ cards, stats, user, currentSort, currencies });
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const { user: _user, token, headers } = await requireUser(request);
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const { user: _user, token } = await requireUser(request);
   const formData = await request.formData();
 
   const rawData = Object.fromEntries(formData);
@@ -128,7 +123,7 @@ export async function action({ request }: Route.ActionArgs) {
         formattedErrors[key] = errors[fieldKey]![0];
       }
     }
-    return data({ errors: formattedErrors }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+    return data({ errors: formattedErrors }, { status: 400 });
   }
 
   const {
@@ -149,7 +144,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   await createMotorcycle(token, formData);
 
-  return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+  return data({ success: true });
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {

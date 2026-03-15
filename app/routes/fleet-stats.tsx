@@ -1,11 +1,11 @@
 import { data, useLoaderData, Link } from "react-router";
 import type { Route } from "./+types/fleet-stats";
-import { mergeHeaders, requireUser } from "~/services/auth.server";
+import { requireUser } from "~/services/auth";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import { useState, Fragment, useRef, useEffect } from "react";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export function meta() {
   return [
@@ -14,10 +14,10 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { token, headers } = await requireUser(request);
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  const { token } = await requireUser(request);
   const stats = await fetchFromBackend<any>("/stats", {}, token);
-  return data({ stats }, { headers: mergeHeaders(headers ?? {}) });
+  return data({ stats });
 }
 
 function ChartSection({
@@ -134,7 +134,7 @@ function YearlyDetails({ yearStats }: { yearStats: any }) {
 }
 
 export default function FleetStatsPage() {
-  const { stats } = useLoaderData<typeof loader>();
+  const { stats } = useLoaderData<typeof clientLoader>();
   const [expandedYear, setExpandedYear] = useState<number | null>(null);
 
   const toggleYear = (year: number) => {

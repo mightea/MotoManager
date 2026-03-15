@@ -1,10 +1,7 @@
 import { type PublicUser, type UserRole } from "~/types/auth";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
-const SESSION_COOKIE_NAME = "mb_session";
-const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
-
-const SECURE_COOKIE = process.env.NODE_ENV === "production";
+const STORAGE_KEY = "moto_auth_token";
 
 export function toPublicUser(user: any): PublicUser {
   return {
@@ -19,56 +16,31 @@ export function toPublicUser(user: any): PublicUser {
   } satisfies PublicUser;
 }
 
-function buildCookie(token: string, maxAgeSeconds: number) {
-  const segments = [
-    `${SESSION_COOKIE_NAME}=${token}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    `Max-Age=${maxAgeSeconds}`,
-  ];
-
-  if (SECURE_COOKIE) {
-    segments.push("Secure");
-  }
-
-  return segments.join("; ");
-}
-
-function clearCookie() {
-  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${
-    SECURE_COOKIE ? "; Secure" : ""
-  }`;
-}
-
-function parseCookieHeader(request: Request): string | null {
-  const header = request.headers.get("Cookie");
-  if (!header) {
-    return null;
-  }
-
-  return (
-    header
-      .split(";")
-      .map((part) => part.trim())
-      .find((part) => part.startsWith(`${SESSION_COOKIE_NAME}=`))
-      ?.slice(SESSION_COOKIE_NAME.length + 1) ?? null
-  );
-}
-
 export type AuthSession = {
   user: PublicUser | null;
   token: string | null;
-  headers: Record<string, string>;
 };
 
-export async function getCurrentSession(
-  request: Request,
-): Promise<AuthSession> {
-  const token = parseCookieHeader(request);
+export function getSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(STORAGE_KEY);
+}
+
+export function setSessionToken(token: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEY, token);
+}
+
+export function clearSessionToken() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+export async function getCurrentSession(): Promise<AuthSession> {
+  const token = getSessionToken();
 
   if (!token) {
-    return { user: null, token: null, headers: {} };
+    return { user: null, token: null };
   }
 
   try {
@@ -77,39 +49,39 @@ export async function getCurrentSession(
     return {
       user: toPublicUser(response.user),
       token,
-      headers: { "Set-Cookie": buildCookie(token, SESSION_DURATION_MS / 1000) },
     };
   } catch (_error) {
+    clearSessionToken();
     return {
       user: null,
       token: null,
-      headers: { "Set-Cookie": clearCookie() },
     };
   }
 }
 
 export async function createSession(token: string) {
+  setSessionToken(token);
   return {
     token,
-    headers: { "Set-Cookie": buildCookie(token, SESSION_DURATION_MS / 1000) },
   };
 }
 
 export async function destroySessionByToken(token: string | null | undefined) {
-  if (token) {
+  const activeToken = token || getSessionToken();
+  if (activeToken) {
     try {
-      await fetchFromBackend("/auth/logout", { method: "POST" }, token);
+      await fetchFromBackend("/auth/logout", { method: "POST" }, activeToken);
     } catch (_error) {
       // Ignore logout errors on backend
     }
   }
 
-  return { headers: { "Set-Cookie": clearCookie() } };
+  clearSessionToken();
+  return {};
 }
 
-export async function destroySessionFromRequest(request: Request) {
-  const token = parseCookieHeader(request);
-  return destroySessionByToken(token);
+export async function destroySessionFromRequest(_request: Request) {
+  return destroySessionByToken(undefined);
 }
 
 export async function getUserCount() {
@@ -121,26 +93,26 @@ export async function getUserCount() {
   }
 }
 
-export async function createUser(
-  input: any,
-): Promise<PublicUser> {
+export async function createUser(input: any): Promise<PublicUser> {
+  console.log(`[Auth Service] Calling /auth/register for: ${input.username}`);
   const user = await fetchFromBackend<any>("/auth/register", {
     method: "POST",
     body: JSON.stringify(input),
   });
+  console.log(`[Auth Service] /auth/register response:`, user);
 
   return toPublicUser(user);
 }
 
-export async function updateUser(
-  userId: number,
-  input: any,
-  token: string,
-): Promise<PublicUser> {
-  const user = await fetchFromBackend<any>(`/admin/users/${userId}`, {
-    method: "PUT",
-    body: JSON.stringify(input),
-  }, token);
+export async function updateUser(userId: number, input: any, token: string): Promise<PublicUser> {
+  const user = await fetchFromBackend<any>(
+    `/admin/users/${userId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+    token,
+  );
 
   return toPublicUser(user);
 }
@@ -157,39 +129,45 @@ export async function verifyLogin(
   password: string,
 ): Promise<{ user: PublicUser; token: string } | null> {
   try {
+    console.log(`[Auth Service] Calling /auth/login for: ${identifier}`);
     const response = await fetchFromBackend<{ user: any; token: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ identifier, password }),
     });
+    console.log(`[Auth Service] /auth/login successful for: ${identifier}`);
 
     return {
       user: toPublicUser(response.user),
       token: response.token,
     };
-  } catch {
+  } catch (error) {
+    console.error(`[Auth Service] /auth/login failed for: ${identifier}`, error);
     return null;
   }
 }
 
 export async function requireUser(request: Request) {
-  const { user, token, headers } = await getCurrentSession(request);
+  console.log(`[Auth Service] Checking requirement for user at: ${request.url}`);
+  const { user, token } = await getCurrentSession();
+  console.log(`[Auth Service] Current session status:`, user ? `Logged in as ${user.username}` : "Not logged in");
+
   if (!user || !token) {
     const url = new URL(request.url);
     const redirectTo = encodeURIComponent(url.pathname + url.search + url.hash);
-    throw new Response(null, {
-      status: 302,
-      headers: {
-        Location: `/auth/login?redirectTo=${redirectTo}`,
-        ...(Object.keys(headers).length > 0 ? headers : {}),
-      },
-    });
+    
+    // In SPA mode, we can't easily set Location header on a response thrown from a client side function
+    // and expect the browser to follow it. Instead, we can throw a redirect response which React Router handles.
+    const { redirect } = await import("react-router");
+    console.log(`[Auth Service] Redirecting to login, target: ${redirectTo}`);
+    throw redirect(`/auth/login?redirectTo=${redirectTo}`);
   }
 
-  return { user, token, headers };
+  return { user, token };
 }
 
 export function requireAdmin(user: PublicUser) {
   if (user.role !== "admin") {
+    // For client-side forbidden, we might want to redirect to a 403 page or home
     throw new Response("Nicht erlaubt", { status: 403 });
   }
 }
@@ -201,18 +179,6 @@ export async function listUsers(token: string): Promise<PublicUser[]> {
 
 export async function deleteUser(userId: number, token: string) {
   await fetchFromBackend(`/admin/users/${userId}`, { method: "DELETE" }, token);
-}
-
-export function mergeHeaders(...headerRecords: Array<Record<string, string>>) {
-  const headers = new Headers();
-  headerRecords
-    .filter((record) => record && Object.keys(record).length > 0)
-    .forEach((record) => {
-      Object.entries(record).forEach(([key, value]) => {
-        headers.set(key, value);
-      });
-    });
-  return headers;
 }
 
 export function isPublicPath(pathname: string) {

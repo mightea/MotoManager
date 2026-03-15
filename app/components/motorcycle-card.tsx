@@ -5,6 +5,7 @@ import clsx from "clsx";
 import type { MotorcycleDashboardItem as DashboardCard } from "~/utils/home-stats";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { formatNumber } from "~/utils/numberUtils";
+import { getBackendAssetUrl } from "~/utils/backend";
 
 interface MotorcycleCardProps {
   moto: DashboardCard;
@@ -14,6 +15,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   const [imageError, setImageError] = useState(false);
   const slug = createMotorcycleSlug(moto.make, moto.model);
   const currentYear = new Date().getFullYear();
+  const imageUrl = getBackendAssetUrl(moto.image);
 
   const inspectionDateShort = moto.nextInspection?.dueDateISO
     ? new Intl.DateTimeFormat("de-CH", { month: "short", year: "numeric" }).format(
@@ -51,17 +53,17 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
         )}
 
         <img
-          src={!imageError && moto.image ? `${moto.image}?width=800` : "/favicon.svg"}
+          src={!imageError && imageUrl ? `${imageUrl}?width=800` : "/favicon.svg"}
           srcSet={
-            !imageError && moto.image
-              ? `${moto.image}?width=400 400w, ${moto.image}?width=800 800w`
+            !imageError && imageUrl
+              ? `${imageUrl}?width=400 400w, ${imageUrl}?width=800 800w`
               : undefined
           }
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           alt={`${moto.make} ${moto.model}`}
           className={clsx(
             "h-full w-full object-cover transition-[transform,brightness] duration-700 ease-out group-hover:scale-[1.06] group-hover:brightness-105",
-            (imageError || !moto.image) && "p-8 object-scale-down opacity-40 grayscale dark:invert"
+            (imageError || !imageUrl) && "p-8 object-scale-down opacity-40 grayscale dark:invert"
           )}
           loading="lazy"
           onError={() => setImageError(true)}

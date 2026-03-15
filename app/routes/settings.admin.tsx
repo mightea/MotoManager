@@ -10,7 +10,7 @@ import {
   deleteCurrencySetting,
   getCurrencies,
   updateCurrencySetting,
-} from "~/services/settings.server";
+} from "~/services/settings";
 import {
   createUser,
   listUsers,
@@ -18,7 +18,7 @@ import {
   requireUser,
   updateUser,
   updateUserPassword,
-} from "~/services/auth.server";
+} from "~/services/auth";
 import { USER_ROLES } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
@@ -26,7 +26,7 @@ import { useEffect, useState } from "react";
 import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export function meta() {
   return [
@@ -35,7 +35,7 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
   requireAdmin(user);
 
@@ -47,7 +47,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { users, currencies, user };
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const { user: currentUser, token } = await requireUser(request);
   requireAdmin(currentUser);
 
@@ -165,8 +165,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function AdminSettings() {
-  const { users, currencies, user: currentUser } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
+  const { users, currencies, user: currentUser } = useLoaderData<typeof clientLoader>();
+  const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   const [editingCurrencyId, setEditingCurrencyId] = useState<number | null>(null);
 

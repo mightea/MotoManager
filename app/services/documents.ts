@@ -1,4 +1,4 @@
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export function isPdfFile(file: File) {
     const mimeType = file.type?.toLowerCase() ?? "";
