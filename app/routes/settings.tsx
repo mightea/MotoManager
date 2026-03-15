@@ -45,7 +45,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const [locations, settings, userAuthenticators] = await Promise.all([
     getLocations(token, user.id),
     getUserSettings(token, user.id),
-    fetchFromBackend<any[]>("/settings/authenticators", {}, token),
+    fetchFromBackend<any[]>("/settings/authenticators", {}, token).catch(() => []),
   ]);
   return { locations, user, settings, userAuthenticators };
 }
