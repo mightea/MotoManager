@@ -6,7 +6,6 @@ import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "luc
 import clsx from "clsx";
 import { useState, Fragment, useRef, useEffect } from "react";
 import { fetchFromBackend } from "~/utils/backend";
-import { calculateFleetStats } from "~/utils/fleet-stats";
 
 export function meta() {
   return [
@@ -19,14 +18,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { token } = await requireUser(request);
   const response = await fetchFromBackend<any>("/stats", {}, token);
   
-  const stats = calculateFleetStats(
-    response.motorcycles ?? [],
-    response.maintenance ?? [],
-    response.issues ?? [],
-    response.locationHistory ?? []
-  );
-
-  return data({ stats });
+  return data({ stats: response.stats });
 }
 
 function ChartSection({
