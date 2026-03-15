@@ -72,7 +72,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Documents({ loaderData }: Route.ComponentProps) {
-  const { docs, user, allMotorcycles, assignments } = loaderData;
+  const { docs = [], user, allMotorcycles = [], assignments = [] } = loaderData;
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);

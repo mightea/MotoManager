@@ -165,7 +165,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function AdminSettings() {
-  const { users, currencies, user: currentUser } = useLoaderData<typeof clientLoader>();
+  const { users = [], currencies = [], user: currentUser } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   const [editingCurrencyId, setEditingCurrencyId] = useState<number | null>(null);
