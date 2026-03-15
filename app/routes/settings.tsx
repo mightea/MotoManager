@@ -12,11 +12,11 @@ import {
   getUserSettings,
   updateLocation,
   updateUserSettings,
-} from "~/services/settings.server";
+} from "~/services/settings";
 import {
   requireUser,
-} from "~/services/auth.server";
-import { fetchFromBackend } from "~/utils/backend.server";
+} from "~/services/auth";
+import { fetchFromBackend } from "~/utils/backend";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { useState } from "react";
@@ -40,7 +40,7 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
   const [locations, settings, userAuthenticators] = await Promise.all([
     getLocations(token, user.id),
@@ -50,7 +50,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { locations, user, settings, userAuthenticators };
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const { user, token } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -163,8 +163,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings() {
-  const { locations, userAuthenticators, settings } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
+  const { locations, userAuthenticators, settings } = useLoaderData<typeof clientLoader>();
+  const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
 

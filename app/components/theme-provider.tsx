@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { Theme } from "~/utils/theme";
-import { useFetcher } from "react-router";
+import { setTheme as persistTheme } from "~/utils/theme.client";
 
 type ThemeContextType = {
   theme: Theme | null;
@@ -27,17 +27,10 @@ export function ThemeProvider({
     return null;
   });
 
-  const fetcher = useFetcher();
-  const persistThemeRef = useRef(fetcher);
-
-  // Persist theme to server when it changes (but not on initial mount if it matches)
+  // Persist theme to localStorage when it changes
   useEffect(() => {
-    const persistTheme = persistThemeRef.current;
     if (theme) {
-      persistTheme.submit(
-        { theme },
-        { action: "/api/set-theme", method: "post" }
-      );
+      persistTheme(theme);
     }
   }, [theme]);
   

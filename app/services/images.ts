@@ -1,4 +1,4 @@
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export async function processImageUpload(file: File, token: string): Promise<string> {
     const formData = new FormData();

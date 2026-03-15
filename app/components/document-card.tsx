@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucide-react";
+import { getBackendAssetUrl } from "~/utils/backend";
 
 export type DocumentSummary = {
   id: number;
@@ -29,19 +30,21 @@ export function DocumentCard({
   assignedMotorcycleNames = [],
 }: DocumentCardProps) {
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
+  const fileUrl = getBackendAssetUrl(document.filePath) ?? "#";
+  const previewUrl = getBackendAssetUrl(document.previewPath);
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-navy-700 dark:bg-navy-800">
       <a
-        href={document.filePath}
+        href={fileUrl}
         target="_blank"
         rel="noreferrer"
         className="relative block h-44 w-full overflow-hidden bg-gray-50 transition-transform duration-200 hover:scale-[1.01] dark:bg-navy-900"
         aria-label={`Dokument ${document.title} öffnen`}
       >
-        {document.previewPath ? (
+        {previewUrl ? (
           <img
-            src={document.previewPath}
+            src={previewUrl}
             alt={document.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"

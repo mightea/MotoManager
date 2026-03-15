@@ -1,10 +1,10 @@
 import { Link, useLoaderData } from "react-router";
-import { requireUser } from "~/services/auth.server";
+import { requireUser } from "~/services/auth";
 import { formatNumber } from "~/utils/numberUtils";
 import { ArrowLeft, Users, Bike, FileText, Wrench, AlertCircle, MapPin, History, PenTool, Link as LinkIcon } from "lucide-react";
 import type { Route } from "./+types/settings.server-stats";
 import clsx from "clsx";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export function meta() {
   return [
@@ -13,7 +13,7 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     const { token } = await requireUser(request);
 
     const statsData = await fetchFromBackend<any>("/stats", {}, token);
@@ -24,7 +24,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function ServerStats() {
-    const { stats, avgMotoPerUser, avgDocsPerUser } = useLoaderData<typeof loader>();
+    const { stats, avgMotoPerUser, avgDocsPerUser } = useLoaderData<typeof clientLoader>();
 
     return (
         <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-4 sm:pt-28 pb-20">

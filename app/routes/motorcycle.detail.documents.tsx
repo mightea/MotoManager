@@ -9,7 +9,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.documents";
 import type { DocumentSummary } from "~/components/document-card";
-import { requireUser, mergeHeaders } from "~/services/auth.server";
+import { requireUser } from "~/services/auth";
 import { DocumentCard } from "~/components/document-card";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
@@ -17,7 +17,7 @@ import { FileText } from "lucide-react";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export type DocumentWithAssignment = DocumentSummary & {
   assignedMotorcycleNames: string[];
@@ -39,8 +39,8 @@ export function meta({ data }: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { user, token, headers } = await requireUser(request);
+export async function clientLoader({ request, params }: Route.ClientLoaderArgs) {
+  const { user, token } = await requireUser(request);
 
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
@@ -55,7 +55,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return data({
     ...response,
     userId: user.id,
-  }, { headers: mergeHeaders(headers ?? {}) });
+  });
 }
 
 export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentProps) {

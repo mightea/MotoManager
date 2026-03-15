@@ -1,4 +1,4 @@
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 import {
   type EditorIssue,
   type NewCurrentLocationRecord,

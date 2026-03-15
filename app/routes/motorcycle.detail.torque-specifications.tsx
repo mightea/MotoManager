@@ -9,7 +9,7 @@ import type { Route } from "./+types/motorcycle.detail.torque-specifications";
 import {
   type TorqueSpecification,
 } from "~/types/db";
-import { requireUser, mergeHeaders } from "~/services/auth.server";
+import { requireUser } from "~/services/auth";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { Wrench, Plus, Pencil, Import, Printer } from "lucide-react";
@@ -23,8 +23,8 @@ import {
   createTorqueSpecification,
   updateTorqueSpecification,
   deleteTorqueSpecification
-} from "~/services/motorcycles.server";
-import { fetchFromBackend } from "~/utils/backend.server";
+} from "~/services/motorcycles";
+import { fetchFromBackend } from "~/utils/backend";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -37,8 +37,8 @@ export function meta({ data }: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { user: _user, token, headers } = await requireUser(request);
+export async function clientLoader({ request, params }: Route.ClientLoaderArgs) {
+  const { user: _user, token } = await requireUser(request);
 
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
@@ -52,11 +52,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   return data({
     ...response,
-  }, { headers: mergeHeaders(headers ?? {}) });
+  });
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const { user: _user, token, headers } = await requireUser(request);
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const { user: _user, token } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
 
@@ -66,22 +66,22 @@ export async function action({ request }: Route.ActionArgs) {
     if (intent === "deleteTorqueSpec") {
       const torqueId = Number(formData.get("torqueId"));
       if (!torqueId) {
-        return data({ error: "ID fehlt für Löschen." }, { status: 400, headers: mergeHeaders(headers) });
+        return data({ error: "ID fehlt für Löschen." }, { status: 400 });
       }
       const deleted = await deleteTorqueSpecification(token, torqueId, motorcycleId);
       if (!deleted) {
         return data(
           { error: "Drehmoment-Spezifikation nicht gefunden oder gehört nicht zu diesem Motorrad." },
-          { status: 404, headers: mergeHeaders(headers) },
+          { status: 404 },
         );
       }
-      return data({ success: true }, { headers: mergeHeaders(headers) });
+      return data({ success: true });
     }
 
     if (intent === "importTorqueSpecs") {
       const sourceSpecIds = formData.getAll("sourceSpecIds").map(Number);
       if (sourceSpecIds.length === 0) {
-        return data({ success: true }, { headers: mergeHeaders(headers) });
+        return data({ success: true });
       }
 
       await fetchFromBackend(`/motorcycles/${motorcycleId}/torque-specs/import`, {
@@ -89,7 +89,7 @@ export async function action({ request }: Route.ActionArgs) {
         body: JSON.stringify({ sourceSpecIds }),
       }, token);
 
-      return data({ success: true }, { headers: mergeHeaders(headers) });
+      return data({ success: true });
     }
 
     const category = formData.get("category") as string;
@@ -106,7 +106,7 @@ export async function action({ request }: Route.ActionArgs) {
     const description = formData.get("description") as string | undefined;
 
     if (!motorcycleId || !category || !name || isNaN(torque)) {
-      return data({ error: "Bitte alle Pflichtfelder ausfüllen." }, { status: 400, headers: mergeHeaders(headers) });
+      return data({ error: "Bitte alle Pflichtfelder ausfüllen." }, { status: 400 });
     }
 
     if (intent === "createTorqueSpec") {
@@ -123,7 +123,7 @@ export async function action({ request }: Route.ActionArgs) {
     } else {
       const torqueId = Number(formData.get("torqueId"));
       if (!torqueId) {
-        return data({ error: "ID fehlt für Update." }, { status: 400, headers: mergeHeaders(headers) });
+        return data({ error: "ID fehlt für Update." }, { status: 400 });
       }
       await updateTorqueSpecification(token, torqueId, motorcycleId, {
         category,
@@ -136,7 +136,7 @@ export async function action({ request }: Route.ActionArgs) {
       });
     }
 
-    return data({ success: true }, { headers: mergeHeaders(headers) });
+    return data({ success: true });
   }
 
   return null;
@@ -153,7 +153,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     allCategories,
     printDate,
   } = loaderData;
-  const actionData = useActionData<typeof action>();
+  const actionData = useActionData<typeof clientAction>();
   const submit = useSubmit();
   const params = useParams<{ slug?: string; id?: string }>();
   const slug = params.slug ?? createMotorcycleSlug(motorcycle.make, motorcycle.model);

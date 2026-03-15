@@ -1,14 +1,14 @@
 import { data, useActionData, useSubmit, useLocation, useNavigate } from "react-router";
 import { useCallback } from "react";
 import type { Route } from "./+types/documents";
-import { requireUser, mergeHeaders } from "~/services/auth.server";
+import { requireUser } from "~/services/auth";
 import { FileText, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
-import { fetchFromBackend } from "~/utils/backend.server";
+import { fetchFromBackend } from "~/utils/backend";
 
 export function meta() {
   return [
@@ -17,16 +17,16 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { user, token, headers } = await requireUser(request);
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+  const { user, token } = await requireUser(request);
 
   const response = await fetchFromBackend<any>("/documents", {}, token);
 
-  return data({ ...response, user }, { headers: mergeHeaders(headers ?? {}) });
+  return data({ ...response, user });
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const { token, headers } = await requireUser(request);
+export async function clientAction({ request }: Route.ClientActionArgs) {
+  const { token } = await requireUser(request);
 
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -37,9 +37,9 @@ export async function action({ request }: Route.ActionArgs) {
         method: "POST",
         body: formData,
       }, token);
-      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+      return data({ success: true });
     } catch (e: any) {
-      return data({ error: e.message }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+      return data({ error: e.message }, { status: 400 });
     }
   }
 
@@ -50,9 +50,9 @@ export async function action({ request }: Route.ActionArgs) {
         method: "PUT",
         body: formData,
       }, token);
-      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+      return data({ success: true });
     } catch (e: any) {
-      return data({ error: e.message }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+      return data({ error: e.message }, { status: 400 });
     }
   }
 
@@ -62,9 +62,9 @@ export async function action({ request }: Route.ActionArgs) {
       await fetchFromBackend(`/documents/${id}`, {
         method: "DELETE",
       }, token);
-      return data({ success: true }, { headers: mergeHeaders(headers ?? {}) });
+      return data({ success: true });
     } catch (e: any) {
-      return data({ error: e.message }, { status: 400, headers: mergeHeaders(headers ?? {}) });
+      return data({ error: e.message }, { status: 400 });
     }
   }
 

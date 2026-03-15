@@ -16,9 +16,8 @@ import {
   createUser,
   getCurrentSession,
   getUserCount,
-  mergeHeaders,
   verifyLogin,
-} from "~/services/auth.server";
+} from "~/services/auth";
 import { authenticateWithPasskey } from "~/utils/webauthn";
 
 const EMAIL_REGEX = /.+@.+\..+/i;
@@ -31,37 +30,32 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const url = new URL(request.url);
   const redirectTo = url.searchParams.get("redirectTo") ?? "/";
 
-  const { user, headers } = await getCurrentSession(request);
+  const { user } = await getCurrentSession();
 
   if (user) {
-    const response = redirect(redirectTo);
-    mergeHeaders(headers ?? {}).forEach((value, key) => {
-      response.headers.set(key, value);
-    });
-    throw response;
+    throw redirect(redirectTo);
   }
 
   const userCount = await getUserCount();
   const isFirstUser = false; // userCount === 0;
 
-  return data(
-    {
-      redirectTo,
-      isFirstUser,
-    },
-    { headers: mergeHeaders(headers ?? {}) },
-  );
+  return data({
+    redirectTo,
+    isFirstUser,
+  });
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function clientAction({ request }: Route.ClientActionArgs) {
   const formData = await request.formData();
   const intentRaw = String(formData.get("intent") ?? "login");
   const intent = intentRaw === "register" ? "register" : "login";
   const redirectToRaw = String(formData.get("redirectTo") ?? "/");
+
+  console.log(`[Login Page] Action triggered with intent: ${intent}`);
 
   if (intent === "register") {
     const name = String(formData.get("name") ?? "").trim();
@@ -106,28 +100,29 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     try {
+      console.log(`[Login Page] Attempting registration for username: ${username}, email: ${email}`);
       const _newUser = await createUser({
         email,
         username,
         name,
         password,
       });
+      console.log(`[Login Page] User created successfully: ${username}`);
 
       // After registration, we need to login to get the token
       const loginResult = await verifyLogin(username, password);
+      console.log(`[Login Page] Auto-login after registration result:`, loginResult ? "Success" : "Failed");
+
       if (!loginResult) {
         return redirect("/auth/login");
       }
 
-      const session = await createSession(loginResult.token);
+      await createSession(loginResult.token);
 
       const redirectTo = redirectToRaw.startsWith("/") ? redirectToRaw : "/";
-      const response = redirect(redirectTo);
-      mergeHeaders(session.headers ?? {}).forEach((value, key) => {
-        response.headers.set(key, value);
-      });
-      return response;
+      return redirect(redirectTo);
     } catch (error) {
+      console.error(`[Login Page] Registration failed:`, error);
       const message =
         error instanceof Error
           ? error.message
@@ -159,7 +154,9 @@ export async function action({ request }: Route.ActionArgs) {
     return data({ success: false, errors, form: "login" }, { status: 400 });
   }
 
+  console.log(`[Login Page] Attempting login for identifier: ${identifier}`);
   const loginResult = await verifyLogin(identifier, password);
+  console.log(`[Login Page] Login result for ${identifier}:`, loginResult ? "Success" : "Failed");
 
   if (!loginResult) {
     return data(
@@ -168,19 +165,15 @@ export async function action({ request }: Route.ActionArgs) {
     );
   }
 
-  const session = await createSession(loginResult.token);
+  await createSession(loginResult.token);
 
   const redirectTo = redirectToRaw.startsWith("/") ? redirectToRaw : "/";
-  const response = redirect(redirectTo);
-  mergeHeaders(session.headers ?? {}).forEach((value, key) => {
-    response.headers.set(key, value);
-  });
-  return response;
+  return redirect(redirectTo);
 }
 
 export default function Login() {
-  const { redirectTo, isFirstUser } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
+  const { redirectTo, isFirstUser } = useLoaderData<typeof clientLoader>();
+  const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   const navigate = useNavigate();
   const submittingIntent = navigation.formData?.get("intent");
