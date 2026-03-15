@@ -62,7 +62,7 @@ export async function fetchFromBackend<T>(
     // Attempt to return from cache if network fails
     const cachedData = await getFromResponseCache<T>(path);
     if (cachedData) {
-      console.log(`[Offline] Using cached data for ${path}`);
+      console.log(`[Offline] Using cached data for ${path}:`, JSON.stringify(cachedData, null, 2));
       return cachedData;
     }
 
