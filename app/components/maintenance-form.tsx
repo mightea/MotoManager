@@ -181,7 +181,7 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                                 className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
                                 defaultValue={initialData?.currency || currencyCode || "CHF"}
                             >
-                                {currencies?.map((c) => (
+                                {Array.isArray(currencies) && currencies.map((c) => (
                                     <option key={c.code} value={c.code}>
                                         {c.code}
                                     </option>
@@ -210,7 +210,7 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                                 className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
                                 defaultValue={initialData?.currency || currencyCode || "CHF"}
                             >
-                                {currencies?.map((c) => (
+                                {Array.isArray(currencies) && currencies.map((c) => (
                                     <option key={c.code} value={c.code}>
                                         {c.code}
                                     </option>

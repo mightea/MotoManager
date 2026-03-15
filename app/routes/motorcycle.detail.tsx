@@ -21,6 +21,7 @@ import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { motorcycleSchema, previousOwnerSchema } from "~/validations";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
+import { getCurrencies } from "~/services/settings";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
@@ -88,7 +89,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ?? null;
   const currentLocationName = userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
 
-  const currencies = await fetchFromBackend<any[]>("/currencies");
+  const currencies = await getCurrencies();
 
   // Fuel stats
   const fuelRecords = maintenanceRecords.filter((r: any) => r.type === "fuel" && r.fuelAmount && r.tripDistance);
@@ -210,13 +211,12 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   } = await import("~/services/motorcycles");
 
   // Fetch currencies for normalization via backend
-  const currencies = await fetchFromBackend<any[]>("/settings/currencies", {}, token);
+  const currencies = await getCurrencies();
   const getCurrencyFactor = (code: string | null | undefined) => {
     if (!code) return 1;
-    const currency = currencies.find(c => c.code === code);
+    const currency = currencies.find((c: any) => c.code === code);
     return currency ? currency.conversionFactor : 1;
   };
-
 
   if (intent === "updateMotorcycle") {
     const motorcycleId = Number(formData.get("motorcycleId"));
