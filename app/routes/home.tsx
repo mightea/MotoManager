@@ -4,8 +4,9 @@ import { createMotorcycle } from "~/services/motorcycles";
 import { getCurrencies } from "~/services/settings";
 import { requireUser } from "~/services/auth";
 import { getUserPrefs, setUserPrefs } from "~/services/preferences";
-import { buildDashboardData } from "~/utils/home-stats";
 import { fetchFromBackend } from "~/utils/backend";
+import { type MotorcycleDashboardItem } from "~/utils/home-stats";
+
 import {
   CalendarDays,
   Gauge,
@@ -42,15 +43,8 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     getCurrencies(),
   ]);
 
-  const { items: cards, stats } = buildDashboardData({
-    motorcycles: dashboardData?.motorcycles ?? [],
-    issues: dashboardData?.issues ?? [],
-    maintenance: dashboardData?.maintenance ?? [],
-    locationHistory: dashboardData?.locationHistory ?? [],
-    locations: dashboardData?.locations ?? [],
-    year: new Date().getFullYear(),
-    settings: dashboardData?.settings,
-  });
+  const cards = dashboardData?.motorcycles ?? [];
+  const stats = dashboardData?.stats;
 
   // Sorting Logic
   const url = new URL(request.url);
@@ -62,7 +56,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     setUserPrefs({ ...prefs, sort: sortParam });
   }
 
-  cards.sort((a, b) => {
+  cards.sort((a: MotorcycleDashboardItem, b: MotorcycleDashboardItem) => {
     switch (currentSort) {
       case "location":
         const codeA = a.currentLocationCountryCode || "ZZ";
@@ -243,8 +237,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             </Button>
           </div>
         ) : (
-          cards.map((moto) => (
-            <MotorcycleCard key={moto.id} moto={moto} />
+          cards.map((moto: MotorcycleDashboardItem) => (
+            <MotorcycleCard
+              key={moto.id}
+ moto={moto} />
           ))
         )}
       </div>

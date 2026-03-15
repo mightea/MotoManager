@@ -16,11 +16,11 @@ export function meta() {
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     const { token } = await requireUser(request);
 
-    const statsData = await fetchFromBackend<any>("/stats", {}, token);
+    const response = await fetchFromBackend<any>("/stats", {}, token);
 
-    const { stats, avgMotoPerUser, avgDocsPerUser } = statsData;
+    const { stats, avgMotoPerUser, avgDocsPerUser } = response;
 
-    return { stats, avgMotoPerUser, avgDocsPerUser };
+    return { stats: stats.global, avgMotoPerUser, avgDocsPerUser };
 }
 
 export default function ServerStats() {

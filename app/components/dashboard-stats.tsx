@@ -7,49 +7,57 @@ interface DashboardStatsProps {
 }
 
 export function DashboardStats({ stats }: DashboardStatsProps) {
+  const year = stats?.year ?? new Date().getFullYear();
+  const totalKmThisYear = stats?.totalKmThisYear ?? 0;
+  const totalKmOverall = stats?.totalKmOverall ?? 0;
+  const totalActiveIssues = stats?.totalActiveIssues ?? 0;
+  const totalMaintenanceCostThisYear = stats?.totalMaintenanceCostThisYear ?? 0;
+  const veteranCount = stats?.veteranCount ?? 0;
+  const topRider = stats?.topRider;
+
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-foreground dark:text-white">
-        Flotte {stats.year}
+        Flotte {year}
       </h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Kilometer dieses Jahr"
-          value={`${formatNumber(stats.totalKmThisYear)} km`}
-          description={`Registrierte Fahrten ${stats.year}`}
+          value={`${formatNumber(totalKmThisYear)} km`}
+          description={`Registrierte Fahrten ${year}`}
           accent="primary"
         />
         <StatCard
           label="Kilometer insgesamt"
-          value={`${formatNumber(stats.totalKmOverall)} km`}
+          value={`${formatNumber(totalKmOverall)} km`}
           description="Gesamtkilometer aller Bikes"
         />
         <StatCard
           label="Offene Mängel"
-          value={stats.totalActiveIssues.toString()}
+          value={totalActiveIssues.toString()}
           description="Ausstehend über alle Motorräder"
-          accent={stats.totalActiveIssues > 0 ? "warning" : undefined}
+          accent={totalActiveIssues > 0 ? "warning" : undefined}
         />
         <StatCard
-          label={`Kosten ${stats.year}`}
-          value={formatCurrency(stats.totalMaintenanceCostThisYear)}
+          label={`Kosten ${year}`}
+          value={formatCurrency(totalMaintenanceCostThisYear)}
           description="Erfasste Wartungskosten"
         />
         <StatCard
           label="Veteranen-Bikes"
-          value={stats.veteranCount.toString()}
+          value={veteranCount.toString()}
           description="Motorräder mit Veteranen-Status"
         />
         <StatCard
           label="Fleissigstes Bike"
-          value={stats.topRider ? `${stats.topRider.make} ${stats.topRider.model}` : "—"}
+          value={topRider ? `${topRider.make} ${topRider.model}` : "—"}
           description={
-            stats.topRider
-              ? `${formatNumber(stats.topRider.odometerThisYear)} km in ${stats.year}`
+            topRider
+              ? `${formatNumber(topRider.odometerThisYear)} km in ${year}`
               : "Keine Fahrten in diesem Jahr"
           }
-          accent={stats.topRider ? "primary" : undefined}
+          accent={topRider ? "primary" : undefined}
         />
       </div>
     </div>
