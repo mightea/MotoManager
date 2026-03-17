@@ -2,40 +2,37 @@ import {
   startRegistration,
   startAuthentication,
 } from "@simplewebauthn/browser";
-import { fetchFromBackend } from "./backend";
-import { getSessionToken } from "~/services/auth";
 
 /**
  * Register a new passkey
  */
 export async function registerPasskey() {
   console.log("[WebAuthn] Starting registration...");
-  const token = getSessionToken();
   
-  // 1. Get options from server
-  const response = await fetchFromBackend<any>("/auth/passkey/register-options", {}, token);
-  console.log("[WebAuthn] Options from server:", response);
+  // 1. Get options from server (via proxy)
+  const response = await fetch("/api/auth/passkey/register-options");
+  if (!response.ok) throw new Error("Could not get registration options");
   
-  if (!response || !response.options) {
-    throw new Error("Fehlende Registrierungs-Optionen vom Server");
-  }
-
-  const { options, challengeId } = response;
+  const { options, challengeId } = await response.json();
+  console.log("[WebAuthn] Options from server:", options);
 
   // 2. Start browser ceremony
   console.log("[WebAuthn] Starting browser registration ceremony...");
   const attestationResponse = await startRegistration({ optionsJSON: options });
   console.log("[WebAuthn] Attestation response:", attestationResponse);
 
-  // 3. Send response back to server for verification
+  // 3. Send response back to server for verification (via proxy)
   console.log("[WebAuthn] Sending verification to server...");
-  const verificationResult = await fetchFromBackend<any>("/auth/passkey/register-verify", {
+  const verificationResponse = await fetch("/api/auth/passkey/register-verify", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       challengeId,
       response: attestationResponse,
     }),
-  }, token);
+  });
+
+  const verificationResult = await verificationResponse.json();
   console.log("[WebAuthn] Verification result:", verificationResult);
 
   if (!verificationResult || !verificationResult.verified) {
@@ -51,31 +48,33 @@ export async function registerPasskey() {
 export async function authenticateWithPasskey(username?: string) {
   console.log("[WebAuthn] Starting authentication for:", username || "any user");
   
-  // 1. Get options from server
-  const path = username ? `/auth/passkey/login-options?username=${encodeURIComponent(username)}` : "/auth/passkey/login-options";
-  const response = await fetchFromBackend<any>(path);
-  console.log("[WebAuthn] Options from server:", response);
-
-  if (!response || !response.options) {
-    throw new Error("Fehlende Login-Optionen vom Server");
-  }
-
-  const { options, challengeId } = response;
+  // 1. Get options from server (via proxy)
+  const url = username ? `/api/auth/passkey/login-options?username=${encodeURIComponent(username)}` : "/api/auth/passkey/login-options";
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Could not get authentication options");
+  
+  const { options, challengeId } = await response.json();
+  console.log("[WebAuthn] Options from server:", options);
 
   // 2. Start browser ceremony
   console.log("[WebAuthn] Starting browser authentication ceremony...");
   const assertionResponse = await startAuthentication({ optionsJSON: options });
   console.log("[WebAuthn] Assertion response:", assertionResponse);
 
-  // 3. Send response back to server for verification
+  // 3. Send response back to server for verification (via proxy)
   console.log("[WebAuthn] Sending verification to server...");
-  const verificationResult = await fetchFromBackend<any>("/auth/passkey/login-verify", {
+  const verificationResponse = await fetch("/api/auth/passkey/login-verify", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       challengeId,
       response: assertionResponse,
     }),
   });
+
+  if (!verificationResponse.ok) throw new Error("Authentication failed");
+  
+  const verificationResult = await verificationResponse.json();
   console.log("[WebAuthn] Verification result:", verificationResult);
 
   if (!verificationResult || !verificationResult.verified) {
