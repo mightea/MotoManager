@@ -22,6 +22,10 @@ export async function registerPasskey() {
   const responseData = await response.json();
   console.log("[WebAuthn] Full response data from /api/auth/passkey/register-options:", responseData);
   const { options, challengeId } = responseData;
+  
+  if (!options) throw new Error("Server response missing 'options'");
+  if (!challengeId) throw new Error("Server response missing 'challengeId'");
+  
   console.log("[WebAuthn] Options from server:", options);
 
   // 2. Start browser ceremony
@@ -64,7 +68,12 @@ export async function authenticateWithPasskey(username?: string) {
   const response = await fetch(url);
   if (!response.ok) throw new Error("Could not get authentication options");
   
-  const { options, challengeId } = await response.json();
+  const responseData = await response.json();
+  const { options, challengeId } = responseData;
+  
+  if (!options) throw new Error("Server response missing 'options'");
+  if (!challengeId) throw new Error("Server response missing 'challengeId'");
+  
   console.log("[WebAuthn] Options from server:", options);
 
   // 2. Start browser ceremony

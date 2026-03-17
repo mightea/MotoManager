@@ -6,7 +6,7 @@ import pkg from "./package.json";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const backendUrl = env.BACKEND_URL || "http://localhost:3001";
+  const backendUrl = env.BACKEND_URL || "http://127.0.0.1:3001";
 
   return {
     define: {
