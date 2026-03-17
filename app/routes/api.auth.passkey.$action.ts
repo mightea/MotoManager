@@ -1,5 +1,5 @@
 import { data } from "react-router";
-import type { Route } from "./+types/api.auth.passkey";
+import type { Route } from "./+types/api.auth.passkey.$action";
 import { fetchFromBackend } from "~/utils/backend";
 
 export async function loader({ params, request }: Route.LoaderArgs) {

@@ -10,8 +10,11 @@ export async function fetchFromBackend<T>(
   options: RequestInit = {},
   token?: string | null
 ): Promise<T> {
-  const baseUrl = getBackendUrl();
+  const isBrowser = typeof window !== "undefined";
+  const baseUrl = isBrowser ? "" : getBackendUrl();
   const safePath = typeof path === "string" ? (path.startsWith("/") ? path : `/${path}`) : "/";
+  
+  // Use /api prefix for the backend
   const url = `${baseUrl}/api${safePath}`;
 
   const headers = new Headers(options.headers);
