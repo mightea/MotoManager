@@ -1,4 +1,4 @@
-import { Link, data, useActionData } from "react-router";
+import { Link, data, useActionData, useNavigation } from "react-router";
 import type { Route } from "./+types/home";
 import { createMotorcycle } from "~/services/motorcycles";
 import { getCurrencies } from "~/services/settings";
@@ -27,6 +27,7 @@ import { motorcycleSchema } from "~/validations";
 import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
 import { Button } from "~/components/button";
+import { MotorcycleCardSkeleton } from "~/components/skeleton";
 
 export function meta() {
   return [
@@ -145,6 +146,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { cards, stats, currentSort, currencies } = loaderData;
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
+  const navigation = useNavigation();
+
+  // Show skeletons when navigation is loading (but not when submitting form)
+  const isLoading = navigation.state === "loading" && !navigation.formData;
 
   useEffect(() => {
     if (actionData?.success) {
@@ -188,6 +193,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 <MenuItem key={option.id}>
                   <Link
                     to={`?sort=${option.id}`}
+                    prefetch="intent"
                     className={clsx(
                       "group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
                       isActive
@@ -220,7 +226,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       </button>
 
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {cards.length === 0 ? (
+        {isLoading ? (
+          Array.from({ length: cards.length || 3 }).map((_, i) => (
+            <MotorcycleCardSkeleton key={i} />
+          ))
+        ) : cards.length === 0 ? (
           <div className="col-span-full flex min-h-[220px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-10 text-center dark:border-navy-700 dark:bg-navy-800/50">
             <div className="mb-3 grid h-12 w-12 place-items-center rounded-xl bg-gray-100 dark:bg-navy-700">
               <Gauge className="h-6 w-6 text-gray-400 dark:text-navy-300" />
@@ -240,12 +250,12 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           cards.map((moto: MotorcycleDashboardItem) => (
             <MotorcycleCard
               key={moto.id}
- moto={moto} />
+              moto={moto} />
           ))
         )}
       </div>
 
-      {cards.length > 0 && (
+      {!isLoading && cards.length > 0 && (
         <div className="pt-2 border-t border-gray-100 dark:border-navy-700">
           <DashboardStats stats={stats} />
         </div>

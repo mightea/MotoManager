@@ -1,5 +1,6 @@
-import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import clsx from "clsx";
+import { Loader2 } from "lucide-react";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "destructive";
 type ButtonSize = "sm" | "md" | "lg" | "icon";
@@ -8,6 +9,9 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
+  isLoading?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 };
 
 const baseStyles =
@@ -34,12 +38,24 @@ const sizeStyles: Record<ButtonSize, string> = {
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, variant = "primary", size = "md", fullWidth, ...props },
+  {
+    className,
+    variant = "primary",
+    size = "md",
+    fullWidth,
+    isLoading = false,
+    leftIcon,
+    rightIcon,
+    children,
+    disabled,
+    ...props
+  },
   ref
 ) {
   return (
     <button
       ref={ref}
+      disabled={disabled || isLoading}
       className={clsx(
         baseStyles,
         variantStyles[variant],
@@ -48,7 +64,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         className
       )}
       {...props}
-    />
+    >
+      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+      {!isLoading && leftIcon && <span className="shrink-0">{leftIcon}</span>}
+      {children}
+      {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
+    </button>
   );
 });
 
