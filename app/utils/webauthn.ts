@@ -30,7 +30,8 @@ export async function registerPasskey() {
 
   // 2. Start browser ceremony
   console.log("[WebAuthn] Starting browser registration ceremony...");
-  const attestationResponse = await startRegistration({ optionsJSON: options });
+  // The backend wraps the options in a "publicKey" field
+  const attestationResponse = await startRegistration({ optionsJSON: options.publicKey || options });
   console.log("[WebAuthn] Attestation response:", attestationResponse);
 
   // 3. Send response back to server for verification (via proxy)
@@ -78,7 +79,8 @@ export async function authenticateWithPasskey(username?: string) {
 
   // 2. Start browser ceremony
   console.log("[WebAuthn] Starting browser authentication ceremony...");
-  const assertionResponse = await startAuthentication({ optionsJSON: options });
+  // The backend wraps the options in a "publicKey" field
+  const assertionResponse = await startAuthentication({ optionsJSON: options.publicKey || options });
   console.log("[WebAuthn] Assertion response:", assertionResponse);
 
   // 3. Send response back to server for verification (via proxy)
