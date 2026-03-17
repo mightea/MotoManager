@@ -1,13 +1,12 @@
 import { data } from "react-router";
-import type { Route } from "./+types/api.auth.passkey.$action";
-import { requireUser, createSession } from "~/services/auth";
+import type { Route } from "./+types/api.auth.passkey";
 import { fetchFromBackend } from "~/utils/backend";
 
-export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
+export async function loader({ params, request }: Route.LoaderArgs) {
   const action = params.action;
+  const token = request.headers.get("Authorization")?.split(" ")[1];
 
   if (action === "register-options") {
-    const { token } = await requireUser(request);
     const result = await fetchFromBackend<any>("/auth/passkey/register-options", {}, token);
     return data(result);
   }
@@ -22,12 +21,12 @@ export async function clientLoader({ params, request }: Route.ClientLoaderArgs) 
   throw new Response("Not Found", { status: 404 });
 }
 
-export async function clientAction({ params, request }: Route.ClientActionArgs) {
+export async function action({ params, request }: Route.ActionArgs) {
   const action = params.action;
+  const token = request.headers.get("Authorization")?.split(" ")[1];
   const body = await request.json();
 
   if (action === "register-verify") {
-    const { token } = await requireUser(request);
     const result = await fetchFromBackend<any>("/auth/passkey/register-verify", {
       method: "POST",
       body: JSON.stringify(body),
@@ -41,12 +40,9 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
       body: JSON.stringify(body),
     });
     
-    if (response.verified && response.token) {
-      await createSession(response.token);
-      return data({ verified: true });
-    }
-    
-    return data({ verified: false }, { status: 400 });
+    // Note: createSession is client-side, so we can't call it here.
+    // The client will handle setting the session token.
+    return data(response);
   }
 
   throw new Response("Not Found", { status: 404 });

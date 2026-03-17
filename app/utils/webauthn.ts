@@ -2,15 +2,21 @@ import {
   startRegistration,
   startAuthentication,
 } from "@simplewebauthn/browser";
+import { getSessionToken, createSession } from "~/services/auth";
 
 /**
  * Register a new passkey
  */
 export async function registerPasskey() {
   console.log("[WebAuthn] Starting registration...");
+  const token = getSessionToken();
   
   // 1. Get options from server (via proxy)
-  const response = await fetch("/api/auth/passkey/register-options");
+  const response = await fetch("/api/auth/passkey/register-options", {
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
   if (!response.ok) throw new Error("Could not get registration options");
   
   const { options, challengeId } = await response.json();
@@ -25,7 +31,10 @@ export async function registerPasskey() {
   console.log("[WebAuthn] Sending verification to server...");
   const verificationResponse = await fetch("/api/auth/passkey/register-verify", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify({
       challengeId,
       response: attestationResponse,
@@ -79,6 +88,11 @@ export async function authenticateWithPasskey(username?: string) {
 
   if (!verificationResult || !verificationResult.verified) {
     throw new Error("Login fehlgeschlagen: Server-Verifizierung negativ");
+  }
+
+  // Handle session creation on client
+  if (verificationResult.token) {
+    await createSession(verificationResult.token);
   }
   
   return verificationResult;
