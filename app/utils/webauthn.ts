@@ -19,7 +19,9 @@ export async function registerPasskey() {
   });
   if (!response.ok) throw new Error("Could not get registration options");
   
-  const { options, challengeId } = await response.json();
+  const responseData = await response.json();
+  console.log("[WebAuthn] Full response data from /api/auth/passkey/register-options:", responseData);
+  const { options, challengeId } = responseData;
   console.log("[WebAuthn] Options from server:", options);
 
   // 2. Start browser ceremony
