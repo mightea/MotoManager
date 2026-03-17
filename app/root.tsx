@@ -122,12 +122,12 @@ function ChangelogRenderer({ content }: { content: string }) {
       flushList();
       elements.push(
         <h3 key={`changelog-title-${index}`} className="text-lg font-semibold mt-4 mb-2 first:mt-0">
-          {trimmed.replace("### ", "")}
+          {trimmed ? trimmed.replace("### ", "") : ""}
         </h3>
       );
     } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
       // Basic link parsing [text](url) -> <a>
-      const parts = trimmed.substring(2).split(/(\[.*?\]\(.*?\))/g);
+      const parts = (trimmed.substring(2) || "").split(/(\[.*?\]\(.*?\))/g);
       const content = parts.map((part, pIndex) => {
         const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
         if (linkMatch) {

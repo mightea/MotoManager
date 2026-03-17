@@ -39,7 +39,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
 
   const [dashboardData, currencies] = await Promise.all([
-    fetchFromBackend<any>("/stats", {}, token),
+    fetchFromBackend<any>("/home", {}, token),
     getCurrencies(),
   ]);
 

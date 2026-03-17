@@ -173,8 +173,8 @@ export function requireAdmin(user: PublicUser) {
 }
 
 export async function listUsers(token: string): Promise<PublicUser[]> {
-  const users = await fetchFromBackend<any[]>("/admin/users", {}, token);
-  return users.map(toPublicUser);
+  const response = await fetchFromBackend<{ users: any[] }>("/admin/users", {}, token);
+  return response.users.map(toPublicUser);
 }
 
 export async function deleteUser(userId: number, token: string) {

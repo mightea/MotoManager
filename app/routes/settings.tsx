@@ -42,11 +42,14 @@ export function meta() {
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
-  const [locations, settings, userAuthenticators] = await Promise.all([
+  const [locations, settings, userAuthenticatorsRaw] = await Promise.all([
     getLocations(token, user.id),
     getUserSettings(token, user.id),
-    fetchFromBackend<any[]>("/settings/authenticators", {}, token).catch(() => []),
+    fetchFromBackend<any>("/settings/authenticators", {}, token).catch(() => []),
   ]);
+  
+  const userAuthenticators = Array.isArray(userAuthenticatorsRaw) ? userAuthenticatorsRaw : [];
+  
   return { locations, user, settings, userAuthenticators };
 }
 
@@ -338,7 +341,7 @@ export default function Settings() {
                     {auth.deviceType === "single_device" ? "Sicherheitsschlüssel / Gerät" : "Multi-Device Passkey"}
                   </p>
                   <p className="text-[10px] text-secondary/60 dark:text-navy-500 uppercase tracking-wider font-bold">
-                    ID: {auth.id.slice(0, 8)}... • Registriert am {new Date(auth.createdAt).toLocaleDateString("de-CH")}
+                    ID: {auth.id?.slice(0, 8) ?? "N/A"}... • Registriert am {auth.createdAt ? new Date(auth.createdAt).toLocaleDateString("de-CH") : "Unbekannt"}
                   </p>
                 </div>
               </div>
