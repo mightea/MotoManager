@@ -23,7 +23,7 @@ import { USER_ROLES } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useEffect, useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
 import { fetchFromBackend } from "~/utils/backend";
@@ -204,6 +204,35 @@ export default function AdminSettings() {
             Benutzer verwalten und Währungseinstellungen konfigurieren.
           </p>
         </div>
+      </div>
+
+      {/* Server Stats Link */}
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-primary/50 hover:shadow-md dark:border-navy-700 dark:bg-navy-800 dark:hover:border-primary/50">
+        <Link to="/settings/server-stats" className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-purple-100 p-2 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+              <Server className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground dark:text-white">Server Statistiken</h3>
+              <p className="text-sm text-secondary dark:text-navy-300">
+                Globale Kennzahlen und Systemstatus einsehen.
+              </p>
+            </div>
+          </div>
+          <div className="text-secondary dark:text-navy-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-5 w-5"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </div>
+        </Link>
       </div>
 
       {actionData && "error" in actionData && (
