@@ -1,4 +1,4 @@
-import { Form, useSubmit, useActionData } from "react-router";
+import { Form, useSubmit, useActionData, useNavigation } from "react-router";
 import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/types/db";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
@@ -6,6 +6,9 @@ import getCroppedImg from "~/utils/cropImage";
 import { Modal } from "./modal";
 import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
 import { Fuel } from "lucide-react";
+import { Button } from "./button";
+import { FormField } from "./form-field";
+import clsx from "clsx";
 
 interface AddMotorcycleFormProps {
   onSubmit?: () => void;
@@ -16,8 +19,6 @@ interface AddMotorcycleFormProps {
   onDelete?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   existingMaintenance?: MaintenanceRecord[];
 }
-
-
 
 const formatDateInput = (value?: string | null) => {
   if (!value) {
@@ -36,7 +37,12 @@ export function AddMotorcycleForm({
   existingMaintenance = [],
 }: AddMotorcycleFormProps) {
   const submit = useSubmit();
+  const navigation = useNavigation();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+  const isSubmitting = navigation.state === "submitting" && 
+                      (navigation.formData?.get("intent") === intent || 
+                       navigation.formData?.get("intent") === "importFuelData");
 
   const handleRoadTripImport = (selectedEntries: any[]) => {
     if (initialValues?.id) {
@@ -48,18 +54,10 @@ export function AddMotorcycleForm({
     }
   };
 
-
   const actionData = useActionData<{
-    errors?: {
-      make?: string;
-      model?: string;
-      vin?: string;
-      engineNumber?: string;
-      fabricationDate?: string;
-      initialOdo?: string;
-      purchasePrice?: string;
-    };
+    errors?: Record<string, string>;
   }>();
+
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -109,17 +107,6 @@ export function AddMotorcycleForm({
       method: "post",
       encType: "multipart/form-data",
     });
-
-    // We do NOT call onSubmit here because we want to wait for the action to complete.
-    // If there are errors, we want to stay in the form.
-    // The parent component should handle closing the modal if successful (e.g. via useEffect on actionData)
-    // or we can optimistically call it if we don't care about server validation preventing close.
-    // However, the prompt specifically asks for validation errors on the form.
-    // So we should probably remove the onSubmit call here, OR only call it if we are sure it succeeded.
-    // Since this is a simple refactor, I will keep the original behavior but the user might need to handle the modal closing logic separately if they want it to stay open on error.
-    // But wait, the original code called onSubmit immediately which closes the modal.
-    // If I want to show errors, the modal must NOT close.
-    // So I should REMOVE the onSubmit call here.
   };
 
   return (
@@ -129,7 +116,9 @@ export function AddMotorcycleForm({
         {typeof initialValues?.id === "number" && (
           <input type="hidden" name="motorcycleId" value={initialValues.id} />
         )}
+        
         <div className="grid gap-5 sm:grid-cols-2">
+          {/* Image Upload Field */}
           <div className="space-y-1.5 sm:col-span-2">
             <label htmlFor="image-upload" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Bild</label>
             <div className="flex items-start gap-4">
@@ -182,122 +171,79 @@ export function AddMotorcycleForm({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="make" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke</label>
-            <input
-              type="text"
-              name="make"
-              id="make"
-              placeholder="z.B. Yamaha"
-              defaultValue={initialValues?.make}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-            {actionData?.errors?.make && (
-              <p className="text-xs text-red-500">{actionData.errors.make}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="model" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Modell</label>
-            <input
-              type="text"
-              name="model"
-              id="model"
-              placeholder="z.B. MT-07"
-              defaultValue={initialValues?.model}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-            {actionData?.errors?.model && (
-              <p className="text-xs text-red-500">{actionData.errors.model}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="fabricationDate" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Fabrikationsdatum</label>
-            <input
-              type="text"
-              name="fabricationDate"
-              id="fabricationDate"
-              placeholder="z.B. 07/1997"
-              defaultValue={initialValues?.fabricationDate ?? ""}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-            {actionData?.errors?.fabricationDate && (
-              <p className="text-xs text-red-500">{actionData.errors.fabricationDate}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="vin" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Fahrgestellnummer (VIN)</label>
-            <input
-              type="text"
-              name="vin"
-              id="vin"
-              defaultValue={initialValues?.vin ?? ""}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-            {actionData?.errors?.vin && (
-              <p className="text-xs text-red-500">{actionData.errors.vin}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="engineNumber" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Motor-Nummer</label>
-            <input
-              type="text"
-              name="engineNumber"
-              id="engineNumber"
-              defaultValue={initialValues?.engineNumber ?? ""}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-            {actionData?.errors?.engineNumber && (
-              <p className="text-xs text-red-500">{actionData.errors.engineNumber}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="vehicleIdNr" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Stammnummer</label>
-            <input
-              type="text"
-              name="vehicleIdNr"
-              id="vehicleIdNr"
-              defaultValue={initialValues?.vehicleIdNr ?? ""}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="numberPlate" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kennzeichen</label>
-            <input
-              type="text"
-              name="numberPlate"
-              id="numberPlate"
-              defaultValue={initialValues?.numberPlate ?? ""}
-              placeholder="z.B. ZH 123456"
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="firstRegistration" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">1. Inverkehrssetzung</label>
-            <input
-              type="date"
-              name="firstRegistration"
-              id="firstRegistration"
-              defaultValue={formatDateInput(initialValues?.firstRegistration)}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]" />
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="initialOdo" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Anfangs-KM</label>
-            <input
-              type="number"
-              name="initialOdo"
-              id="initialOdo"
-              defaultValue={
-                typeof initialValues?.initialOdo === "number"
-                  ? initialValues.initialOdo
-                  : 0
-              }
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-            {actionData?.errors?.initialOdo && (
-              <p className="text-xs text-red-500">{actionData.errors.initialOdo}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <label htmlFor="purchaseDate" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kaufdatum</label>
-            <input
-              type="date"
-              name="purchaseDate"
-              id="purchaseDate"
-              defaultValue={formatDateInput(initialValues?.purchaseDate)}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]" />
-          </div>
+          <FormField
+            label="Marke"
+            name="make"
+            placeholder="z.B. Yamaha"
+            defaultValue={initialValues?.make}
+            error={actionData?.errors?.make}
+          />
+
+          <FormField
+            label="Modell"
+            name="model"
+            placeholder="z.B. MT-07"
+            defaultValue={initialValues?.model}
+            error={actionData?.errors?.model}
+          />
+
+          <FormField
+            label="Fabrikationsdatum"
+            name="fabricationDate"
+            placeholder="z.B. 07/1997"
+            defaultValue={initialValues?.fabricationDate ?? ""}
+            error={actionData?.errors?.fabricationDate}
+          />
+
+          <FormField
+            label="Fahrgestellnummer (VIN)"
+            name="vin"
+            defaultValue={initialValues?.vin ?? ""}
+            error={actionData?.errors?.vin}
+          />
+
+          <FormField
+            label="Motor-Nummer"
+            name="engineNumber"
+            defaultValue={initialValues?.engineNumber ?? ""}
+            error={actionData?.errors?.engineNumber}
+          />
+
+          <FormField
+            label="Stammnummer"
+            name="vehicleIdNr"
+            defaultValue={initialValues?.vehicleIdNr ?? ""}
+          />
+
+          <FormField
+            label="Kennzeichen"
+            name="numberPlate"
+            placeholder="z.B. ZH 123456"
+            defaultValue={initialValues?.numberPlate ?? ""}
+          />
+
+          <FormField
+            label="1. Inverkehrssetzung"
+            name="firstRegistration"
+            type="date"
+            defaultValue={formatDateInput(initialValues?.firstRegistration)}
+          />
+
+          <FormField
+            label="Anfangs-KM"
+            name="initialOdo"
+            type="number"
+            defaultValue={typeof initialValues?.initialOdo === "number" ? initialValues.initialOdo : 0}
+            error={actionData?.errors?.initialOdo}
+          />
+
+          <FormField
+            label="Kaufdatum"
+            name="purchaseDate"
+            type="date"
+            defaultValue={formatDateInput(initialValues?.purchaseDate)}
+          />
+
           <div className="space-y-1.5">
             <label htmlFor="purchasePrice" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kaufpreis</label>
             <div className="flex rounded-xl shadow-sm">
@@ -307,12 +253,12 @@ export function AddMotorcycleForm({
                 id="purchasePrice"
                 step="0.05"
                 placeholder="0.00"
-                defaultValue={
-                  typeof initialValues?.purchasePrice === "number"
-                    ? initialValues.purchasePrice
-                    : ""
-                }
-                className="block w-full rounded-l-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
+                defaultValue={typeof initialValues?.purchasePrice === "number" ? initialValues.purchasePrice : ""}
+                className={clsx(
+                  "block w-full rounded-l-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500",
+                  actionData?.errors?.purchasePrice && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                )}
+              />
               <select
                 name="currencyCode"
                 className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
@@ -326,20 +272,18 @@ export function AddMotorcycleForm({
               </select>
             </div>
             {actionData?.errors?.purchasePrice && (
-              <p className="text-xs text-red-500">{actionData.errors.purchasePrice}</p>
+              <p className="text-xs font-medium text-red-500">{actionData.errors.purchasePrice}</p>
             )}
           </div>
-          <div className="space-y-1.5">
-            <label htmlFor="fuelTankSize" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Tankgrösse (Liter)</label>
-            <input
-              type="number"
-              name="fuelTankSize"
-              id="fuelTankSize"
-              step="0.1"
-              placeholder="z.B. 18.5"
-              defaultValue={initialValues?.fuelTankSize ?? ""}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500" />
-          </div>
+
+          <FormField
+            label="Tankgrösse (Liter)"
+            name="fuelTankSize"
+            type="number"
+            step="0.1"
+            placeholder="z.B. 18.5"
+            defaultValue={initialValues?.fuelTankSize ?? ""}
+          />
         </div>
 
         <div className="col-span-full space-y-3 pt-2">
@@ -370,14 +314,14 @@ export function AddMotorcycleForm({
 
           {initialValues?.id && (
             <div className="pt-2 border-t border-gray-100 dark:border-navy-700">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setImportDialogOpen(true)}
-                className="flex items-center gap-2 rounded-xl border border-secondary/30 px-4 py-2.5 text-sm font-semibold text-secondary transition-colors hover:bg-gray-50 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-700"
+                leftIcon={<Fuel className="h-4 w-4" />}
               >
-                <Fuel className="h-4 w-4" />
                 RoadTrip Import
-              </button>
+              </Button>
               <p className="mt-1.5 text-[10px] text-secondary/70 dark:text-navy-400">
                 Importiere historische Tankdaten aus der RoadTrip App (.csv Export).
               </p>
@@ -387,30 +331,32 @@ export function AddMotorcycleForm({
 
         <div className="flex items-center justify-between mt-4">
           {onDelete ? (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onDelete}
-              className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/30"
+              className="text-red-600 border-red-200 dark:border-red-900/40 dark:text-red-300"
             >
               Motorrad löschen
-            </button>
+            </Button>
           ) : (
             <div></div>
           )}
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={onSubmit}
-              className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
             >
               Abbrechen
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
+              isLoading={isSubmitting}
+              className="px-6"
             >
               {submitLabel}
-            </button>
+            </Button>
           </div>
         </div>
       </Form>
@@ -447,20 +393,19 @@ export function AddMotorcycleForm({
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setIsCropping(false)}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             Abbrechen
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={showCroppedImage}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark"
           >
             Fertig
-          </button>
+          </Button>
         </div>
       </Modal>
 
