@@ -6,11 +6,25 @@ import pkg from "./package.json";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const backendUrl = env.BACKEND_URL || "http://localhost:3001";
+
   return {
     define: {
       "process.env.APP_VERSION": JSON.stringify(pkg.version),
-      "process.env.BACKEND_URL": JSON.stringify(env.BACKEND_URL),
+      "process.env.BACKEND_URL": JSON.stringify(backendUrl),
       "process.env.ENABLE_REGISTRATION": JSON.stringify(env.ENABLE_REGISTRATION),
+    },
+    server: {
+      proxy: {
+        "/api": {
+          target: backendUrl,
+          changeOrigin: true,
+        },
+        "/auth": {
+          target: backendUrl,
+          changeOrigin: true,
+        },
+      },
     },
     plugins: [
       tailwindcss(),
