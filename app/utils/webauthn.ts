@@ -80,7 +80,15 @@ export async function authenticateWithPasskey(username?: string) {
   // 2. Start browser ceremony
   console.log("[WebAuthn] Starting browser authentication ceremony...");
   // The backend wraps the options in a "publicKey" field
-  const assertionResponse = await startAuthentication({ optionsJSON: options.publicKey || options });
+  const authOptions = options.publicKey || options;
+  
+  // If no username was provided, we want discoverable credentials
+  if (!username) {
+    authOptions.allowCredentials = [];
+    authOptions.userVerification = "preferred";
+  }
+
+  const assertionResponse = await startAuthentication({ optionsJSON: authOptions });
   console.log("[WebAuthn] Assertion response:", assertionResponse);
 
   // 3. Send response back to server for verification (via proxy)
