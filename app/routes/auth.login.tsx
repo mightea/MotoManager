@@ -171,7 +171,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Login() {
-  const { redirectTo, isFirstUser } = useLoaderData<typeof clientLoader>();
+  const loaderData = useLoaderData<typeof clientLoader>();
+  const redirectTo = loaderData?.redirectTo || "/";
+  const isFirstUser = loaderData?.isFirstUser || false;
+  
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   const navigate = useNavigate();
