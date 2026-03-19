@@ -227,7 +227,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         {isLoading ? (
-          Array.from({ length: cards.length || 3 }).map((_, i) => (
+          [...Array(cards.length || 3)].map((_, i) => (
+            // eslint-disable-next-line react/no-array-index-key
             <MotorcycleCardSkeleton key={i} />
           ))
         ) : cards.length === 0 ? (

@@ -127,7 +127,7 @@ export function ImportRoadTripDialog({
                 <tbody className="divide-y divide-gray-100 dark:divide-navy-700">
                   {entries.map((entry, idx) => (
                     <tr 
-                      key={entry.externalId || `${entry.date}-${entry.odo}-${idx}`} 
+                      key={entry.externalId || `${entry.date}-${entry.odo}-${entry.locationName || ""}`} 
                       className={clsx(
                         "transition-colors",
                         entry.duplicate ? "bg-amber-50/30 dark:bg-amber-900/10" : "hover:bg-gray-50/50 dark:hover:bg-navy-800/50"
