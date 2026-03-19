@@ -14,6 +14,7 @@ import { Modal } from "~/components/modal";
 import { Button } from "~/components/button";
 import { getTheme } from "~/utils/theme.client";
 import { getNewChangelog, markChangelogSeen } from "~/services/changelog.client";
+import { getCurrentSession } from "~/services/auth";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
@@ -21,7 +22,8 @@ import "./app.css";
 
 export async function clientLoader() {
   const theme = getTheme();
-  const changelog = await getNewChangelog();
+  const { user } = await getCurrentSession();
+  const changelog = user ? await getNewChangelog() : null;
   return data({ theme, changelog });
 }
 
@@ -116,24 +118,24 @@ function ChangelogRenderer({ content }: { content: string }) {
     }
   };
 
-  lines.forEach((line, index) => {
+  lines.forEach((line, _index) => {
     const trimmed = line.trim();
     if (trimmed.startsWith("### ")) {
       flushList();
       elements.push(
-        <h3 key={`changelog-title-${index}`} className="text-lg font-semibold mt-4 mb-2 first:mt-0">
+        <h3 key={trimmed} className="text-lg font-semibold mt-4 mb-2 first:mt-0">
           {trimmed ? trimmed.replace("### ", "") : ""}
         </h3>
       );
     } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
       // Basic link parsing [text](url) -> <a>
       const parts = (trimmed.substring(2) || "").split(/(\[.*?\]\(.*?\))/g);
-      const content = parts.map((part, pIndex) => {
+      const content = parts.map((part, _pIndex) => {
         const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
         if (linkMatch) {
           return (
             <a
-              key={`changelog-link-${index}-${pIndex}`}
+              key={part}
               href={linkMatch[2]}
               target="_blank"
               rel="noopener noreferrer"
@@ -147,7 +149,7 @@ function ChangelogRenderer({ content }: { content: string }) {
       });
 
       currentList.push(
-        <li key={`changelog-item-${index}`} className="leading-relaxed">
+        <li key={trimmed} className="leading-relaxed">
           {content}
         </li>
       );
@@ -156,7 +158,7 @@ function ChangelogRenderer({ content }: { content: string }) {
     } else {
       flushList();
       elements.push(
-        <p key={`changelog-p-${index}`} className="text-secondary dark:text-navy-300">
+        <p key={trimmed} className="text-secondary dark:text-navy-300">
           {trimmed}
         </p>
       );

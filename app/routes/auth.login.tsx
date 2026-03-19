@@ -40,8 +40,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     throw redirect(redirectTo);
   }
 
-  const userCount = await getUserCount();
-  const isFirstUser = false; // userCount === 0;
+  const isFirstUser = false;
 
   return data({
     redirectTo,

@@ -50,7 +50,7 @@ export async function getCurrentSession(): Promise<AuthSession> {
       user: toPublicUser(response.user),
       token,
     };
-  } catch (_error) {
+  } catch {
     clearSessionToken();
     return {
       user: null,
@@ -71,7 +71,7 @@ export async function destroySessionByToken(token: string | null | undefined) {
   if (activeToken) {
     try {
       await fetchFromBackend("/auth/logout", { method: "POST" }, activeToken);
-    } catch (_error) {
+    } catch {
       // Ignore logout errors on backend
     }
   }
@@ -88,7 +88,7 @@ export async function getUserCount() {
   try {
     const result = await fetchFromBackend<{ userCount: number }>("/auth/status");
     return result.userCount;
-  } catch (_e) {
+  } catch {
     return 0;
   }
 }
