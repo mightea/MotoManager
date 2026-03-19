@@ -5,7 +5,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  data,
   useLoaderData,
 } from "react-router";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
@@ -13,6 +12,7 @@ import { LoadingIndicator } from "~/components/loading-indicator";
 import { Modal } from "~/components/modal";
 import { Button } from "~/components/button";
 import { getTheme } from "~/utils/theme.client";
+import { Theme } from "~/utils/theme";
 import { getNewChangelog, markChangelogSeen } from "~/services/changelog.client";
 import { getCurrentSession } from "~/services/auth";
 import { useEffect, useState } from "react";
@@ -24,12 +24,20 @@ export async function clientLoader() {
   const theme = getTheme();
   const { user } = await getCurrentSession();
   const changelog = user ? await getNewChangelog() : null;
-  return data({ theme, changelog });
+  return { theme, changelog };
+}
+
+export function HydrateFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useLoaderData<typeof clientLoader>();
-  const theme = data?.theme;
+  const theme = data?.theme || Theme.LIGHT;
 
   return (
     <html lang="de" className={clsx(theme)}>
@@ -54,7 +62,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { theme, changelog } = useLoaderData<typeof clientLoader>();
+  const loaderData = useLoaderData<typeof clientLoader>();
+  const theme = loaderData?.theme || Theme.LIGHT;
+  const changelog = loaderData?.changelog || null;
   const [isChangelogOpen, setIsChangelogOpen] = useState(!!changelog);
 
   useEffect(() => {
