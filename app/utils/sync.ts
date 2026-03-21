@@ -134,11 +134,14 @@ export async function syncPendingItems() {
   }
 }
 
+let isInitialized = false;
+
 /**
  * Hook up sync to online events.
  */
 export function initSync() {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || isInitialized) return;
+  isInitialized = true;
 
   window.addEventListener("online", () => {
     console.log("[Sync] Browser online, triggering sync...");
