@@ -78,7 +78,9 @@ async function cacheResponse(path: string, data: any) {
   if (typeof window === 'undefined') return;
 
   try {
-    if (path === '/stats' || path === '/home') {
+    if (path === '/auth/me') {
+      if (data.user) await saveToCache(db.users, data.user);
+    } else if (path === '/stats' || path === '/home') {
       if (data.motorcycles) await saveToCache(db.motorcycles, data.motorcycles);
       if (data.issues) await saveToCache(db.issues, data.issues);
       if (data.maintenance) await saveToCache(db.maintenance, data.maintenance);
@@ -93,6 +95,8 @@ async function cacheResponse(path: string, data: any) {
         if (data.issues) await saveToCache(db.issues, data.issues);
         if (data.maintenanceRecords) await saveToCache(db.maintenance, data.maintenanceRecords);
       }
+    } else if (path === '/settings') {
+      if (data.settings) await saveToCache(db.settings, data.settings);
     } else if (path === '/locations') {
       if (Array.isArray(data.locations)) await saveToCache(db.locations, data.locations);
     } else if (path === '/currencies') {
@@ -100,6 +104,7 @@ async function cacheResponse(path: string, data: any) {
     } else if (path === '/documents') {
       if (Array.isArray(data.docs)) await saveToCache(db.documents, data.docs);
       if (Array.isArray(data.assignments)) await saveToCache(db.docAssignments, data.assignments);
+      if (Array.isArray(data.allMotorcycles)) await saveToCache(db.motorcycles, data.allMotorcycles);
     }
   } catch (e) {
     console.warn('Failed to cache response:', e);
@@ -113,7 +118,37 @@ async function getFromResponseCache<T>(path: string): Promise<T | null> {
   if (typeof window === 'undefined') return null;
 
   try {
-    if (path === '/stats' || path === '/home') {
+    if (path === '/auth/me') {
+      const user = await db.users.toCollection().first();
+      if (!user) return null;
+      return { user } as any;
+    } else if (path.startsWith('/motorcycles/')) {
+      const parts = path.split('/');
+      const id = parseInt(parts[2], 10);
+      if (isNaN(id)) return null;
+
+      const [motorcycle, issues, maintenanceRecords] = await Promise.all([
+        db.motorcycles.get(id),
+        db.issues.where('motorcycleId').equals(id).toArray(),
+        db.maintenance.where('motorcycleId').equals(id).toArray(),
+      ]);
+
+      if (!motorcycle) return null;
+
+      return {
+        motorcycle,
+        issues,
+        maintenanceRecords,
+        previousOwners: [], // Not cached yet
+      } as any;
+    } else if (path === '/documents') {
+      const [docs, assignments, allMotorcycles] = await Promise.all([
+        db.documents.toArray(),
+        db.docAssignments.toArray(),
+        db.motorcycles.toArray(),
+      ]);
+      return { docs, assignments, allMotorcycles } as any;
+    } else if (path === '/stats' || path === '/home') {
       const [motorcycles, issues, maintenance, locationHistory, locations, settings] = await Promise.all([
         db.motorcycles.toArray(),
         db.issues.toArray(),
@@ -139,6 +174,15 @@ async function getFromResponseCache<T>(path: string): Promise<T | null> {
         settings,
         version: 'offline',
       } as any;
+    } else if (path === '/settings') {
+      const settings = await db.settings.toCollection().first();
+      return { settings } as any;
+    } else if (path === '/locations') {
+      const locations = await db.locations.toArray();
+      return { locations } as any;
+    } else if (path === '/currencies') {
+      const currencies = await db.currencies.toArray();
+      return { currencies } as any;
     }
   } catch (e) {
     console.warn('Failed to get from cache:', e);
