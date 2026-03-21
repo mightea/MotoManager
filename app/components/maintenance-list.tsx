@@ -19,7 +19,8 @@ import {
   Info,
   Hash,
   Fuel,
-  Activity
+  Activity,
+  CloudOff
 } from "lucide-react";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location } from "~/types/db";
@@ -52,7 +53,7 @@ interface GroupedMaintenanceRecord {
   cost: number;
   currency: string | null;
   summaries: string[];
-  originalRecords: MaintenanceRecord[];
+  originalRecords: (MaintenanceRecord & { isPending?: number })[];
 }
 
 const getIconForType = (type: MaintenanceType) => {
@@ -267,9 +268,14 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       <div className="flex-1 min-w-0 pt-0.5">
                         {/* Row 1: date left, odo + chevron right */}
                         <div className="flex items-center justify-between gap-2">
-                          <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white">
-                            {dateFormatter.format(new Date(group.date))}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white">
+                              {dateFormatter.format(new Date(group.date))}
+                            </h3>
+                            {group.originalRecords.some(r => r.isPending === 1) && (
+                              <CloudOff className="h-3 w-3 text-orange-500" />
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
                               {formatNumber(group.odo)} km
@@ -377,6 +383,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                 <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3 dark:border-navy-700">
                                   <h4 className="text-sm font-semibold text-foreground dark:text-white">
                                     {maintenanceTypeLabels[record.type] || record.type}
+                                    {record.isPending === 1 && (
+                                      <span className="ml-2 text-[10px] font-bold text-orange-500 uppercase tracking-wider">(Ausstehend)</span>
+                                    )}
                                   </h4>
                                   <button
                                     onClick={(e) => {

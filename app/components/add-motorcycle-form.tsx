@@ -43,6 +43,7 @@ export function AddMotorcycleForm({
   const isSubmitting = navigation.state === "submitting" && 
                       (navigation.formData?.get("intent") === intent || 
                        navigation.formData?.get("intent") === "importFuelData");
+  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
 
   const handleRoadTripImport = (selectedEntries: any[]) => {
     if (initialValues?.id) {
@@ -335,6 +336,7 @@ export function AddMotorcycleForm({
               type="button"
               variant="outline"
               onClick={onDelete}
+              disabled={isOffline}
               className="text-red-600 border-red-200 dark:border-red-900/40 dark:text-red-300"
             >
               Motorrad löschen
@@ -353,12 +355,18 @@ export function AddMotorcycleForm({
             <Button
               type="submit"
               isLoading={isSubmitting}
+              disabled={isOffline}
               className="px-6"
             >
               {submitLabel}
             </Button>
           </div>
         </div>
+        {isOffline && (
+          <p className="mt-2 text-center text-[10px] font-bold text-orange-500 bg-orange-50 dark:bg-orange-950/20 py-2 rounded-lg border border-orange-200 dark:border-orange-900/50">
+            Motorräder können offline nicht hinzugefügt oder bearbeitet werden.
+          </p>
+        )}
       </Form>
 
       <Modal isOpen={isCropping} onClose={() => setIsCropping(false)} title="Bild zuschneiden">

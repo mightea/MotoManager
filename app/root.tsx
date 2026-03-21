@@ -15,6 +15,7 @@ import { getTheme } from "~/utils/theme.client";
 import { Theme } from "~/utils/theme";
 import { getNewChangelog, markChangelogSeen } from "~/services/changelog.client";
 import { getCurrentSession } from "~/services/auth";
+import { initSync } from "~/utils/sync";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
@@ -68,6 +69,8 @@ export default function App() {
   const [isChangelogOpen, setIsChangelogOpen] = useState(!!changelog);
 
   useEffect(() => {
+    initSync();
+
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then((registration) => {

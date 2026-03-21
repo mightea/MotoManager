@@ -1,9 +1,9 @@
-import { AlertTriangle, CircleAlert, Info } from "lucide-react";
+import { AlertTriangle, CircleAlert, Info, CloudOff } from "lucide-react";
 import clsx from "clsx";
 import type { Issue } from "~/types/db";
 
 type IssueItemProps = {
-  issue: Issue;
+  issue: Issue & { isPending?: number };
   dateFormatter: Intl.DateTimeFormat;
   onSelect?: (issue: Issue) => void;
 };
@@ -34,9 +34,14 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
         })}
       />
       <div className="flex-1">
-        <p className="font-medium text-foreground dark:text-gray-200">
-          {issue.description || "Beschreibung fehlt"}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-foreground dark:text-gray-200">
+            {issue.description || "Beschreibung fehlt"}
+          </p>
+          {issue.isPending === 1 && (
+            <CloudOff className="h-3 w-3 text-orange-500" />
+          )}
+        </div>
         <p suppressHydrationWarning className="text-xs text-secondary dark:text-navy-400">
           {issue.date
             ? dateFormatter.format(new Date(issue.date))
