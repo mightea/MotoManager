@@ -130,11 +130,12 @@ async function cacheResponse(path: string, data: any) {
     } else if (path.startsWith('/motorcycles/')) {
       const parts = path.split('/');
       if (parts.length === 3 && !isNaN(Number(parts[2]))) {
+        const motorcycleId = Number(parts[2]);
         // Motorcycle detail
         if (data.motorcycle) await saveToCache(db.motorcycles, data.motorcycle);
-        if (data.issues) await syncCache(db.issues, data.issues);
-        if (data.maintenanceRecords) await syncCache(db.maintenance, data.maintenanceRecords);
-        if (data.torqueSpecs) await syncCache(db.torqueSpecs, data.torqueSpecs);
+        if (data.issues) await syncCache(db.issues, data.issues, (i: any) => i.motorcycleId === motorcycleId);
+        if (data.maintenanceRecords) await syncCache(db.maintenance, data.maintenanceRecords, (m: any) => m.motorcycleId === motorcycleId);
+        if (data.torqueSpecs) await syncCache(db.torqueSpecs, data.torqueSpecs, (s: any) => s.motorcycleId === motorcycleId);
       }
     } else if (path === '/settings') {
       if (data.settings) await saveToCache(db.settings, data.settings);
