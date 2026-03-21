@@ -6,13 +6,14 @@ import clsx from "clsx";
 import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 
 import { syncStore } from "~/services/sync-store.client";
+import { useIsOffline } from "~/utils/offline";
 
 export function Header({ user }: { user: PublicUser | null }) {
   const location = useLocation();
+  const isOffline = useIsOffline();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
   
   const { status: syncStatus, count: syncedCount } = useSyncExternalStore(
     syncStore.subscribe,
@@ -23,22 +24,17 @@ export function Header({ user }: { user: PublicUser | null }) {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
 
+  // Close user menu if we go offline
   useEffect(() => {
-    setIsOffline(!navigator.onLine);
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+    if (isOffline) {
+      setIsUserMenuOpen(false);
+    }
+  }, [isOffline]);
 
   const navItems = [
     { label: "Übersicht", href: "/" },
     { label: "Dokumente", href: "/documents" },
-    { label: "Statistiken", href: "/fleet-stats" },
+    { label: "Statistiken", href: "/fleet-stats", disabled: isOffline },
   ];
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -171,15 +167,20 @@ export function Header({ user }: { user: PublicUser | null }) {
             <ul className="flex items-center gap-1 rounded-full bg-gray-100 p-1 dark:bg-navy-900/50">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
+                const isDisabled = (item as any).disabled;
+                
                 return (
                   <li key={item.label}>
                     <Link
-                      to={item.href}
+                      to={isDisabled ? "#" : item.href}
+                      onClick={(e) => isDisabled && e.preventDefault()}
                       className={clsx(
                         "block rounded-full px-5 py-2 text-sm font-medium transition-all",
                         isActive
                           ? "bg-primary text-white shadow-sm dark:bg-primary-light dark:text-navy-900"
-                          : "text-secondary hover:text-foreground dark:text-navy-400 dark:hover:text-white"
+                          : isDisabled
+                            ? "text-secondary/30 cursor-not-allowed pointer-events-none"
+                            : "text-secondary hover:text-foreground dark:text-navy-400 dark:hover:text-white"
                       )}
                     >
                       {item.label}
@@ -213,9 +214,13 @@ export function Header({ user }: { user: PublicUser | null }) {
             {user ? (
               <div className="relative hidden md:block" ref={userMenuRef}>
                 <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  onClick={() => !isOffline && setIsUserMenuOpen(!isUserMenuOpen)}
+                  disabled={isOffline}
                   className={clsx(
-                    "flex items-center gap-3 rounded-full bg-gray-50 py-1.5 pl-1.5 pr-3 transition-colors hover:bg-gray-100 dark:bg-navy-900/50 dark:hover:bg-navy-900",
+                    "flex items-center gap-3 rounded-full py-1.5 pl-1.5 pr-3 transition-all",
+                    isOffline 
+                      ? "bg-gray-100/50 cursor-not-allowed opacity-50 dark:bg-navy-900/20" 
+                      : "bg-gray-50 hover:bg-gray-100 dark:bg-navy-900/50 dark:hover:bg-navy-900",
                     isUserMenuOpen && "bg-gray-100 dark:bg-navy-900"
                   )}
                 >
@@ -301,16 +306,26 @@ export function Header({ user }: { user: PublicUser | null }) {
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
+                const isDisabled = (item as any).disabled;
+
                 return (
                   <Link
                     key={item.label}
-                    to={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    to={isDisabled ? "#" : item.href}
+                    onClick={(e) => {
+                      if (isDisabled) {
+                        e.preventDefault();
+                        return;
+                      }
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={clsx(
                       "block rounded-lg px-4 py-3 text-base font-medium transition-colors",
                       isActive
                         ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
-                        : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+                        : isDisabled
+                          ? "text-secondary/30 cursor-not-allowed"
+                          : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
                     )}
                   >
                     {item.label}
@@ -319,7 +334,10 @@ export function Header({ user }: { user: PublicUser | null }) {
               })}
 
               {user && (
-                <div className="mt-4 border-t border-gray-100 pt-4 dark:border-navy-700">
+                <div className={clsx(
+                  "mt-4 border-t border-gray-100 pt-4 dark:border-navy-700 transition-opacity",
+                  isOffline && "opacity-50 pointer-events-none"
+                )}>
                   <div className="mb-4 flex items-center gap-3 px-2">
                     <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-base font-bold text-primary dark:bg-navy-700 dark:text-primary-light">
                       {user.username.charAt(0).toUpperCase()}

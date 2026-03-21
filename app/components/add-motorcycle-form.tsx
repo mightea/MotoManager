@@ -5,6 +5,7 @@ import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
 import { Modal } from "./modal";
 import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
+import { useIsOffline } from "~/utils/offline";
 import { Fuel } from "lucide-react";
 import { Button } from "./button";
 import { FormField } from "./form-field";
@@ -43,7 +44,7 @@ export function AddMotorcycleForm({
   const isSubmitting = navigation.state === "submitting" && 
                       (navigation.formData?.get("intent") === intent || 
                        navigation.formData?.get("intent") === "importFuelData");
-  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+  const isOffline = useIsOffline();
 
   const handleRoadTripImport = (selectedEntries: any[]) => {
     if (initialValues?.id) {
