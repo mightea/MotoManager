@@ -23,7 +23,12 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
     <button
       type="button"
       onClick={handleClick}
-      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700/50"
+      className={clsx(
+        "flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        issue.isPending === 1
+          ? "bg-orange-50/40 hover:bg-orange-50/60 dark:bg-orange-950/10 dark:hover:bg-orange-950/20 border border-orange-200/50 dark:border-orange-900/30"
+          : "hover:bg-gray-50 dark:hover:bg-navy-700/50"
+      )}
       aria-label="Mangel bearbeiten"
     >
       <PriorityIcon

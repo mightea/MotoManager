@@ -170,7 +170,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
           onClick={openCreateDialog}
           disabled={isOffline}
           className={clsx(
-            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all active:scale-95",
+            "relative inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all active:scale-95",
             isOffline
               ? "bg-gray-400 cursor-not-allowed opacity-50"
               : "bg-primary hover:bg-primary-dark hover:shadow-md"
@@ -178,6 +178,11 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
         >
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Hochladen</span>
+          {isOffline && (
+            <span className="absolute -top-2 -right-2 rounded-full bg-orange-500 px-1.5 py-0.5 text-[8px] font-black uppercase text-white shadow-sm">
+              Offline
+            </span>
+          )}
         </button>
       </div>
 

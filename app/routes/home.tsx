@@ -211,9 +211,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </MenuItems>
         </Menu>
 
-        <Button onClick={() => setIsAddOpen(true)} disabled={isOffline}>
+        <Button onClick={() => setIsAddOpen(true)} disabled={isOffline} className="relative">
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Neues Motorrad</span>
+          {isOffline && (
+            <span className="absolute -top-2 -right-2 rounded-full bg-orange-500 px-1.5 py-0.5 text-[8px] font-black uppercase text-white shadow-sm">
+              Offline
+            </span>
+          )}
         </Button>
       </div>
 
@@ -230,6 +235,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         aria-label="Neues Motorrad hinzufügen"
       >
         <Plus className="h-6 w-6" />
+        {isOffline && (
+          <span className="absolute top-0 right-0 rounded-full bg-orange-500 px-1.5 py-0.5 text-[8px] font-black uppercase text-white shadow-sm">
+            Offline
+          </span>
+        )}
       </button>
 
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
