@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import { getBackendUrl } from "~/config";
-import { db, saveToCache } from "./db.client";
+import { db, saveToCache, syncCache } from "./db.client";
 
 /**
  * Utility to fetch from the backend with Bearer token authentication.
@@ -101,11 +101,11 @@ async function cacheResponse(path: string, data: any) {
     if (path === '/auth/me') {
       if (data.user) await saveToCache(db.users, data.user);
     } else if (path === '/stats' || path === '/home') {
-      if (data.motorcycles) await saveToCache(db.motorcycles, data.motorcycles);
-      if (data.issues) await saveToCache(db.issues, data.issues);
-      if (data.maintenance) await saveToCache(db.maintenance, data.maintenance);
-      if (data.locationHistory) await saveToCache(db.locationHistory, data.locationHistory);
-      if (data.locations) await saveToCache(db.locations, data.locations);
+      if (data.motorcycles) await syncCache(db.motorcycles, data.motorcycles);
+      if (data.issues) await syncCache(db.issues, data.issues);
+      if (data.maintenance) await syncCache(db.maintenance, data.maintenance);
+      if (data.locationHistory) await syncCache(db.locationHistory, data.locationHistory);
+      if (data.locations) await syncCache(db.locations, data.locations);
       if (data.settings) await saveToCache(db.settings, data.settings);
     } else if (path.startsWith('/motorcycles/')) {
       const parts = path.split('/');
@@ -118,13 +118,13 @@ async function cacheResponse(path: string, data: any) {
     } else if (path === '/settings') {
       if (data.settings) await saveToCache(db.settings, data.settings);
     } else if (path === '/locations') {
-      if (Array.isArray(data.locations)) await saveToCache(db.locations, data.locations);
+      if (Array.isArray(data.locations)) await syncCache(db.locations, data.locations);
     } else if (path === '/currencies') {
-      if (Array.isArray(data.currencies)) await saveToCache(db.currencies, data.currencies);
+      if (Array.isArray(data.currencies)) await syncCache(db.currencies, data.currencies);
     } else if (path === '/documents') {
-      if (Array.isArray(data.docs)) await saveToCache(db.documents, data.docs);
-      if (Array.isArray(data.assignments)) await saveToCache(db.docAssignments, data.assignments);
-      if (Array.isArray(data.allMotorcycles)) await saveToCache(db.motorcycles, data.allMotorcycles);
+      if (Array.isArray(data.docs)) await syncCache(db.documents, data.docs);
+      if (Array.isArray(data.assignments)) await syncCache(db.docAssignments, data.assignments);
+      if (Array.isArray(data.allMotorcycles)) await syncCache(db.motorcycles, data.allMotorcycles);
     }
   } catch (e) {
     console.warn('Failed to cache response:', e);

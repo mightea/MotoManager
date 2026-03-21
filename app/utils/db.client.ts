@@ -54,6 +54,14 @@ export async function saveToCache<T extends { id: number | string }>(table: Tabl
 }
 
 /**
+ * Helper to fully synchronize a table with new data, removing old items.
+ */
+export async function syncCache<T>(table: Table<T>, data: T[]) {
+  await table.clear();
+  await table.bulkPut(data);
+}
+
+/**
  * Helper to get data from the local cache.
  */
 export async function getFromCache<T>(table: Table<T>): Promise<T[]> {
