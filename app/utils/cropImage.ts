@@ -64,26 +64,34 @@ export default async function getCroppedImg(
   // draw rotated image
   ctx.drawImage(image, 0, 0)
 
-  // croppedAreaPixels values are bounding box relative
-  // extract the cropped image using these values
-  const data = ctx.getImageData(
+  // set canvas width to final desired crop size
+  const croppedCanvas = document.createElement('canvas')
+  const croppedCtx = croppedCanvas.getContext('2d')
+
+  if (!croppedCtx) {
+    return null
+  }
+
+  croppedCanvas.width = pixelCrop.width
+  croppedCanvas.height = pixelCrop.height
+
+  // Draw the cropped area from the first canvas to the second
+  croppedCtx.drawImage(
+    canvas,
     pixelCrop.x,
     pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
     pixelCrop.width,
     pixelCrop.height
   )
 
-  // set canvas width to final desired crop size - this will clear existing context
-  canvas.width = pixelCrop.width
-  canvas.height = pixelCrop.height
-
-  // paste generated rotate image at the top left corner
-  ctx.putImageData(data, 0, 0)
-
   // As a blob
   return new Promise((resolve) => {
-    canvas.toBlob((file) => {
+    croppedCanvas.toBlob((file) => {
       resolve(file)
-    }, 'image/jpeg')
+    }, 'image/jpeg', 0.95)
   })
 }
