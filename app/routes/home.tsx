@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
+import { useIsOffline } from "~/utils/offline";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
@@ -144,7 +145,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { cards, stats, currentSort, currencies } = loaderData;
-  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+  const isOffline = useIsOffline();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
   const navigation = useNavigation();

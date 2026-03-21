@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucide-react";
 import { getBackendAssetUrl } from "~/utils/backend";
-import { useEffect, useState } from "react";
+import { useIsOffline } from "~/utils/offline";
 
 export type DocumentSummary = {
   id: number;
@@ -30,20 +30,7 @@ export function DocumentCard({
   onEdit,
   assignedMotorcycleNames = [],
 }: DocumentCardProps) {
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    setIsOffline(!navigator.onLine);
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
+  const isOffline = useIsOffline();
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
   const fileUrl = getBackendAssetUrl(document.filePath) ?? "#";
   const previewUrl = getBackendAssetUrl(document.previewPath);

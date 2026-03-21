@@ -6,6 +6,7 @@ import type { Document, Motorcycle } from "~/types/db";
 import { Switch } from "@headlessui/react";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
+import { useIsOffline } from "~/utils/offline";
 
 interface AddDocumentFormProps {
   document?: Pick<Document, "id" | "title" | "isPrivate" | "previewPath" | "filePath" | "ownerId">;
@@ -42,7 +43,7 @@ export function AddDocumentForm({
 
   const isEditMode = !!document;
   const isOwner = !document || document.ownerId === currentUserId;
-  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+  const isOffline = useIsOffline();
 
   // Filter motorcycles: 
   // If owner: show all (to allow assigning to others)
@@ -125,9 +126,6 @@ export function AddDocumentForm({
     } else {
       submit(formData, submitOptions);
     }
-    
-    // We let the parent handle closing, or we could call onSubmit() if we want optimistic close
-    // But usually we wait for action result. The parent can listen to actionData.
   };
 
   return (

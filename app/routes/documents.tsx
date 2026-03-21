@@ -4,6 +4,7 @@ import type { Route } from "./+types/documents";
 import { requireUser } from "~/services/auth";
 import { FileText, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useIsOffline } from "~/utils/offline";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
@@ -74,7 +75,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 export default function Documents({ loaderData }: Route.ComponentProps) {
   const { docs = [], user, allMotorcycles = [], assignments = [] } = loaderData;
-  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+  const isOffline = useIsOffline();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);

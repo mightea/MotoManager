@@ -1,6 +1,7 @@
 import { redirect } from "react-router";
 import { getBackendUrl } from "~/config";
 import { db, saveToCache, syncCache } from "./db.client";
+import { getIsOffline } from "./offline";
 
 /**
  * Utility to fetch from the backend with Bearer token authentication.
@@ -60,7 +61,7 @@ export async function fetchFromBackend<T>(
     if (error instanceof Response) throw error;
     
     // Check if we can handle this POST offline
-    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+    const isOffline = getIsOffline();
     if (isOffline && options.method === "POST") {
       const body = options.body ? JSON.parse(options.body as string) : {};
       
