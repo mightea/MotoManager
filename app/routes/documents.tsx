@@ -9,6 +9,7 @@ import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { fetchFromBackend } from "~/utils/backend";
+import clsx from "clsx";
 
 export function meta() {
   return [
@@ -73,6 +74,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 export default function Documents({ loaderData }: Route.ComponentProps) {
   const { docs = [], user, allMotorcycles = [], assignments = [] } = loaderData;
+  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -166,7 +168,13 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
         </div>
         <button
           onClick={openCreateDialog}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+          disabled={isOffline}
+          className={clsx(
+            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all active:scale-95",
+            isOffline
+              ? "bg-gray-400 cursor-not-allowed opacity-50"
+              : "bg-primary hover:bg-primary-dark hover:shadow-md"
+          )}
         >
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Hochladen</span>
