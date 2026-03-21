@@ -1,17 +1,43 @@
 import { Form, Link, useLocation } from "react-router";
-import { Bike, LogOut, Menu, X, Settings, Shield, ChevronDown } from "lucide-react";
+import { Bike, LogOut, Menu, X, Settings, Shield, ChevronDown, WifiOff, RefreshCw, CheckCircle2 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { type PublicUser } from "~/types/auth";
 import clsx from "clsx";
 import { useEffect, useState, useRef } from "react";
+
+import { type SyncStatus } from "~/utils/sync";
 
 export function Header({ user }: { user: PublicUser | null }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const [syncedCount, setSyncCount] = useState(0);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
+
+  useEffect(() => {
+    const handleSyncEvent = (e: any) => {
+      setSyncStatus(e.detail.status);
+      if (e.detail.count) setSyncCount(e.detail.count);
+    };
+    window.addEventListener("moto-sync-status", handleSyncEvent);
+    return () => window.removeEventListener("moto-sync-status", handleSyncEvent);
+  }, []);
+
+  useEffect(() => {
+    setIsOffline(!navigator.onLine);
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const navItems = [
     { label: "Übersicht", href: "/" },
@@ -118,6 +144,12 @@ export function Header({ user }: { user: PublicUser | null }) {
                   <span className="text-[0.65rem] font-bold uppercase tracking-widest text-secondary dark:text-navy-400">
                     MotoManager
                   </span>
+                  {isOffline && (
+                    <span className="flex items-center gap-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[8px] font-black uppercase text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                      <WifiOff className="h-2 w-2" />
+                      Offline
+                    </span>
+                  )}
                 </div>
                 <span className="text-lg font-bold leading-none tracking-tight text-foreground dark:text-white">
                   Garagenverwaltung
@@ -152,6 +184,22 @@ export function Header({ user }: { user: PublicUser | null }) {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3 pr-2">
+            {/* Sync Indicator */}
+            {syncStatus !== "idle" && (
+              <div className={clsx(
+                "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-all animate-in fade-in zoom-in duration-300",
+                syncStatus === "syncing" && "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+                syncStatus === "success" && "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+                syncStatus === "error" && "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+              )}>
+                {syncStatus === "syncing" && <RefreshCw className="h-3 w-3 animate-spin" />}
+                {syncStatus === "success" && <CheckCircle2 className="h-3 w-3" />}
+                <span className="hidden sm:inline">
+                  {syncStatus === "syncing" ? "Synchronisiere..." : syncStatus === "success" ? `${syncedCount} Einträge synchronisiert` : "Sync Fehler"}
+                </span>
+              </div>
+            )}
+
             <ThemeToggle />
 
             {user ? (

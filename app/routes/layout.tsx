@@ -44,9 +44,11 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
         )}
       >
         {isOffline && (
-          <div className="bg-orange-500 text-white px-4 py-2 flex items-center justify-center gap-2 animate-in slide-in-from-top duration-300 relative z-50">
-            <WifiOff className="h-4 w-4" />
-            <span className="text-sm font-medium">Du bist momentan offline. Einige Funktionen sind eingeschränkt.</span>
+          <div className="bg-orange-600 text-white px-4 py-2.5 flex items-center justify-center gap-3 animate-in slide-in-from-top duration-500 relative z-50 shadow-md border-b border-orange-700/20">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20">
+              <WifiOff className="h-3.5 w-3.5" />
+            </div>
+            <span className="text-sm font-bold tracking-tight">Offline-Modus: Du kannst Daten ansehen und Wartungen erfassen, aber einige Funktionen sind eingeschränkt.</span>
           </div>
         )}
         <Outlet />

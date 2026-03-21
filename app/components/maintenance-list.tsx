@@ -251,9 +251,15 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                 }
 
                 const metric = getCollapsedMetric(group, currencyCode);
+                const isPending = group.originalRecords.some(r => r.isPending === 1);
 
                 return (
-                  <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
+                  <li key={group.id} className={clsx(
+                    "rounded-xl transition-colors",
+                    isPending 
+                      ? "bg-orange-50/40 hover:bg-orange-50/60 dark:bg-orange-950/10 dark:hover:bg-orange-950/20 border border-orange-200/50 dark:border-orange-900/30" 
+                      : "hover:bg-gray-50/50 dark:hover:bg-navy-700/30"
+                  )}>
                     <button
                       type="button"
                       onClick={() => toggleExpand(group.id)}
