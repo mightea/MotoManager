@@ -128,9 +128,19 @@ export function Header({ user }: { user: PublicUser | null }) {
         isMotorcycleDetail && isHidden && "md:-translate-y-full"
       )}
     >
-      <header className="relative w-full max-w-7xl rounded-b-2xl border border-gray-200 bg-white/90 shadow-xl backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90 pointer-events-auto">
-        {/* Motorsport Stripe Accent */}
-        <div className="absolute left-0 right-0 top-0 h-2.5 bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]" />
+      <header className={clsx(
+        "relative w-full max-w-7xl rounded-b-2xl border shadow-xl backdrop-blur-md pointer-events-auto transition-all duration-500",
+        isOffline 
+          ? "border-orange-500 bg-orange-50/90 shadow-orange-500/10 dark:border-orange-500/50 dark:bg-orange-950/20" 
+          : "border-gray-200 bg-white/90 dark:border-navy-700 dark:bg-navy-800/90"
+      )}>
+        {/* Motorsport Stripe Accent / Offline Status Stripe */}
+        <div className={clsx(
+          "absolute left-0 right-0 top-0 h-2.5 transition-all duration-500",
+          isOffline
+            ? "bg-orange-500"
+            : "bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]"
+        )} />
 
         <div className="flex items-center justify-between p-3 pt-5">
           {/* Logo Section */}
