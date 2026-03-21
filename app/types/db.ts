@@ -1,5 +1,10 @@
 export type UserRole = "admin" | "user";
 
+/**
+ * Utility type for items that may be pending sync.
+ */
+export type Pending<T> = T & { isPending?: number };
+
 export interface User {
   id: number;
   email: string;
@@ -111,7 +116,6 @@ export interface MaintenanceRecord {
   locationName: string | null;
   fuelConsumption: number | null;
   tripDistance: number | null;
-  isPending?: number;
 }
 
 export type NewMaintenanceRecord = Omit<MaintenanceRecord, "id">;
@@ -125,7 +129,6 @@ export interface Issue {
   priority: "low" | "medium" | "high";
   status: "new" | "in_progress" | "done";
   date: string | null;
-  isPending?: number;
 }
 
 export type NewIssue = Omit<Issue, "id">;

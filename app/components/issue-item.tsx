@@ -1,9 +1,9 @@
 import { AlertTriangle, CircleAlert, Info, CloudOff } from "lucide-react";
 import clsx from "clsx";
-import type { Issue } from "~/types/db";
+import type { Issue, Pending } from "~/types/db";
 
 type IssueItemProps = {
-  issue: Issue & { isPending?: number };
+  issue: Pending<Issue>;
   dateFormatter: Intl.DateTimeFormat;
   onSelect?: (issue: Issue) => void;
 };

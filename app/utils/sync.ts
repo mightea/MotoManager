@@ -1,16 +1,16 @@
 import { db } from "./db.client";
 import { fetchFromBackend } from "./backend";
 import { getSessionToken } from "~/services/auth";
+import { type Pending, type Issue, type MaintenanceRecord } from "~/types/db";
+
+import { syncStore } from "~/services/sync-store.client";
 
 let isSyncing = false;
 
 export type SyncStatus = "idle" | "syncing" | "success" | "error";
 
-function notifySyncStatus(status: SyncStatus, count?: number) {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("moto-sync-status", { 
-    detail: { status, count } 
-  }));
+function notifySyncStatus(status: SyncStatus, count: number = 0) {
+  syncStore.update(status, count);
 }
 
 /**
@@ -22,8 +22,8 @@ export async function syncPendingItems() {
   const token = getSessionToken();
   if (!token) return;
 
-  const pendingIssues = await db.issues.where("isPending").equals(1).toArray();
-  const pendingMaintenance = await db.maintenance.where("isPending").equals(1).toArray();
+  const pendingIssues = await db.issues.where("isPending").equals(1).toArray() as Pending<Issue>[];
+  const pendingMaintenance = await db.maintenance.where("isPending").equals(1).toArray() as Pending<MaintenanceRecord>[];
   const total = pendingIssues.length + pendingMaintenance.length;
 
   if (total === 0) return;
