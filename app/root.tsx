@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useRevalidator,
 } from "react-router";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
@@ -67,9 +68,17 @@ export default function App() {
   const theme = loaderData?.theme || Theme.LIGHT;
   const changelog = loaderData?.changelog || null;
   const [isChangelogOpen, setIsChangelogOpen] = useState(!!changelog);
+  const revalidator = useRevalidator();
 
   useEffect(() => {
     initSync();
+
+    const handleRevalidate = () => {
+      console.log("[App] Revalidation triggered by sync");
+      revalidator.revalidate();
+    };
+
+    window.addEventListener("moto-revalidate", handleRevalidate);
 
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       window.addEventListener('load', () => {
@@ -80,7 +89,11 @@ export default function App() {
         });
       });
     }
-  }, []);
+
+    return () => {
+      window.removeEventListener("moto-revalidate", handleRevalidate);
+    };
+  }, [revalidator]);
 
   const handleCloseChangelog = () => {
     setIsChangelogOpen(false);
