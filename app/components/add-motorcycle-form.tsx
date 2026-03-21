@@ -319,6 +319,7 @@ export function AddMotorcycleForm({
                 type="button"
                 variant="outline"
                 onClick={() => setImportDialogOpen(true)}
+                disabled={isOffline}
                 leftIcon={<Fuel className="h-4 w-4" />}
               >
                 RoadTrip Import

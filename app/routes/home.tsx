@@ -144,6 +144,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { cards, stats, currentSort, currencies } = loaderData;
+  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
   const navigation = useNavigation();
@@ -210,7 +211,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </MenuItems>
         </Menu>
 
-        <Button onClick={() => setIsAddOpen(true)}>
+        <Button onClick={() => setIsAddOpen(true)} disabled={isOffline}>
           <Plus className="h-5 w-5" />
           <span className="hidden sm:inline">Neues Motorrad</span>
         </Button>
@@ -219,7 +220,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {/* FAB on mobile */}
       <button
         onClick={() => setIsAddOpen(true)}
-        className="fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary-dark hover:shadow-xl active:scale-95 sm:hidden"
+        disabled={isOffline}
+        className={clsx(
+          "fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full text-white shadow-lg transition-all active:scale-95 sm:hidden",
+          isOffline 
+            ? "bg-gray-400 cursor-not-allowed opacity-50" 
+            : "bg-primary shadow-primary/30 hover:bg-primary-dark hover:shadow-xl"
+        )}
         aria-label="Neues Motorrad hinzufügen"
       >
         <Plus className="h-6 w-6" />
@@ -242,7 +249,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <p className="mt-1.5 max-w-sm text-sm text-secondary dark:text-navy-400">
               Deine Garage ist leer. Füge dein erstes Motorrad hinzu.
             </p>
-            <Button onClick={() => setIsAddOpen(true)} className="mt-5">
+            <Button onClick={() => setIsAddOpen(true)} className="mt-5" disabled={isOffline}>
               <Plus className="h-4 w-4" />
               Motorrad hinzufügen
             </Button>
