@@ -22,6 +22,7 @@ export class MotoDatabase extends Dexie {
   docAssignments!: Table<DocumentMotorcycle>;
   currencies!: Table<CurrencySetting>;
   users!: Table<import('~/types/db').User>;
+  torqueSpecs!: Table<import('~/types/db').TorqueSpecification>;
 
   constructor() {
     super('MotoDatabase');
@@ -35,7 +36,8 @@ export class MotoDatabase extends Dexie {
       documents: 'id, ownerId, isPrivate',
       docAssignments: '[documentId+motorcycleId], documentId, motorcycleId',
       currencies: 'id, code',
-      users: 'id, username, email'
+      users: 'id, username, email',
+      torqueSpecs: 'id, motorcycleId, category, isPending'
     });
   }
 }

@@ -1,7 +1,8 @@
 import { Form, useSubmit } from "react-router";
 import { useState } from "react";
 import { Button } from "./button";
-import type { TorqueSpecification } from "~/types/db";
+import type { TorqueSpecification, Pending } from "~/types/db";
+import { useIsOffline } from "~/utils/offline";
 
 import { Trash2 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export function TorqueSpecForm({
   onDelete,
 }: TorqueSpecFormProps) {
   const submit = useSubmit();
+  const isOffline = useIsOffline();
 
   const defaultCategories = ["Motor", "Fahrwerk", "Bremsen", "Antrieb", "Elektrik", "Karosserie"];
   const combinedCategories = Array.from(new Set([...defaultCategories, ...existingCategories])).sort();
@@ -182,6 +184,7 @@ export function TorqueSpecForm({
               type="button"
               variant="ghost"
               onClick={() => onDelete(initialValues)}
+              disabled={isOffline && !(initialValues as Pending<TorqueSpecification>).isPending}
               className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
             >
               <Trash2 className="h-4 w-4 mr-2" />
@@ -189,13 +192,20 @@ export function TorqueSpecForm({
             </Button>
           )}
         </div>
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Abbrechen
-          </Button>
-          <Button type="submit">
-            Speichern
-          </Button>
+        <div className="flex justify-end gap-3 flex-col sm:flex-row w-full sm:w-auto">
+          {isOffline && (
+            <div className="text-[10px] font-bold text-orange-500 uppercase tracking-widest flex items-center justify-center bg-orange-50 dark:bg-orange-950/20 px-3 py-2 rounded-lg border border-orange-200 dark:border-orange-900/50">
+              Offline: Wird später synchronisiert
+            </div>
+          )}
+          <div className="flex gap-3 justify-end">
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Abbrechen
+            </Button>
+            <Button type="submit">
+              Speichern
+            </Button>
+          </div>
         </div>
       </div>
     </Form>

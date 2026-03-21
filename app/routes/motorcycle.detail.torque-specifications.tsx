@@ -12,7 +12,7 @@ import {
 import { requireUser } from "~/services/auth";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Wrench, Plus, Pencil, Import, Printer } from "lucide-react";
+import { Wrench, Plus, Pencil, Import, Printer, CloudOff } from "lucide-react";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { Modal } from "~/components/modal";
@@ -25,6 +25,8 @@ import {
   deleteTorqueSpecification
 } from "~/services/motorcycles";
 import { fetchFromBackend } from "~/utils/backend";
+import { useIsOffline } from "~/utils/offline";
+import { type Pending } from "~/types/db";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -147,12 +149,14 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     motorcycle,
     nextInspection,
     currentLocationName,
-    torqueSpecs: specs = [],
+    torqueSpecs: specsRaw = [],
     allMotorcycles: otherMotorcycles = [],
     otherSpecs = [],
     printDate,
   } = loaderData;
 
+  const specs = specsRaw as Pending<TorqueSpecification>[];
+  const isOffline = useIsOffline();
   const allCategories = Array.from(new Set(specs.map((s: any) => s.category as string))).sort() as string[];
   const actionData = useActionData<typeof clientAction>();
   const submit = useSubmit();
@@ -295,7 +299,13 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             {otherMotorcycles.length > 0 && (
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+                disabled={isOffline}
+                className={clsx(
+                  "inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-semibold text-secondary transition-all dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200",
+                  isOffline 
+                    ? "opacity-50 cursor-not-allowed bg-gray-50" 
+                    : "hover:bg-gray-50 hover:text-foreground dark:hover:bg-navy-700 dark:hover:text-white"
+                )}
               >
                 <Import className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Importieren</span>
@@ -356,13 +366,22 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                   {category as string}
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-navy-700 print:divide-gray-300">
-                  {(specs as any[]).filter((s: any) => s.category === category).map((spec: any) => (
-                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:!bg-white print:!text-black">
+                  {specs.filter((s: any) => s.category === category).map((spec: Pending<TorqueSpecification>) => (
+                    <div key={spec.id} className={clsx(
+                      "group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors",
+                      spec.isPending === 1
+                        ? "bg-orange-50/40 hover:bg-orange-50/60 dark:bg-orange-950/10 dark:hover:bg-orange-950/20 border-l-2 border-l-orange-500"
+                        : "hover:bg-gray-50/50 dark:hover:bg-navy-700/30",
+                      "print:flex print:items-center print:justify-between print:px-4 print:py-3 print:!bg-white print:!text-black print:border-0"
+                    )}>
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
                             {spec.name}
                           </h3>
+                          {spec.isPending === 1 && (
+                            <CloudOff className="h-3 w-3 text-orange-500" />
+                          )}
                           <button
                             onClick={() => setEditingSpec(spec)}
                             className="rounded-lg p-1 text-secondary sm:opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light focus:opacity-100 print:hidden"
