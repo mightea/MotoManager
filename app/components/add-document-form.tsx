@@ -42,6 +42,7 @@ export function AddDocumentForm({
 
   const isEditMode = !!document;
   const isOwner = !document || document.ownerId === currentUserId;
+  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
 
   // Filter motorcycles: 
   // If owner: show all (to allow assigning to others)
@@ -333,12 +334,17 @@ export function AddDocumentForm({
         
         <Button
             type="submit"
-            disabled={isSubmitting || (!isEditMode && !file)}
+            disabled={isSubmitting || (!isEditMode && !file) || isOffline}
             className="w-full sm:w-auto"
         >
             {isSubmitting ? "Speichern..." : (isEditMode ? (isOwner ? "Speichern" : "Zuordnungen speichern") : "Hochladen")}
         </Button>
       </div>
+      {isOffline && (
+        <p className="mt-2 text-center text-xs font-bold text-orange-500 bg-orange-50 dark:bg-orange-950/20 py-2 rounded-lg border border-orange-200 dark:border-orange-900/50">
+          Dokumente können offline nicht hochgeladen werden.
+        </p>
+      )}
     </form>
   );
 }

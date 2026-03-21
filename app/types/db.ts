@@ -111,6 +111,7 @@ export interface MaintenanceRecord {
   locationName: string | null;
   fuelConsumption: number | null;
   tripDistance: number | null;
+  isPending?: number;
 }
 
 export type NewMaintenanceRecord = Omit<MaintenanceRecord, "id">;
@@ -124,6 +125,7 @@ export interface Issue {
   priority: "low" | "medium" | "high";
   status: "new" | "in_progress" | "done";
   date: string | null;
+  isPending?: number;
 }
 
 export type NewIssue = Omit<Issue, "id">;

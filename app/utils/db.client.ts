@@ -27,8 +27,8 @@ export class MotoDatabase extends Dexie {
     super('MotoDatabase');
     this.version(1).stores({
       motorcycles: 'id, make, model, userId',
-      issues: 'id, motorcycleId, status',
-      maintenance: 'id, motorcycleId, type, date',
+      issues: 'id, motorcycleId, status, isPending',
+      maintenance: 'id, motorcycleId, type, date, isPending',
       locationHistory: 'id, motorcycleId, locationId',
       locations: 'id, userId',
       settings: 'id, userId',

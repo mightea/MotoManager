@@ -59,6 +59,26 @@ export async function fetchFromBackend<T>(
   } catch (error) {
     if (error instanceof Response) throw error;
     
+    // Check if we can handle this POST offline
+    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+    if (isOffline && options.method === "POST") {
+      const body = options.body ? JSON.parse(options.body as string) : {};
+      
+      if (path.endsWith("/issues")) {
+        const id = -(Date.now()); // Temporary negative ID
+        const pendingIssue = { ...body, id, isPending: 1 };
+        await saveToCache(db.issues, pendingIssue);
+        return { issue: pendingIssue } as any;
+      }
+      
+      if (path.endsWith("/maintenance")) {
+        const id = -(Date.now()); // Temporary negative ID
+        const pendingRecord = { ...body, id, isPending: 1 };
+        await saveToCache(db.maintenance, pendingRecord);
+        return { maintenanceRecord: pendingRecord } as any;
+      }
+    }
+
     console.error(`[Backend Error] ${options.method || "GET"} ${url}:`, error);
     
     // Attempt to return from cache if network fails
