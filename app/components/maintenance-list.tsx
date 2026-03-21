@@ -23,7 +23,7 @@ import {
   CloudOff
 } from "lucide-react";
 import { useState } from "react";
-import type { MaintenanceRecord, MaintenanceType, Location } from "~/types/db";
+import type { MaintenanceRecord, MaintenanceType, Location, Pending } from "~/types/db";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { parseDotCode } from "~/utils/maintenance-intervals";
@@ -53,7 +53,7 @@ interface GroupedMaintenanceRecord {
   cost: number;
   currency: string | null;
   summaries: string[];
-  originalRecords: (MaintenanceRecord & { isPending?: number })[];
+  originalRecords: Pending<MaintenanceRecord>[];
 }
 
 const getIconForType = (type: MaintenanceType) => {

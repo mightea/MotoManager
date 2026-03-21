@@ -3,9 +3,9 @@ import { Bike, LogOut, Menu, X, Settings, Shield, ChevronDown, WifiOff, RefreshC
 import { ThemeToggle } from "./theme-toggle";
 import { type PublicUser } from "~/types/auth";
 import clsx from "clsx";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 
-import { type SyncStatus } from "~/utils/sync";
+import { syncStore } from "~/services/sync-store.client";
 
 export function Header({ user }: { user: PublicUser | null }) {
   const location = useLocation();
@@ -13,19 +13,15 @@ export function Header({ user }: { user: PublicUser | null }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
-  const [syncedCount, setSyncCount] = useState(0);
+  
+  const { status: syncStatus, count: syncedCount } = useSyncExternalStore(
+    syncStore.subscribe,
+    syncStore.getSnapshot,
+    () => ({ status: "idle" as const, count: 0 })
+  );
+
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
-
-  useEffect(() => {
-    const handleSyncEvent = (e: any) => {
-      setSyncStatus(e.detail.status);
-      if (e.detail.count) setSyncCount(e.detail.count);
-    };
-    window.addEventListener("moto-sync-status", handleSyncEvent);
-    return () => window.removeEventListener("moto-sync-status", handleSyncEvent);
-  }, []);
 
   useEffect(() => {
     setIsOffline(!navigator.onLine);
@@ -150,16 +146,18 @@ export function Header({ user }: { user: PublicUser | null }) {
                 <Bike className="h-8 w-8" />
               </div>
               <div className="flex flex-col">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-h-[1.25rem]">
                   <span className="text-[0.65rem] font-bold uppercase tracking-widest text-secondary dark:text-navy-400">
                     MotoManager
                   </span>
-                  {isOffline && (
-                    <span className="flex items-center gap-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[8px] font-black uppercase text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                      <WifiOff className="h-2 w-2" />
-                      Offline
-                    </span>
-                  )}
+                  <div className="w-12"> {/* Reserved space for offline badge */}
+                    {isOffline && (
+                      <span className="flex items-center gap-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[8px] font-black uppercase text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 animate-in fade-in zoom-in duration-300">
+                        <WifiOff className="h-2 w-2" />
+                        Offline
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span className="text-lg font-bold leading-none tracking-tight text-foreground dark:text-white">
                   Garagenverwaltung
