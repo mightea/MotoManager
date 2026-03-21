@@ -194,29 +194,41 @@ function AppWithTheme({ children }: { children: React.ReactNode }) {
 
 export function ErrorBoundary({ error }: { error: unknown }) {
   let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let details = "Ein unerwarteter Fehler ist aufgetreten.";
   let stack: string | undefined;
 
+  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = error.status === 404 ? "404" : "Fehler";
     details =
       error.status === 404
-        ? "The requested page could not be found."
+        ? "Die angeforderte Seite konnte nicht gefunden werden."
         : error.statusText || details;
   } else if (error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
+    if (error.message.includes("fetch") || isOffline) {
+      message = "Offline";
+      details = "Diese Seite ist momentan nicht verfügbar, da du offline bist und die Daten nicht im Cache gespeichert sind.";
+    } else {
+      details = error.message;
+      stack = error.stack;
+    }
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto text-foreground dark:text-gray-50">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-navy-800 rounded-md mt-4">
-          <code className="text-sm text-gray-700 dark:text-gray-200">{stack}</code>
-        </pre>
-      )}
+    <main className="pt-24 p-4 container mx-auto text-foreground dark:text-gray-50 flex flex-col items-center text-center">
+      <div className="bg-white dark:bg-navy-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-navy-800 max-w-lg w-full">
+        <h1 className="text-4xl font-black text-primary mb-4">{message}</h1>
+        <p className="text-secondary dark:text-navy-300 mb-8">{details}</p>
+        <Button onClick={() => window.location.reload()}>
+          Erneut versuchen
+        </Button>
+        {stack && (
+          <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-navy-800 rounded-xl mt-8 text-left">
+            <code className="text-xs text-gray-700 dark:text-gray-200">{stack}</code>
+          </pre>
+        )}
+      </div>
     </main>
   );
 }

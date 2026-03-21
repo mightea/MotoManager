@@ -50,8 +50,15 @@ export async function getCurrentSession(): Promise<AuthSession> {
       user: toPublicUser(response.user),
       token,
     };
-  } catch {
-    clearSessionToken();
+  } catch (error) {
+    // If it's a redirect response (likely 401 from fetchFromBackend), let it bubble up or handle it
+    if (error instanceof Response) {
+      clearSessionToken();
+      return { user: null, token: null };
+    }
+
+    // If we are offline or have a network error and no cache, don't clear the token
+    // Just return no user for now, but keep the token for later
     return {
       user: null,
       token: null,
