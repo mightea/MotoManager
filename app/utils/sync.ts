@@ -48,6 +48,8 @@ export async function syncPendingItems() {
           },
           token
         );
+        // Important: Always delete the temporary local item and add server item
+        // to prevent duplicates and ensure state is correctly updated.
         await db.issues.delete(issue.id);
         await db.issues.put(result.issue);
         successCount++;
@@ -68,6 +70,7 @@ export async function syncPendingItems() {
           },
           token
         );
+        // Important: Always delete the temporary local item and add server item
         await db.maintenance.delete(record.id);
         await db.maintenance.put(result.maintenanceRecord);
         successCount++;
@@ -95,9 +98,11 @@ export async function syncPendingItems() {
           token
         );
         
+        // Always delete local item if it was a temporary new one
         if (isNew) {
           await db.torqueSpecs.delete(id);
         }
+        // Always put server item to ensure local data is up to date and flag is removed
         await db.torqueSpecs.put(result.torqueSpec);
         successCount++;
       } catch (e) {
@@ -107,6 +112,14 @@ export async function syncPendingItems() {
 
     if (successCount > 0) {
       notifySyncStatus("success", successCount);
+      
+      // Trigger revalidation of current route if we are in a browser
+      if (typeof window !== "undefined") {
+        // We can't easily get the revalidator here, but we can emit an event 
+        // that the root or Layout can listen to
+        window.dispatchEvent(new CustomEvent("moto-revalidate"));
+      }
+
       // Reset to idle after a delay
       setTimeout(() => notifySyncStatus("idle"), 5000);
     } else {
