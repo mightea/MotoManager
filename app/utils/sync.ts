@@ -1,7 +1,7 @@
 import { db } from "./db.client";
 import { fetchFromBackend } from "./backend";
 import { getSessionToken } from "~/services/auth";
-import { type Pending, type Issue, type MaintenanceRecord } from "~/types/db";
+import { type Pending, type Issue, type MaintenanceRecord, type TorqueSpecification } from "~/types/db";
 
 import { syncStore } from "~/services/sync-store.client";
 
@@ -24,7 +24,8 @@ export async function syncPendingItems() {
 
   const pendingIssues = await db.issues.where("isPending").equals(1).toArray() as Pending<Issue>[];
   const pendingMaintenance = await db.maintenance.where("isPending").equals(1).toArray() as Pending<MaintenanceRecord>[];
-  const total = pendingIssues.length + pendingMaintenance.length;
+  const pendingTorqueSpecs = await db.torqueSpecs.where("isPending").equals(1).toArray() as Pending<TorqueSpecification>[];
+  const total = pendingIssues.length + pendingMaintenance.length + pendingTorqueSpecs.length;
 
   if (total === 0) return;
 
@@ -72,6 +73,35 @@ export async function syncPendingItems() {
         successCount++;
       } catch (e) {
         console.error(`[Sync] Failed to sync maintenance:`, e);
+      }
+    }
+
+    // 3. Sync Torque Specs
+    for (const spec of pendingTorqueSpecs) {
+      try {
+        const { id, isPending: _isPending, ...data } = spec;
+        const isNew = id < 0;
+        
+        console.log(`[Sync] Syncing torque spec (${isNew ? "POST" : "PUT"}):`, data);
+        
+        const result = await fetchFromBackend<{ torqueSpec: any }>(
+          isNew 
+            ? `/motorcycles/${spec.motorcycleId}/torque-specs`
+            : `/motorcycles/${spec.motorcycleId}/torque-specs/${id}`,
+          {
+            method: isNew ? "POST" : "PUT",
+            body: JSON.stringify(data),
+          },
+          token
+        );
+        
+        if (isNew) {
+          await db.torqueSpecs.delete(id);
+        }
+        await db.torqueSpecs.put(result.torqueSpec);
+        successCount++;
+      } catch (e) {
+        console.error(`[Sync] Failed to sync torque spec:`, e);
       }
     }
 

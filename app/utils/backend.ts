@@ -78,6 +78,25 @@ export async function fetchFromBackend<T>(
         await saveToCache(db.maintenance, pendingRecord);
         return { maintenanceRecord: pendingRecord } as any;
       }
+
+      if (path.endsWith("/torque-specs")) {
+        const id = -(Date.now()); // Temporary negative ID
+        const pendingSpec = { ...body, id, isPending: 1 };
+        await saveToCache(db.torqueSpecs, pendingSpec);
+        return { torqueSpec: pendingSpec } as any;
+      }
+    }
+
+    if (isOffline && options.method === "PUT") {
+      const body = options.body ? JSON.parse(options.body as string) : {};
+      const parts = path.split('/');
+      const id = parseInt(parts[parts.length - 1], 10);
+
+      if (path.includes("/torque-specs/")) {
+        const pendingSpec = { ...body, id, isPending: 1 };
+        await saveToCache(db.torqueSpecs, pendingSpec);
+        return { torqueSpec: pendingSpec } as any;
+      }
     }
 
     console.error(`[Backend Error] ${options.method || "GET"} ${url}:`, error);
@@ -113,8 +132,9 @@ async function cacheResponse(path: string, data: any) {
       if (parts.length === 3 && !isNaN(Number(parts[2]))) {
         // Motorcycle detail
         if (data.motorcycle) await saveToCache(db.motorcycles, data.motorcycle);
-        if (data.issues) await saveToCache(db.issues, data.issues);
-        if (data.maintenanceRecords) await saveToCache(db.maintenance, data.maintenanceRecords);
+        if (data.issues) await syncCache(db.issues, data.issues);
+        if (data.maintenanceRecords) await syncCache(db.maintenance, data.maintenanceRecords);
+        if (data.torqueSpecs) await syncCache(db.torqueSpecs, data.torqueSpecs);
       }
     } else if (path === '/settings') {
       if (data.settings) await saveToCache(db.settings, data.settings);
@@ -148,10 +168,11 @@ async function getFromResponseCache<T>(path: string): Promise<T | null> {
       const id = parseInt(parts[2], 10);
       if (isNaN(id)) return null;
 
-      const [motorcycle, issues, maintenanceRecords] = await Promise.all([
+      const [motorcycle, issues, maintenanceRecords, torqueSpecs] = await Promise.all([
         db.motorcycles.get(id),
         db.issues.where('motorcycleId').equals(id).toArray(),
         db.maintenance.where('motorcycleId').equals(id).toArray(),
+        db.torqueSpecs.where('motorcycleId').equals(id).toArray(),
       ]);
 
       if (!motorcycle) return null;
@@ -160,6 +181,7 @@ async function getFromResponseCache<T>(path: string): Promise<T | null> {
         motorcycle,
         issues,
         maintenanceRecords,
+        torqueSpecs,
         previousOwners: [], // Not cached yet
       } as any;
     } else if (path === '/documents') {
