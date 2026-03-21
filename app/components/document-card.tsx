@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucide-react";
 import { getBackendAssetUrl } from "~/utils/backend";
+import { useEffect, useState } from "react";
 
 export type DocumentSummary = {
   id: number;
@@ -29,7 +30,20 @@ export function DocumentCard({
   onEdit,
   assignedMotorcycleNames = [],
 }: DocumentCardProps) {
-  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    setIsOffline(!navigator.onLine);
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
   const fileUrl = getBackendAssetUrl(document.filePath) ?? "#";
   const previewUrl = getBackendAssetUrl(document.previewPath);
@@ -136,7 +150,7 @@ export function DocumentCard({
               onClick={() => onEdit(document)}
               disabled={isOffline}
               className={clsx(
-                "inline-flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
+                "relative inline-flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                 isOffline
                   ? "border-gray-100 bg-gray-50 text-secondary/40 cursor-not-allowed dark:border-navy-700/50 dark:bg-navy-900/50 dark:text-navy-500"
                   : "border-gray-200 text-secondary hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
@@ -144,6 +158,11 @@ export function DocumentCard({
             >
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
               {isOwner ? "Bearbeiten" : "Zuordnen"}
+              {isOffline && (
+                <span className="absolute -top-2 -right-2 rounded-full bg-orange-500 px-1.5 py-0.5 text-[8px] font-black uppercase text-white shadow-sm">
+                  Offline
+                </span>
+              )}
             </button>
           </div>
         )}
