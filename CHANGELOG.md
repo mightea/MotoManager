@@ -1,5 +1,42 @@
 # Changelog
 
+## [2026.4.0](https://github.com/mightea/MotoManager/compare/2026.3.1...2026.4.0) (2026-04-11)
+
+### Features
+
+* disable add motorcycle and document buttons when offline ([4f5a15a](https://github.com/mightea/MotoManager/commit/4f5a15a90817a1b053992ee6455501c81dfd9877))
+* enable offline data entry for issues/maintenance with auto-sync ([6843213](https://github.com/mightea/MotoManager/commit/6843213cacd6304e42ec092be9cefbd65108a655))
+* enable offline torque specs management with auto-sync ([210fd75](https://github.com/mightea/MotoManager/commit/210fd75415f2c14d0f9eb7bc9022709b8d8f86eb))
+* enhance frontend UX with skeletons, refactored forms, and loading states ([0972696](https://github.com/mightea/MotoManager/commit/097269668b938c74113221a4a250d22e11591551))
+* improve image cropping quality and resolution ([e46f34b](https://github.com/mightea/MotoManager/commit/e46f34b373091098286611d53fe0f84b3af31267))
+* improve offline mode with auth caching and better error handling ([f46b787](https://github.com/mightea/MotoManager/commit/f46b787c629e9e4a8b5e4439c4ed1fa4917007d5))
+* migrate to external backend and remove local database ([8c42f62](https://github.com/mightea/MotoManager/commit/8c42f62424c25a14e04e769a9d11504f55818bbb))
+* move server statistics link to admin area ([dbf95a3](https://github.com/mightea/MotoManager/commit/dbf95a34789a176da6afe9d354b45bc67c5a59c6))
+* refactor to client-side rendered SPA and offline-capable PWA ([2e3043e](https://github.com/mightea/MotoManager/commit/2e3043eb5a5776419984559fed8892feb393e130))
+* show changelog only for logged in users and fix lint issues ([a7a831e](https://github.com/mightea/MotoManager/commit/a7a831e5c4ae5b65f743620ff719c0902c42f6c8))
+* update home dashboard to use /home endpoint and cleanup passkey routes ([c365bc4](https://github.com/mightea/MotoManager/commit/c365bc45b8f33a2cbd4b3c236c63b0b64cb7f4a2))
+
+### Bug Fixes
+
+* allow passkey login without specifying a username ([7c7505d](https://github.com/mightea/MotoManager/commit/7c7505d17e7ec6e785353b280593ac0edc690261))
+* correctly pass nested publicKey to simplewebauthn library ([d4b32c4](https://github.com/mightea/MotoManager/commit/d4b32c424e14125cfdd71797369fc1d0a71f2518))
+* enable SSR to support server-side resource routes and fix production build ([b7addb8](https://github.com/mightea/MotoManager/commit/b7addb849a2ce21271a9f0b962ee88f0ede7f537))
+* ensure offline cache is properly cleaned by using syncCache for lists ([4e69f20](https://github.com/mightea/MotoManager/commit/4e69f206a3a14c1364d0f501361467aa822b0779))
+* ensure UI updates after sync and prevent duplicate entries ([e498ff6](https://github.com/mightea/MotoManager/commit/e498ff6281456d6b8c801c3ad1d18cd7b0012974))
+* prevent duplicate entries during sync and ensure surgical cache updates ([4c945ce](https://github.com/mightea/MotoManager/commit/4c945ceca4daf94a4c45de7d3206fe781c141121))
+* prevent white screen on reload by adding HydrateFallback and safety checks ([faaa6cf](https://github.com/mightea/MotoManager/commit/faaa6cfe90b32fc7bc928e4526fe625cbba2bddc))
+* resolve passkey JSON error and refine proxy implementation ([08a184b](https://github.com/mightea/MotoManager/commit/08a184be81888c3f783026e7dbbce0a9a622f807))
+* resolve passkey JSON error by using Vite proxy and relative paths ([4b61788](https://github.com/mightea/MotoManager/commit/4b617886edb9a5e13e9e4ae64ef2084fd5e32f74))
+* resolve TypeError in maintenance form and improve currency handling ([a473fac](https://github.com/mightea/MotoManager/commit/a473fac7133d644e251a0ba4e3b360241a90b2ce))
+* resolve TypeErrors and restore missing data in documents and statistics ([4858372](https://github.com/mightea/MotoManager/commit/4858372dbd34145b1491a9d5116f0c43a187e4d2))
+* restore passkey proxy routes for local development compatibility ([6ed1f60](https://github.com/mightea/MotoManager/commit/6ed1f6000a33de6518b373b650a4c3ae9c3959ad))
+* settings page recovery and improved offline logging ([6362ff9](https://github.com/mightea/MotoManager/commit/6362ff9aad11c466a8db6a4d0bca22ecb24f1c59))
+* use 127.0.0.1 for proxy and add safety checks for passkey options ([7151f5d](https://github.com/mightea/MotoManager/commit/7151f5d8c6893a12e3b4769e51de237e5372ed83))
+
+### Performance Improvements
+
+* use server-aggregated stats and improve dashboard resilience ([f19ab5c](https://github.com/mightea/MotoManager/commit/f19ab5cb6bf64ba91581e4ebb04b6fa77a060c32))
+
 ## [2026.3.1](https://github.com/mightea/MotoManager/compare/2026.3.0...2026.3.1) (2026-03-12)
 
 ### Features
