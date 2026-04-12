@@ -19,6 +19,7 @@ import {
   verifyLogin,
 } from "~/services/auth";
 import { authenticateWithPasskey } from "~/utils/webauthn";
+import { getVersion } from "~/config";
 
 const EMAIL_REGEX = /.+@.+\..+/i;
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
@@ -36,6 +37,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data({
     redirectTo,
     isFirstUser: false,
+    version: getVersion(),
   });
 }
 
@@ -52,6 +54,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   return data({
     redirectTo,
     isFirstUser: false,
+    version: getVersion(),
   });
 }
 
@@ -181,6 +184,7 @@ export default function Login() {
   const loaderData = useLoaderData<typeof clientLoader>();
   const redirectTo = loaderData?.redirectTo || "/";
   const isFirstUser = loaderData?.isFirstUser || false;
+  const version = loaderData?.version || "0.0.0";
   
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
@@ -578,7 +582,7 @@ export default function Login() {
 
           <div className="border-t border-gray-100 bg-gray-50/50 p-6 text-center dark:border-navy-700/50 dark:bg-navy-950/30">
             <p className="text-[10px] font-medium text-secondary/50 dark:text-navy-500">
-              © {new Date().getFullYear()} MotoManager • Garagenverwaltung
+              © {new Date().getFullYear()} MotoManager • Garagenverwaltung • v{version}
             </p>
           </div>
         </div>
