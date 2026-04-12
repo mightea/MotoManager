@@ -17,6 +17,7 @@ import { Theme } from "~/utils/theme";
 import { getNewChangelog, markChangelogSeen } from "~/services/changelog.client";
 import { getCurrentSession } from "~/services/auth";
 import { initSync } from "~/utils/sync";
+import { getPublicBackendUrl, isRegistrationEnabled, getVersion } from "~/config";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
@@ -25,10 +26,10 @@ import "./app.css";
 export async function loader() {
   return {
     ENV: {
-      BACKEND_URL: process.env.BACKEND_URL || "http://localhost:3001",
+      BACKEND_URL: getPublicBackendUrl(),
       INTERNAL_BACKEND_URL: process.env.INTERNAL_BACKEND_URL,
-      ENABLE_REGISTRATION: process.env.ENABLE_REGISTRATION,
-      APP_VERSION: process.env.APP_VERSION,
+      ENABLE_REGISTRATION: isRegistrationEnabled(),
+      APP_VERSION: getVersion(),
     },
   };
 }

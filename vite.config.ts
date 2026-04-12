@@ -11,8 +11,6 @@ export default defineConfig(({ mode }) => {
   return {
     define: {
       "process.env.APP_VERSION": JSON.stringify(pkg.version),
-      "process.env.BACKEND_URL": JSON.stringify(backendUrl),
-      "process.env.ENABLE_REGISTRATION": JSON.stringify(env.ENABLE_REGISTRATION),
     },
     server: {
       proxy: {
