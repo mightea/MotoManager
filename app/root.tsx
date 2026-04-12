@@ -26,6 +26,7 @@ export async function loader() {
   return {
     ENV: {
       BACKEND_URL: process.env.BACKEND_URL || "http://localhost:3001",
+      INTERNAL_BACKEND_URL: process.env.INTERNAL_BACKEND_URL,
       ENABLE_REGISTRATION: process.env.ENABLE_REGISTRATION,
       APP_VERSION: process.env.APP_VERSION,
     },
