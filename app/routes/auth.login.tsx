@@ -30,8 +30,13 @@ export function meta() {
   ];
 }
 
-export async function loader() {
-  return {};
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const redirectTo = url.searchParams.get("redirectTo") ?? "/";
+  return data({
+    redirectTo,
+    isFirstUser: false,
+  });
 }
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -44,11 +49,9 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     throw redirect(redirectTo);
   }
 
-  const isFirstUser = false;
-
   return data({
     redirectTo,
-    isFirstUser,
+    isFirstUser: false,
   });
 }
 
