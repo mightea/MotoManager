@@ -17,15 +17,21 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   // Support both camelCase and snake_case for the busiest bike field
   const busiestBike = stats?.busiestBike ?? (stats as any)?.busiest_bike;
 
-  // Defensive access for properties which might be camelCase, snake_case or PascalCase
-  const bikeMake = busiestBike ? (busiestBike.make || (busiestBike as any).Make) : null;
-  const bikeModel = busiestBike ? (busiestBike.model || (busiestBike as any).Model) : null;
-  const bikeOdo = busiestBike ? (
-    busiestBike.odometerThisYear ?? 
-    (busiestBike as any).odometer_this_year ?? 
-    (busiestBike as any).OdometerThisYear ?? 
-    0
-  ) : 0;
+  // Handle case where busiestBike is just a string from the backend
+  let bikeLabel = "—";
+  let bikeDesc = "Keine Fahrten in diesem Jahr";
+  
+  if (typeof busiestBike === "string") {
+    bikeLabel = busiestBike;
+    bikeDesc = `${formatNumber(totalKmThisYear)} km insgesamt in ${year}`;
+  } else if (busiestBike && typeof busiestBike === "object") {
+    const bikeMake = busiestBike.make || (busiestBike as any).Make;
+    const bikeModel = busiestBike.model || (busiestBike as any).Model;
+    const bikeOdo = busiestBike.odometerThisYear ?? (busiestBike as any).odometer_this_year ?? (busiestBike as any).OdometerThisYear ?? 0;
+    
+    bikeLabel = bikeMake && bikeModel ? `${bikeMake} ${bikeModel}` : "—";
+    bikeDesc = `${formatNumber(bikeOdo)} km in ${year}`;
+  }
 
   return (
     <div className="space-y-4">
@@ -63,12 +69,8 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         />
         <StatCard
           label="Fleissigstes Bike"
-          value={bikeMake && bikeModel ? `${bikeMake} ${bikeModel}` : "—"}
-          description={
-            busiestBike
-              ? `${formatNumber(bikeOdo)} km in ${year}`
-              : "Keine Fahrten in diesem Jahr"
-          }
+          value={bikeLabel}
+          description={bikeDesc}
           accent={busiestBike ? "primary" : undefined}
         />
       </div>
