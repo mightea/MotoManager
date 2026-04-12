@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.4.4](https://github.com/mightea/MotoManager/compare/2026.4.3...2026.4.4) (2026-04-12)
+
+### Bug Fixes
+
+* ensure all image paths use the public backend URL ([731d192](https://github.com/mightea/MotoManager/commit/731d19270cd8027cd417bb510691a4988c1853fd))
+* implement authenticated document downloads ([6a112a0](https://github.com/mightea/MotoManager/commit/6a112a0364a7a59a2e8e7818c4a36955e9539014))
+
 ## [2026.4.3](https://github.com/mightea/MotoManager/compare/2026.4.2...2026.4.3) (2026-04-12)
 
 ### Bug Fixes
