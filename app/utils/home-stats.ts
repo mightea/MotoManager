@@ -26,7 +26,7 @@ export type DashboardStats = {
   totalActiveIssues: number;
   totalMaintenanceCostThisYear: number;
   veteranCount: number;
-  topRider: null | {
+  busiestBike: null | {
     id: number;
     make: string;
     model: string;

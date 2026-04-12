@@ -13,7 +13,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   const totalActiveIssues = stats?.totalActiveIssues ?? 0;
   const totalMaintenanceCostThisYear = stats?.totalMaintenanceCostThisYear ?? 0;
   const veteranCount = stats?.veteranCount ?? 0;
-  const topRider = stats?.topRider;
+  const busiestBike = stats?.busiestBike;
 
   return (
     <div className="space-y-4">
@@ -51,13 +51,13 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         />
         <StatCard
           label="Fleissigstes Bike"
-          value={topRider ? `${topRider.make} ${topRider.model}` : "—"}
+          value={busiestBike ? `${busiestBike.make} ${busiestBike.model}` : "—"}
           description={
-            topRider
-              ? `${formatNumber(topRider.odometerThisYear)} km in ${year}`
+            busiestBike
+              ? `${formatNumber(busiestBike.odometerThisYear)} km in ${year}`
               : "Keine Fahrten in diesem Jahr"
           }
-          accent={topRider ? "primary" : undefined}
+          accent={busiestBike ? "primary" : undefined}
         />
       </div>
     </div>
