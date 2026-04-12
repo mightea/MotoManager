@@ -38,7 +38,10 @@ export function DocumentCard({
 
   const handleOpen = useCallback(() => {
     const token = getSessionToken();
-    const url = new URL(`/data/documents/${document.filePath.split("/").pop()}`, window.location.origin);
+    const backendUrl = getBackendAssetUrl(document.filePath);
+    if (!backendUrl) return;
+
+    const url = new URL(backendUrl);
     if (token) {
       url.searchParams.set("token", token);
     }

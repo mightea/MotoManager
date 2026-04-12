@@ -244,5 +244,7 @@ export function getBackendAssetUrl(path: string | null | undefined): string | nu
   
   const baseUrl = getPublicBackendUrl();
   const normalizedPath = (path.startsWith("/") ? path : `/${path}`).replace(/^\/data/, "");
-  return `${baseUrl}${normalizedPath}`;
+  
+  // Consistency: use /api prefix for all backend communication
+  return `${baseUrl}/api${normalizedPath}`;
 }
