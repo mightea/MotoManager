@@ -2,8 +2,9 @@
  * Returns true if user registration is enabled.
  */
 export function isRegistrationEnabled(): boolean {
-  // Use shimmed process.env from vite.config.ts
-  const flag = typeof process !== "undefined" ? process.env.ENABLE_REGISTRATION : undefined;
+  // Check runtime ENV first, then baked-in process.env
+  const flag = (typeof window !== "undefined" && (window as any).ENV?.ENABLE_REGISTRATION) ?? 
+               (typeof process !== "undefined" ? process.env.ENABLE_REGISTRATION : undefined);
 
   if (flag === undefined || flag === null) {
     return true;
@@ -22,7 +23,9 @@ export function isRegistrationEnabled(): boolean {
  * Returns the application version.
  */
 export function getVersion(): string {
-  return (typeof process !== "undefined" ? process.env.APP_VERSION : null) ?? "0.0.0";
+  return (typeof window !== "undefined" && (window as any).ENV?.APP_VERSION) ??
+         (typeof process !== "undefined" ? process.env.APP_VERSION : null) ?? 
+         "0.0.0";
 }
 
 /**
@@ -30,5 +33,10 @@ export function getVersion(): string {
  * Defaults to http://localhost:3001 if not set.
  */
 export function getBackendUrl(): string {
-  return (typeof process !== "undefined" ? process.env.BACKEND_URL : null) ?? "http://localhost:3001";
+  const url = (typeof window !== "undefined" && (window as any).ENV?.BACKEND_URL) ??
+              (typeof process !== "undefined" ? process.env.BACKEND_URL : null) ?? 
+              "http://localhost:3001";
+  
+  // Strip trailing slash if present
+  return url.endsWith("/") ? url.slice(0, -1) : url;
 }

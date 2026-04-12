@@ -22,11 +22,21 @@ import clsx from "clsx";
 
 import "./app.css";
 
-export async function clientLoader() {
+export async function loader() {
+  return {
+    ENV: {
+      BACKEND_URL: process.env.BACKEND_URL || "http://localhost:3001",
+      ENABLE_REGISTRATION: process.env.ENABLE_REGISTRATION,
+      APP_VERSION: process.env.APP_VERSION,
+    },
+  };
+}
+
+export async function clientLoader({ serverLoaderData }: any) {
   const theme = getTheme();
   const { user } = await getCurrentSession();
   const changelog = user ? await getNewChangelog() : null;
-  return { theme, changelog };
+  return { ...serverLoaderData, theme, changelog };
 }
 
 export function HydrateFallback() {
@@ -38,7 +48,7 @@ export function HydrateFallback() {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<typeof clientLoader>();
+  const data = useLoaderData<any>();
   const theme = data?.theme || Theme.LIGHT;
 
   return (
@@ -53,6 +63,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+        {data?.ENV && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+            }}
+          />
+        )}
       </head>
       <body className="bg-background font-sans antialiased text-foreground dark:bg-navy-950 dark:text-gray-50">
         {children}
