@@ -19,9 +19,10 @@
 
 ## Tools and Libraries
 
-- Use tailwindcss for styling.
+- Use tailwindcss 4 for styling.
 - Use pnpm for package management.
-- Use drizzle-orm for database interactions.
+- Use Dexie.js for client-side persistence and offline support.
+- API interactions are handled via a server-side proxy to a Rust backend.
 - Use oxlint for linting.
 - Use React Compiler for automatic memoization.
 

@@ -1,13 +1,13 @@
 # MotoManager
 
-MotoManager keeps track of your motorcycle fleet: maintenance logs, storage locations, running issues, odometer history, and torque specifications. The app is built with React Router 7, TypeScript, and Tailwind CSS 4, and persists data in SQLite via Drizzle ORM.
+MotoManager keeps track of your motorcycle fleet: maintenance logs, storage locations, running issues, odometer history, and torque specifications. The app features a modern **React Router 7** frontend and communicates with a high-performance **Rust** backend.
 
 ## Highlights
 
 - 🔐 **Passkey (WebAuthn) Support:** Secure, biometric-ready login with FaceID, TouchID, or security keys.
 - 🏍️ **Fleet Management:** Detailed motorcycle profiles with maintenance history, open issues, and storage tracking.
 - 🖨️ **Professional Print View:** High-contrast, clean layouts for torque specifications—perfect for the garage.
-- 🛠️ **Drizzle-backed CRUD:** Robust data handling for issues, maintenance, and location records.
+- 📶 **Offline First:** Robust offline support via **IndexedDB (Dexie)** ensuring your data is always accessible.
 - 📊 **Dynamic Dashboards:** Fleet-wide statistics, annual mileage, and condition summaries.
 - 🎨 **Modern UI:** Tailwind CSS 4 powered interface with a professional "Motorsport" theme and carbon-fiber accents.
 - ✅ **TypeScript-first:** Type-safe codebase with Vitest + Testing Library support.
@@ -16,16 +16,17 @@ MotoManager keeps track of your motorcycle fleet: maintenance logs, storage loca
 
 | Layer        | Choice                               |
 | ------------ | ------------------------------------- |
-| UI / Routing | React 19, React Router 7              |
+| Frontend     | React 19, React Router 7 (SSR)        |
+| Backend      | Rust (Rocket/Axum based API)          |
 | Security     | WebAuthn (SimpleWebAuthn), Passkeys   |
 | Styling      | Tailwind CSS 4 with custom UI kit     |
-| Data         | SQLite + Drizzle ORM                  |
+| Offline      | IndexedDB + Dexie.js                  |
 | Tooling      | Vite 6, pnpm, TypeScript 5.9          |
 | Testing      | Vitest, Playwright, Testing Library   |
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22+
 - pnpm 10+
 
 ```bash
@@ -40,9 +41,11 @@ corepack enable pnpm
    ```
 
 2. **Environment Configuration:**
-   For Passkey support to function correctly, ensure the following are set (defaults to localhost for development):
-   - `RP_ID`: Relying Party ID (e.g., `localhost` or `app.yourdomain.com`)
-   - `ORIGIN`: The full origin URL (e.g., `http://localhost:5173`)
+   Create a `.env` file or set environment variables:
+   - `BACKEND_URL`: The public URL of your Rust backend (e.g., `https://api.yourdomain.com`).
+   - `INTERNAL_BACKEND_URL`: (Optional) Internal Docker network URL for server-to-server proxying (e.g., `http://backend:3001`).
+   - `RP_ID`: Relying Party ID for Passkeys (e.g., `app.yourdomain.com`).
+   - `ORIGIN`: The full origin URL (e.g., `https://app.yourdomain.com`).
 
 3. **Start the dev server:**
    ```bash
@@ -58,25 +61,6 @@ MotoManager supports standard password-based authentication and modern **Passkey
 - **Registration:** Log in with your password and navigate to **Settings** to register your current device.
 - **Login:** Use the "Passkey-Login" button on the login screen for biometric authentication.
 - **Management:** View and delete registered authenticators directly from your account settings.
-
-## Database
-
-MotoManager ships with a versioned SQLite database (`db.sqlite`).
-
-- Apply migrations locally:
-  ```bash
-  pnpm db:migrate
-  ```
-
-- Generate new migrations:
-  ```bash
-  pnpm drizzle-kit generate
-  ```
-
-- Explore the database via Drizzle Studio:
-  ```bash
-  pnpm studio
-  ```
 
 ## Common Commands
 
@@ -95,10 +79,9 @@ MotoManager ships with a versioned SQLite database (`db.sqlite`).
 ```
 app/
   components/       # Reusable UI building blocks
-  db/               # Drizzle schema, migrations, and db client
   routes/           # Route modules with loaders/actions/screens
-  services/         # Server-side business logic (Auth, WebAuthn, Images)
-  utils/            # Shared helpers (dates, formatting, numbers, ...)
+  services/         # Client-side API services
+  utils/            # Shared helpers (offline sync, formatting, ...)
   types/            # Global TypeScript definitions
 public/             # Static assets served as-is
 tests/              # Vitest & Playwright setup
@@ -106,12 +89,14 @@ tests/              # Vitest & Playwright setup
 
 ## Deployment
 
+MotoManager is container-ready. Use the provided `Dockerfile` to build your image:
+
 1. Build the production bundle:
    ```bash
    pnpm build
    ```
 
-2. Deploy the generated `build/` folder plus `package.json`, `pnpm-lock.yaml`, and `db.sqlite`. The bundled app runs on any platform that supports Node.js.
+2. The application runs as a Node.js server (SSR). Ensure `BACKEND_URL` is set in your production environment so the server-side proxy can reach the API.
 
 ---
 
