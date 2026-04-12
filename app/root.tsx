@@ -33,6 +33,9 @@ export async function loader() {
 }
 
 export async function clientLoader({ serverLoaderData }: any) {
+  if (typeof window !== "undefined" && serverLoaderData?.ENV) {
+    (window as any).ENV = serverLoaderData.ENV;
+  }
   const theme = getTheme();
   const { user } = await getCurrentSession();
   const changelog = user ? await getNewChangelog() : null;

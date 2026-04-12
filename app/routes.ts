@@ -7,7 +7,7 @@ import {
 export default [
   route("/auth/login", "routes/auth.login.tsx"),
   route("/auth/logout", "routes/auth.logout.tsx"),
-  route("/api/auth/passkey/:action", "routes/api.auth.passkey.$action.ts"),
+  route("/api/*", "routes/api.proxy.ts"),
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/.well-known.appspecific.com.chrome.devtools.json.ts"),
   route("/data/images/:filename", "routes/images.$filename.ts"),
   route("/data/documents/:filename", "routes/data.documents.$filename.ts"),
