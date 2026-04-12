@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.4.5](https://github.com/mightea/MotoManager/compare/2026.4.4...2026.4.5) (2026-04-12)
+
+### Bug Fixes
+
+* ensure environment variables are truly dynamic at runtime ([056f492](https://github.com/mightea/MotoManager/commit/056f492f0796f0f1d49f225467595ad70b68a2c3))
+
 ## [2026.4.4](https://github.com/mightea/MotoManager/compare/2026.4.3...2026.4.4) (2026-04-12)
 
 ### Bug Fixes
