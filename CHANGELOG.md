@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.4.3](https://github.com/mightea/MotoManager/compare/2026.4.2...2026.4.3) (2026-04-12)
+
+### Bug Fixes
+
+* enhance proxy stability and support internal docker networking ([7c927f0](https://github.com/mightea/MotoManager/commit/7c927f061826bf3286348af3e2ac152236485437))
+
 ## [2026.4.2](https://github.com/mightea/MotoManager/compare/2026.4.1...2026.4.2) (2026-04-12)
 
 ### Bug Fixes
