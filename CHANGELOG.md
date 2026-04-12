@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.4.2](https://github.com/mightea/MotoManager/compare/2026.4.1...2026.4.2) (2026-04-12)
+
+### Bug Fixes
+
+* implement robust server-side proxying for all API calls to avoid production CORS issues ([68ca9d2](https://github.com/mightea/MotoManager/commit/68ca9d2b47eb29822ecbfd8ed23139545d8f4da2))
+
 ## [2026.4.1](https://github.com/mightea/MotoManager/compare/2026.4.0...2026.4.1) (2026-04-12)
 
 ### Bug Fixes
