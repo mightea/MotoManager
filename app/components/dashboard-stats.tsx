@@ -15,6 +15,11 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   const veteranCount = stats?.veteranCount ?? 0;
   const busiestBike = stats?.busiestBike;
 
+  // Defensive access for make/model which might be capitalized from Rust backend
+  const bikeMake = busiestBike ? (busiestBike.make || (busiestBike as any).Make) : null;
+  const bikeModel = busiestBike ? (busiestBike.model || (busiestBike as any).Model) : null;
+  const bikeOdo = busiestBike ? (busiestBike.odometerThisYear || (busiestBike as any).odometer_this_year || (busiestBike as any).OdometerThisYear) : 0;
+
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold text-foreground dark:text-white">
@@ -51,10 +56,10 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         />
         <StatCard
           label="Fleissigstes Bike"
-          value={busiestBike ? `${busiestBike.make} ${busiestBike.model}` : "—"}
+          value={bikeMake && bikeModel ? `${bikeMake} ${bikeModel}` : "—"}
           description={
             busiestBike
-              ? `${formatNumber(busiestBike.odometerThisYear)} km in ${year}`
+              ? `${formatNumber(bikeOdo)} km in ${year}`
               : "Keine Fahrten in diesem Jahr"
           }
           accent={busiestBike ? "primary" : undefined}
