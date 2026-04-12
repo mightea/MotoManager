@@ -30,6 +30,10 @@ export function meta() {
   ];
 }
 
+export async function loader() {
+  return {};
+}
+
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const url = new URL(request.url);
   const redirectTo = url.searchParams.get("redirectTo") ?? "/";

@@ -4,6 +4,10 @@ import {
   destroySessionFromRequest,
 } from "~/services/auth";
 
+export async function loader() {
+  return redirect("/auth/login");
+}
+
 export async function clientAction({ request }: Route.ClientActionArgs) {
   if (request.method.toUpperCase() !== "POST") {
     throw new Response("Method Not Allowed", { status: 405 });

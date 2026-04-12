@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API requests strategy: Network-First, then fallback to cache
+  // 1. API requests strategy: Network-First, then fallback to cache
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
@@ -60,7 +60,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets strategy: Stale-While-Revalidate
+  // 2. Navigation requests: Network-First, then fallback to cached shell (/)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => {
+        return caches.match('/');
+      })
+    );
+    return;
+  }
+
+  // 3. Static assets strategy: Stale-While-Revalidate
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       const fetchPromise = fetch(request).then((networkResponse) => {
