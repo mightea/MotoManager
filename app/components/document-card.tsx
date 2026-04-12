@@ -1,7 +1,9 @@
+import { useCallback } from "react";
 import clsx from "clsx";
 import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucide-react";
 import { getBackendAssetUrl } from "~/utils/backend";
 import { useIsOffline } from "~/utils/offline";
+import { getSessionToken } from "~/services/auth";
 
 export type DocumentSummary = {
   id: number;
@@ -32,15 +34,22 @@ export function DocumentCard({
 }: DocumentCardProps) {
   const isOffline = useIsOffline();
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
-  const fileUrl = getBackendAssetUrl(document.filePath) ?? "#";
   const previewUrl = getBackendAssetUrl(document.previewPath);
+
+  const handleOpen = useCallback(() => {
+    const token = getSessionToken();
+    const url = new URL(`/data/documents/${document.filePath.split("/").pop()}`, window.location.origin);
+    if (token) {
+      url.searchParams.set("token", token);
+    }
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  }, [document.filePath]);
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-navy-700 dark:bg-navy-800">
-      <a
-        href={fileUrl}
-        target="_blank"
-        rel="noreferrer"
+      <button
+        type="button"
+        onClick={handleOpen}
         className="relative block h-44 w-full overflow-hidden bg-gray-50 transition-transform duration-200 hover:scale-[1.01] dark:bg-navy-900"
         aria-label={`Dokument ${document.title} öffnen`}
       >
@@ -91,7 +100,7 @@ export function DocumentCard({
             )}
           </span>
         </div>
-      </a>
+      </button>
 
       <div className="flex flex-1 flex-col p-3">
         <h3 className="line-clamp-1 text-base font-semibold text-foreground dark:text-white" title={document.title}>
