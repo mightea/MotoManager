@@ -94,47 +94,27 @@ export function Header({ user }: { user: PublicUser | null }) {
     };
   }, [isMotorcycleDetail]);
 
-  // CSS variable for desktop detail header offset
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const root = document.documentElement;
-
-    if (isMotorcycleDetail && window.innerWidth >= 768) {
-      root.style.setProperty("--app-header-offset", isHidden ? "0px" : "96px");
-    } else {
-      root.style.removeProperty("--app-header-offset");
-    }
-
-    return () => { root.style.removeProperty("--app-header-offset"); };
-  }, [isMotorcycleDetail, isHidden]);
-
   return (
     <div
       className={clsx(
-        "z-40 flex justify-center pointer-events-none print:hidden",
-        // On mobile motorcycle detail: non-fixed, scrolls with page naturally
-        isMotorcycleDetail
-          ? "relative md:fixed md:top-4 md:px-4 md:left-0 md:right-0 transition-transform duration-300 ease-out"
-          : "fixed top-0 md:top-4 left-0 right-0 md:px-4 transition-transform duration-300 ease-out",
-        // Hide transform only on desktop motorcycle detail
-        isMotorcycleDetail && isHidden && "md:-translate-y-full"
+        "z-40 w-full sticky top-0 print:hidden",
+        isOffline 
+          ? "border-b border-orange-500 bg-orange-50/90 backdrop-blur-md dark:border-orange-500/50 dark:bg-orange-950/20" 
+          : "border-b border-gray-200 bg-white/90 backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90",
+        // Scroll-based hide on desktop motorcycle detail
+        isMotorcycleDetail && isHidden && "md:-translate-y-full transition-transform duration-300 ease-out"
       )}
     >
-      <header className={clsx(
-        "relative w-full max-w-7xl rounded-b-2xl border shadow-xl backdrop-blur-md pointer-events-auto transition-all duration-500",
-        isOffline 
-          ? "border-orange-500 bg-orange-50/90 shadow-orange-500/10 dark:border-orange-500/50 dark:bg-orange-950/20" 
-          : "border-gray-200 bg-white/90 dark:border-navy-700 dark:bg-navy-800/90"
-      )}>
+      <header className="mx-auto w-full max-w-7xl relative">
         {/* Motorsport Stripe Accent / Offline Status Stripe */}
         <div className={clsx(
-          "absolute left-0 right-0 top-0 h-2.5 transition-all duration-500",
+          "absolute left-0 right-0 top-0 h-1.5 transition-all duration-500",
           isOffline
             ? "bg-orange-500"
             : "bg-gradient-to-r from-[#008AC9] via-[#2B115A] to-[#F11A22]"
         )} />
 
-        <div className="flex items-center justify-between p-3 pt-5">
+        <div className="flex items-center justify-between p-3 pt-4">
           {/* Logo Section */}
           <div className="flex items-center gap-3 pl-2">
             <Link to="/" className="group flex items-center gap-3" onClick={() => setIsMobileMenuOpen(false)}>

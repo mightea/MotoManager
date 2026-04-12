@@ -72,12 +72,11 @@ export function MotorcycleDetailHeader({
       ref={headerRef}
       className={clsx(
         "sticky z-30 -mx-4 px-4 transition-all duration-300 md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
-        isCompact ? "py-2" : "py-4",
+        isCompact ? "py-2 top-16" : "py-4 top-20",
         hasHeroImage
           ? "text-white"
           : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
       )}
-      style={{ top: "var(--app-header-offset, 0px)" }}
     >
       {hasHeroImage && (
         <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
