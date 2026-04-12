@@ -8,17 +8,24 @@ interface DashboardStatsProps {
 
 export function DashboardStats({ stats }: DashboardStatsProps) {
   const year = stats?.year ?? new Date().getFullYear();
-  const totalKmThisYear = stats?.totalKmThisYear ?? 0;
-  const totalKmOverall = stats?.totalKmOverall ?? 0;
-  const totalActiveIssues = stats?.totalActiveIssues ?? 0;
-  const totalMaintenanceCostThisYear = stats?.totalMaintenanceCostThisYear ?? 0;
-  const veteranCount = stats?.veteranCount ?? 0;
-  const busiestBike = stats?.busiestBike;
+  const totalKmThisYear = stats?.totalKmThisYear ?? (stats as any)?.total_km_this_year ?? 0;
+  const totalKmOverall = stats?.totalKmOverall ?? (stats as any)?.total_km_overall ?? 0;
+  const totalActiveIssues = stats?.totalActiveIssues ?? (stats as any)?.total_active_issues ?? 0;
+  const totalMaintenanceCostThisYear = stats?.totalMaintenanceCostThisYear ?? (stats as any)?.total_maintenance_cost_this_year ?? 0;
+  const veteranCount = stats?.veteranCount ?? (stats as any)?.veteran_count ?? 0;
+  
+  // Support both camelCase and snake_case for the busiest bike field
+  const busiestBike = stats?.busiestBike ?? (stats as any)?.busiest_bike;
 
-  // Defensive access for make/model which might be capitalized from Rust backend
+  // Defensive access for properties which might be camelCase, snake_case or PascalCase
   const bikeMake = busiestBike ? (busiestBike.make || (busiestBike as any).Make) : null;
   const bikeModel = busiestBike ? (busiestBike.model || (busiestBike as any).Model) : null;
-  const bikeOdo = busiestBike ? (busiestBike.odometerThisYear || (busiestBike as any).odometer_this_year || (busiestBike as any).OdometerThisYear) : 0;
+  const bikeOdo = busiestBike ? (
+    busiestBike.odometerThisYear ?? 
+    (busiestBike as any).odometer_this_year ?? 
+    (busiestBike as any).OdometerThisYear ?? 
+    0
+  ) : 0;
 
   return (
     <div className="space-y-4">
