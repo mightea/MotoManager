@@ -29,6 +29,25 @@ export function getVersion(): string {
 }
 
 /**
+ * Returns the public backend URL for browser access.
+ */
+export function getPublicBackendUrl(): string {
+  // 1. Check runtime browser ENV
+  if (typeof window !== "undefined" && (window as any).ENV?.BACKEND_URL) {
+    const url = (window as any).ENV.BACKEND_URL;
+    return url.endsWith("/") ? url.slice(0, -1) : url;
+  }
+
+  // 2. Check server-side process.env (use public BACKEND_URL)
+  if (typeof process !== "undefined" && process.env.BACKEND_URL) {
+    const url = process.env.BACKEND_URL;
+    return url.endsWith("/") ? url.slice(0, -1) : url;
+  }
+
+  return "http://localhost:3001";
+}
+
+/**
  * Returns the backend URL from the environment.
  * Defaults to http://localhost:3001 if not set.
  */

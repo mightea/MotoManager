@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
-import { getBackendUrl } from "~/config";
+import { getBackendUrl, getPublicBackendUrl } from "~/config";
 import { db, saveToCache, syncCache } from "./db.client";
 import { getIsOffline } from "./offline";
 
@@ -242,7 +242,7 @@ export function getBackendAssetUrl(path: string | null | undefined): string | nu
   if (typeof path !== "string" || path.trim() === "") return null;
   if (path.startsWith("http")) return path;
   
-  const baseUrl = getBackendUrl();
+  const baseUrl = getPublicBackendUrl();
   const normalizedPath = (path.startsWith("/") ? path : `/${path}`).replace(/^\/data/, "");
   return `${baseUrl}${normalizedPath}`;
 }

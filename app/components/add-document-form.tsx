@@ -7,6 +7,7 @@ import { Switch } from "@headlessui/react";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { useIsOffline } from "~/utils/offline";
+import { getBackendAssetUrl } from "~/utils/backend";
 
 interface AddDocumentFormProps {
   document?: Pick<Document, "id" | "title" | "isPrivate" | "previewPath" | "filePath" | "ownerId">;
@@ -143,7 +144,7 @@ export function AddDocumentForm({
                 <div className="flex p-4 gap-4 items-center">
                     <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-navy-900 border border-gray-100 dark:border-navy-600">
                         {document.previewPath ? (
-                            <img src={document.previewPath} alt="Preview" className="h-full w-full object-cover" />
+                            <img src={getBackendAssetUrl(document.previewPath) ?? ""} alt="Preview" className="h-full w-full object-cover" />
                         ) : (
                             <div className="flex h-full w-full items-center justify-center">
                                 <FileText className="h-8 w-8 text-gray-400" />

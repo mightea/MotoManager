@@ -9,6 +9,7 @@ import { useIsOffline } from "~/utils/offline";
 import { Fuel } from "lucide-react";
 import { Button } from "./button";
 import { FormField } from "./form-field";
+import { getBackendAssetUrl } from "~/utils/backend";
 import clsx from "clsx";
 
 interface AddMotorcycleFormProps {
@@ -127,7 +128,7 @@ export function AddMotorcycleForm({
               {initialValues?.image && !croppedImageUrl && (
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-navy-700">
                   <img
-                    src={`${initialValues.image}?width=200`}
+                    src={`${getBackendAssetUrl(initialValues.image)}?width=200`}
                     alt="Current"
                     className="h-full w-full object-cover"
                   />
