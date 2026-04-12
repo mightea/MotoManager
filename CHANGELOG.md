@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.4.1](https://github.com/mightea/MotoManager/compare/2026.4.0...2026.4.1) (2026-04-12)
+
+### Bug Fixes
+
+* enable absolute backend URLs and runtime environment injection ([c42cebd](https://github.com/mightea/MotoManager/commit/c42cebd32aedbc760b9a550976a68334e16755f6))
+
 ## [2026.4.0](https://github.com/mightea/MotoManager/compare/2026.3.1...2026.4.0) (2026-04-11)
 
 ### Features
