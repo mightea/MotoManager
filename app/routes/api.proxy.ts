@@ -21,7 +21,7 @@ async function handleProxyRequest({ request, params }: LoaderFunctionArgs | Acti
   try {
     const targetUrlObj = new URL(targetUrl);
     headers.set("Host", targetUrlObj.host);
-  } catch (e) {
+  } catch {
     // Ignore invalid URL errors here, fetch will catch them
   }
 
