@@ -119,6 +119,12 @@ export interface MaintenanceRecord {
   parentId: number | null;
 }
 
+export interface MaintenanceLocation {
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
 export type NewMaintenanceRecord = Omit<MaintenanceRecord, "id"> & {
   bundledItems?: string[];
 };

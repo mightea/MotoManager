@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Form } from "react-router";
 import clsx from "clsx";
-import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting } from "~/types/db";
+import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting, MaintenanceLocation } from "~/types/db";
 import {
     Wrench,
     Battery,
@@ -15,7 +15,9 @@ import {
     ClipboardList,
     MapPin,
     Fuel,
-    Map
+    Map,
+    Plus,
+    X as XIcon
 } from "lucide-react";
 import { MapPicker } from "./map-picker";
 import { MapView } from "./map-view";
@@ -26,6 +28,7 @@ interface MaintenanceFormProps {
     currencyCode?: string | null;
     defaultOdo?: number | null;
     userLocations?: Location[];
+    maintenanceLocations?: MaintenanceLocation[];
     locationNames?: string[];
     currencies?: CurrencySetting[];
     onSubmit: () => void;
@@ -57,6 +60,7 @@ export function MaintenanceForm({
     currencyCode, 
     defaultOdo, 
     userLocations, 
+    maintenanceLocations = [],
     locationNames = [], 
     currencies = [], 
     onSubmit, 
@@ -66,6 +70,15 @@ export function MaintenanceForm({
 }: MaintenanceFormProps) {
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
     const [isNewLocation, setIsNewLocation] = useState(false);
+    
+    // Check if current location name exists in existing maintenance locations
+    const initialLocationExists = useMemo(() => {
+        if (!initialData?.locationName) return false;
+        return maintenanceLocations.some(l => l.name === initialData.locationName);
+    }, [initialData?.locationName, maintenanceLocations]);
+
+    const [isNewMaintenanceLocation, setIsNewMaintenanceLocation] = useState(!initialData || !initialLocationExists);
+    
     const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
     const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
     const [isLocating, setIsLocating] = useState(false);
@@ -130,23 +143,71 @@ export function MaintenanceForm({
 
     const LocationFields = () => (
         <>
-            <div className="space-y-1.5">
-                <label htmlFor="locationName" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Name / Ort (z.B. Garage, Shell)</label>
-                <input
-                    type="text"
-                    name="locationName"
-                    id="locationName"
-                    list="location-names"
-                    placeholder="Name des Standorts..."
-                    defaultValue={initialData?.locationName || ""}
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                />
-                <datalist id="location-names">
-                    {locationNames.map(name => (
-                        <option key={name} value={name} />
-                    ))}
-                </datalist>
+            <div className="space-y-1.5 sm:col-span-2">
+                <label htmlFor="locationName" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                    Betrieb / Ort (z.B. Garage, Shell)
+                </label>
+                <div className="flex gap-2">
+                    {!isNewMaintenanceLocation && maintenanceLocations.length > 0 ? (
+                        <div className="flex-1 flex gap-2">
+                            <select
+                                name="locationName"
+                                id="locationName"
+                                defaultValue={initialData?.locationName || ""}
+                                onChange={(e) => {
+                                    const loc = maintenanceLocations.find(l => l.name === e.target.value);
+                                    if (loc) {
+                                        setLat(loc.latitude);
+                                        setLng(loc.longitude);
+                                    }
+                                }}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            >
+                                <option value="" disabled>Wähle einen Betrieb...</option>
+                                {maintenanceLocations.map(loc => (
+                                    <option key={loc.name} value={loc.name}>{loc.name}</option>
+                                ))}
+                            </select>
+                            <button
+                                type="button"
+                                onClick={() => setIsNewMaintenanceLocation(true)}
+                                className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-secondary hover:bg-gray-50 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-800"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Neu
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex gap-2">
+                            <input
+                                type="text"
+                                name="locationName"
+                                id="locationName"
+                                list="location-names"
+                                placeholder="Name des Standorts..."
+                                defaultValue={isNewMaintenanceLocation ? "" : (initialData?.locationName || "")}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            />
+                            <datalist id="location-names">
+                                {locationNames.map(name => (
+                                    <option key={name} value={name} />
+                                ))}
+                            </datalist>
+                            {maintenanceLocations.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsNewMaintenanceLocation(false)}
+                                    className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-secondary hover:bg-gray-100 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-700"
+                                >
+                                    <XIcon className="h-4 w-4" />
+                                    Abbrechen
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
+            
             <div className="space-y-1.5 sm:col-span-2">
                 <span className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Koordinaten (optional)</span>
                 <div className="flex flex-wrap gap-2">
@@ -182,7 +243,7 @@ export function MaintenanceForm({
                     <MapView 
                         latitude={lat} 
                         longitude={lng} 
-                        title={initialData?.locationName || "Vorschau Standort"} 
+                        title="Vorschau Standort" 
                     />
                 </div>
             )}

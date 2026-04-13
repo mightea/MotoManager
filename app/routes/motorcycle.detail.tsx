@@ -64,6 +64,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const motorcycle = response?.motorcycle;
   const issues = Array.isArray(response?.issues) ? response.issues : [];
   const maintenanceRecords = Array.isArray(response?.maintenanceRecords) ? response.maintenanceRecords : [];
+  const maintenanceLocations = Array.isArray(response?.maintenanceLocations) ? response.maintenanceLocations : [];
   const previousOwners = Array.isArray(response?.previousOwners) ? response.previousOwners : [];
 
   if (!motorcycle) {
@@ -146,34 +147,31 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     lastInspection,
     isVeteran: motorcycle.isVeteran ?? false,
   });
-
-  return data(
-    {
-      motorcycle,
-      openIssues,
-      maintenanceHistory,
-      previousOwnersList,
-      ownerCount,
-      nextInspection,
-      lastKnownOdo,
-      insights,
-      userLocations,
-      currentLocationName,
-      currencies,
-      ownershipLabel,
-      kmDriven,
-      avgKmPerYear,
-      yearsOwned,
-      avgFuelConsumption,
-      avgTripDistance,
-      estimatedRange,
-      fuelStationNames,
-      formattedPurchaseDate,
-      formattedFirstRegistration,
-      hasPurchaseDate,
-      user,
-    }
-  );
+  return data({
+    motorcycle,
+    openIssues,
+    maintenanceHistory,
+    maintenanceLocations,
+    previousOwnersList,
+    ownerCount,
+    nextInspection,
+    lastKnownOdo,
+    insights,
+    userLocations,
+    currentLocationName,
+    currencies,
+    ownershipLabel,
+    kmDriven,
+    avgKmPerYear,
+    yearsOwned,
+    avgFuelConsumption,
+    avgTripDistance,
+    estimatedRange,
+    fuelStationNames,
+    formattedPurchaseDate,
+    formattedFirstRegistration,
+    hasPurchaseDate
+  });
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -527,6 +525,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     motorcycle,
     openIssues,
     maintenanceHistory,
+    maintenanceLocations,
     previousOwnersList,
     ownerCount,
     nextInspection,
@@ -722,6 +721,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setDeleteMaintenanceConfirmationOpen(true);
         }}
         userLocations={userLocations}
+        maintenanceLocations={maintenanceLocations}
         locationNames={fuelStationNames}
         currencies={currencies}
       />

@@ -1,6 +1,6 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm } from "~/components/maintenance-form";
-import type { MaintenanceRecord, Location, CurrencySetting } from "~/types/db";
+import type { MaintenanceRecord, Location, CurrencySetting, MaintenanceLocation } from "~/types/db";
 
 interface MaintenanceDialogProps {
   isOpen: boolean;
@@ -11,12 +11,13 @@ interface MaintenanceDialogProps {
   currencyCode?: string | null;
   defaultOdo?: number | null;
   userLocations?: Location[];
+  maintenanceLocations?: MaintenanceLocation[];
   locationNames?: string[];
   currencies?: CurrencySetting[];
   onDelete?: () => void;
 }
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = [], currencyCode, defaultOdo, userLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = [], currencyCode, defaultOdo, userLocations, maintenanceLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
   const existingBundledItems = initialData 
     ? allRecords
         .filter(r => r.parentId === initialData.id)
@@ -37,6 +38,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         currencyCode={currencyCode}
         defaultOdo={defaultOdo}
         userLocations={userLocations}
+        maintenanceLocations={maintenanceLocations}
         locationNames={locationNames}
         currencies={currencies}
         onSubmit={onClose}
