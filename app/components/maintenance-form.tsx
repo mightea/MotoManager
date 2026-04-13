@@ -247,8 +247,8 @@ export function MaintenanceForm({
                     />
                 </div>
 
-                {/* Generic Brand/Model - Show for almost all types except fuel and location */}
-                {(!["fuel", "location"].includes(type)) && (
+                {/* Brand/Model - Show for technical types and service */}
+                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor", "service"].includes(type)) && (
                     <>
                         <div className="space-y-1.5">
                             <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
@@ -275,7 +275,7 @@ export function MaintenanceForm({
                     </>
                 )}
 
-                {["service", "repair", "general"].includes(type) && (
+                {type === "service" && (
                     <div className="space-y-3 sm:col-span-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300 block">
                             Zusätzliche Arbeiten (werden als separate Einträge erfasst)

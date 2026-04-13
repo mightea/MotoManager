@@ -343,18 +343,23 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       <div className="overflow-hidden">
                         <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
                           {group.originalRecords.map((record) => {
+                            const isService = record.type === "service";
+                            const isTechnical = ["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(record.type);
+
                             const metadataItems = [
                               { label: "Beschreibung", value: record.description, icon: Info },
-                              { label: "Marke", value: record.brand, icon: Tag },
-                              { label: "Modell", value: record.model, icon: Hash },
+                              
+                              // Brand/Model - Show for technical types or service
+                              { label: "Marke", value: (isService || isTechnical) ? record.brand : null, icon: Tag },
+                              { label: "Modell", value: (isService || isTechnical) ? record.model : null, icon: Hash },
 
-                              // Tire fields - show if any tire field has a value
-                              { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null, icon: MapPin },
-                              { label: "Grösse", value: record.tireSize, icon: Maximize2 },
+                              // Tire fields - show if it's a tire record
+                              { label: "Position", value: record.type === "tire" ? (record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null) : null, icon: MapPin },
+                              { label: "Grösse", value: record.type === "tire" ? record.tireSize : null, icon: Maximize2 },
                               { 
                                 label: "DOT / Alter", 
                                 icon: Calendar,
-                                value: (() => {
+                                value: record.type === "tire" ? (() => {
                                   if (!record.dotCode) return null;
                                   const dotMatch = record.dotCode.match(/(\d{2})(\d{2})$/);
                                   const formattedDot = dotMatch ? `${dotMatch[1]}/${dotMatch[2]}` : record.dotCode;
@@ -362,30 +367,30 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                   if (!dotDate) return formattedDot;
                                   const ageInYears = (new Date().getTime() - dotDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
                                   return `${formattedDot} (${ageInYears.toFixed(1)} Jahre)`;
-                                })()
+                                })() : null
                               },
 
                               // Fluid fields
-                              { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType as FluidType] || record.fluidType : null, icon: Droplet },
-                              { label: "Viskosität", value: record.viscosity, icon: Wrench },
-                              { label: "Öl-Typ", value: record.oilType ? (record.oilType === "synthetic" ? "Synthetisch" : record.oilType === "semi-synthetic" ? "Teilsynthetisch" : "Mineralisch") : null, icon: Activity },
+                              { label: "Art", value: record.type === "fluid" ? (record.fluidType ? fluidTypeLabels[record.fluidType as FluidType] || record.fluidType : null) : null, icon: Droplet },
+                              { label: "Viskosität", value: (record.type === "fluid" || isService) ? record.viscosity : null, icon: Wrench },
+                              { label: "Öl-Typ", value: record.type === "fluid" ? (record.oilType ? (record.oilType === "synthetic" ? "Synthetisch" : record.oilType === "semi-synthetic" ? "Teilsynthetisch" : "Mineralisch") : null) : null, icon: Activity },
 
                               // Battery fields
-                              { label: "Batterietyp", value: record.batteryType ? batteryTypeLabels[record.batteryType as BatteryType] || record.batteryType : null, icon: Battery },
+                              { label: "Batterietyp", value: record.type === "battery" ? (record.batteryType ? batteryTypeLabels[record.batteryType as BatteryType] || record.batteryType : null) : null, icon: Battery },
 
                               // Inspection fields
-                              { label: "Prüfstelle", value: record.inspectionLocation, icon: MapPin },
+                              { label: "Prüfstelle", value: record.type === "inspection" ? record.inspectionLocation : null, icon: MapPin },
 
                               // Location fields
-                              { label: "Standort", value: record.locationId ? userLocations?.find(l => l.id === record.locationId)?.name : null, icon: MapPin },
+                              { label: "Standort", value: record.type === "location" ? (record.locationId ? userLocations?.find(l => l.id === record.locationId)?.name : null) : null, icon: MapPin },
 
                               // Fuel fields
-                              { label: "Kraftstoffart", value: record.fuelType ? fuelTypeLabels[record.fuelType] || record.fuelType : null, icon: Droplet },
-                              { label: "Menge", value: record.fuelAmount ? `${record.fuelAmount} L` : null, icon: Maximize2 },
-                              { label: "Verbrauch", value: record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null, icon: Activity },
-                              { label: "Trip", value: record.tripDistance ? `${record.tripDistance} km` : null, icon: Hash },
-                              { label: "Preis/Liter", value: record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null, icon: Coins },
-                              { label: "Tankstelle", value: record.locationName, icon: MapPin },
+                              { label: "Kraftstoffart", value: record.type === "fuel" ? (record.fuelType ? fuelTypeLabels[record.fuelType] || record.fuelType : null) : null, icon: Droplet },
+                              { label: "Menge", value: record.type === "fuel" ? (record.fuelAmount ? `${record.fuelAmount} L` : null) : null, icon: Maximize2 },
+                              { label: "Verbrauch", value: record.type === "fuel" ? (record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null) : null, icon: Activity },
+                              { label: "Trip", value: record.type === "fuel" ? (record.tripDistance ? `${record.tripDistance} km` : null) : null, icon: Hash },
+                              { label: "Preis/Liter", value: record.type === "fuel" ? (record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null) : null, icon: Coins },
+                              { label: "Tankstelle", value: record.type === "fuel" ? record.locationName : null, icon: MapPin },
 
                               { 
                                 label: "Kosten", 
