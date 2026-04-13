@@ -1,5 +1,29 @@
 # Changelog
 
+## [2026.4.6](https://github.com/mightea/MotoManager/compare/2026.4.5...2026.4.6) (2026-04-13)
+
+### Features
+
+* add dealership location and coordinates to service maintenance items ([54f075a](https://github.com/mightea/MotoManager/commit/54f075af2335c777d11753ba01135cfcee77bcc2))
+* display app version in login footer ([f60157d](https://github.com/mightea/MotoManager/commit/f60157df3d9d6001b05fb38d2148dd354e8ebd06))
+* implement selectable service locations from previous records ([5768514](https://github.com/mightea/MotoManager/commit/5768514a89525c6f753c34083c95ec57c1f9d3c9))
+* improve maintenance form and list to show optional fields and bundled items during edit ([e9e6ad3](https://github.com/mightea/MotoManager/commit/e9e6ad353f65e93f0e8f44190309308ea9c15ae0))
+* improve maintenance location management and service detail view ([4e85a0c](https://github.com/mightea/MotoManager/commit/4e85a0c1ceb573bc645118afcc1b29ba40ee14d0))
+* remove make and model fields from service items and cleanup dialog props ([fbc6b56](https://github.com/mightea/MotoManager/commit/fbc6b5605af2de35ab242556f727ce642929a4fc))
+* restrict optional fields to service type in maintenance form and list ([9c7298f](https://github.com/mightea/MotoManager/commit/9c7298f4841ff44622d778ff427d5112a6de7704))
+* use busiestBike field for home page stats card ([86f6250](https://github.com/mightea/MotoManager/commit/86f6250a41291932e288e35d79008c75a7518065))
+* use direct backend URLs for document downloads and ensure consistency ([9324a0e](https://github.com/mightea/MotoManager/commit/9324a0e92d3069bf6d50b7ffeca9227dc84d6a44))
+
+### Bug Fixes
+
+* ensure login/logout routes handle server-side requests and reloads ([3645436](https://github.com/mightea/MotoManager/commit/36454368992f32b72f7188ab3d864d26e2487ae4))
+* ensure maintenance location dropdown shows by default when locations exist ([d1eaf62](https://github.com/mightea/MotoManager/commit/d1eaf621d6a94259a2b78150b19b0e4e0c55e4de))
+* handle busiestBike as string in dashboard stats ([17a954a](https://github.com/mightea/MotoManager/commit/17a954ab85de14727e38b41d52fae47b49534ae2))
+* handle capitalized property names for busiest bike stats ([ea80309](https://github.com/mightea/MotoManager/commit/ea80309702d16e826c2a5821b28cd00bd1a13af1))
+* remove incorrect api prefix from backend asset urls ([c9143c5](https://github.com/mightea/MotoManager/commit/c9143c516c8fa6ca0d6b939239dbfce7b23123f3))
+* resolve 404 on login reload by fixing greedy proxy and synchronizing loaders ([bd3a31c](https://github.com/mightea/MotoManager/commit/bd3a31c26a8dc99089fad0ceb7a4e947ae9ec0e3))
+* support snake_case property names from backend in dashboard stats ([2611fe4](https://github.com/mightea/MotoManager/commit/2611fe4ab0440b1865ed08c7898d8572515ba001))
+
 ## [2026.4.5](https://github.com/mightea/MotoManager/compare/2026.4.4...2026.4.5) (2026-04-12)
 
 ### Bug Fixes
