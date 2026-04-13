@@ -30,11 +30,11 @@ import { parseDotCode } from "~/utils/maintenance-intervals";
 import { 
   maintenanceTypeLabels, 
   fluidTypeLabels, 
-  tirePositionLabels, 
+  tirePositionLabels,
   batteryTypeLabels,
-  fuelTypeLabels,
   summarizeMaintenanceRecord 
-} from "~/utils/maintenance";
+  } from "~/utils/maintenance";
+
 import { MapView } from "./map-view";
 
 interface MaintenanceListProps {
@@ -383,14 +383,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
 
                               // Location fields
                               { label: "Standort", value: record.type === "location" ? (record.locationId ? userLocations?.find(l => l.id === record.locationId)?.name : null) : null, icon: MapPin },
-
-                              // Fuel fields
-                              { label: "Kraftstoffart", value: record.type === "fuel" ? (record.fuelType ? fuelTypeLabels[record.fuelType] || record.fuelType : null) : null, icon: Droplet },
+                              { label: "Betrieb / Ort", value: (record.type === "fuel" || isService) ? record.locationName : null, icon: MapPin },
                               { label: "Menge", value: record.type === "fuel" ? (record.fuelAmount ? `${record.fuelAmount} L` : null) : null, icon: Maximize2 },
                               { label: "Verbrauch", value: record.type === "fuel" ? (record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null) : null, icon: Activity },
                               { label: "Trip", value: record.type === "fuel" ? (record.tripDistance ? `${record.tripDistance} km` : null) : null, icon: Hash },
                               { label: "Preis/Liter", value: record.type === "fuel" ? (record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null) : null, icon: Coins },
-                              { label: "Tankstelle", value: record.type === "fuel" ? record.locationName : null, icon: MapPin },
 
                               { 
                                 label: "Kosten", 

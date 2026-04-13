@@ -128,6 +128,67 @@ export function MaintenanceForm({
 
     const today = new Date().toISOString().split('T')[0];
 
+    const LocationFields = () => (
+        <>
+            <div className="space-y-1.5">
+                <label htmlFor="locationName" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Name / Ort (z.B. Garage, Shell)</label>
+                <input
+                    type="text"
+                    name="locationName"
+                    id="locationName"
+                    list="location-names"
+                    placeholder="Name des Standorts..."
+                    defaultValue={initialData?.locationName || ""}
+                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                />
+                <datalist id="location-names">
+                    {locationNames.map(name => (
+                        <option key={name} value={name} />
+                    ))}
+                </datalist>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+                <span className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Koordinaten (optional)</span>
+                <div className="flex flex-wrap gap-2">
+                    <div className="flex-1 min-w-[200px] rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm text-secondary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-400">
+                        {lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : "Kein genauer Standort erfasst"}
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={handleGetLocation}
+                            disabled={isLocating}
+                            className="flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-secondary-dark disabled:opacity-50"
+                        >
+                            <MapPin className="h-4 w-4" />
+                            {isLocating ? "Ortet..." : "Ort abrufen"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsMapPickerOpen(true)}
+                            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-primary-dark"
+                        >
+                            <Map className="h-4 w-4" />
+                            Auf Karte wählen
+                        </button>
+                    </div>
+                </div>
+                <input type="hidden" name="latitude" value={lat || ""} />
+                <input type="hidden" name="longitude" value={lng || ""} />
+            </div>
+
+            {lat && lng && (
+                <div className="sm:col-span-2">
+                    <MapView 
+                        latitude={lat} 
+                        longitude={lng} 
+                        title={initialData?.locationName || "Vorschau Standort"} 
+                    />
+                </div>
+            )}
+        </>
+    );
+
     return (
         <>
         <Form method="post" className="space-y-6" onSubmit={onSubmit}>
@@ -276,51 +337,54 @@ export function MaintenanceForm({
                 )}
 
                 {type === "service" && (
-                    <div className="space-y-3 sm:col-span-2">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300 block">
-                            Ausgeführte Arbeiten (werden als separate Einträge erfasst)
-                        </span>
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                            {[
-                                { value: "engineoil", label: "Motoröl" },
-                                { value: "gearboxoil", label: "Getriebeöl" },
-                                { value: "finaldriveoil", label: "Kardanöl" },
-                                { value: "forkoil", label: "Gabelöl" },
-                                { value: "brakefluid", label: "Bremsflüssigkeit" },
-                                { value: "coolant", label: "Kühlflüssigkeit" },
-                                { value: "chain", label: "Kette reinigen/fetten" },
-                            ].map((opt) => (
-                                <label
-                                    key={opt.value}
-                                    className={clsx(
-                                        "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all",
-                                        bundledItems.includes(opt.value)
-                                            ? "border-primary bg-primary/5 dark:border-primary-light/50 dark:bg-primary-light/5"
-                                            : "border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-navy-600 dark:bg-navy-900 dark:hover:bg-navy-800"
-                                    )}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={bundledItems.includes(opt.value)}
-                                        onChange={(e) => {
-                                            if (e.target.checked) {
-                                                setBundledItems([...bundledItems, opt.value]);
-                                            } else {
-                                                setBundledItems(bundledItems.filter((i) => i !== opt.value));
-                                            }
-                                        }}
-                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-700 dark:ring-offset-navy-900"
-                                    />
-                                    <span className="text-xs font-semibold text-foreground dark:text-gray-200">
-                                        {opt.label}
-                                    </span>
-                                </label>
+                    <>
+                        <div className="space-y-3 sm:col-span-2">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300 block">
+                                Ausgeführte Arbeiten (werden als separate Einträge erfasst)
+                            </span>
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {[
+                                    { value: "engineoil", label: "Motoröl" },
+                                    { value: "gearboxoil", label: "Getriebeöl" },
+                                    { value: "finaldriveoil", label: "Kardanöl" },
+                                    { value: "forkoil", label: "Gabelöl" },
+                                    { value: "brakefluid", label: "Bremsflüssigkeit" },
+                                    { value: "coolant", label: "Kühlflüssigkeit" },
+                                    { value: "chain", label: "Kette reinigen/fetten" },
+                                ].map((opt) => (
+                                    <label
+                                        key={opt.value}
+                                        className={clsx(
+                                            "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all",
+                                            bundledItems.includes(opt.value)
+                                                ? "border-primary bg-primary/5 dark:border-primary-light/50 dark:bg-primary-light/5"
+                                                : "border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-navy-600 dark:bg-navy-900 dark:hover:bg-navy-800"
+                                        )}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={bundledItems.includes(opt.value)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setBundledItems([...bundledItems, opt.value]);
+                                                } else {
+                                                    setBundledItems(bundledItems.filter((i) => i !== opt.value));
+                                                }
+                                            }}
+                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-700 dark:ring-offset-navy-900"
+                                        />
+                                        <span className="text-xs font-semibold text-foreground dark:text-gray-200">
+                                            {opt.label}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                            {bundledItems.map((item) => (
+                                <input key={item} type="hidden" name="bundledItems[]" value={item} />
                             ))}
                         </div>
-                        {bundledItems.map((item) => (
-                            <input key={item} type="hidden" name="bundledItems[]" value={item} />
-                        ))}
-                    </div>
+                        <LocationFields />
+                    </>
                 )}
 
                 {/* Conditional Fields based on Type */}
@@ -539,62 +603,7 @@ export function MaintenanceForm({
                                 className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <label htmlFor="locationName" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Tankstelle / Ort</label>
-                            <input
-                                type="text"
-                                name="locationName"
-                                id="locationName"
-                                list="location-names"
-                                placeholder="z.B. Shell Zürich"
-                                defaultValue={initialData?.locationName || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                            />
-                            <datalist id="location-names">
-                                {locationNames.map(name => (
-                                    <option key={name} value={name} />
-                                ))}
-                            </datalist>
-                        </div>
-                        <div className="space-y-1.5 sm:col-span-2">
-                            <span className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Koordinaten</span>
-                            <div className="flex flex-wrap gap-2">
-                                <div className="flex-1 min-w-[200px] rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm text-secondary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-400">
-                                    {lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : "Kein Standort erfasst"}
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={handleGetLocation}
-                                        disabled={isLocating}
-                                        className="flex items-center gap-2 rounded-xl bg-secondary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-secondary-dark disabled:opacity-50"
-                                    >
-                                        <MapPin className="h-4 w-4" />
-                                        {isLocating ? "Ortet..." : "Ort abrufen"}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsMapPickerOpen(true)}
-                                        className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-all hover:bg-primary-dark"
-                                    >
-                                        <Map className="h-4 w-4" />
-                                        Auf Karte wählen
-                                    </button>
-                                </div>
-                            </div>
-                            <input type="hidden" name="latitude" value={lat || ""} />
-                            <input type="hidden" name="longitude" value={lng || ""} />
-                        </div>
-
-                        {lat && lng && (
-                            <div className="sm:col-span-2">
-                                <MapView 
-                                    latitude={lat} 
-                                    longitude={lng} 
-                                    title="Vorschau Standort" 
-                                />
-                            </div>
-                        )}
+                        <LocationFields />
                     </>
                 )}
             </div>
