@@ -58,7 +58,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
     "babel-plugin-react-compiler": "^1.0.0",
-    "jsdom": "^28.1.0",
+    "jsdom": "^29.0.2",
     "oxlint": "^1.59.0",
     "release-it": "^19.2.4",
     "typescript": "^5.9.3",
