@@ -7,16 +7,23 @@ interface MaintenanceDialogProps {
   onClose: () => void;
   motorcycleId: number;
   initialData?: MaintenanceRecord | null;
+  allRecords?: MaintenanceRecord[];
   currencyCode?: string | null;
   defaultOdo?: number | null;
   userLocations?: Location[];
   locationNames?: string[];
   currencies?: CurrencySetting[];
   onDelete?: () => void;
-  existingBundledItems?: string[];
 }
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, currencyCode, defaultOdo, userLocations, locationNames, currencies, onDelete, existingBundledItems }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = [], currencyCode, defaultOdo, userLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
+  const existingBundledItems = initialData 
+    ? allRecords
+        .filter(r => r.parentId === initialData.id)
+        .map(r => r.type === "fluid" ? r.fluidType || "" : r.type)
+        .filter(Boolean)
+    : [];
+
   return (
     <Modal
       isOpen={isOpen}
