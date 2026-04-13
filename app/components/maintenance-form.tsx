@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Form } from "react-router";
 import clsx from "clsx";
 import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting, MaintenanceLocation } from "~/types/db";
@@ -15,9 +15,7 @@ import {
     ClipboardList,
     MapPin,
     Fuel,
-    Map,
-    Plus,
-    X as XIcon
+    Map
 } from "lucide-react";
 import { MapPicker } from "./map-picker";
 import { MapView } from "./map-view";
@@ -71,13 +69,7 @@ export function MaintenanceForm({
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
     const [isNewLocation, setIsNewLocation] = useState(false);
     
-    // Check if current location name exists in existing maintenance locations
-    const initialLocationExists = useMemo(() => {
-        if (!initialData?.locationName) return false;
-        return maintenanceLocations.some(l => l.name === initialData.locationName);
-    }, [initialData?.locationName, maintenanceLocations]);
-
-    const [isNewMaintenanceLocation, setIsNewMaintenanceLocation] = useState(!initialData || !initialLocationExists);
+    const [isNewMaintenanceLocation, setIsNewMaintenanceLocation] = useState(false);
     
     const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
     const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
@@ -171,9 +163,8 @@ export function MaintenanceForm({
                             <button
                                 type="button"
                                 onClick={() => setIsNewMaintenanceLocation(true)}
-                                className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-secondary hover:bg-gray-50 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-800"
+                                className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
                             >
-                                <Plus className="h-4 w-4" />
                                 Neu
                             </button>
                         </div>
@@ -185,7 +176,7 @@ export function MaintenanceForm({
                                 id="locationName"
                                 list="location-names"
                                 placeholder="Name des Standorts..."
-                                defaultValue={isNewMaintenanceLocation ? "" : (initialData?.locationName || "")}
+                                defaultValue={initialData?.locationName || ""}
                                 className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                             <datalist id="location-names">
@@ -197,9 +188,8 @@ export function MaintenanceForm({
                                 <button
                                     type="button"
                                     onClick={() => setIsNewMaintenanceLocation(false)}
-                                    className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-secondary hover:bg-gray-100 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-700"
+                                    className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
                                 >
-                                    <XIcon className="h-4 w-4" />
                                     Abbrechen
                                 </button>
                             )}
