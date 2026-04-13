@@ -22,6 +22,7 @@ interface MotorcycleInfoCardProps {
   avgFuelConsumption?: number | null;
   avgTripDistance?: number | null;
   estimatedRange?: number | null;
+  totalLifetimeCost?: number;
 }
 
 /**
@@ -45,6 +46,7 @@ export function MotorcycleInfoCard({
   avgFuelConsumption,
   avgTripDistance,
   estimatedRange,
+  totalLifetimeCost,
 }: MotorcycleInfoCardProps) {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
 
@@ -196,6 +198,13 @@ export function MotorcycleInfoCard({
               label="Ø km / Jahr"
               value={hasPurchaseDate && yearsOwned > 0.1 ? `${formatNumber(Math.round(avgKmPerYear))} km` : null}
             />
+            {totalLifetimeCost !== undefined && (
+              <StatisticEntry
+                icon={DollarSign}
+                label="Gesamtkosten Lebensdauer"
+                value={formatCurrency(totalLifetimeCost, motorcycle.currencyCode || "CHF")}
+              />
+            )}
           </div>
 
           {/* Previous Owners Group */}

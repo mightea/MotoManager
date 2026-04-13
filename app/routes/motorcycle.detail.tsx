@@ -7,6 +7,7 @@ import {
   useSubmit,
   useLocation,
   useParams,
+  Link,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { 
@@ -31,6 +32,7 @@ import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { motorcycleSchema, previousOwnerSchema } from "~/validations";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { getCurrencies } from "~/services/settings";
+import { formatCurrency } from "~/utils/numberUtils";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
@@ -147,11 +149,30 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     lastInspection,
     isVeteran: motorcycle.isVeteran ?? false,
   });
+
+  // Get shared expenses
+  const { listExpenses } = await import("~/services/expenses");
+  const allExpenses = await listExpenses(token);
+  const motorcycleExpenses = allExpenses.filter(e => e.motorcycleIds?.includes(motorcycleId));
+
+  // Calculate total costs
+  const maintenanceCost = maintenanceHistory.reduce((sum: number, r: any) => sum + (r.normalizedCost || 0), 0);
+  const purchasePrice = motorcycle.normalizedPurchasePrice || 0;
+  const sharedExpensesCost = motorcycleExpenses.reduce((sum: number, e: any) => {
+    const factor = e.motorcycleIds?.length || 1;
+    const currency = currencies.find((c: any) => c.code === e.currency);
+    const normalizedAmount = e.amount * (currency?.conversionFactor || 1);
+    return sum + (normalizedAmount / factor);
+  }, 0);
+  const totalLifetimeCost = purchasePrice + maintenanceCost + sharedExpensesCost;
+
   return data({
     motorcycle,
     openIssues,
     maintenanceHistory,
     maintenanceLocations,
+    motorcycleExpenses,
+    totalLifetimeCost,
     previousOwnersList,
     ownerCount,
     nextInspection,
@@ -526,6 +547,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     openIssues,
     maintenanceHistory,
     maintenanceLocations,
+    motorcycleExpenses,
+    totalLifetimeCost,
     previousOwnersList,
     ownerCount,
     nextInspection,
@@ -624,6 +647,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             avgFuelConsumption={avgFuelConsumption}
             avgTripDistance={avgTripDistance}
             estimatedRange={estimatedRange}
+            totalLifetimeCost={totalLifetimeCost}
             onEdit={() => setEditMotorcycleDialogOpen(true)}
             previousOwnersList={previousOwnersList}
             onAddPreviousOwner={() => {
@@ -671,6 +695,46 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               }}
             />
           </div>
+
+          {/* Shared Expenses Card */}
+          {motorcycleExpenses.length > 0 && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
+                <h2 className="text-sm font-semibold text-foreground dark:text-white">Gemeinsame Ausgaben</h2>
+                <Link
+                  to="/fleet-expenses"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-semibold text-secondary transition-all hover:bg-gray-200 active:scale-[0.98] dark:bg-navy-700 dark:text-navy-300 dark:hover:bg-navy-600"
+                >
+                  Verwalten
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {motorcycleExpenses.map(expense => {
+                  const factor = expense.motorcycleIds?.length || 1;
+                  const proratedAmount = expense.amount / factor;
+                  return (
+                    <div key={expense.id} className="flex items-center justify-between gap-4 rounded-lg border border-gray-50 bg-gray-50/30 p-3 dark:border-navy-700/50 dark:bg-navy-900/30">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-foreground dark:text-white">{expense.category}</span>
+                          <span className="text-[10px] text-secondary/50 dark:text-navy-500">{new Date(expense.date).toLocaleDateString("de-CH")}</span>
+                        </div>
+                        {expense.description && <p className="text-[10px] text-secondary dark:text-navy-400 mt-0.5 line-clamp-1">{expense.description}</p>}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-bold text-foreground dark:text-white">{formatCurrency(proratedAmount, expense.currency)}</div>
+                        {factor > 1 && (
+                          <div className="text-[10px] text-secondary/50 dark:text-navy-500">
+                            (1/{factor} von {formatCurrency(expense.amount, expense.currency)})
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

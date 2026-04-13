@@ -34,6 +34,7 @@ export function Header({ user }: { user: PublicUser | null }) {
   const navItems = [
     { label: "Übersicht", href: "/" },
     { label: "Dokumente", href: "/documents" },
+    { label: "Ausgaben", href: "/fleet-expenses", disabled: isOffline },
     { label: "Statistiken", href: "/fleet-stats", disabled: isOffline },
   ];
 

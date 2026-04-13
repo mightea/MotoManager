@@ -13,6 +13,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   const totalActiveIssues = stats?.totalActiveIssues ?? (stats as any)?.total_active_issues ?? 0;
   const totalMaintenanceCostThisYear = stats?.totalMaintenanceCostThisYear ?? (stats as any)?.total_maintenance_cost_this_year ?? 0;
   const veteranCount = stats?.veteranCount ?? (stats as any)?.veteran_count ?? 0;
+  const totalMotorcycles = stats?.totalMotorcycles ?? (stats as any)?.total_motorcycles ?? 0;
   
   // Support both camelCase and snake_case for the busiest bike field
   const busiestBike = stats?.busiestBike ?? (stats as any)?.busiest_bike;
@@ -32,6 +33,8 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
     bikeLabel = bikeMake && bikeModel ? `${bikeMake} ${bikeModel}` : "—";
     bikeDesc = `${formatNumber(bikeOdo)} km in ${year}`;
   }
+
+  const costPerBike = totalMotorcycles > 0 ? totalMaintenanceCostThisYear / totalMotorcycles : 0;
 
   return (
     <div className="space-y-4">
@@ -60,7 +63,9 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         <StatCard
           label={`Kosten ${year}`}
           value={formatCurrency(totalMaintenanceCostThisYear)}
-          description="Erfasste Wartungskosten"
+          description={totalMotorcycles > 0 
+            ? `Ø ${formatCurrency(costPerBike)} pro Bike in ${year}` 
+            : "Erfasste Wartungskosten"}
         />
         <StatCard
           label="Veteranen-Bikes"

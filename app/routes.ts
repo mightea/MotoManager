@@ -15,6 +15,7 @@ export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
     route("fleet-stats", "routes/fleet-stats.tsx"),
+    route("fleet-expenses", "routes/fleet-expenses.tsx"),
     route("documents", "routes/documents.tsx"),
     route("settings", "routes/settings.tsx"),
     route("settings/admin", "routes/settings.admin.tsx"),

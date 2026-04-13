@@ -282,3 +282,19 @@ export interface Challenge {
 }
 
 export type NewChallenge = Omit<Challenge, "createdAt">;
+
+export interface Expense {
+  id: number;
+  userId: number;
+  date: string;
+  amount: number;
+  currency: string;
+  category: string;
+  description: string | null;
+  intervalMonths: number | null;
+  createdAt: string;
+  updatedAt: string;
+  motorcycleIds?: number[];
+}
+
+export type NewExpense = Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">;

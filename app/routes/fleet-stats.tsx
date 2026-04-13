@@ -188,6 +188,11 @@ export default function FleetStatsPage() {
           <div className="text-3xl font-bold text-foreground dark:text-white tabular-nums">
             {formatCurrency(stats.overall.totalCost)}
           </div>
+          {stats.yearly[0]?.motorcycleCount > 0 && (
+            <div className="mt-1 text-xs text-secondary dark:text-navy-400 font-medium">
+              Ø {formatCurrency(stats.overall.totalCost / stats.yearly[0].motorcycleCount)} pro Motorrad
+            </div>
+          )}
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
           <div className="flex items-center gap-3 text-amber-500 mb-2">
