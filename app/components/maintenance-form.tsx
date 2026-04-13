@@ -247,8 +247,8 @@ export function MaintenanceForm({
                     />
                 </div>
 
-                {/* Brand/Model - Show for technical types and service */}
-                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor", "service"].includes(type)) && (
+                {/* Brand/Model - Show for technical types */}
+                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
                     <>
                         <div className="space-y-1.5">
                             <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
@@ -322,7 +322,7 @@ export function MaintenanceForm({
                         ))}
                         {initialData && (
                             <p className="text-[10px] text-secondary dark:text-navy-400 italic">
-                                * Hinzu-gefügte Arbeiten werden als neue, verknüpfte Einträge erstellt. Bereits bestehende verknüpfte Einträge werden hier nicht angezeigt oder verändert.
+                                * Das Ändern dieser Optionen fügt neue verknüpfte Einträge hinzu oder entfernt bestehende.
                             </p>
                         )}
                     </div>

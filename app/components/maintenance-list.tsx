@@ -349,9 +349,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                             const metadataItems = [
                               { label: "Beschreibung", value: record.description, icon: Info },
                               
-                              // Brand/Model - Show for technical types or service
-                              { label: "Marke", value: (isService || isTechnical) ? record.brand : null, icon: Tag },
-                              { label: "Modell", value: (isService || isTechnical) ? record.model : null, icon: Hash },
+                              // Brand/Model - Show for technical types only
+                              { label: "Marke", value: isTechnical ? record.brand : null, icon: Tag },
+                              { label: "Modell", value: isTechnical ? record.model : null, icon: Hash },
 
                               // Tire fields - show if it's a tire record
                               { label: "Position", value: record.type === "tire" ? (record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null) : null, icon: MapPin },

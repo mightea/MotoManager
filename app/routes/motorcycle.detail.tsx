@@ -17,8 +17,7 @@ import {
   type FluidType, 
   type NewIssue, 
   type Issue, 
-  type NewPreviousOwner,
-  type MaintenanceRecord
+  type NewPreviousOwner
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
 import { Plus } from "lucide-react";
@@ -715,6 +714,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         onClose={() => setMaintenanceDialogOpen(false)}
         motorcycleId={motorcycle.id}
         initialData={selectedMaintenance}
+        allRecords={maintenanceHistory}
         currencyCode={motorcycle.currencyCode}
         defaultOdo={lastKnownOdo}
         onDelete={() => {
@@ -724,13 +724,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         userLocations={userLocations}
         locationNames={fuelStationNames}
         currencies={currencies}
-        existingBundledItems={
-          selectedMaintenance 
-            ? maintenanceHistory
-                .filter((r: MaintenanceRecord) => r.parentId === selectedMaintenance.id)
-                .map((r: MaintenanceRecord) => (r.fluidType || r.type) as string)
-            : []
-        }
       />
 
       <DeleteConfirmationDialog
