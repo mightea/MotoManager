@@ -116,9 +116,12 @@ export interface MaintenanceRecord {
   locationName: string | null;
   fuelConsumption: number | null;
   tripDistance: number | null;
+  parentId: number | null;
 }
 
-export type NewMaintenanceRecord = Omit<MaintenanceRecord, "id">;
+export type NewMaintenanceRecord = Omit<MaintenanceRecord, "id"> & {
+  bundledItems?: string[];
+};
 export type EditMaintenanceRecord = Partial<NewMaintenanceRecord>;
 
 export interface Issue {
