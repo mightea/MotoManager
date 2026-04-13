@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Form } from "react-router";
 import clsx from "clsx";
 import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting, MaintenanceLocation } from "~/types/db";
@@ -15,7 +15,9 @@ import {
     ClipboardList,
     MapPin,
     Fuel,
-    Map
+    Map,
+    Plus,
+    X as XIcon
 } from "lucide-react";
 import { MapPicker } from "./map-picker";
 import { MapView } from "./map-view";
@@ -69,7 +71,15 @@ export function MaintenanceForm({
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
     const [isNewLocation, setIsNewLocation] = useState(false);
     
-    const [isNewMaintenanceLocation, setIsNewMaintenanceLocation] = useState(false);
+    // Check if current location name exists in existing maintenance locations
+    const initialLocationExists = useMemo(() => {
+        if (!initialData?.locationName) return false;
+        return maintenanceLocations.some(l => l.name === initialData.locationName);
+    }, [initialData?.locationName, maintenanceLocations]);
+
+    const [isNewMaintenanceLocation, setIsNewMaintenanceLocation] = useState(
+        maintenanceLocations.length === 0 || (initialData?.locationName ? !initialLocationExists : false)
+    );
     
     const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
     const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
@@ -163,8 +173,9 @@ export function MaintenanceForm({
                             <button
                                 type="button"
                                 onClick={() => setIsNewMaintenanceLocation(true)}
-                                className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
+                                className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-secondary hover:bg-gray-50 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-800"
                             >
+                                <Plus className="h-4 w-4" />
                                 Neu
                             </button>
                         </div>
@@ -188,8 +199,9 @@ export function MaintenanceForm({
                                 <button
                                     type="button"
                                     onClick={() => setIsNewMaintenanceLocation(false)}
-                                    className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
+                                    className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-secondary hover:bg-gray-100 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-700"
                                 >
+                                    <XIcon className="h-4 w-4" />
                                     Abbrechen
                                 </button>
                             )}
