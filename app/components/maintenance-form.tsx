@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Form } from "react-router";
+import clsx from "clsx";
 import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting } from "~/types/db";
 import {
     Wrench,
@@ -30,6 +31,7 @@ interface MaintenanceFormProps {
     onSubmit: () => void;
     onCancel: () => void;
     onDelete?: () => void;
+    existingBundledItems?: string[];
 }
 
 const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] = [
@@ -49,13 +51,26 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
 
 
 
-export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defaultOdo, userLocations, locationNames = [], currencies = [], onSubmit, onCancel, onDelete }: MaintenanceFormProps) {
+export function MaintenanceForm({ 
+    motorcycleId, 
+    initialData, 
+    currencyCode, 
+    defaultOdo, 
+    userLocations, 
+    locationNames = [], 
+    currencies = [], 
+    onSubmit, 
+    onCancel, 
+    onDelete,
+    existingBundledItems = []
+}: MaintenanceFormProps) {
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
     const [isNewLocation, setIsNewLocation] = useState(false);
     const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
     const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
     const [isLocating, setIsLocating] = useState(false);
     const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
+    const [bundledItems, setBundledItems] = useState<string[]>(existingBundledItems);
 
     const [fuelAmount, setFuelAmount] = useState<string>(initialData?.fuelAmount?.toString() || "");
     const [pricePerUnit, setPricePerUnit] = useState<string>(initialData?.pricePerUnit?.toString() || "");
@@ -232,12 +247,93 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                     />
                 </div>
 
+                {/* Generic Brand/Model - Show for almost all types except fuel and location */}
+                {(!["fuel", "location"].includes(type)) && (
+                    <>
+                        <div className="space-y-1.5">
+                            <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
+                            <input
+                                type="text"
+                                name="brand"
+                                id="brand"
+                                placeholder={type === "tire" ? "z.B. Michelin" : "Hersteller..."}
+                                defaultValue={initialData?.brand || ""}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label htmlFor="model" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Modell / Typ</label>
+                            <input
+                                type="text"
+                                name="model"
+                                id="model"
+                                placeholder={type === "tire" ? "z.B. Road 6" : "Modellbezeichnung..."}
+                                defaultValue={initialData?.model || ""}
+                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            />
+                        </div>
+                    </>
+                )}
+
+                {["service", "repair", "general"].includes(type) && (
+                    <div className="space-y-3 sm:col-span-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300 block">
+                            Zusätzliche Arbeiten (werden als separate Einträge erfasst)
+                        </span>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {[
+                                { value: "engineoil", label: "Motoröl" },
+                                { value: "gearboxoil", label: "Getriebeöl" },
+                                { value: "finaldriveoil", label: "Kardanöl" },
+                                { value: "forkoil", label: "Gabelöl" },
+                                { value: "brakefluid", label: "Bremsflüssigkeit" },
+                                { value: "coolant", label: "Kühlflüssigkeit" },
+                                { value: "chain", label: "Kette reinigen/fetten" },
+                            ].map((opt) => (
+                                <label
+                                    key={opt.value}
+                                    className={clsx(
+                                        "flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all",
+                                        bundledItems.includes(opt.value)
+                                            ? "border-primary bg-primary/5 dark:border-primary-light/50 dark:bg-primary-light/5"
+                                            : "border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-navy-600 dark:bg-navy-900 dark:hover:bg-navy-800"
+                                    )}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={bundledItems.includes(opt.value)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setBundledItems([...bundledItems, opt.value]);
+                                            } else {
+                                                setBundledItems(bundledItems.filter((i) => i !== opt.value));
+                                            }
+                                        }}
+                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-700 dark:ring-offset-navy-900"
+                                    />
+                                    <span className="text-xs font-semibold text-foreground dark:text-gray-200">
+                                        {opt.label}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                        {bundledItems.map((item) => (
+                            <input key={item} type="hidden" name="bundledItems[]" value={item} />
+                        ))}
+                        {initialData && (
+                            <p className="text-[10px] text-secondary dark:text-navy-400 italic">
+                                * Hinzu-gefügte Arbeiten werden als neue, verknüpfte Einträge erstellt. Bereits bestehende verknüpfte Einträge werden hier nicht angezeigt oder verändert.
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {/* Conditional Fields based on Type */}
 
                 {/* Location Specifics */}
                 {type === "location" && (
                     <div className="space-y-1.5 sm:col-span-2">
-                        <label htmlFor="location" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Standort</label>
+                        <label htmlFor="locationId" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Standort</label>
                         <div className="space-y-2">
                             {!isNewLocation && userLocations && userLocations.length > 0 ? (
                                 <div className="flex gap-2">
@@ -282,34 +378,6 @@ export function MaintenanceForm({ motorcycleId, initialData, currencyCode, defau
                             )}
                         </div>
                     </div>
-                )}
-
-                {/* Generic Brand/Model */}
-                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
-                    <>
-                        <div className="space-y-1.5">
-                            <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
-                            <input
-                                type="text"
-                                name="brand"
-                                id="brand"
-                                placeholder={type === "tire" ? "z.B. Michelin" : "Hersteller..."}
-                                defaultValue={initialData?.brand || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label htmlFor="model" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Modell / Typ</label>
-                            <input
-                                type="text"
-                                name="model"
-                                id="model"
-                                placeholder={type === "tire" ? "z.B. Road 6" : "Modellbezeichnung..."}
-                                defaultValue={initialData?.model || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                            />
-                        </div>
-                    </>
                 )}
 
                 {/* Tire Specifics */}

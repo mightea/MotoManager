@@ -23,7 +23,7 @@ import {
   CloudOff
 } from "lucide-react";
 import { useState } from "react";
-import type { MaintenanceRecord, MaintenanceType, Location, Pending } from "~/types/db";
+import type { MaintenanceRecord, MaintenanceType, Location, Pending, FluidType, BatteryType } from "~/types/db";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { parseDotCode } from "~/utils/maintenance-intervals";
@@ -75,30 +75,44 @@ const getIconForType = (type: MaintenanceType) => {
 
 function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: Location[]): GroupedMaintenanceRecord[] {
   const groups = new Map<string, GroupedMaintenanceRecord>();
+  const recordsById = new Map<number, MaintenanceRecord>(records.map(r => [r.id, r]));
 
   for (const record of records) {
-    const key = `${record.date}-${record.odo}-${record.type}`;
+    let effectiveRecord = record;
+    if (record.parentId) {
+      const parent = recordsById.get(record.parentId);
+      if (parent) {
+        effectiveRecord = parent;
+      }
+    }
+
+    const key = `${effectiveRecord.date}-${effectiveRecord.odo}-${effectiveRecord.type}`;
 
     if (!groups.has(key)) {
       groups.set(key, {
         id: key,
-        date: record.date,
-        odo: record.odo,
-        type: record.type,
+        date: effectiveRecord.date,
+        odo: effectiveRecord.odo,
+        type: effectiveRecord.type,
         count: 0,
         cost: 0,
-        currency: record.currency || null,
+        currency: effectiveRecord.currency || null,
         summaries: [],
         originalRecords: [],
       });
     }
 
     const group = groups.get(key)!;
-    group.count += 1;
-    group.cost += record.cost || 0;
-
-    if (!group.currency && record.currency) {
-      group.currency = record.currency;
+    
+    // Only count and add cost if it's not a child record (to avoid double counting)
+    // Or if it IS a child record, we might want to sum it up if it has its own cost?
+    // Usually bundled items have null cost.
+    if (!record.parentId) {
+      group.count += 1;
+      group.cost += record.cost || 0;
+      if (!group.currency && record.currency) {
+        group.currency = record.currency;
+      }
     }
 
     const summary = summarizeMaintenanceRecord(record, userLocations);
@@ -111,6 +125,15 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
 
     group.originalRecords.push(record);
   }
+
+  // Sort originalRecords within each group: parent first, then children
+  groups.forEach(group => {
+    group.originalRecords.sort((a, b) => {
+      if (!a.parentId && b.parentId) return -1;
+      if (a.parentId && !b.parentId) return 1;
+      return a.id - b.id;
+    });
+  });
 
   return Array.from(groups.values()).sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -325,63 +348,59 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                               { label: "Marke", value: record.brand, icon: Tag },
                               { label: "Modell", value: record.model, icon: Hash },
 
-                              // Type-specific fields
-                              ...(record.type === "tire" ? [
-                                { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null, icon: MapPin },
-                                { label: "Grösse", value: record.tireSize, icon: Maximize2 },
-                                { 
-                                  label: "DOT / Alter", 
-                                  icon: Calendar,
-                                  value: (() => {
-                                    if (!record.dotCode) return null;
-                                    
-                                    // Reformat DOT Code (e.g., 1223 -> 12/23)
-                                    const dotMatch = record.dotCode.match(/(\d{2})(\d{2})$/);
-                                    const formattedDot = dotMatch ? `${dotMatch[1]}/${dotMatch[2]}` : record.dotCode;
-                                    
-                                    const dotDate = parseDotCode(record.dotCode);
-                                    if (!dotDate) return formattedDot;
-                                    
-                                    const ageInYears = (new Date().getTime() - dotDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-                                    return `${formattedDot} (${ageInYears.toFixed(1)} Jahre)`;
-                                  })()
-                                },
-                              ] : []),
-                              ...(record.type === "fluid" ? [
-                                { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType] || record.fluidType : null, icon: Droplet },
-                                { label: "Viskosität", value: record.viscosity, icon: Wrench },
-                              ] : []),
-                              ...(record.type === "battery" ? [
-                                { label: "Batterietyp", value: record.batteryType ? batteryTypeLabels[record.batteryType] || record.batteryType : null, icon: Battery },
-                              ] : []),
-                              ...(record.type === "inspection" ? [
-                                { label: "Prüfstelle", value: record.inspectionLocation, icon: MapPin },
-                              ] : []),
-                                                    ...(record.type === "location" ? [
-                                                      { label: "Standort", value: userLocations?.find(l => l.id === record.locationId)?.name, icon: MapPin },
-                                                    ] : []),
-                                                    ...(record.type === "fuel" ? [
-                                                      { label: "Kraftstoffart", value: record.fuelType ? fuelTypeLabels[record.fuelType] || record.fuelType : null, icon: Droplet },
-                                                      { label: "Menge", value: record.fuelAmount ? `${record.fuelAmount} L` : null, icon: Maximize2 },                                { label: "Verbrauch", value: record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null, icon: Activity },
-                                { label: "Trip", value: record.tripDistance ? `${record.tripDistance} km` : null, icon: Hash },
-                                { label: "Preis/Liter", value: record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null, icon: Coins },
-                                { label: "Tankstelle", value: record.locationName, icon: MapPin },
-                              ] : []),
+                              // Tire fields - show if any tire field has a value
+                              { label: "Position", value: record.tirePosition ? tirePositionLabels[record.tirePosition] || record.tirePosition : null, icon: MapPin },
+                              { label: "Grösse", value: record.tireSize, icon: Maximize2 },
+                              { 
+                                label: "DOT / Alter", 
+                                icon: Calendar,
+                                value: (() => {
+                                  if (!record.dotCode) return null;
+                                  const dotMatch = record.dotCode.match(/(\d{2})(\d{2})$/);
+                                  const formattedDot = dotMatch ? `${dotMatch[1]}/${dotMatch[2]}` : record.dotCode;
+                                  const dotDate = parseDotCode(record.dotCode);
+                                  if (!dotDate) return formattedDot;
+                                  const ageInYears = (new Date().getTime() - dotDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+                                  return `${formattedDot} (${ageInYears.toFixed(1)} Jahre)`;
+                                })()
+                              },
+
+                              // Fluid fields
+                              { label: "Art", value: record.fluidType ? fluidTypeLabels[record.fluidType as FluidType] || record.fluidType : null, icon: Droplet },
+                              { label: "Viskosität", value: record.viscosity, icon: Wrench },
+                              { label: "Öl-Typ", value: record.oilType ? (record.oilType === "synthetic" ? "Synthetisch" : record.oilType === "semi-synthetic" ? "Teilsynthetisch" : "Mineralisch") : null, icon: Activity },
+
+                              // Battery fields
+                              { label: "Batterietyp", value: record.batteryType ? batteryTypeLabels[record.batteryType as BatteryType] || record.batteryType : null, icon: Battery },
+
+                              // Inspection fields
+                              { label: "Prüfstelle", value: record.inspectionLocation, icon: MapPin },
+
+                              // Location fields
+                              { label: "Standort", value: record.locationId ? userLocations?.find(l => l.id === record.locationId)?.name : null, icon: MapPin },
+
+                              // Fuel fields
+                              { label: "Kraftstoffart", value: record.fuelType ? fuelTypeLabels[record.fuelType] || record.fuelType : null, icon: Droplet },
+                              { label: "Menge", value: record.fuelAmount ? `${record.fuelAmount} L` : null, icon: Maximize2 },
+                              { label: "Verbrauch", value: record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null, icon: Activity },
+                              { label: "Trip", value: record.tripDistance ? `${record.tripDistance} km` : null, icon: Hash },
+                              { label: "Preis/Liter", value: record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null, icon: Coins },
+                              { label: "Tankstelle", value: record.locationName, icon: MapPin },
 
                               { 
-                        label: "Kosten", 
-                        value: record.cost && record.cost > 0 ? (
-                          record.currency && currencyCode && record.currency !== currencyCode ? (
-                            <span className="flex flex-col items-end">
-                              <span>{formatCurrency(record.cost, record.currency)}</span>
-                              {record.normalizedCost !== null && (
-                                <span className="text-[10px] text-secondary/70">({formatCurrency(record.normalizedCost, currencyCode)})</span>
-                              )}
-                            </span>
-                          ) : formatCurrency(record.cost, record.currency || currencyCode || "CHF")
-                        ) : null, 
-                        icon: Coins 
-                      },
+                                label: "Kosten", 
+                                value: record.cost && record.cost > 0 ? (
+                                  record.currency && currencyCode && record.currency !== currencyCode ? (
+                                    <span className="flex flex-col items-end">
+                                      <span>{formatCurrency(record.cost, record.currency)}</span>
+                                      {record.normalizedCost !== null && (
+                                        <span className="text-[10px] text-secondary/70">({formatCurrency(record.normalizedCost, currencyCode)})</span>
+                                      )}
+                                    </span>
+                                  ) : formatCurrency(record.cost, record.currency || currencyCode || "CHF")
+                                ) : null, 
+                                icon: Coins 
+                              },
                             ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 
                             return (

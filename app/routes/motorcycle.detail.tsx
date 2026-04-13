@@ -9,7 +9,17 @@ import {
   useParams,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
-import { type NewMaintenanceRecord, type MaintenanceType, type TirePosition, type BatteryType, type FluidType, type NewIssue, type Issue, type NewPreviousOwner } from "~/types/db";
+import { 
+  type NewMaintenanceRecord, 
+  type MaintenanceType, 
+  type TirePosition, 
+  type BatteryType, 
+  type FluidType, 
+  type NewIssue, 
+  type Issue, 
+  type NewPreviousOwner,
+  type MaintenanceRecord
+} from "~/types/db";
 import { requireUser } from "~/services/auth";
 import { Plus } from "lucide-react";
 import OpenIssuesCard from "~/components/open-issues-card";
@@ -383,6 +393,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       longitude: parseNumber(formData.get("longitude")),
       locationName: parseString(formData.get("locationName")),
       normalizedCost: (parseNumber(formData.get("cost")) || 0) * getCurrencyFactor(parseString(formData.get("currency"))),
+      bundledItems: formData.getAll("bundledItems[]") as string[],
     };
 
     if (intent === "createMaintenance") {
@@ -713,6 +724,13 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         userLocations={userLocations}
         locationNames={fuelStationNames}
         currencies={currencies}
+        existingBundledItems={
+          selectedMaintenance 
+            ? maintenanceHistory
+                .filter((r: MaintenanceRecord) => r.parentId === selectedMaintenance.id)
+                .map((r: MaintenanceRecord) => (r.fluidType || r.type) as string)
+            : []
+        }
       />
 
       <DeleteConfirmationDialog
