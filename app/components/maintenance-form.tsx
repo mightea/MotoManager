@@ -278,7 +278,7 @@ export function MaintenanceForm({
                 {type === "service" && (
                     <div className="space-y-3 sm:col-span-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300 block">
-                            Zusätzliche Arbeiten (werden als separate Einträge erfasst)
+                            Ausgeführte Arbeiten (werden als separate Einträge erfasst)
                         </span>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {[
@@ -320,11 +320,6 @@ export function MaintenanceForm({
                         {bundledItems.map((item) => (
                             <input key={item} type="hidden" name="bundledItems[]" value={item} />
                         ))}
-                        {initialData && (
-                            <p className="text-[10px] text-secondary dark:text-navy-400 italic">
-                                * Das Ändern dieser Optionen fügt neue verknüpfte Einträge hinzu oder entfernt bestehende.
-                            </p>
-                        )}
                     </div>
                 )}
 
