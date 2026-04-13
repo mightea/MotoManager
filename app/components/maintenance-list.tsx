@@ -342,9 +342,10 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                     >
                       <div className="overflow-hidden">
                         <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
-                          {group.originalRecords.map((record) => {
+                          {group.originalRecords.filter(r => !r.parentId).map((record) => {
                             const isService = record.type === "service";
                             const isTechnical = ["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(record.type);
+                            const childRecords = group.originalRecords.filter(r => r.parentId === record.id);
 
                             const metadataItems = [
                               { label: "Beschreibung", value: record.description, icon: Info },
@@ -426,8 +427,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                   </button>
                                 </div>
 
-                                {metadataItems.length > 0 ? (
-                                  <div className="space-y-4">
+                                <div className="space-y-4">
+                                  {metadataItems.length > 0 && (
                                     <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2 text-sm">
                                       {metadataItems.map((item) => {
                                         const ItemIcon = item.icon;
@@ -446,21 +447,53 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                         );
                                       })}
                                     </dl>
-                                    {record.latitude && record.longitude && (
-                                      <div className="mt-2">
-                                        <MapView 
-                                          latitude={record.latitude} 
-                                          longitude={record.longitude} 
-                                          title={record.locationName || "Tankstelle"}
-                                        />
+                                  )}
+
+                                  {childRecords.length > 0 && (
+                                    <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-navy-700">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-secondary dark:text-navy-500">
+                                        Eingeschlossene Arbeiten
+                                      </span>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {childRecords.map(child => (
+                                          <div key={child.id} className="flex items-center justify-between rounded-lg bg-white/50 px-3 py-2 text-xs dark:bg-navy-900/50">
+                                            <div className="flex items-center gap-2">
+                                              <Wrench className="h-3 w-3 text-secondary/60 dark:text-navy-500" />
+                                              <span className="font-medium text-foreground dark:text-gray-200">
+                                                {summarizeMaintenanceRecord(child, userLocations)}
+                                              </span>
+                                            </div>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                onEdit(child);
+                                              }}
+                                              className="text-secondary hover:text-primary dark:text-navy-400 dark:hover:text-primary-light"
+                                            >
+                                              <Edit2 className="h-3 w-3" />
+                                            </button>
+                                          </div>
+                                        ))}
                                       </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-secondary dark:text-navy-400">
-                                    Keine weiteren Details verfügbar.
-                                  </p>
-                                )}
+                                    </div>
+                                  )}
+
+                                  {record.latitude && record.longitude && (
+                                    <div className="mt-2">
+                                      <MapView 
+                                        latitude={record.latitude} 
+                                        longitude={record.longitude} 
+                                        title={record.locationName || "Tankstelle"}
+                                      />
+                                    </div>
+                                  )}
+
+                                  {metadataItems.length === 0 && childRecords.length === 0 && (
+                                    <p className="text-sm text-secondary dark:text-navy-400">
+                                      Keine weiteren Details verfügbar.
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}

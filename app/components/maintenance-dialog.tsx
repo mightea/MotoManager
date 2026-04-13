@@ -39,7 +39,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         defaultOdo={defaultOdo}
         userLocations={userLocations}
         maintenanceLocations={maintenanceLocations}
-        locationNames={locationNames}
+        _locationNames={locationNames}
         currencies={currencies}
         onSubmit={onClose}
         onCancel={onClose}
