@@ -1,8 +1,8 @@
 import { data, useActionData, useSubmit, useLocation, useNavigate } from "react-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { Route } from "./+types/documents";
 import { requireUser } from "~/services/auth";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Plus, User as UserIcon, Bike, Globe, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsOffline } from "~/utils/offline";
 import { Modal } from "~/components/modal";
@@ -73,9 +73,12 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   return null;
 }
 
+type FilterType = "all" | "mine" | "assigned" | "others";
+
 export default function Documents({ loaderData }: Route.ComponentProps) {
   const { docs = [], user, allMotorcycles = [], assignments = [] } = loaderData;
   const isOffline = useIsOffline();
+  const [filter, setFilter] = useState<FilterType>("all");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -109,6 +112,59 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
       .filter((a: any) => a.documentId === docId)
       .map((a: any) => a.motorcycleId);
   };
+
+  const myMotorcycleIds = useMemo(() =>
+    new Set((allMotorcycles as any[]).filter(m => m.userId === user.id).map(m => m.id)),
+    [allMotorcycles, user.id]
+  );
+
+  const assignedToMeDocIds = useMemo(() => {
+    const docIds = new Set<number>();
+    (assignments as any[]).forEach(a => {
+      if (myMotorcycleIds.has(a.motorcycleId)) {
+        docIds.add(a.documentId);
+      }
+    });
+    return docIds;
+  }, [assignments, myMotorcycleIds]);
+
+  const filteredAndSortedDocs = useMemo(() => {
+    let result = [...docs];
+
+    // Filtering
+    if (filter === "mine") {
+      result = result.filter(d => d.ownerId === user.id);
+    } else if (filter === "assigned") {
+      result = result.filter(d => assignedToMeDocIds.has(d.id));
+    } else if (filter === "others") {
+      result = result.filter(d => d.ownerId !== user.id);
+    }
+
+    // Sorting: Mine > Assigned to my bikes > Others
+    result.sort((a, b) => {
+      const isOwnerA = a.ownerId === user.id;
+      const isOwnerB = b.ownerId === user.id;
+      const isAssignedA = assignedToMeDocIds.has(a.id);
+      const isAssignedB = assignedToMeDocIds.has(b.id);
+
+      const scoreA = isOwnerA ? 0 : isAssignedA ? 1 : 2;
+      const scoreB = isOwnerB ? 0 : isAssignedB ? 1 : 2;
+
+      if (scoreA !== scoreB) return scoreA - scoreB;
+
+      // Secondary sort by date desc
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return result;
+  }, [docs, filter, user.id, assignedToMeDocIds]);
+
+  const counts = useMemo(() => ({
+    all: docs.length,
+    mine: docs.filter((d: any) => d.ownerId === user.id).length,
+    assigned: docs.filter((d: any) => assignedToMeDocIds.has(d.id)).length,
+    others: docs.filter((d: any) => d.ownerId !== user.id).length,
+  }), [docs, user.id, assignedToMeDocIds]);
 
   const motorcycleNameMap = new Map(
     (allMotorcycles as any[]).map((moto: any) => {
@@ -158,6 +214,13 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     );
   }, [location.search, docs, navigate, openEditDialog, location.pathname]);
 
+  const filters: { id: FilterType; label: string; icon: any; count: number }[] = [
+    { id: "all", label: "Alle", icon: Filter, count: counts.all },
+    { id: "mine", label: "Meine", icon: UserIcon, count: counts.mine },
+    { id: "assigned", label: "Zugeordnet", icon: Bike, count: counts.assigned },
+    { id: "others", label: "Andere", icon: Globe, count: counts.others },
+  ];
+
   return (
     <div className="container mx-auto space-y-6 p-4 pb-24">
       <div className="flex items-center justify-between">
@@ -187,8 +250,41 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
         </button>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-2 dark:border-navy-700">
+        {filters.map((f) => {
+          const Icon = f.icon;
+          const isActive = filter === f.id;
+          return (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={clsx(
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                isActive
+                  ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
+                  : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+              )}
+            >
+              <Icon className={clsx("h-4 w-4", isActive ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400")} />
+              {f.label}
+              {f.count > 0 && (
+                <span className={clsx(
+                  "ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+                  isActive
+                    ? "bg-primary text-white dark:bg-primary-light dark:text-navy-900"
+                    : "bg-gray-100 text-secondary dark:bg-navy-700 dark:text-navy-300"
+                )}>
+                  {f.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-        {docs.length === 0 ? (
+        {filteredAndSortedDocs.length === 0 ? (
           <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
             <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">
               <FileText className="h-8 w-8 text-gray-400 dark:text-navy-300" />
@@ -197,11 +293,13 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
               Keine Dokumente gefunden
             </h3>
             <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
-              Es sind momentan keine Dokumente verfügbar.
+              {filter === "all" 
+                ? "Es sind momentan keine Dokumente verfügbar." 
+                : "Keine Dokumente für den gewählten Filter gefunden."}
             </p>
           </div>
         ) : (
-          (docs as any[]).map((doc: any) => (
+          filteredAndSortedDocs.map((doc: any) => (
             <DocumentCard
               key={doc.id}
               document={doc}
