@@ -623,7 +623,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   });
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 pb-24 pt-0 md:p-6 md:space-y-8 space-y-6">
+    <div className="container mx-auto max-w-7xl px-4 pb-24 pt-0 md:px-6 md:pb-12 md:pt-2 md:space-y-6 space-y-4">
       <MotorcycleDetailHeader
         motorcycle={motorcycle}
         nextInspection={nextInspection}
@@ -634,7 +634,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       />
 
       <div className="grid gap-5 md:grid-cols-3 items-start">
-        <div className="space-y-5 md:sticky" style={{ top: "calc(var(--app-header-offset, 0px) + 1.5rem)" }}>
+        <div className="space-y-5 md:sticky top-20">
           <MotorcycleInfoCard
             motorcycle={motorcycle}
             formattedFirstRegistration={formattedFirstRegistration}

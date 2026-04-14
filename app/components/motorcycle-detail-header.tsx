@@ -51,15 +51,9 @@ export function MotorcycleDetailHeader({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const isMobile = () => window.innerWidth < 768;
-
     const handleScroll = () => {
-      if (!isMobile()) {
-        setIsCompact(false);
-        return;
-      }
-      // Compact when scrolled past 120px (roughly the hero area top)
-      setIsCompact(window.scrollY > 120);
+      // Compact earlier now that it sticks to top-0
+      setIsCompact(window.scrollY > 60);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -71,15 +65,19 @@ export function MotorcycleDetailHeader({
     <div
       ref={headerRef}
       className={clsx(
-        "sticky z-30 -mx-4 px-4 transition-all duration-300 md:mx-0 md:rounded-3xl md:p-8 md:overflow-hidden",
-        isCompact ? "py-2 top-16" : "py-4 top-20",
-        hasHeroImage
-          ? "text-white"
-          : "bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/60 dark:bg-navy-900/95 md:bg-transparent md:backdrop-blur-none"
+        "sticky top-0 z-30 transition-all duration-300 md:overflow-hidden",
+        "-mx-4 px-4 md:mx-0",
+        isCompact 
+          ? "py-2 md:py-3 md:px-6 md:rounded-b-2xl shadow-xl bg-navy-900/40 backdrop-blur-md ring-1 ring-white/10" 
+          : "py-4 md:py-6 md:px-8 md:rounded-3xl md:mt-2",
+        "text-white"
       )}
     >
       {hasHeroImage && (
-        <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
+        <div className={clsx(
+          "absolute inset-0 -z-10 h-full w-full overflow-hidden transition-all duration-500",
+          isCompact ? "md:rounded-b-2xl" : "md:rounded-3xl"
+        )}>
           <img
             src={
               !imageError && imageUrl
@@ -94,68 +92,64 @@ export function MotorcycleDetailHeader({
             sizes="(max-width: 768px) 100vw, 1200px"
             alt={`${motorcycle.make} ${motorcycle.model}`}
             className={clsx(
-              "h-full w-full object-cover",
+              "h-full w-full object-cover transition-transform duration-700",
+              isCompact ? "scale-110" : "scale-100",
               (imageError || !imageUrl) &&
               "p-32 object-contain opacity-50 grayscale dark:invert"
             )}
             onError={() => setImageError(true)}
             fetchPriority="high"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30" />
+          <div className={clsx(
+            "absolute inset-0 transition-colors duration-500",
+            isCompact 
+              ? "bg-gradient-to-b from-black/60 to-black/80" 
+              : "bg-gradient-to-t from-black/80 via-black/40 to-black/30"
+          )} />
         </div>
       )}
 
-      <div className="relative flex items-start gap-4 pointer-events-auto">
+      <div className="relative flex items-center gap-4 pointer-events-auto">
         <Link
           to={backTo}
           aria-label="Zurück"
           className={clsx(
-            "group flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all hover:bg-primary hover:text-white",
-            hasHeroImage
-              ? "bg-white/20 text-white hover:bg-white hover:text-primary backdrop-blur-md"
-              : "bg-white text-secondary dark:bg-navy-800 dark:text-navy-400 dark:hover:bg-primary-dark"
+            "group flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-all hover:bg-white hover:text-primary backdrop-blur-md",
+            isCompact ? "bg-white/10 text-white" : "bg-white/20 text-white"
           )}
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div className="flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-x-3">
             <h1
               className={clsx(
-                "font-bold transition-all duration-300",
-                isCompact ? "text-lg" : "text-2xl",
-                hasHeroImage ? "text-white" : "text-foreground dark:text-white"
+                "font-bold transition-all duration-300 truncate",
+                isCompact ? "text-base md:text-lg" : "text-xl md:text-2xl",
+                "text-white"
               )}
             >
               {motorcycle.make} {motorcycle.model}
             </h1>
-            {motorcycle.isVeteran && (
+            {motorcycle.isVeteran && !isCompact && (
               <span
-                className={clsx(
-                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                  hasHeroImage
-                    ? "border-white/30 bg-white/20 text-white backdrop-blur-sm"
-                    : "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/30 dark:bg-orange-900/20 dark:text-orange-400"
-                )}
+                className="inline-flex items-center rounded-full border border-white/30 bg-white/20 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm"
               >
                 Veteran
               </span>
             )}
           </div>
 
-          {/* Collapsible info section – hidden when compact on mobile */}
+          {/* Collapsible info section – hidden when compact */}
           <div
             className={clsx(
-              "grid transition-all duration-300 ease-in-out md:grid-rows-[1fr] md:opacity-100",
+              "grid transition-all duration-300 ease-in-out",
               isCompact ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
             )}
           >
             <div className="overflow-hidden">
               <div
-                className={clsx(
-                  "flex flex-wrap items-center gap-x-4 gap-y-2 text-sm",
-                  hasHeroImage ? "text-gray-200" : "text-secondary dark:text-navy-400"
-                )}
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-200 mt-1"
               >
                 <span>
                   {motorcycle.fabricationDate ? `${motorcycle.fabricationDate}` : "Fabrikationsdatum unbekannt"}
@@ -163,17 +157,11 @@ export function MotorcycleDetailHeader({
 
                 {nextInspection && (
                   <>
-                    <span className="hidden sm:inline">•</span>
+                    <span className="hidden sm:inline text-white/40">•</span>
                     <div
                       className={clsx(
                         "flex items-center gap-1.5 font-medium",
-                        hasHeroImage
-                          ? nextInspection.isOverdue
-                            ? "text-red-300"
-                            : "text-gray-200"
-                          : nextInspection.isOverdue
-                            ? "text-red-600 dark:text-red-400"
-                            : "text-secondary dark:text-navy-400"
+                        nextInspection.isOverdue ? "text-red-300" : "text-gray-200"
                       )}
                     >
                       <svg
@@ -198,70 +186,86 @@ export function MotorcycleDetailHeader({
 
                 {currentLocationName && (
                   <>
-                    <span className="hidden sm:inline">•</span>
+                    <span className="hidden sm:inline text-white/40">•</span>
                     <span>{currentLocationName}</span>
                   </>
                 )}
               </div>
             </div>
           </div>
-
-          {(navLinks.length > 0 || overviewLink) && (
-            <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {overviewLink && (
-                <Link
-                  key="overview-link"
-                  to={overviewLink.to}
-                  className={clsx(
-                    "whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
-                    overviewLink.isActive
-                      ? hasHeroImage
-                        ? "border-white bg-white text-primary"
-                        : "border-primary bg-primary text-white"
-                      : hasHeroImage
-                        ? "border-white/40 bg-white/10 text-white hover:bg-white/20"
-                        : "border-gray-200 text-secondary hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-                  )}
-                >
-                  {overviewLink.label ?? "Übersicht"}
-                </Link>
-              )}
-              {navLinks.map((link) =>
-                link.disabled ? (
-                  <span
-                    key={link.label}
-                    className={clsx(
-                      "whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold opacity-60",
-                      hasHeroImage
-                        ? "border-white/40 text-white"
-                        : "border-gray-200 text-secondary dark:border-navy-600 dark:text-navy-300"
-                    )}
-                  >
-                    {link.label}
-                  </span>
-                ) : (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className={clsx(
-                      "whitespace-nowrap rounded-full border px-4 py-2 text-xs font-semibold transition-all",
-                      link.isActive
-                        ? hasHeroImage
-                          ? "border-white bg-white text-primary"
-                          : "border-primary bg-primary text-white"
-                        : hasHeroImage
-                          ? "border-white/40 bg-white/10 text-white hover:bg-white/20"
-                          : "border-gray-200 text-secondary hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                )
-              )}
-            </div>
-          )}
         </div>
+
+        {/* Navigation links - inline when compact on desktop */}
+        {(navLinks.length > 0 || overviewLink) && (
+          <div className={clsx(
+            "flex gap-2 transition-all duration-300",
+            isCompact ? "opacity-100" : "hidden md:flex"
+          )}>
+            {overviewLink && (
+              <Link
+                key="overview-link"
+                to={overviewLink.to}
+                className={clsx(
+                  "whitespace-nowrap rounded-full border px-3 py-1.5 md:px-4 text-[10px] md:text-xs font-semibold transition-all",
+                  overviewLink.isActive
+                    ? "border-white bg-white text-navy-900"
+                    : "border-white/40 bg-white/10 text-white hover:bg-white/20"
+                )}
+              >
+                {overviewLink.label ?? "Übersicht"}
+              </Link>
+            )}
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={clsx(
+                  "whitespace-nowrap rounded-full border px-3 py-1.5 md:px-4 text-[10px] md:text-xs font-semibold transition-all",
+                  link.isActive
+                    ? "border-white bg-white text-navy-900"
+                    : "border-white/40 bg-white/10 text-white hover:bg-white/20"
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Navigation links - regular position when NOT compact */}
+      {(navLinks.length > 0 || overviewLink) && !isCompact && (
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide md:hidden">
+          {overviewLink && (
+            <Link
+              key="overview-link-mobile"
+              to={overviewLink.to}
+              className={clsx(
+                "whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
+                overviewLink.isActive
+                  ? "border-white bg-white text-primary"
+                  : "border-white/40 bg-white/10 text-white hover:bg-white/20"
+              )}
+            >
+              {overviewLink.label ?? "Übersicht"}
+            </Link>
+          )}
+          {navLinks.map((link) => (
+            <Link
+              key={link.to + "-mobile"}
+              to={link.to}
+              className={clsx(
+                "whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
+                link.isActive
+                  ? "border-white bg-white text-primary"
+                  : "border-white/40 bg-white/10 text-white hover:bg-white/20"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

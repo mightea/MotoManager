@@ -13,7 +13,6 @@ export function Header({ user }: { user: PublicUser | null }) {
   const isOffline = useIsOffline();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
   
   const { status: syncStatus, count: syncedCount } = useSyncExternalStore(
     syncStore.subscribe,
@@ -52,58 +51,14 @@ export function Header({ user }: { user: PublicUser | null }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Scroll-based show/hide — desktop motorcycle detail only
-  useEffect(() => {
-    if (!isMotorcycleDetail || typeof window === "undefined") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsHidden(false);
-      return;
-    }
-
-    // On mobile, the header is non-fixed and scrolls with content → no hide logic needed
-    if (window.innerWidth < 768) {
-      setIsHidden(false);
-      return;
-    }
-
-    let lastScrollY = window.scrollY;
-    let frame: number | null = null;
-
-    const handleScroll = () => {
-      if (frame !== null) return;
-      frame = window.requestAnimationFrame(() => {
-        const currentY = window.scrollY;
-        const delta = currentY - lastScrollY;
-
-        if (currentY <= 80) {
-          setIsHidden(false);
-        } else if (delta > 6) {
-          setIsHidden(true);
-        } else if (delta < -6) {
-          setIsHidden(false);
-        }
-
-        lastScrollY = currentY;
-        frame = null;
-      });
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      if (frame !== null) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [isMotorcycleDetail]);
-
   return (
     <div
       className={clsx(
-        "z-40 w-full sticky top-0 print:hidden",
+        "z-40 w-full print:hidden transition-all duration-300",
+        !isMotorcycleDetail ? "sticky top-0" : "relative",
         isOffline 
           ? "border-b border-orange-500 bg-orange-50/90 backdrop-blur-md dark:border-orange-500/50 dark:bg-orange-950/20" 
-          : "border-b border-gray-200 bg-white/90 backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90",
-        // Scroll-based hide on desktop motorcycle detail
-        isMotorcycleDetail && isHidden && "md:-translate-y-full transition-transform duration-300 ease-out"
+          : "border-b border-gray-200 bg-white/90 backdrop-blur-md dark:border-navy-700 dark:bg-navy-800/90"
       )}
     >
       <header className="mx-auto w-full max-w-7xl relative">
