@@ -32,6 +32,20 @@ export function isRegistrationEnabled(): boolean {
 }
 
 /**
+ * Returns the Umami Website ID.
+ */
+export function getUmamiWebsiteId(): string | undefined {
+  return getEnv("UMAMI_WEBSITE_ID");
+}
+
+/**
+ * Returns the Umami Script URL.
+ */
+export function getUmamiScriptUrl(): string | undefined {
+  return getEnv("UMAMI_SCRIPT_URL");
+}
+
+/**
  * Returns the application version.
  */
 export function getVersion(): string {

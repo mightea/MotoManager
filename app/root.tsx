@@ -9,6 +9,7 @@ import {
   useRevalidator,
 } from "react-router";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
+import { UmamiProvider } from "~/components/umami-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
 import { Modal } from "~/components/modal";
 import { Button } from "~/components/button";
@@ -17,7 +18,7 @@ import { Theme } from "~/utils/theme";
 import { getNewChangelog, markChangelogSeen } from "~/services/changelog.client";
 import { getCurrentSession } from "~/services/auth";
 import { initSync } from "~/utils/sync";
-import { getPublicBackendUrl, isRegistrationEnabled, getVersion } from "~/config";
+import { getPublicBackendUrl, isRegistrationEnabled, getVersion, getUmamiWebsiteId, getUmamiScriptUrl } from "~/config";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
@@ -30,6 +31,8 @@ export async function loader() {
       INTERNAL_BACKEND_URL: process.env.INTERNAL_BACKEND_URL,
       ENABLE_REGISTRATION: isRegistrationEnabled(),
       APP_VERSION: getVersion(),
+      UMAMI_WEBSITE_ID: getUmamiWebsiteId(),
+      UMAMI_SCRIPT_URL: getUmamiScriptUrl(),
     },
   };
 }
@@ -73,6 +76,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
             dangerouslySetInnerHTML={{
               __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
             }}
+          />
+        )}
+        {data?.ENV?.UMAMI_SCRIPT_URL && data?.ENV?.UMAMI_WEBSITE_ID && (
+          <script
+            async
+            defer
+            src={data.ENV.UMAMI_SCRIPT_URL}
+            data-website-id={data.ENV.UMAMI_WEBSITE_ID}
+            data-auto-track="false"
           />
         )}
       </head>
@@ -126,26 +138,28 @@ export default function App() {
 
   return (
     <ThemeProvider specifiedTheme={theme}>
-      <AppWithTheme>
-        <LoadingIndicator />
-        <Outlet />
-        {changelog && (
-          <Modal
-            isOpen={isChangelogOpen}
-            onClose={handleCloseChangelog}
-            title={`Was ist neu in v${changelog.version}`}
-          >
-            <div className="space-y-4">
-              <ChangelogRenderer content={changelog.content} />
-              <div className="pt-4 flex justify-end">
-                <Button onClick={handleCloseChangelog}>
-                  Verstanden
-                </Button>
+      <UmamiProvider>
+        <AppWithTheme>
+          <LoadingIndicator />
+          <Outlet />
+          {changelog && (
+            <Modal
+              isOpen={isChangelogOpen}
+              onClose={handleCloseChangelog}
+              title={`Was ist neu in v${changelog.version}`}
+            >
+              <div className="space-y-4">
+                <ChangelogRenderer content={changelog.content} />
+                <div className="pt-4 flex justify-end">
+                  <Button onClick={handleCloseChangelog}>
+                    Verstanden
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Modal>
-        )}
-      </AppWithTheme>
+            </Modal>
+          )}
+        </AppWithTheme>
+      </UmamiProvider>
     </ThemeProvider>
   );
 }

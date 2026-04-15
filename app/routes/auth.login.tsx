@@ -20,6 +20,7 @@ import {
 } from "~/services/auth";
 import { authenticateWithPasskey } from "~/utils/webauthn";
 import { getVersion } from "~/config";
+import { useUmami } from "~/components/umami-provider";
 
 const EMAIL_REGEX = /.+@.+\..+/i;
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
@@ -181,6 +182,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Login() {
+  const { trackEvent } = useUmami();
   const loaderData = useLoaderData<typeof clientLoader>();
   const redirectTo = loaderData?.redirectTo || "/";
   const isFirstUser = loaderData?.isFirstUser || false;
@@ -210,8 +212,10 @@ export default function Login() {
   const handlePasskeyLogin = async () => {
     try {
       setPasskeyError(null);
+      trackEvent("passkey_login_attempt");
       await authenticateWithPasskey(identifier || undefined);
       // If successful, the server has set the cookie. We just need to navigate.
+      trackEvent("passkey_login_success");
       navigate(redirectTo);
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
@@ -457,6 +461,7 @@ export default function Login() {
 
                   <button
                     type="submit"
+                    onClick={() => trackEvent("register_submit")}
                     disabled={isRegisterSubmitting}
                     className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
                   >
@@ -554,6 +559,7 @@ export default function Login() {
                   <div className="flex flex-col gap-3">
                     <button
                       type="submit"
+                      onClick={() => trackEvent("login_submit")}
                       disabled={isLoginSubmitting}
                       className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
                     >
