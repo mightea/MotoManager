@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026.4.7](https://github.com/mightea/MotoManager/compare/2026.4.6...2026.4.7) (2026-04-15)
+
+### Features
+
+* add filtering and sorting capabilities to documents page ([287c3e5](https://github.com/mightea/MotoManager/commit/287c3e5d03eaf6f1e01e8fef62e76d61dc874cf9))
+* implement production-grade Umami Analytics integration ([a7a7e4b](https://github.com/mightea/MotoManager/commit/a7a7e4bdf3826222829ae39fcb7d82af2e54704e))
+* improve maintenance details, fleet expenses and location selection ([65e1937](https://github.com/mightea/MotoManager/commit/65e1937fc6eb9c0c1da15cb0d4523697bd1ece13))
+* track maintenance events with Umami ([68e61bb](https://github.com/mightea/MotoManager/commit/68e61bb375b48f9ecc6f77030b2a187a5204b03a))
+
 ## [2026.4.6](https://github.com/mightea/MotoManager/compare/2026.4.5...2026.4.6) (2026-04-13)
 
 ### Features
