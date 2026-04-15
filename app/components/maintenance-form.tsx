@@ -17,6 +17,7 @@ import {
     Fuel
 } from "lucide-react";
 import { MaintenanceLocationDialog } from "./maintenance-location-dialog";
+import { useUmami } from "./umami-provider";
 
 interface MaintenanceFormProps {
     motorcycleId: number;
@@ -64,6 +65,7 @@ export function MaintenanceForm({
     onDelete,
     existingBundledItems = []
 }: MaintenanceFormProps) {
+    const { trackEvent } = useUmami();
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
     const [isNewLocation, setIsNewLocation] = useState(false);
     
@@ -115,6 +117,14 @@ export function MaintenanceForm({
 
     const today = new Date().toISOString().split('T')[0];
 
+    const handleFormSubmit = () => {
+        trackEvent("maintenance_submit", {
+            type,
+            action: initialData ? "update" : "create"
+        });
+        onSubmit();
+    };
+
     const LocationFields = () => (
         <>
             <div className="space-y-1.5 sm:col-span-2">
@@ -160,7 +170,7 @@ export function MaintenanceForm({
 
     return (
         <>
-        <Form method="post" className="space-y-6" onSubmit={onSubmit}>
+        <Form method="post" className="space-y-6" onSubmit={handleFormSubmit}>
             <input type="hidden" name="intent" value={initialData ? "updateMaintenance" : "createMaintenance"} />
             {initialData && <input type="hidden" name="maintenanceId" value={initialData.id} />}
                         <input type="hidden" name="motorcycleId" value={motorcycleId} />

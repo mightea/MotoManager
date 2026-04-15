@@ -38,6 +38,7 @@ import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialo
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
 import { fetchFromBackend } from "~/utils/backend";
+import { useUmami } from "~/components/umami-provider";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -542,6 +543,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
+  const { trackEvent } = useUmami();
   const {
     motorcycle,
     openIssues,
@@ -801,6 +803,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         }}
         onConfirm={() => {
           if (selectedMaintenance) {
+            trackEvent("maintenance_delete", { type: selectedMaintenance.type });
             const formData = new FormData();
             formData.append("intent", "deleteMaintenance");
             formData.append("motorcycleId", motorcycle.id.toString());

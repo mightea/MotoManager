@@ -1,6 +1,8 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm } from "~/components/maintenance-form";
 import type { MaintenanceRecord, Location, CurrencySetting, MaintenanceLocation } from "~/types/db";
+import { useUmami } from "./umami-provider";
+import { useEffect } from "react";
 
 interface MaintenanceDialogProps {
   isOpen: boolean;
@@ -18,6 +20,17 @@ interface MaintenanceDialogProps {
 }
 
 export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = [], currencyCode, defaultOdo, userLocations, maintenanceLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
+  const { trackEvent } = useUmami();
+
+  useEffect(() => {
+    if (isOpen) {
+      trackEvent("maintenance_dialog_open", {
+        mode: initialData ? "edit" : "create",
+        type: initialData?.type
+      });
+    }
+  }, [isOpen, initialData, trackEvent]);
+
   const existingBundledItems = initialData 
     ? allRecords
         .filter(r => r.parentId === initialData.id)
