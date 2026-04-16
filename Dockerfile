@@ -10,7 +10,6 @@ ENV APP_VERSION=$APP_VERSION
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN cp CHANGELOG.md public/CHANGELOG.md
 RUN pnpm build
 RUN pnpm prune --prod
 
@@ -25,7 +24,7 @@ RUN mkdir -p $PNPM_HOME \
   && corepack prepare pnpm@10.2.1 --activate
 WORKDIR /app
 ENV APP_VERSION=$APP_VERSION
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml CHANGELOG.md ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/build ./build
 

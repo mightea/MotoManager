@@ -11,15 +11,13 @@ import {
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { UmamiProvider } from "~/components/umami-provider";
 import { LoadingIndicator } from "~/components/loading-indicator";
-import { Modal } from "~/components/modal";
 import { Button } from "~/components/button";
 import { getTheme } from "~/utils/theme.client";
 import { Theme } from "~/utils/theme";
-import { getNewChangelog, markChangelogSeen } from "~/services/changelog.client";
 import { getCurrentSession } from "~/services/auth";
 import { initSync } from "~/utils/sync";
 import { getPublicBackendUrl, isRegistrationEnabled, getVersion, getUmamiWebsiteId, getUmamiScriptUrl } from "~/config";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import clsx from "clsx";
 
 import "./app.css";
@@ -42,9 +40,8 @@ export async function clientLoader({ serverLoaderData }: any) {
     (window as any).ENV = serverLoaderData.ENV;
   }
   const theme = getTheme();
-  const { user } = await getCurrentSession();
-  const changelog = user ? await getNewChangelog() : null;
-  return { ...serverLoaderData, theme, changelog };
+  await getCurrentSession();
+  return { ...serverLoaderData, theme };
 }
 
 export function HydrateFallback() {
@@ -100,8 +97,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const loaderData = useLoaderData<typeof clientLoader>();
   const theme = loaderData?.theme || Theme.LIGHT;
-  const changelog = loaderData?.changelog || null;
-  const [isChangelogOpen, setIsChangelogOpen] = useState(!!changelog);
   const revalidator = useRevalidator();
 
   useEffect(() => {
@@ -129,107 +124,16 @@ export default function App() {
     };
   }, [revalidator]);
 
-  const handleCloseChangelog = () => {
-    setIsChangelogOpen(false);
-    if (changelog) {
-      markChangelogSeen(changelog.version);
-    }
-  };
-
   return (
     <ThemeProvider specifiedTheme={theme}>
       <UmamiProvider>
         <AppWithTheme>
           <LoadingIndicator />
           <Outlet />
-          {changelog && (
-            <Modal
-              isOpen={isChangelogOpen}
-              onClose={handleCloseChangelog}
-              title={`Was ist neu in v${changelog.version}`}
-            >
-              <div className="space-y-4">
-                <ChangelogRenderer content={changelog.content} />
-                <div className="pt-4 flex justify-end">
-                  <Button onClick={handleCloseChangelog}>
-                    Verstanden
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-          )}
         </AppWithTheme>
       </UmamiProvider>
     </ThemeProvider>
   );
-}
-
-function ChangelogRenderer({ content }: { content: string }) {
-  const lines = content.split("\n");
-  const elements: React.ReactNode[] = [];
-  let currentList: React.ReactNode[] = [];
-
-  const flushList = () => {
-    if (currentList.length > 0) {
-      elements.push(
-        <ul key={`list-${elements.length}`} className="list-disc list-inside space-y-1 ml-2 text-secondary dark:text-navy-300">
-          {currentList}
-        </ul>
-      );
-      currentList = [];
-    }
-  };
-
-  lines.forEach((line, _index) => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("### ")) {
-      flushList();
-      elements.push(
-        <h3 key={trimmed} className="text-lg font-semibold mt-4 mb-2 first:mt-0">
-          {trimmed ? trimmed.replace("### ", "") : ""}
-        </h3>
-      );
-    } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
-      // Basic link parsing [text](url) -> <a>
-      const parts = (trimmed.substring(2) || "").split(/(\[.*?\]\(.*?\))/g);
-      const content = parts.map((part, _pIndex) => {
-        const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
-        if (linkMatch) {
-          return (
-            <a
-              key={part}
-              href={linkMatch[2]}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline dark:text-blue-400"
-            >
-              {linkMatch[1]}
-            </a>
-          );
-        }
-        return part;
-      });
-
-      currentList.push(
-        <li key={trimmed} className="leading-relaxed">
-          {content}
-        </li>
-      );
-    } else if (trimmed === "") {
-      flushList();
-    } else {
-      flushList();
-      elements.push(
-        <p key={trimmed} className="text-secondary dark:text-navy-300">
-          {trimmed}
-        </p>
-      );
-    }
-  });
-
-  flushList();
-
-  return <div className="changelog-content">{elements}</div>;
 }
 
 function AppWithTheme({ children }: { children: React.ReactNode }) {
