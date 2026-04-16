@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.4.9](https://github.com/mightea/MotoManager/compare/2026.4.8...2026.4.9) (2026-04-16)
+
+### Bug Fixes
+
+* resolve fuel import 405 error by using sequential processing ([0a74586](https://github.com/mightea/MotoManager/commit/0a7458679866dafc093b896adae69589a763b13a))
+
 ## [2026.4.8](https://github.com/mightea/MotoManager/compare/2026.4.7...2026.4.8) (2026-04-16)
 
 ### Features
