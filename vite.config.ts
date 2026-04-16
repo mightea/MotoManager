@@ -1,7 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
 
 export default defineConfig(({ mode }) => {
@@ -11,6 +10,9 @@ export default defineConfig(({ mode }) => {
   return {
     define: {
       "process.env.APP_VERSION": JSON.stringify(pkg.version),
+    },
+    resolve: {
+      tsconfigPaths: true,
     },
     server: {
       proxy: {
@@ -23,7 +25,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       tailwindcss(),
       reactRouter(),
-      tsconfigPaths(),
     ],
   };
 });
