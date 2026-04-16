@@ -31,7 +31,6 @@ export async function syncPendingItems() {
 
   isSyncing = true;
   notifySyncStatus("syncing");
-  console.log(`[Sync] Starting sync of ${total} pending items...`);
 
   let successCount = 0;
 
@@ -88,8 +87,6 @@ export async function syncPendingItems() {
       const { id, isPending: _isPending, ...data } = spec;
       const isNew = id < 0;
       
-      console.log(`[Sync] Syncing torque spec (${isNew ? "POST" : "PUT"}):`, data);
-      
       const result = await fetchFromBackend<{ torqueSpec: any }>(
         isNew 
           ? `/motorcycles/${spec.motorcycleId}/torque-specs`
@@ -135,7 +132,6 @@ export async function syncPendingItems() {
     setTimeout(() => notifySyncStatus("idle"), 5000);
   } finally {
     isSyncing = false;
-    console.log("[Sync] Sync process finished");
   }
 }
 
@@ -149,7 +145,6 @@ export function initSync() {
   isInitialized = true;
 
   window.addEventListener("online", () => {
-    console.log("[Sync] Browser online, triggering sync...");
     syncPendingItems();
   });
 

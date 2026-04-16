@@ -9,27 +9,20 @@ import { fetchFromBackend } from "./backend";
  * Register a new passkey
  */
 export async function registerPasskey() {
-  console.log("[WebAuthn] Starting registration...");
   const token = getSessionToken();
   
   // 1. Get options from server
   const responseData = await fetchFromBackend<any>("/auth/passkey/register-options", {}, token);
-  console.log("[WebAuthn] Full response data from /auth/passkey/register-options:", responseData);
   const { options, challengeId } = responseData;
   
   if (!options) throw new Error("Server response missing 'options'");
   if (!challengeId) throw new Error("Server response missing 'challengeId'");
-  
-  console.log("[WebAuthn] Options from server:", options);
 
   // 2. Start browser ceremony
-  console.log("[WebAuthn] Starting browser registration ceremony...");
   // The backend wraps the options in a "publicKey" field
   const attestationResponse = await startRegistration({ optionsJSON: options.publicKey || options });
-  console.log("[WebAuthn] Attestation response:", attestationResponse);
 
   // 3. Send response back to server for verification
-  console.log("[WebAuthn] Sending verification to server...");
   const verificationResult = await fetchFromBackend<any>("/auth/passkey/register-verify", {
     method: "POST",
     body: JSON.stringify({
@@ -37,8 +30,6 @@ export async function registerPasskey() {
       response: attestationResponse,
     }),
   }, token);
-
-  console.log("[WebAuthn] Verification result:", verificationResult);
 
   if (!verificationResult || !verificationResult.verified) {
     throw new Error("Registrierung fehlgeschlagen: Server-Verifizierung negativ");
@@ -51,8 +42,6 @@ export async function registerPasskey() {
  * Authenticate with a passkey
  */
 export async function authenticateWithPasskey(username?: string) {
-  console.log("[WebAuthn] Starting authentication for:", username || "any user");
-  
   // 1. Get options from server
   const path = username ? `/auth/passkey/login-options?username=${encodeURIComponent(username)}` : "/auth/passkey/login-options";
   const responseData = await fetchFromBackend<any>(path);
@@ -60,11 +49,8 @@ export async function authenticateWithPasskey(username?: string) {
   
   if (!options) throw new Error("Server response missing 'options'");
   if (!challengeId) throw new Error("Server response missing 'challengeId'");
-  
-  console.log("[WebAuthn] Options from server:", options);
 
   // 2. Start browser ceremony
-  console.log("[WebAuthn] Starting browser authentication ceremony...");
   // The backend wraps the options in a "publicKey" field
   const authOptions = options.publicKey || options;
   
@@ -75,10 +61,8 @@ export async function authenticateWithPasskey(username?: string) {
   }
 
   const assertionResponse = await startAuthentication({ optionsJSON: authOptions });
-  console.log("[WebAuthn] Assertion response:", assertionResponse);
 
   // 3. Send response back to server for verification
-  console.log("[WebAuthn] Sending verification to server...");
   const verificationResult = await fetchFromBackend<any>("/auth/passkey/login-verify", {
     method: "POST",
     body: JSON.stringify({
@@ -86,8 +70,6 @@ export async function authenticateWithPasskey(username?: string) {
       response: assertionResponse,
     }),
   });
-
-  console.log("[WebAuthn] Verification result:", verificationResult);
 
   if (!verificationResult || !verificationResult.verified) {
     throw new Error("Login fehlgeschlagen: Server-Verifizierung negativ");

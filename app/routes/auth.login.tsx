@@ -65,8 +65,6 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   const intent = intentRaw === "register" ? "register" : "login";
   const redirectToRaw = String(formData.get("redirectTo") ?? "/");
 
-  console.log(`[Login Page] Action triggered with intent: ${intent}`);
-
   if (intent === "register") {
     const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
@@ -110,18 +108,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     try {
-      console.log(`[Login Page] Attempting registration for username: ${username}, email: ${email}`);
       const _newUser = await createUser({
         email,
         username,
         name,
         password,
       });
-      console.log(`[Login Page] User created successfully: ${username}`);
 
       // After registration, we need to login to get the token
       const loginResult = await verifyLogin(username, password);
-      console.log(`[Login Page] Auto-login after registration result:`, loginResult ? "Success" : "Failed");
 
       if (!loginResult) {
         return redirect("/auth/login");
@@ -164,9 +159,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return data({ success: false, errors, form: "login" }, { status: 400 });
   }
 
-  console.log(`[Login Page] Attempting login for identifier: ${identifier}`);
   const loginResult = await verifyLogin(identifier, password);
-  console.log(`[Login Page] Login result for ${identifier}:`, loginResult ? "Success" : "Failed");
 
   if (!loginResult) {
     return data(

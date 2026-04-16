@@ -101,12 +101,10 @@ export async function getUserCount() {
 }
 
 export async function createUser(input: any): Promise<PublicUser> {
-  console.log(`[Auth Service] Calling /auth/register for: ${input.username}`);
   const user = await fetchFromBackend<any>("/auth/register", {
     method: "POST",
     body: JSON.stringify(input),
   });
-  console.log(`[Auth Service] /auth/register response:`, user);
 
   return toPublicUser(user);
 }
@@ -136,12 +134,10 @@ export async function verifyLogin(
   password: string,
 ): Promise<{ user: PublicUser; token: string } | null> {
   try {
-    console.log(`[Auth Service] Calling /auth/login for: ${identifier}`);
     const response = await fetchFromBackend<{ user: any; token: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ identifier, password }),
     });
-    console.log(`[Auth Service] /auth/login successful for: ${identifier}`);
 
     return {
       user: toPublicUser(response.user),
@@ -154,9 +150,7 @@ export async function verifyLogin(
 }
 
 export async function requireUser(request: Request) {
-  console.log(`[Auth Service] Checking requirement for user at: ${request.url}`);
   const { user, token } = await getCurrentSession();
-  console.log(`[Auth Service] Current session status:`, user ? `Logged in as ${user.username}` : "Not logged in");
 
   if (!user || !token) {
     const url = new URL(request.url);
@@ -165,7 +159,6 @@ export async function requireUser(request: Request) {
     // In SPA mode, we can't easily set Location header on a response thrown from a client side function
     // and expect the browser to follow it. Instead, we can throw a redirect response which React Router handles.
     const { redirect } = await import("react-router");
-    console.log(`[Auth Service] Redirecting to login, target: ${redirectTo}`);
     throw redirect(`/auth/login?redirectTo=${redirectTo}`);
   }
 

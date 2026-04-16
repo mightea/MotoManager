@@ -44,15 +44,11 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     trackEvent: (name: string, data?: Record<string, any>) => {
       if (IS_PROD && window.umami) {
         window.umami.track(name, data);
-      } else if (!IS_PROD) {
-        console.log(`[Umami Debug]: Event "${name}"`, data);
       }
     },
     identifyUser: (data: Record<string, any>) => {
       if (IS_PROD && window.umami) {
         window.umami.identify(data);
-      } else if (!IS_PROD) {
-        console.log(`[Umami Debug]: Identify User`, data);
       }
     }
   }), []);

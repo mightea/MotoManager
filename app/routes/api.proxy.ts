@@ -13,8 +13,6 @@ async function handleProxyRequest({ request, params }: LoaderFunctionArgs | Acti
   const path = params["*"] || "";
   const targetUrl = `${backendUrl}/api/${path}${url.search}`;
 
-  console.info(`[Proxy] ${request.method} ${url.pathname}${url.search} -> ${targetUrl}`);
-
   const headers = new Headers(request.headers);
   
   // Update Host header to match target
@@ -39,8 +37,6 @@ async function handleProxyRequest({ request, params }: LoaderFunctionArgs | Acti
       duplex: "half",
       redirect: "follow",
     });
-
-    console.info(`[Proxy] Response: ${response.status} ${response.statusText}`);
 
     // Create a new response to allow modifying headers
     const responseHeaders = new Headers(response.headers);

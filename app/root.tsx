@@ -103,7 +103,6 @@ export default function App() {
     initSync();
 
     const handleRevalidate = () => {
-      console.log("[App] Revalidation triggered by sync");
       revalidator.revalidate();
     };
 
@@ -111,10 +110,10 @@ export default function App() {
 
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then((registration) => {
-          console.log('SW registered: ', registration);
-        }).catch((registrationError) => {
-          console.log('SW registration failed: ', registrationError);
+        navigator.serviceWorker.register('/sw.js').then(() => {
+          // SW registered
+        }).catch(() => {
+          // SW registration failed
         });
       });
     }
