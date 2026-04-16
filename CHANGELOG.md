@@ -1,5 +1,11 @@
 # Changelog
 
+## [2026.4.8](https://github.com/mightea/MotoManager/compare/2026.4.7...2026.4.8) (2026-04-16)
+
+### Features
+
+* identify user session with Umami ([d1f291d](https://github.com/mightea/MotoManager/commit/d1f291de6989f2e50f421de5e804c9993f3440e5))
+
 ## [2026.4.7](https://github.com/mightea/MotoManager/compare/2026.4.6...2026.4.7) (2026-04-15)
 
 ### Features
