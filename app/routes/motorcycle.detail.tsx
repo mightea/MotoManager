@@ -531,16 +531,21 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     if (values.length > 0) {
       try {
-        await fetchFromBackend(`/motorcycles/${motorcycleId}/maintenance/import`, {
-          method: "POST",
-          body: JSON.stringify({ records: values }),
-        }, token);
+        // Send requests sequentially to avoid overwhelming the backend/proxy
+        for (const record of values) {
+          // eslint-disable-next-line no-await-in-loop
+          await fetchFromBackend(`/motorcycles/${motorcycleId}/maintenance`, {
+            method: "POST",
+            body: JSON.stringify(record),
+          }, token);
+        }
+        return data({ success: true, count: values.length });
       } catch (e: any) {
         return data({ success: false, error: e.message || "Import fehlgeschlagen" }, { status: 500 });
       }
     }
 
-    return data({ success: true });
+    return data({ success: true, count: 0 });
   }
 
   return data({ success: false });
@@ -605,6 +610,9 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (actionData?.success) {
+      if ((actionData as any).count !== undefined) {
+        trackEvent("fuel_import_success", { count: (actionData as any).count });
+      }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditMotorcycleDialogOpen(false);
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -612,7 +620,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       setSelectedPreviousOwner(null);
       revalidator.revalidate();
     }
-  }, [actionData, revalidator]);
+  }, [actionData, revalidator, trackEvent]);
 
   const openIssueDialog = (issue: Issue | null) => {
     setSelectedIssue(issue);
