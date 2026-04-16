@@ -59,6 +59,7 @@ export function AddMotorcycleForm({
 
   const actionData = useActionData<{
     errors?: Record<string, string>;
+    error?: string;
   }>();
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -121,6 +122,11 @@ export function AddMotorcycleForm({
         )}
         
         <div className="grid gap-5 sm:grid-cols-2">
+          {actionData?.error && (
+            <div className="col-span-full rounded-xl bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950/20 dark:text-red-300">
+              {actionData.error}
+            </div>
+          )}
           {/* Image Upload Field */}
           <div className="space-y-1.5 sm:col-span-2">
             <label htmlFor="image-upload" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Bild</label>

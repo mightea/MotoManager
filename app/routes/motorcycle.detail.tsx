@@ -530,10 +530,14 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     });
 
     if (values.length > 0) {
-      await fetchFromBackend(`/motorcycles/${motorcycleId}/fuel-import`, {
-        method: "POST",
-        body: JSON.stringify({ records: values }),
-      }, token);
+      try {
+        await fetchFromBackend(`/motorcycles/${motorcycleId}/maintenance/import`, {
+          method: "POST",
+          body: JSON.stringify({ records: values }),
+        }, token);
+      } catch (e: any) {
+        return data({ success: false, error: e.message || "Import fehlgeschlagen" }, { status: 500 });
+      }
     }
 
     return data({ success: true });
@@ -582,7 +586,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [selectedPreviousOwner, setSelectedPreviousOwner] = useState<(typeof previousOwnersList)[number] | null>(null);
   const [deletePreviousOwnerConfirmationOpen, setDeletePreviousOwnerConfirmationOpen] = useState(false);
   const revalidator = useRevalidator();
-  const actionData = useActionData<{ success?: boolean; errors?: Record<string, string> }>();
+  const actionData = useActionData<{ success?: boolean; error?: string; errors?: Record<string, string> }>();
   const submit = useSubmit();
   const location = useLocation();
   const params = useParams<{ slug?: string; id?: string }>();

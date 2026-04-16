@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { Modal } from "./modal";
 import { isDuplicate, type RoadTripFuelEntry, parseRoadTripCsv } from "~/utils/roadtrip-import";
 import type { MaintenanceRecord } from "~/types/db";
-import { Upload, Check, AlertTriangle, Fuel, Calendar, Hash } from "lucide-react";
+import { Upload, Check, AlertTriangle, Fuel, Calendar, Hash, FileText } from "lucide-react";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import clsx from "clsx";
 
@@ -20,12 +21,8 @@ export function ImportRoadTripDialog({
   existingMaintenance = [],
 }: ImportRoadTripDialogProps) {
   const [entries, setEntries] = useState<(RoadTripFuelEntry & { selected: boolean; duplicate: boolean })[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
@@ -40,7 +37,21 @@ export function ImportRoadTripDialog({
       setEntries(enriched);
     };
     reader.readAsText(file);
-  };
+  }, [existingMaintenance]);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      processFile(acceptedFiles[0]);
+    }
+  }, [processFile]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "text/csv": [".csv"],
+    },
+    multiple: false,
+  });
 
   const toggleSelect = (index: number) => {
     setEntries(prev => prev.map((e, i) => i === index ? { ...e, selected: !e.selected } : e));
@@ -70,26 +81,29 @@ export function ImportRoadTripDialog({
     >
       <div className="space-y-6">
         {entries.length === 0 ? (
-          <button 
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-12 transition-colors hover:bg-gray-100 dark:border-navy-600 dark:bg-navy-900/50 dark:hover:bg-navy-900"
+          <div
+            {...getRootProps()}
+            className={clsx(
+              "flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed py-12 transition-all",
+              isDragActive
+                ? "border-primary bg-primary/5 dark:border-primary-light/50 dark:bg-primary-light/5"
+                : "border-gray-200 bg-gray-50 hover:bg-gray-100 dark:border-navy-600 dark:bg-navy-900/50 dark:hover:bg-navy-900"
+            )}
           >
-            <Upload className="mb-4 h-12 w-12 text-secondary dark:text-navy-400" />
-            <span className="text-sm font-medium text-foreground dark:text-white">
-              CSV Datei auswählen
+            <input {...getInputProps()} />
+            <div className={clsx(
+              "mb-4 grid h-16 w-16 place-items-center rounded-2xl transition-colors",
+              isDragActive ? "bg-primary/20 text-primary dark:bg-primary-light/20 dark:text-primary-light" : "bg-gray-100 text-secondary dark:bg-navy-700 dark:text-navy-400"
+            )}>
+              {isDragActive ? <FileText className="h-8 w-8" /> : <Upload className="h-8 w-8" />}
+            </div>
+            <span className="text-sm font-bold text-foreground dark:text-white">
+              {isDragActive ? "Datei hier loslassen" : "CSV Datei auswählen"}
             </span>
             <span className="mt-1 text-xs text-secondary dark:text-navy-400">
               Klicke hier oder ziehe die Datei in das Feld
             </span>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              accept=".csv" 
-              className="hidden" 
-            />
-          </button>
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -189,7 +203,6 @@ export function ImportRoadTripDialog({
                 type="button"
                 onClick={() => {
                     setEntries([]);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
                 className="text-sm font-medium text-red-500 hover:underline"
               >

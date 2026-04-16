@@ -7,6 +7,11 @@ interface UmamiContextProps {
    * Only tracks in production environment.
    */
   trackEvent: (name: string, data?: Record<string, any>) => void;
+  /**
+   * Identify a user session.
+   * Only tracks in production environment.
+   */
+  identifyUser: (data: Record<string, any>) => void;
 }
 
 const UmamiContext = createContext<UmamiContextProps | undefined>(undefined);
@@ -34,13 +39,20 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [location.pathname, location.search]);
 
-  // 2. Memoized Event Tracker to prevent unnecessary re-renders in consumers
+  // 2. Memoized Context Value
   const value = useMemo(() => ({
     trackEvent: (name: string, data?: Record<string, any>) => {
       if (IS_PROD && window.umami) {
         window.umami.track(name, data);
       } else if (!IS_PROD) {
         console.log(`[Umami Debug]: Event "${name}"`, data);
+      }
+    },
+    identifyUser: (data: Record<string, any>) => {
+      if (IS_PROD && window.umami) {
+        window.umami.identify(data);
+      } else if (!IS_PROD) {
+        console.log(`[Umami Debug]: Identify User`, data);
       }
     }
   }), []);
