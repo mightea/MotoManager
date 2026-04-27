@@ -88,8 +88,8 @@ importers:
         specifier: ^7.28.5
         version: 7.28.5(@babel/core@7.29.0)
       '@csmith/release-it-calver-plugin':
-        specifier: ^2026.3.11
-        version: 2026.3.11(release-it@20.0.0(@types/node@25.6.0))
+        specifier: ^2026.4.0
+        version: 2026.4.0(release-it@20.0.0(@types/node@25.6.0))
       '@favoloso/conventional-changelog-emoji':
         specifier: ^0.10.0
         version: 0.10.0
@@ -347,10 +347,10 @@ packages:
       conventional-commits-parser:
         optional: true
 
-  '@csmith/release-it-calver-plugin@2026.3.11':
-    resolution: {integrity: sha512-Xj7Sjw0XNxr7DCzk9gikosdVoO1ylfjZ+DIfvCv/h3R6prDhjM2QGvQ/gZOFwqWFQDkfbSo8bQuTmZPskAz3oQ==}
+  '@csmith/release-it-calver-plugin@2026.4.0':
+    resolution: {integrity: sha512-6Zqs6E/Rqx9b3fVqDkvENa68DzNTfu0c1nRVryqMNgjyB9xeRpnPIvQVANFjKBQJaZ1tHM6gWT+nL7MCq9FdEw==}
     peerDependencies:
-      release-it: ^19.2.4
+      release-it: ^20.0.1
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -4213,7 +4213,7 @@ snapshots:
       conventional-commits-filter: 5.0.0
       conventional-commits-parser: 6.4.0
 
-  '@csmith/release-it-calver-plugin@2026.3.11(release-it@20.0.0(@types/node@25.6.0))':
+  '@csmith/release-it-calver-plugin@2026.4.0(release-it@20.0.0(@types/node@25.6.0))':
     dependencies:
       calver: 24.1.0
       chai: 6.2.2
