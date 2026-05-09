@@ -15,26 +15,26 @@ const variantConfig: Record<
 > = {
   success: {
     icon: CheckCircle2,
-    container: "border-green-200 bg-green-50 text-green-900 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-100",
-    iconColor: "text-green-600 dark:text-green-400",
+    container: "border-success/40 bg-success/10",
+    iconColor: "text-success",
     role: "status",
   },
   error: {
     icon: AlertCircle,
-    container: "border-red-200 bg-red-50 text-red-900 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100",
-    iconColor: "text-red-600 dark:text-red-400",
+    container: "border-error/40 bg-error/10",
+    iconColor: "text-error",
     role: "alert",
   },
   info: {
     icon: Info,
-    container: "border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-100",
-    iconColor: "text-blue-600 dark:text-blue-400",
+    container: "border-info/40 bg-info/10",
+    iconColor: "text-info",
     role: "status",
   },
   warning: {
     icon: AlertTriangle,
-    container: "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100",
-    iconColor: "text-amber-600 dark:text-amber-400",
+    container: "border-warning/40 bg-warning/10",
+    iconColor: "text-warning",
     role: "status",
   },
 };
@@ -48,7 +48,7 @@ function ToastItem({ toast }: { toast: Toast }) {
       role={config.role}
       aria-live={config.role === "alert" ? "assertive" : "polite"}
       className={clsx(
-        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border p-4 shadow-lg backdrop-blur-sm motion-safe:animate-fade-in",
+        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-box border p-4 text-base-content shadow-lg backdrop-blur-sm motion-safe:animate-fade-in",
         config.container
       )}
     >
@@ -56,7 +56,7 @@ function ToastItem({ toast }: { toast: Toast }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold leading-tight">{toast.title}</p>
         {toast.description && (
-          <p className="mt-1 text-xs opacity-85 leading-snug">{toast.description}</p>
+          <p className="mt-1 text-xs opacity-75 leading-snug">{toast.description}</p>
         )}
       </div>
       <button
@@ -85,7 +85,7 @@ export function Toaster() {
   return createPortal(
     <div
       aria-label="Benachrichtigungen"
-      className="pointer-events-none fixed inset-x-0 top-4 z-[100] flex flex-col items-center gap-2 px-4 sm:bottom-4 sm:top-auto sm:right-4 sm:left-auto sm:items-end"
+      className="toast toast-top toast-center sm:toast-bottom sm:toast-end pointer-events-none z-[100]"
     >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} />

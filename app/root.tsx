@@ -57,7 +57,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const theme = data?.theme || Theme.LIGHT;
 
   return (
-    <html lang="de" className={clsx(theme)}>
+    <html
+      lang="de"
+      className={clsx(theme)}
+      data-theme={theme === Theme.DARK ? "motomanager-dark" : "motomanager"}
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -141,6 +145,8 @@ function AppWithTheme({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.className = clsx(theme);
+      document.documentElement.dataset.theme =
+        theme === Theme.DARK ? "motomanager-dark" : "motomanager";
     }
   }, [theme]);
 

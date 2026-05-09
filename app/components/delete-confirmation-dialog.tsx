@@ -1,4 +1,5 @@
 import { Modal } from "./modal";
+import { Button } from "./button";
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -31,22 +32,20 @@ export function DeleteConfirmationDialog({
       description={description}
     >
       <div className="flex justify-end gap-3 mt-4">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={onCancel}
           disabled={cancelDisabled}
-          className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {cancelLabel}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="destructive"
           onClick={onConfirm}
           disabled={confirmDisabled}
-          className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700 hover:shadow-red-600/40 focus:outline-none focus:ring-4 focus:ring-red-600/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </Modal>
   );

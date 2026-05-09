@@ -3,7 +3,6 @@ import { useNavigation, useSubmit, type SubmitOptions } from "react-router";
 import { Button } from "./button";
 import clsx from "clsx";
 import type { Document, Motorcycle } from "~/types/db";
-import { Switch } from "@headlessui/react";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { useIsOffline } from "~/utils/offline";
@@ -255,28 +254,19 @@ export function AddDocumentForm({
       <div className={clsx("flex items-center justify-between", !isOwner && "opacity-60")}>
         <label
           htmlFor="isPrivate"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-base-content cursor-pointer"
         >
           Privat (nur für mich sichtbar) {!isOwner && "(Nur Besitzer)"}
         </label>
-        <Switch
-            checked={isPrivate}
-            onChange={setIsPrivate}
-            disabled={!isOwner}
-            className={clsx(
-                isPrivate ? 'bg-primary' : 'bg-gray-200 dark:bg-navy-700',
-                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
-            )}
-        >
-            <span className="sr-only">Privat Einstellung</span>
-            <span
-                aria-hidden="true"
-                className={clsx(
-                    isPrivate ? 'translate-x-5' : 'translate-x-0',
-                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-                )}
-            />
-        </Switch>
+        <input
+          id="isPrivate"
+          type="checkbox"
+          className="toggle toggle-primary"
+          checked={isPrivate}
+          onChange={(e) => setIsPrivate(e.target.checked)}
+          disabled={!isOwner}
+          aria-label="Privat Einstellung"
+        />
       </div>
 
       <div>

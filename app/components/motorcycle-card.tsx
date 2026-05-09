@@ -31,7 +31,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   return (
     <Link
       to={`/motorcycle/${slug}/${moto.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-out hover:border-primary/20 hover:shadow-xl motion-safe:hover:-translate-y-1 motion-safe:active:scale-[0.99] active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:border-navy-700 dark:bg-navy-800 dark:hover:border-primary/30 dark:focus-visible:ring-offset-navy-950"
+      className="card card-bordered group overflow-hidden border-base-300 bg-base-100 shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-out hover:border-primary/30 hover:shadow-xl motion-safe:hover:-translate-y-1 motion-safe:active:scale-[0.99] active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200"
     >
       {/* Image banner */}
       <div className="relative h-36 w-full overflow-hidden">
@@ -74,30 +74,30 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
       </div>
 
       {/* 3-column stats */}
-      <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-navy-700">
+      <div className="grid grid-cols-3 divide-x divide-base-300">
         {/* Odometer */}
         <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
-          <Gauge className="mb-0.5 h-3.5 w-3.5 text-secondary/40 motion-safe:transition-colors motion-safe:duration-300 group-hover:text-primary/50 dark:text-navy-500 dark:group-hover:text-primary-light/60" />
-          <span className="text-sm font-bold tabular-nums leading-none text-foreground dark:text-white">
+          <Gauge className="mb-0.5 h-3.5 w-3.5 text-base-content/40 motion-safe:transition-colors motion-safe:duration-300 group-hover:text-primary/60" />
+          <span className="text-sm font-bold tabular-nums leading-none text-base-content">
             {formatNumber(moto.odometer)}
           </span>
-          <span className="text-[10px] font-medium text-secondary dark:text-navy-400">km gesamt</span>
+          <span className="text-[10px] font-medium text-base-content/60">km gesamt</span>
         </div>
 
         {/* This year */}
         <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
-          <RouteIcon className="mb-0.5 h-3.5 w-3.5 text-secondary/40 motion-safe:transition-colors motion-safe:duration-300 group-hover:text-primary/50 dark:text-navy-500 dark:group-hover:text-primary-light/60" />
+          <RouteIcon className="mb-0.5 h-3.5 w-3.5 text-base-content/40 motion-safe:transition-colors motion-safe:duration-300 group-hover:text-primary/60" />
           <span
             className={clsx(
               "text-sm font-bold tabular-nums leading-none",
               moto.odometerThisYear > 0
-                ? "text-foreground dark:text-white"
-                : "text-secondary/30 dark:text-navy-600"
+                ? "text-base-content"
+                : "text-base-content/30"
             )}
           >
             {moto.odometerThisYear > 0 ? `+${formatNumber(moto.odometerThisYear)}` : "—"}
           </span>
-          <span suppressHydrationWarning className="text-[10px] font-medium text-secondary dark:text-navy-400">
+          <span suppressHydrationWarning className="text-[10px] font-medium text-base-content/60">
             km {currentYear}
           </span>
         </div>
@@ -107,8 +107,8 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
           <CalendarDays className={clsx(
             "mb-0.5 h-3.5 w-3.5 motion-safe:transition-colors motion-safe:duration-300",
             moto.nextInspection?.isOverdue
-              ? "text-red-500/60"
-              : "text-secondary/40 group-hover:text-primary/50 dark:text-navy-500 dark:group-hover:text-primary-light/60"
+              ? "text-error/70"
+              : "text-base-content/40 group-hover:text-primary/60"
           )} />
           {moto.nextInspection ? (
             <>
@@ -116,8 +116,8 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
                 className={clsx(
                   "text-xs font-bold leading-none",
                   moto.nextInspection.isOverdue
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-foreground dark:text-white"
+                    ? "text-error"
+                    : "text-base-content"
                 )}
               >
                 {moto.nextInspection.isOverdue ? "Überfällig" : moto.nextInspection.relativeLabel}
@@ -126,8 +126,8 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
                 className={clsx(
                   "text-[10px] font-medium",
                   moto.nextInspection.isOverdue
-                    ? "text-red-500/70 dark:text-red-400/70"
-                    : "text-secondary dark:text-navy-400"
+                    ? "text-error/70"
+                    : "text-base-content/60"
                 )}
               >
                 {inspectionDateShort}
@@ -135,8 +135,8 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
             </>
           ) : (
             <>
-              <span className="text-sm font-bold leading-none text-secondary/30 dark:text-navy-600">—</span>
-              <span className="text-[10px] font-medium text-secondary/50 dark:text-navy-500">MFK</span>
+              <span className="text-sm font-bold leading-none text-base-content/30">—</span>
+              <span className="text-[10px] font-medium text-base-content/40">MFK</span>
             </>
           )}
         </div>
@@ -144,22 +144,22 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
 
       {/* Meta row: status + location, off the image so contrast is reliable */}
       {showMetaRow && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 px-3 py-2 dark:border-navy-700">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-base-300 px-3 py-2">
           {hasMaintenance && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-error">
               <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               Wartung fällig
             </span>
           )}
           {hasIssues && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               {moto.numberOfIssues} offene{moto.numberOfIssues === 1 ? "r Mangel" : " Mängel"}
             </span>
           )}
           {hasLocation && (
-            <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-secondary dark:text-navy-400">
-              <MapPin className="h-3 w-3 shrink-0 text-blue-500/70" aria-hidden="true" />
+            <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-base-content/60">
+              <MapPin className="h-3 w-3 shrink-0 text-info/70" aria-hidden="true" />
               {moto.currentLocationName}
             </span>
           )}

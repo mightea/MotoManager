@@ -1,6 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import clsx from "clsx";
-import { Loader2 } from "lucide-react";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "destructive";
 type ButtonSize = "sm" | "md" | "lg" | "icon";
@@ -14,27 +13,26 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   rightIcon?: ReactNode;
 };
 
-const baseStyles =
-  "inline-flex items-center justify-center gap-2 font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60";
-
 const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    "bg-primary text-white shadow-sm hover:bg-primary-dark hover:shadow-md active:scale-[0.98] dark:bg-primary-light dark:text-navy-900",
-  secondary:
-    "border border-gray-200 bg-white text-foreground shadow-sm hover:bg-gray-50 active:scale-[0.98] dark:border-navy-600 dark:bg-navy-700 dark:text-white dark:hover:bg-navy-600",
-  outline:
-    "border border-gray-300 text-secondary hover:bg-gray-50 active:scale-[0.98] dark:border-navy-600 dark:text-navy-200 dark:hover:bg-navy-700/60",
-  ghost:
-    "text-secondary hover:bg-gray-100 active:scale-[0.98] dark:text-navy-300 dark:hover:bg-navy-700",
-  destructive:
-    "bg-red-50 text-red-600 hover:bg-red-100 active:scale-[0.98] dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50",
+  primary: "btn-primary",
+  secondary: "btn-neutral btn-outline",
+  outline: "btn-outline",
+  ghost: "btn-ghost",
+  destructive: "btn-error",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "rounded-lg px-3 py-1.5 text-xs",
-  md: "rounded-xl px-4 py-2 text-sm",
-  lg: "rounded-2xl px-6 py-3 text-base",
-  icon: "h-10 w-10 rounded-xl p-0",
+  sm: "btn-sm",
+  md: "",
+  lg: "btn-lg",
+  icon: "btn-square",
+};
+
+const loaderSize: Record<ButtonSize, string> = {
+  sm: "loading-xs",
+  md: "loading-sm",
+  lg: "loading-md",
+  icon: "loading-sm",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -57,15 +55,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       disabled={disabled || isLoading}
       className={clsx(
-        baseStyles,
+        "btn",
         variantStyles[variant],
         sizeStyles[size],
-        fullWidth && "w-full",
+        fullWidth && "btn-block",
         className
       )}
       {...props}
     >
-      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+      {isLoading && (
+        <span
+          aria-hidden="true"
+          className={clsx("loading loading-spinner", loaderSize[size])}
+        />
+      )}
       {!isLoading && leftIcon && <span className="shrink-0">{leftIcon}</span>}
       {children}
       {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}

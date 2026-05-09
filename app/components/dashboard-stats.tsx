@@ -63,14 +63,14 @@ function StatCard({
 }) {
   const valueColor =
     accent === "primary"
-      ? "text-primary dark:text-primary-light"
+      ? "text-primary"
       : accent === "warning"
-      ? "text-orange-600 dark:text-orange-400"
-      : "text-foreground dark:text-white";
+      ? "text-warning"
+      : "text-base-content";
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-      <dt className="text-[10px] font-semibold uppercase tracking-wide leading-tight text-secondary/80 dark:text-navy-400">
+    <div className="rounded-lg border border-base-300 bg-base-100 px-2.5 py-1.5 shadow-sm">
+      <dt className="text-[10px] font-semibold uppercase tracking-wide leading-tight text-base-content/60">
         {label}
       </dt>
       <dd

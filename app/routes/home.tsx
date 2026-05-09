@@ -1,4 +1,4 @@
-import { Link, data, useActionData, useNavigation, useSearchParams } from "react-router";
+import { data, useActionData, useNavigate, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/home";
 import { createMotorcycle } from "~/services/motorcycles";
 import { getCurrencies } from "~/services/settings";
@@ -23,7 +23,7 @@ import {
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import { useIsOffline } from "~/utils/offline";
-import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { DropdownMenu } from "~/components/dropdown-menu";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { motorcycleSchema } from "~/validations";
@@ -200,6 +200,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { cards, stats, currencies } = loaderData;
   const isOffline = useIsOffline();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const actionData = useActionData<{ success?: boolean }>();
   const navigation = useNavigation();
@@ -337,49 +338,40 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {/* Header Actions */}
       <div className="order-2 sm:order-3 flex items-center justify-between">
         {/* Sort Dropdown */}
-        <Menu>
-          <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
-            {ActiveSortIcon && <ActiveSortIcon className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />}
-            <span className="hidden sm:inline text-secondary/70 dark:text-navy-400">Sortiert nach</span>
-            <span className="font-semibold text-foreground dark:text-white">{activeSortOption?.label ?? "Aktualität"}</span>
-            <ChevronDown className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />
-          </MenuButton>
-
-          <MenuItems
-            portal
-            transition
-            anchor={{ to: "bottom start", gap: 8 }}
-            className="z-30 w-56 rounded-xl border border-gray-200 bg-white p-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in dark:border-navy-700 dark:bg-navy-800 dark:ring-white/10"
-          >
-            {sortOptions.map((option) => {
-              const Icon = option.icon;
-              const isActive = currentSort === option.id;
-              return (
-                <MenuItem key={option.id}>
-                  <Link
-                    to={`?${(() => {
-                      const p = new URLSearchParams(searchParams);
-                      p.set("sort", option.id);
-                      return p.toString();
-                    })()}`}
-                    prefetch="intent"
-                    replace
-                    preventScrollReset
-                    className={clsx(
-                      "group flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm font-medium",
-                      isActive
-                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
-                        : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
-                    )}
-                  >
-                    <Icon className={clsx("h-4 w-4", isActive ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400")} />
-                    {option.label}
-                  </Link>
-                </MenuItem>
-              );
-            })}
-          </MenuItems>
-        </Menu>
+        <DropdownMenu
+          align="start"
+          trigger={
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-base-300 bg-base-100 px-4 py-3 text-sm font-medium text-base-content/70 shadow-sm hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              {ActiveSortIcon && <ActiveSortIcon className="h-4 w-4 text-base-content/60" aria-hidden="true" />}
+              <span className="hidden sm:inline text-base-content/60">Sortiert nach</span>
+              <span className="font-semibold text-base-content">{activeSortOption?.label ?? "Aktualität"}</span>
+              <ChevronDown className="h-4 w-4 text-base-content/60" aria-hidden="true" />
+            </button>
+          }
+        >
+          {sortOptions.map((option) => {
+            const Icon = option.icon;
+            const isActive = currentSort === option.id;
+            return (
+              <DropdownMenu.Item
+                key={option.id}
+                icon={<Icon className={clsx("h-4 w-4", isActive ? "text-primary" : "text-base-content/60")} />}
+                onSelect={() => {
+                  const p = new URLSearchParams(searchParams);
+                  p.set("sort", option.id);
+                  navigate(`?${p.toString()}`, { replace: true, preventScrollReset: true });
+                }}
+                aria-current={isActive ? "true" : undefined}
+                className={clsx(isActive && "bg-primary/10 text-primary")}
+              >
+                {option.label}
+              </DropdownMenu.Item>
+            );
+          })}
+        </DropdownMenu>
 
         <Button
           onClick={() => setIsAddOpen(true)}

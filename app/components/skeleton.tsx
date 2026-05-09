@@ -9,8 +9,12 @@ export function Skeleton({ className, variant = "rect" }: SkeletonProps) {
   return (
     <div
       className={clsx(
-        "animate-pulse bg-gray-200 dark:bg-navy-700",
-        variant === "circle" ? "rounded-full" : variant === "text" ? "h-4 rounded" : "rounded-xl",
+        "skeleton",
+        variant === "circle"
+          ? "rounded-full"
+          : variant === "text"
+            ? "h-4 rounded"
+            : "rounded-box",
         className
       )}
     />
@@ -19,9 +23,9 @@ export function Skeleton({ className, variant = "rect" }: SkeletonProps) {
 
 export function MotorcycleCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800">
+    <div className="card card-bordered border-base-300 bg-base-100 overflow-hidden shadow-sm">
       <Skeleton className="h-36 w-full rounded-none" />
-      <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-navy-700">
+      <div className="grid grid-cols-3 divide-x divide-base-300">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex flex-col items-center gap-2 px-2 py-4">
             <Skeleton variant="circle" className="h-4 w-4" />
@@ -36,7 +40,7 @@ export function MotorcycleCardSkeleton() {
 
 export function DocumentCardSkeleton() {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+    <div className="card card-bordered border-base-300 bg-base-100 p-4 shadow-sm flex flex-col gap-3">
       <Skeleton className="h-32 w-full" />
       <Skeleton variant="text" className="w-3/4" />
       <Skeleton variant="text" className="w-1/2 h-3" />
@@ -46,7 +50,7 @@ export function DocumentCardSkeleton() {
 
 export function ExpenseRowSkeleton() {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-navy-800 dark:bg-navy-900">
+    <div className="card card-bordered border-base-200 bg-base-100 p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
@@ -64,7 +68,7 @@ export function ExpenseRowSkeleton() {
 
 export function StatRowSkeleton() {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-navy-800 dark:bg-navy-900">
+    <div className="card card-bordered border-base-200 bg-base-100 p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <Skeleton variant="text" className="w-24 h-6" />
         <Skeleton variant="text" className="w-16 h-4" />

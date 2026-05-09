@@ -27,20 +27,18 @@ export function FormField({
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
 
-  const fieldClassName = clsx(
-    "block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500",
-    error && "border-red-500 focus:border-red-500 focus:ring-red-500"
-  );
+  const baseFieldClass = "w-full bg-base-200 text-base-content";
+  const errorClass = error ? "border-error focus:border-error focus:outline-error" : "";
 
   return (
     <div className={clsx("space-y-1.5", className)}>
       <label
         htmlFor={fieldId}
-        className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+        className="block text-xs font-semibold uppercase tracking-wider text-base-content/60"
       >
         {label}
         {required && (
-          <span aria-hidden="true" className="ml-0.5 text-red-500">
+          <span aria-hidden="true" className="ml-0.5 text-error">
             *
           </span>
         )}
@@ -49,44 +47,49 @@ export function FormField({
       {Component === "select" ? (
         <select
           id={fieldId}
-          className={fieldClassName}
+          className={clsx("select select-bordered", baseFieldClass, errorClass)}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
           aria-required={required || undefined}
           required={required}
-          {...(props as any)}
+          {...(props as InputHTMLAttributes<HTMLSelectElement>)}
         >
           {children}
         </select>
       ) : Component === "textarea" ? (
         <textarea
           id={fieldId}
-          className={fieldClassName}
+          className={clsx("textarea textarea-bordered", baseFieldClass, errorClass)}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
           aria-required={required || undefined}
           required={required}
-          {...(props as any)}
+          {...(props as InputHTMLAttributes<HTMLTextAreaElement>)}
         />
       ) : (
         <input
           id={fieldId}
           type={type}
-          className={clsx(fieldClassName, type === "date" && "dark:[color-scheme:dark]")}
+          className={clsx(
+            "input input-bordered",
+            baseFieldClass,
+            errorClass,
+            type === "date" && "[color-scheme:light] dark:[color-scheme:dark]"
+          )}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
           aria-required={required || undefined}
           required={required}
-          {...(props as any)}
+          {...(props as InputHTMLAttributes<HTMLInputElement>)}
         />
       )}
 
       {error ? (
-        <p id={errorId} className="text-xs font-medium text-red-500 animate-fade-in">
+        <p id={errorId} className="text-xs font-medium text-error animate-fade-in">
           {error}
         </p>
       ) : helperText ? (
-        <p id={helperId} className="text-xs text-secondary dark:text-navy-400">
+        <p id={helperId} className="text-xs text-base-content/60">
           {helperText}
         </p>
       ) : null}

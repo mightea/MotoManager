@@ -1,8 +1,83 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/forms";
+@plugin "daisyui" {
+  themes: motomanager --default, motomanager-dark --prefersdark;
+  logs: false;
+}
 @import "leaflet/dist/leaflet.css";
 
 @variant dark (&:where(.dark, .dark *));
+
+/* BMW motorsport-mapped daisyUI themes.
+   Driven by data-theme on <html>; coexists with the .dark class so existing
+   Tailwind dark: utilities keep working through the migration. */
+@plugin "daisyui/theme" {
+  name: "motomanager";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-primary: #008AC9;          /* Motorsport Light Blue */
+  --color-primary-content: #ffffff;
+  --color-secondary: #2B115A;        /* Motorsport Violet */
+  --color-secondary-content: #ffffff;
+  --color-accent: #F11A22;           /* Motorsport Red */
+  --color-accent-content: #ffffff;
+  --color-neutral: #64748b;          /* Slate */
+  --color-neutral-content: #ffffff;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #f8fafc;
+  --color-base-300: #e2e8f0;
+  --color-base-content: #0f172a;
+
+  --color-info: #2563eb;
+  --color-info-content: #ffffff;
+  --color-success: #16a34a;
+  --color-success-content: #ffffff;
+  --color-warning: #d97706;
+  --color-warning-content: #ffffff;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
+
+  --radius-selector: 1rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+}
+
+@plugin "daisyui/theme" {
+  name: "motomanager-dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-primary: #4a82e0;          /* Lighter blue for dark mode legibility */
+  --color-primary-content: #0a0711;
+  --color-secondary: #2B115A;
+  --color-secondary-content: #ffffff;
+  --color-accent: #F11A22;
+  --color-accent-content: #ffffff;
+  --color-neutral: #262134;          /* navy-700 */
+  --color-neutral-content: #e5e3eb;  /* navy-50 */
+
+  --color-base-100: #1b1627;         /* navy-800, surface */
+  --color-base-200: #120e1d;         /* navy-900, background */
+  --color-base-300: #0a0711;         /* navy-950, deepest */
+  --color-base-content: #f8fafc;
+
+  --color-info: #60a5fa;
+  --color-info-content: #0a0711;
+  --color-success: #4ade80;
+  --color-success-content: #0a0711;
+  --color-warning: #fbbf24;
+  --color-warning-content: #0a0711;
+  --color-error: #f87171;
+  --color-error-content: #0a0711;
+
+  --radius-selector: 1rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+}
 
 @theme {
   --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
