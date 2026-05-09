@@ -20,5 +20,6 @@ export default {
         'build',
       ],
     ],
+    'scope-empty': [2, 'always'],
   },
 };

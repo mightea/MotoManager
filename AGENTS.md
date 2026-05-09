@@ -22,7 +22,7 @@ Stick with TypeScript, ES modules, and functional React components. Prefer Pasca
 
 This repo follows [Conventional Commits](https://www.conventionalcommits.org/). Release-please parses commit messages to generate the changelog and bump the calver patch on the next release.
 
-**Format:** `<type>(optional-scope): <subject>` — e.g. `feat(maintenance): add interval reminders`, `fix: handle nullable mileage`.
+**Format:** `<type>: <subject>` — e.g. `feat: add maintenance interval reminders`, `fix: handle nullable mileage`. Scopes (the `(area)` parenthetical) are not used in this repo and are rejected by commitlint.
 
 **Allowed types:**
 
