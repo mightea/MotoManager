@@ -18,6 +18,30 @@ Use pnpm for every workflow:
 
 Stick with TypeScript, ES modules, and functional React components. Prefer PascalCase for components (`MotorcycleSummaryCard`), camelCase for utilities, and kebab-case route filenames (`motorcycle.tsx`). Keep JSX prop order consistent (structural props first, handlers last). Tailwind is the primary styling tool, so group utilities logically and avoid inline style drift. Use 2-space indentation, and commit only formatted, lint-clean code.
 
+## Commit Messages
+
+This repo follows [Conventional Commits](https://www.conventionalcommits.org/). Release-please parses commit messages to generate the changelog and bump the calver patch on the next release.
+
+**Format:** `<type>(optional-scope): <subject>` — e.g. `feat(maintenance): add interval reminders`, `fix: handle nullable mileage`.
+
+**Allowed types:**
+
+- `feat` — user-facing feature
+- `fix` — bug fix
+- `perf` — performance improvement
+- `revert` — revert of an earlier commit
+- `docs` — documentation only
+- `style` — formatting/whitespace, no behavioral change
+- `refactor` / `ref` — internal restructure, no behavior change
+- `test` — adding or adjusting tests
+- `ci` — workflow / pipeline changes
+- `build` — build system or dependency changes
+- `chore` — anything else (lockfile bumps, tooling, housekeeping)
+
+**Enforcement:** A husky `commit-msg` hook runs `commitlint` against `commitlint.config.js` and rejects non-conforming messages. Hooks install automatically on `pnpm install` via the `prepare` script.
+
+**Releases:** Use `BREAKING CHANGE:` in the body for breaking changes; the changelog highlights them. To force a specific version (e.g. on month rollover), include `Release-As: YYYY.M.0` as a footer — release-please honors it.
+
 ## Testing Guidelines
 
 Vitest with Testing Library is configured. Unit specs reside in the test directory with the same folder structure as the code they cover using a `*.test.ts(x)` suffix. Aim to cover utility logic and critical route loaders first. Run `pnpm test` for CI-style checks, or `pnpm test:watch` while developing. Snapshot or integration helpers should live under `tests/` if they span multiple modules, and document any required fixtures in the PR.
