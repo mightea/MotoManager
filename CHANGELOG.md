@@ -1,5 +1,27 @@
 # Changelog
 
+## [2026.5.1](https://github.com/mightea/MotoManager/compare/2026.5.0...2026.5.1) (2026-05-09)
+
+
+### ✨ Features
+
+* more descriptive fleet stats cards with units ([a5b07d2](https://github.com/mightea/MotoManager/commit/a5b07d285a1c2c269f8b229cbb13cb7e0d2fc40b))
+
+
+### 🐛 Bug Fixes
+
+* skip lifecycle scripts on docker prune ([711e62d](https://github.com/mightea/MotoManager/commit/711e62d77020261b70c7da451426348e9349cbb8))
+
+
+### ✏️ Miscellaneous Chores
+
+* include component in release-please pr title pattern ([505a3df](https://github.com/mightea/MotoManager/commit/505a3dfdfd7e37b9270170ebf9931ece9f99cf67))
+
+
+### ♻️ Code Refactoring
+
+* replace headless ui with daisyui across the ui ([bf440af](https://github.com/mightea/MotoManager/commit/bf440af1ac9cccd64e3814916e2143b3f58255ac))
+
 ## [2026.5.0](https://github.com/mightea/MotoManager/compare/2026.4.9...2026.5.0) (2026-05-09)
 
 
