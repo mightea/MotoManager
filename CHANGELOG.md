@@ -1,5 +1,34 @@
 # Changelog
 
+## [2026.5.0](https://github.com/mightea/MotoManager/compare/2026.4.9...2026.5.0) (2026-05-09)
+
+
+### ✨ Features
+
+* a11y, toasts, empty states, tokens — four-phase audit follow-up ([1526eb1](https://github.com/mightea/MotoManager/commit/1526eb1fd0d3e50f12655c193447fa68ad7797c3))
+* overhaul dashboard UX ([eaa1cab](https://github.com/mightea/MotoManager/commit/eaa1cab87b4d3e748d61394887d821e7d06ef0f6))
+
+
+### 🐛 Bug Fixes
+
+* keep page layout stable when sort menu opens on mobile ([826bb1e](https://github.com/mightea/MotoManager/commit/826bb1e80ecb866367871f78762ce6252dedea26))
+* serialize release-please runs and rebase before push ([59beb72](https://github.com/mightea/MotoManager/commit/59beb728d280225057331c9e41c81c0eca8bd908))
+
+
+### ✏️ Miscellaneous Chores
+
+* enforce conventional commits via husky + commitlint ([ebf7d35](https://github.com/mightea/MotoManager/commit/ebf7d3592ca3313cccadf9f6e977cff438f32c45))
+* forbid scope in conventional commit messages ([b840b26](https://github.com/mightea/MotoManager/commit/b840b26273720845adb9c88a1aecd7eeb64434d2))
+* replace release-it with release-please ([9da4196](https://github.com/mightea/MotoManager/commit/9da41962757e714b93f9b07a9d84e837bb56753f))
+* roll calver to 2026.5.0 ([a0de3b0](https://github.com/mightea/MotoManager/commit/a0de3b0c50e8a2ee2006f40eb20ea475191d2aa0))
+* set explicit release-please PR title pattern ([8277872](https://github.com/mightea/MotoManager/commit/827787269574ae4c85a57b5f7deeecb24572f6c2))
+* upgrade all dependencies to latest ([e01697f](https://github.com/mightea/MotoManager/commit/e01697f1d3d62f4c3d26c673bc2f9cd0706f9e76))
+
+
+### ♻️ Code Refactoring
+
+* compact stats, mobile order, stable sort menu ([d015107](https://github.com/mightea/MotoManager/commit/d01510721720a5cd3146fd7af17dc033e2339572))
+
 ## [2026.4.9](https://github.com/mightea/MotoManager/compare/2026.4.8...2026.4.9) (2026-04-16)
 
 ### Bug Fixes
