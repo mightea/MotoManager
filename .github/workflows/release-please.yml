@@ -9,6 +9,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Serialize runs so two pushes can't both race a calver-rollover commit and
+# cause a non-fast-forward rejection.
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
@@ -47,6 +53,12 @@ jobs:
           git commit --allow-empty \
             -m "chore: roll calver to ${current}.0" \
             -m "Release-As: ${current}.0"
+
+          # Defense in depth: if any commit landed on main between checkout
+          # and here (e.g. another push racing this run), rebase our empty
+          # calver commit on top before pushing. Empty commits never
+          # conflict, so the rebase is always trivial.
+          git pull --rebase origin main
           git push origin HEAD:main
 
       - name: Run release-please
