@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useLoaderData } from "react-router";
+import { useEffect, useState } from "react";
+import { useActionData, useLoaderData } from "react-router";
+import { toast } from "~/hooks/use-toast";
 import type { Route } from "./+types/fleet-expenses";
 import { requireUser } from "~/services/auth";
 import { listExpenses, createExpense, updateExpense, deleteExpense } from "~/services/expenses";
@@ -7,6 +8,8 @@ import { getCurrencies } from "~/services/settings";
 import { fetchFromBackend } from "~/utils/backend";
 import { Plus, Receipt, Calendar, Info, Pencil, Car } from "lucide-react";
 import { ExpenseDialog } from "~/components/expense-dialog";
+import { EmptyState } from "~/components/empty-state";
+import { ExpenseRowSkeleton } from "~/components/skeleton";
 import { formatCurrency } from "~/utils/numberUtils";
 import type { Expense, Motorcycle } from "~/types/db";
 
@@ -20,11 +23,25 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   ]);
 
   return { 
-    expenses, 
-    currencies, 
+    expenses,
+    currencies,
     motorcycles: motorcyclesResponse.motorcycles,
-    user 
+    user
   };
+}
+
+export function HydrateFallback() {
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="mb-8 h-12" />
+      <div className="space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          // eslint-disable-next-line react/no-array-index-key
+          <ExpenseRowSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -50,13 +67,13 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       const id = parseInt(formData.get("expenseId") as string, 10);
       await updateExpense(token, id, expenseData);
     }
-    return { success: true };
+    return { success: true, intent };
   }
 
   if (intent === "deleteExpense") {
     const id = parseInt(formData.get("expenseId") as string, 10);
     await deleteExpense(token, id);
-    return { success: true };
+    return { success: true, intent };
   }
 
   return { success: false };
@@ -64,8 +81,27 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 export default function FleetExpenses() {
   const { expenses, currencies, motorcycles } = useLoaderData<typeof clientLoader>();
+  const actionData = useActionData<{ success?: boolean; intent?: string }>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+
+  useEffect(() => {
+    if (actionData?.success) {
+      switch (actionData.intent) {
+        case "createExpense":
+          toast.success("Ausgabe hinzugefügt");
+          break;
+        case "updateExpense":
+          toast.success("Ausgabe aktualisiert");
+          break;
+        case "deleteExpense":
+          toast.success("Ausgabe gelöscht");
+          break;
+      }
+      setIsDialogOpen(false);
+      setSelectedExpense(null);
+    }
+  }, [actionData]);
 
   const openAddDialog = () => {
     setSelectedExpense(null);
@@ -100,10 +136,21 @@ export default function FleetExpenses() {
 
       <div className="space-y-4">
         {expenses.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-gray-100 p-12 text-center dark:border-navy-800">
-            <Receipt className="mx-auto h-12 w-12 text-secondary/20 mb-4" />
-            <p className="text-secondary dark:text-navy-400">Noch keine gemeinsamen Ausgaben erfasst.</p>
-          </div>
+          <EmptyState
+            icon={Receipt}
+            title="Noch keine gemeinsamen Ausgaben"
+            description="Erfasse Versicherungen, Steuern und andere Ausgaben, die mehrere Fahrzeuge betreffen."
+            action={
+              <button
+                type="button"
+                onClick={openAddDialog}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                <Plus className="h-4 w-4" />
+                Ausgabe hinzufügen
+              </button>
+            }
+          />
         ) : (
           expenses.map(expense => (
             <div 

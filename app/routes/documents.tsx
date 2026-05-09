@@ -11,6 +11,9 @@ import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { fetchFromBackend } from "~/utils/backend";
 import clsx from "clsx";
+import { toast } from "~/hooks/use-toast";
+import { EmptyState } from "~/components/empty-state";
+import { DocumentCardSkeleton } from "~/components/skeleton";
 
 export function meta() {
   return [
@@ -27,6 +30,19 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   return data({ ...response, user });
 }
 
+export function HydrateFallback() {
+  return (
+    <div className="container mx-auto p-4 max-w-7xl">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+        {Array.from({ length: 8 }).map((_, i) => (
+          // eslint-disable-next-line react/no-array-index-key
+          <DocumentCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const { token } = await requireUser(request);
 
@@ -39,9 +55,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         method: "POST",
         body: formData,
       }, token);
-      return data({ success: true });
+      return data({ success: true, intent: "create" });
     } catch (e: any) {
-      return data({ error: e.message }, { status: 400 });
+      return data({ error: e.message, intent: "create" }, { status: 400 });
     }
   }
 
@@ -52,9 +68,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         method: "PUT",
         body: formData,
       }, token);
-      return data({ success: true });
+      return data({ success: true, intent: "update" });
     } catch (e: any) {
-      return data({ error: e.message }, { status: 400 });
+      return data({ error: e.message, intent: "update" }, { status: 400 });
     }
   }
 
@@ -64,9 +80,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       await fetchFromBackend(`/documents/${id}`, {
         method: "DELETE",
       }, token);
-      return data({ success: true });
+      return data({ success: true, intent: "delete" });
     } catch (e: any) {
-      return data({ error: e.message }, { status: 400 });
+      return data({ error: e.message, intent: "delete" }, { status: 400 });
     }
   }
 
@@ -83,18 +99,31 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
 
-  const actionData = useActionData<{ success?: boolean }>();
+  const actionData = useActionData<{ success?: boolean; error?: string; intent?: string }>();
   const submit = useSubmit();
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (actionData?.success) {
+      switch (actionData.intent) {
+        case "create":
+          toast.success("Dokument hinzugefügt");
+          break;
+        case "update":
+          toast.success("Dokument aktualisiert");
+          break;
+        case "delete":
+          toast.success("Dokument gelöscht");
+          break;
+      }
       setTimeout(() => {
         setDeleteConfirmationOpen(false);
         setIsEditorOpen(false);
         setEditingDocument(undefined);
       }, 0);
+    } else if (actionData?.error) {
+      toast.error("Fehler", actionData.error);
     }
   }, [actionData]);
 
@@ -285,18 +314,16 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         {filteredAndSortedDocs.length === 0 ? (
-          <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
-            <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">
-              <FileText className="h-8 w-8 text-gray-400 dark:text-navy-300" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground dark:text-white">
-              Keine Dokumente gefunden
-            </h3>
-            <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
-              {filter === "all" 
-                ? "Es sind momentan keine Dokumente verfügbar." 
-                : "Keine Dokumente für den gewählten Filter gefunden."}
-            </p>
+          <div className="col-span-full">
+            <EmptyState
+              icon={FileText}
+              title="Keine Dokumente gefunden"
+              description={
+                filter === "all"
+                  ? "Es sind momentan keine Dokumente verfügbar."
+                  : "Keine Dokumente für den gewählten Filter gefunden."
+              }
+            />
           </div>
         ) : (
           filteredAndSortedDocs.map((doc: any) => (

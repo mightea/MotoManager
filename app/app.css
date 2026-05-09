@@ -8,22 +8,33 @@
   --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
 
   /* BMW R 80 G/S Paris Dakar / Motorsport Scheme */
-  
+
   /* Motorsport Light Blue - Primary Action Color */
-  --color-primary: #008AC9; 
-  
+  --color-primary: #008AC9;
+
   /* Motorsport Violet/Dark Blue - Hover / Deep Interaction */
-  --color-primary-dark: #2B115A; 
-  
+  --color-primary-dark: #2B115A;
+
   /* Lighter Blue for Dark Mode Text/Accents */
-  --color-primary-light: #4a82e0; /* Darkened from previous #60a5fa */
+  --color-primary-light: #4a82e0;
 
   --color-secondary: #64748b;
 
-  /* Motorsport Red - Accents / Destructive */
-  --color-red-600: #F11A22;
-  --color-red-500: #F11A22; /* Mapping standard tailwind red-500 to brand red for ease */
-  --color-red-400: #ff5c5c; /* Lighter Red for Dark Mode */
+  /* Motorsport Red - brand accent. Namespaced so it doesn't override
+     Tailwind's red-* scale (which forms have to keep using for inputs/borders). */
+  --color-brand-red: #F11A22;
+  --color-brand-red-soft: #ff5c5c;
+
+  /* Semantic status tokens — used by toasts, badges, sync indicators.
+     Keep these wired up in @theme so dark-mode variants flow through `dark:` classes. */
+  --color-status-success: #16a34a;
+  --color-status-success-soft: #4ade80;
+  --color-status-warning: #d97706;
+  --color-status-warning-soft: #fbbf24;
+  --color-status-error: #dc2626;
+  --color-status-error-soft: #f87171;
+  --color-status-info: #2563eb;
+  --color-status-info-soft: #60a5fa;
 
   --color-background: #f8fafc; /* Alpine White-ish (Slate 50) */
   --color-foreground: #0f172a;

@@ -26,11 +26,6 @@ export function Modal({ isOpen, onClose, title, children, description }: ModalPr
                         transition
                         className="flex w-full max-h-[90vh] sm:max-h-[85vh] flex-col sm:max-w-xl rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl ring-1 ring-gray-900/5 transition-all duration-300 ease-out data-[closed]:translate-y-full sm:data-[closed]:translate-y-0 sm:data-[closed]:scale-95 data-[closed]:opacity-0 dark:bg-navy-800 dark:ring-white/10"
                     >
-                        {/* Drag indicator (mobile only) */}
-                        <div className="flex justify-center pt-3 sm:hidden">
-                            <div className="h-1.5 w-10 rounded-full bg-gray-300 dark:bg-navy-600" />
-                        </div>
-
                         {/* Sticky Header */}
                         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white/95 px-6 py-4 backdrop-blur-sm dark:border-navy-700 dark:bg-navy-800/95 sm:rounded-t-2xl">
                             <div>

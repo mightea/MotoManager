@@ -5,7 +5,7 @@ import { getCurrencies } from "~/services/settings";
 import { requireUser } from "~/services/auth";
 import { getUserPrefs, setUserPrefs } from "~/services/preferences";
 import { fetchFromBackend } from "~/utils/backend";
-import { type MotorcycleDashboardItem } from "~/utils/home-stats";
+import { type MotorcycleDashboardItem, normalizeDashboardStats } from "~/utils/home-stats";
 
 import {
   CalendarDays,
@@ -32,6 +32,8 @@ import { DashboardStats } from "~/components/dashboard-stats";
 import { MotorcycleCard } from "~/components/motorcycle-card";
 import { Button } from "~/components/button";
 import { MotorcycleCardSkeleton } from "~/components/skeleton";
+import { EmptyState } from "~/components/empty-state";
+import { toast } from "~/hooks/use-toast";
 
 type SortKey = "updated" | "make" | "age" | "location" | "inspection";
 type FilterKey = "all" | "overdue-inspection" | "overdue-maintenance" | "issues" | "veteran";
@@ -67,7 +69,7 @@ export async function clientLoader({ request: _request }: Route.ClientLoaderArgs
   ]);
 
   const cards: MotorcycleDashboardItem[] = dashboardData?.motorcycles ?? [];
-  const stats = dashboardData?.stats;
+  const stats = normalizeDashboardStats(dashboardData?.stats);
 
   return data({ cards, stats, user, currencies });
 }
@@ -231,6 +233,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (actionData?.success) {
+      toast.success("Motorrad hinzugefügt");
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAddOpen(false);
     }
@@ -274,7 +277,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const offlineHint = "Offline – nur in Verbindung mit dem Server möglich.";
 
   return (
-    <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12 motion-safe:animate-fade-in">
+    <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12">
 
       {/* Needs-attention chips: only render if anything is actionable.
           Single row with horizontal scroll on small screens so wrap behavior
@@ -335,9 +338,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <div className="order-2 sm:order-3 flex items-center justify-between">
         {/* Sort Dropdown */}
         <Menu>
-          <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus:outline-none dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
+          <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
             {ActiveSortIcon && <ActiveSortIcon className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />}
-            <span className="text-secondary/70 dark:text-navy-400">Sortiert nach</span>
+            <span className="hidden sm:inline text-secondary/70 dark:text-navy-400">Sortiert nach</span>
             <span className="font-semibold text-foreground dark:text-white">{activeSortOption?.label ?? "Aktualität"}</span>
             <ChevronDown className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />
           </MenuButton>
@@ -383,10 +386,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           disabled={isOffline}
           aria-disabled={isOffline}
           title={isOffline ? offlineHint : undefined}
-          className="relative"
+          className="relative hidden sm:inline-flex"
         >
           <Plus className="h-5 w-5" />
-          <span className="hidden sm:inline">Neues Motorrad</span>
+          <span>Neues Motorrad</span>
         </Button>
       </div>
 
@@ -398,7 +401,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           aria-disabled={isOffline}
           title={isOffline ? offlineHint : undefined}
           className={clsx(
-            "fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full text-white shadow-lg motion-safe:transition-all motion-safe:active:scale-95 sm:hidden",
+            "fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full text-white shadow-lg motion-safe:transition-all motion-safe:active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950 sm:hidden",
             isOffline
               ? "bg-gray-400 cursor-not-allowed opacity-60"
               : "bg-primary shadow-primary/30 hover:bg-primary-dark hover:shadow-xl"
@@ -416,40 +419,40 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <MotorcycleCardSkeleton key={i} />
           ))
         ) : cards.length === 0 ? (
-          <div className="col-span-full flex min-h-[220px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-10 text-center dark:border-navy-700 dark:bg-navy-800/50">
-            <div className="mb-3 grid h-12 w-12 place-items-center rounded-xl bg-gray-100 dark:bg-navy-700">
-              <Gauge className="h-6 w-6 text-gray-400 dark:text-navy-300" />
-            </div>
-            <h3 className="text-base font-semibold text-foreground dark:text-white">
-              Keine Motorräder gefunden
-            </h3>
-            <p className="mt-1.5 max-w-sm text-sm text-secondary dark:text-navy-400">
-              Deine Garage ist leer. Füge dein erstes Motorrad hinzu.
-            </p>
-            <Button
-              onClick={() => setIsAddOpen(true)}
-              className="mt-5"
-              disabled={isOffline}
-              aria-disabled={isOffline}
-              title={isOffline ? offlineHint : undefined}
-            >
-              <Plus className="h-4 w-4" />
-              Motorrad hinzufügen
-            </Button>
+          <div className="col-span-full">
+            <EmptyState
+              icon={Gauge}
+              title="Keine Motorräder gefunden"
+              description="Deine Garage ist leer. Füge dein erstes Motorrad hinzu."
+              action={
+                <Button
+                  onClick={() => setIsAddOpen(true)}
+                  disabled={isOffline}
+                  aria-disabled={isOffline}
+                  title={isOffline ? offlineHint : undefined}
+                >
+                  <Plus className="h-4 w-4" />
+                  Motorrad hinzufügen
+                </Button>
+              }
+            />
           </div>
         ) : visibleCards.length === 0 ? (
-          <div className="col-span-full flex min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center dark:border-navy-700 dark:bg-navy-800/50">
-            <h3 className="text-sm font-semibold text-foreground dark:text-white">
-              Keine Motorräder im aktuellen Filter
-            </h3>
-            <button
-              type="button"
-              onClick={() => updateParam("filter", null)}
-              className="mt-3 inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 dark:text-primary-light"
-            >
-              <X className="h-3.5 w-3.5" aria-hidden="true" />
-              Filter aufheben
-            </button>
+          <div className="col-span-full">
+            <EmptyState
+              size="sm"
+              title="Keine Motorräder im aktuellen Filter"
+              action={
+                <button
+                  type="button"
+                  onClick={() => updateParam("filter", null)}
+                  className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  Filter aufheben
+                </button>
+              }
+            />
           </div>
         ) : (
           visibleCards.map((moto: MotorcycleDashboardItem) => (
@@ -509,7 +512,7 @@ function AttentionChip({
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold motion-safe:transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950",
         active ? t.activeCls : t.idle,
       )}
     >

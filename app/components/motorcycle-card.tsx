@@ -31,7 +31,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   return (
     <Link
       to={`/motorcycle/${slug}/${moto.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-out hover:border-primary/20 hover:shadow-xl motion-safe:hover:-translate-y-1 motion-safe:active:scale-[0.99] active:shadow-sm dark:border-navy-700 dark:bg-navy-800 dark:hover:border-primary/30"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-out hover:border-primary/20 hover:shadow-xl motion-safe:hover:-translate-y-1 motion-safe:active:scale-[0.99] active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:border-navy-700 dark:bg-navy-800 dark:hover:border-primary/30 dark:focus-visible:ring-offset-navy-950"
     >
       {/* Image banner */}
       <div className="relative h-36 w-full overflow-hidden">

@@ -8,22 +8,21 @@ interface DashboardStatsProps {
 }
 
 export function DashboardStats({ stats, className }: DashboardStatsProps) {
-  const year = stats?.year ?? new Date().getFullYear();
-  const totalKmThisYear = stats?.totalKmThisYear ?? (stats as any)?.total_km_this_year ?? 0;
-  const totalKmOverall = stats?.totalKmOverall ?? (stats as any)?.total_km_overall ?? 0;
-  const totalActiveIssues = stats?.totalActiveIssues ?? (stats as any)?.total_active_issues ?? 0;
-  const totalMaintenanceCostThisYear = stats?.totalMaintenanceCostThisYear ?? (stats as any)?.total_maintenance_cost_this_year ?? 0;
-  const veteranCount = stats?.veteranCount ?? (stats as any)?.veteran_count ?? 0;
-
-  const busiestBike = stats?.busiestBike ?? (stats as any)?.busiest_bike;
+  const {
+    year,
+    totalKmThisYear,
+    totalKmOverall,
+    totalActiveIssues,
+    totalMaintenanceCostThisYear,
+    veteranCount,
+    busiestBike,
+  } = stats;
 
   let bikeLabel = "—";
   if (typeof busiestBike === "string") {
     bikeLabel = busiestBike;
   } else if (busiestBike && typeof busiestBike === "object") {
-    const bikeMake = busiestBike.make || (busiestBike as any).Make;
-    const bikeModel = busiestBike.model || (busiestBike as any).Model;
-    bikeLabel = bikeMake && bikeModel ? `${bikeMake} ${bikeModel}` : "—";
+    bikeLabel = busiestBike.make && busiestBike.model ? `${busiestBike.make} ${busiestBike.model}` : "—";
   }
 
   return (

@@ -39,6 +39,8 @@ import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
 import { fetchFromBackend } from "~/utils/backend";
 import { useUmami } from "~/components/umami-provider";
+import { toast } from "~/hooks/use-toast";
+import { MotorcycleDetailSkeleton } from "~/components/skeleton";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -196,6 +198,10 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   });
 }
 
+export function HydrateFallback() {
+  return <MotorcycleDetailSkeleton />;
+}
+
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const { user, token } = await requireUser(request);
   const formData = await request.formData();
@@ -286,7 +292,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       throw new Response("Motorrad nicht gefunden.", { status: 404 });
     }
 
-    return data({ success: true });
+    return data({ success: true, intent: "updateMotorcycle" });
   }
 
   if (intent === "deleteMotorcycle") {
@@ -321,7 +327,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     await createIssue(token, issueData);
 
-    return data({ success: true });
+    return data({ success: true, intent: "createIssue" });
   }
 
   if (intent === "updateIssue") {
@@ -347,7 +353,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       date: parseString(formData.get("date")),
     });
 
-    return data({ success: true });
+    return data({ success: true, intent: "updateIssue" });
   }
 
   if (intent === "deleteIssue") {
@@ -360,7 +366,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     await deleteIssue(token, issueId, motorcycleId);
 
-    return data({ success: true });
+    return data({ success: true, intent: "deleteIssue" });
   }
 
   if (intent === "createMaintenance" || intent === "updateMaintenance") {
@@ -422,7 +428,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       await updateMaintenanceRecord(token, maintenanceId, motorcycleId, recordData);
     }
 
-    return data({ success: true });
+    return data({ success: true, intent: intent === "createMaintenance" ? "createMaintenance" : "updateMaintenance" });
   }
 
   if (intent === "deleteMaintenance") {
@@ -435,7 +441,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     await deleteMaintenanceRecord(token, maintenanceId, motorcycleId);
 
-    return data({ success: true });
+    return data({ success: true, intent: "deleteMaintenance" });
   }
 
   if (intent === "createPreviousOwner" || intent === "updatePreviousOwner") {
@@ -481,7 +487,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       await updatePreviousOwner(token, ownerId, motorcycleId, ownerData);
     }
 
-    return data({ success: true });
+    return data({ success: true, intent: intent === "createPreviousOwner" ? "createPreviousOwner" : "updatePreviousOwner" });
   }
 
   if (intent === "deletePreviousOwner") {
@@ -494,7 +500,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     await deletePreviousOwner(token, ownerId, motorcycleId);
 
-    return data({ success: true });
+    return data({ success: true, intent: "deletePreviousOwner" });
   }
 
   if (intent === "importFuelData") {
@@ -539,13 +545,13 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
             body: JSON.stringify(record),
           }, token);
         }
-        return data({ success: true, count: values.length });
+        return data({ success: true, intent: "importFuelData", count: values.length });
       } catch (e: any) {
-        return data({ success: false, error: e.message || "Import fehlgeschlagen" }, { status: 500 });
+        return data({ success: false, intent: "importFuelData", error: e.message || "Import fehlgeschlagen" }, { status: 500 });
       }
     }
 
-    return data({ success: true, count: 0 });
+    return data({ success: true, intent: "importFuelData", count: 0 });
   }
 
   return data({ success: false });
@@ -591,7 +597,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [selectedPreviousOwner, setSelectedPreviousOwner] = useState<(typeof previousOwnersList)[number] | null>(null);
   const [deletePreviousOwnerConfirmationOpen, setDeletePreviousOwnerConfirmationOpen] = useState(false);
   const revalidator = useRevalidator();
-  const actionData = useActionData<{ success?: boolean; error?: string; errors?: Record<string, string> }>();
+  const actionData = useActionData<{ success?: boolean; error?: string; errors?: Record<string, string>; intent?: string; count?: number }>();
   const submit = useSubmit();
   const location = useLocation();
   const params = useParams<{ slug?: string; id?: string }>();
@@ -610,8 +616,42 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (actionData?.success) {
-      if ((actionData as any).count !== undefined) {
-        trackEvent("fuel_import_success", { count: (actionData as any).count });
+      if (actionData.count !== undefined && actionData.intent === "importFuelData") {
+        trackEvent("fuel_import_success", { count: actionData.count });
+        toast.success("Tank-Daten importiert", `${actionData.count} Einträge übernommen.`);
+      } else {
+        switch (actionData.intent) {
+          case "updateMotorcycle":
+            toast.success("Motorrad aktualisiert");
+            break;
+          case "createIssue":
+            toast.success("Mangel erstellt");
+            break;
+          case "updateIssue":
+            toast.success("Mangel aktualisiert");
+            break;
+          case "deleteIssue":
+            toast.success("Mangel gelöscht");
+            break;
+          case "createMaintenance":
+            toast.success("Eintrag erstellt");
+            break;
+          case "updateMaintenance":
+            toast.success("Eintrag aktualisiert");
+            break;
+          case "deleteMaintenance":
+            toast.success("Eintrag gelöscht");
+            break;
+          case "createPreviousOwner":
+            toast.success("Vorbesitzer erstellt");
+            break;
+          case "updatePreviousOwner":
+            toast.success("Vorbesitzer aktualisiert");
+            break;
+          case "deletePreviousOwner":
+            toast.success("Vorbesitzer gelöscht");
+            break;
+        }
       }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditMotorcycleDialogOpen(false);
@@ -619,6 +659,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       setPreviousOwnerDialogOpen(false);
       setSelectedPreviousOwner(null);
       revalidator.revalidate();
+    } else if (actionData && actionData.success === false && actionData.error) {
+      toast.error("Fehler", actionData.error);
     }
   }, [actionData, revalidator, trackEvent]);
 

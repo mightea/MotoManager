@@ -6,6 +6,8 @@ import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "luc
 import clsx from "clsx";
 import { useState, Fragment, useRef, useEffect } from "react";
 import { fetchFromBackend } from "~/utils/backend";
+import { EmptyState } from "~/components/empty-state";
+import { StatRowSkeleton } from "~/components/skeleton";
 
 export function meta() {
   return [
@@ -17,8 +19,20 @@ export function meta() {
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { token } = await requireUser(request);
   const response = await fetchFromBackend<any>("/stats", {}, token);
-  
+
   return data({ stats: response.stats });
+}
+
+export function HydrateFallback() {
+  return (
+    <div className="container mx-auto p-4 max-w-6xl space-y-6">
+      <div className="h-12" />
+      {Array.from({ length: 3 }).map((_, i) => (
+        // eslint-disable-next-line react/no-array-index-key
+        <StatRowSkeleton key={i} />
+      ))}
+    </div>
+  );
 }
 
 function ChartSection({
@@ -146,10 +160,20 @@ export default function FleetStatsPage() {
 
   if (activeYearlyStats.length === 0) {
     return (
-      <div className="container mx-auto p-4 space-y-6 pt-28 pb-20 text-center">
-        <h1 className="text-3xl font-bold">Statistiken</h1>
-        <p className="text-secondary">Noch keine Daten vorhanden, um Statistiken anzuzeigen.</p>
-        <Link to="/" className="text-primary hover:underline">Zurück zur Übersicht</Link>
+      <div className="container mx-auto p-4 max-w-2xl">
+        <EmptyState
+          icon={BarChart3}
+          title="Noch keine Statistiken"
+          description="Sobald Wartungs- oder Tank-Einträge vorhanden sind, erscheinen hier deine Flotten-Statistiken."
+          action={
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              Zur Übersicht
+            </Link>
+          }
+        />
       </div>
     );
   }
