@@ -1,0 +1,57 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLEASE_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Calver rollover
+        env:
+          GH_USER_NAME: github-actions[bot]
+          GH_USER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
+          current="$(date -u +%Y).$(date -u +%-m)"
+          last=$(jq -r '.["."]' .release-please-manifest.json)
+          last_prefix=$(echo "$last" | awk -F. '{print $1"."$2}')
+
+          if [ "$current" = "$last_prefix" ]; then
+            echo "Within month ($current); patch bump will be handled by release-please."
+            exit 0
+          fi
+
+          last_tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          range=${last_tag:+${last_tag}..HEAD}
+          if git log $range --grep="Release-As: ${current}.0" --fixed-strings | grep -q .; then
+            echo "Release-As: ${current}.0 already injected since ${last_tag:-bootstrap}; skipping."
+            exit 0
+          fi
+
+          echo "Month rolled over (${last_prefix} -> ${current}); injecting Release-As marker."
+          git config user.name  "${GH_USER_NAME}"
+          git config user.email "${GH_USER_EMAIL}"
+          git commit --allow-empty \
+            -m "chore: roll calver to ${current}.0" \
+            -m "Release-As: ${current}.0"
+          git push origin HEAD:main
+
+      - name: Run release-please
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_PAT || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

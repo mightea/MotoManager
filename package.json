@@ -13,8 +13,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "lint": "oxlint .",
-    "approve-builds": "pnpm approve-builds",
-    "release-it": "release-it"
+    "approve-builds": "pnpm approve-builds"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
@@ -45,11 +44,8 @@
   "devDependencies": {
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
-    "@csmith/release-it-calver-plugin": "^2026.4.0",
-    "@favoloso/conventional-changelog-emoji": "^0.10.0",
     "@playwright/test": "^1.59.1",
     "@react-router/dev": "^7.15.0",
-    "@release-it/conventional-changelog": "^11.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/leaflet": "^1.9.21",
@@ -60,7 +56,6 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "jsdom": "^29.1.1",
     "oxlint": "^1.63.0",
-    "release-it": "^20.0.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.11",
     "vite-plugin-babel": "^1.6.0",
