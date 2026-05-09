@@ -42,9 +42,11 @@
   --color-navy-950: #0a0711;
 }
 
-/* Smooth scroll */
+/* Smooth scroll, and reserve scrollbar gutter so dropdown/menu opens
+   never reflow the page when a scrollbar appears. */
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 /* Prevent iOS Safari from zooming in on form fields */

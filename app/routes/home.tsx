@@ -276,10 +276,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12 motion-safe:animate-fade-in">
 
-      {/* Needs-attention chips: only render if anything is actionable */}
+      {/* Needs-attention chips: only render if anything is actionable.
+          Single row with horizontal scroll on small screens so wrap behavior
+          never reflows when something else (a popover, a scrollbar) shifts
+          the available width. */}
       {(counts.overdueInspection + counts.overdueMaintenance + counts.openIssues) > 0 && (
-        <div className="order-1 flex flex-wrap items-center gap-2">
-          <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-secondary dark:text-navy-400">
+        <div className="order-1 -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <span className="mr-1 inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-secondary dark:text-navy-400">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
             Aktion erforderlich:
           </span>
@@ -314,7 +317,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <button
               type="button"
               onClick={() => updateParam("filter", null)}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-secondary underline-offset-2 hover:text-foreground hover:underline dark:text-navy-300 dark:hover:text-white"
+              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium text-secondary underline-offset-2 hover:text-foreground hover:underline dark:text-navy-300 dark:hover:text-white"
             >
               <X className="h-3 w-3" aria-hidden="true" />
               Filter aufheben
@@ -340,6 +343,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </MenuButton>
 
           <MenuItems
+            portal
             transition
             anchor={{ to: "bottom start", gap: 8 }}
             className="z-30 w-56 rounded-xl border border-gray-200 bg-white p-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in dark:border-navy-700 dark:bg-navy-800 dark:ring-white/10"
@@ -505,7 +509,7 @@ function AttentionChip({
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold motion-safe:transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold motion-safe:transition-colors",
         active ? t.activeCls : t.idle,
       )}
     >
