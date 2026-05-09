@@ -274,11 +274,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const offlineHint = "Offline – nur in Verbindung mit dem Server möglich.";
 
   return (
-    <div className="container mx-auto p-4 space-y-6 pb-28 sm:pb-12 motion-safe:animate-fade-in">
+    <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12 motion-safe:animate-fade-in">
 
       {/* Needs-attention chips: only render if anything is actionable */}
       {(counts.overdueInspection + counts.overdueMaintenance + counts.openIssues) > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="order-1 flex flex-wrap items-center gap-2">
           <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-secondary dark:text-navy-400">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
             Aktion erforderlich:
@@ -323,15 +323,15 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      {/* Compact fleet stats above the cards */}
+      {/* Compact fleet stats — below the grid on mobile, above on desktop */}
       {cards.length > 0 && stats && (
-        <DashboardStats stats={stats} />
+        <DashboardStats stats={stats} className="order-4 sm:order-2" />
       )}
 
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
+      <div className="order-2 sm:order-3 flex items-center justify-between">
         {/* Sort Dropdown */}
-        <Menu as="div" className="relative inline-block text-left">
+        <Menu>
           <MenuButton className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-secondary shadow-sm hover:bg-gray-50 focus:outline-none dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700">
             {ActiveSortIcon && <ActiveSortIcon className="h-4 w-4 text-secondary/70 dark:text-navy-400" aria-hidden="true" />}
             <span className="text-secondary/70 dark:text-navy-400">Sortiert nach</span>
@@ -341,7 +341,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
           <MenuItems
             transition
-            className="absolute left-0 z-30 mt-2 w-56 origin-top-left rounded-xl border border-gray-200 bg-white p-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in dark:border-navy-700 dark:bg-navy-800 dark:ring-white/10"
+            anchor={{ to: "bottom start", gap: 8 }}
+            className="z-30 w-56 rounded-xl border border-gray-200 bg-white p-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in dark:border-navy-700 dark:bg-navy-800 dark:ring-white/10"
           >
             {sortOptions.map((option) => {
               const Icon = option.icon;
@@ -404,7 +405,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </button>
       )}
 
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="order-3 sm:order-4 grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         {isLoading && cards.length > 0 ? (
           [...Array(Math.min(cards.length, 6))].map((_, i) => (
             // eslint-disable-next-line react/no-array-index-key
