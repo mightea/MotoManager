@@ -35,16 +35,33 @@ export function DashboardStats({ stats, className }: DashboardStatsProps) {
       </h2>
 
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <StatCard label={`km ${year}`} value={formatNumber(totalKmThisYear)} accent="primary" />
-        <StatCard label={`Kosten ${year}`} value={formatCurrency(totalMaintenanceCostThisYear)} />
-        <StatCard label="km gesamt" value={formatNumber(totalKmOverall)} />
         <StatCard
-          label="Mängel"
-          value={totalActiveIssues.toString()}
+          label={`Fahrstrecke ${year}`}
+          value={formatNumber(totalKmThisYear)}
+          unit="km"
+          accent="primary"
+        />
+        <StatCard
+          label={`Wartungskosten ${year}`}
+          value={formatCurrency(totalMaintenanceCostThisYear)}
+        />
+        <StatCard
+          label="Gesamtkilometer"
+          value={formatNumber(totalKmOverall)}
+          unit="km"
+        />
+        <StatCard
+          label="Offene Mängel"
+          value={String(totalActiveIssues)}
+          unit={totalActiveIssues === 1 ? "Mangel" : "Mängel"}
           accent={totalActiveIssues > 0 ? "warning" : undefined}
         />
-        <StatCard label="Veteranen" value={veteranCount.toString()} />
-        <StatCard label="Fleissigstes" value={bikeLabel} variant="text" />
+        <StatCard
+          label="Veteranen"
+          value={String(veteranCount)}
+          unit={veteranCount === 1 ? "Fahrzeug" : "Fahrzeuge"}
+        />
+        <StatCard label="Fleissigstes Motorrad" value={bikeLabel} variant="text" />
       </dl>
     </section>
   );
@@ -53,11 +70,13 @@ export function DashboardStats({ stats, className }: DashboardStatsProps) {
 function StatCard({
   label,
   value,
+  unit,
   accent,
   variant = "number",
 }: {
   label: string;
   value: string;
+  unit?: string;
   accent?: "primary" | "warning";
   variant?: "number" | "text";
 }) {
@@ -75,13 +94,19 @@ function StatCard({
       </dt>
       <dd
         className={clsx(
-          "mt-0.5 truncate font-bold leading-tight",
-          variant === "number" ? "text-sm tabular-nums" : "text-xs",
-          valueColor,
+          "mt-0.5 truncate leading-tight",
+          variant === "number" ? "text-sm" : "text-xs",
         )}
         title={variant === "text" ? value : undefined}
       >
-        {value}
+        <span className={clsx("font-bold", variant === "number" && "tabular-nums", valueColor)}>
+          {value}
+        </span>
+        {unit && (
+          <span className="ml-1 text-[10px] font-medium text-base-content/60">
+            {unit}
+          </span>
+        )}
       </dd>
     </div>
   );
