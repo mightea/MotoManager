@@ -11,7 +11,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
-RUN pnpm prune --prod
+RUN pnpm prune --prod --ignore-scripts
 
 FROM node:25-alpine AS runtime
 ARG APP_VERSION=0.0.0
