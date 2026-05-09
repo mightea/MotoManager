@@ -14,14 +14,12 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   const totalMaintenanceCostThisYear = stats?.totalMaintenanceCostThisYear ?? (stats as any)?.total_maintenance_cost_this_year ?? 0;
   const veteranCount = stats?.veteranCount ?? (stats as any)?.veteran_count ?? 0;
   const totalMotorcycles = stats?.totalMotorcycles ?? (stats as any)?.total_motorcycles ?? 0;
-  
-  // Support both camelCase and snake_case for the busiest bike field
+
   const busiestBike = stats?.busiestBike ?? (stats as any)?.busiest_bike;
 
-  // Handle case where busiestBike is just a string from the backend
   let bikeLabel = "—";
   let bikeDesc = "Keine Fahrten in diesem Jahr";
-  
+
   if (typeof busiestBike === "string") {
     bikeLabel = busiestBike;
     bikeDesc = `${formatNumber(totalKmThisYear)} km insgesamt in ${year}`;
@@ -29,7 +27,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
     const bikeMake = busiestBike.make || (busiestBike as any).Make;
     const bikeModel = busiestBike.model || (busiestBike as any).Model;
     const bikeOdo = busiestBike.odometerThisYear ?? (busiestBike as any).odometer_this_year ?? (busiestBike as any).OdometerThisYear ?? 0;
-    
+
     bikeLabel = bikeMake && bikeModel ? `${bikeMake} ${bikeModel}` : "—";
     bikeDesc = `${formatNumber(bikeOdo)} km in ${year}`;
   }
@@ -37,53 +35,56 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   const costPerBike = totalMotorcycles > 0 ? totalMaintenanceCostThisYear / totalMotorcycles : 0;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-sm font-semibold text-foreground dark:text-white">
+    <section aria-labelledby="fleet-stats-heading" className="space-y-3">
+      <h2 id="fleet-stats-heading" className="text-sm font-semibold text-foreground dark:text-white">
         Flotte {year}
       </h2>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
+      {/* Hero row: the two daily-relevant numbers */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <HeroStat
           label="Kilometer dieses Jahr"
           value={`${formatNumber(totalKmThisYear)} km`}
           description={`Registrierte Fahrten ${year}`}
           accent="primary"
         />
-        <StatCard
-          label="Kilometer insgesamt"
-          value={`${formatNumber(totalKmOverall)} km`}
-          description="Gesamtkilometer aller Bikes"
-        />
-        <StatCard
-          label="Offene Mängel"
-          value={totalActiveIssues.toString()}
-          description="Ausstehend über alle Motorräder"
-          accent={totalActiveIssues > 0 ? "warning" : undefined}
-        />
-        <StatCard
+        <HeroStat
           label={`Kosten ${year}`}
           value={formatCurrency(totalMaintenanceCostThisYear)}
-          description={totalMotorcycles > 0 
-            ? `Ø ${formatCurrency(costPerBike)} pro Bike in ${year}` 
-            : "Erfasste Wartungskosten"}
-        />
-        <StatCard
-          label="Veteranen-Bikes"
-          value={veteranCount.toString()}
-          description="Motorräder mit Veteranen-Status"
-        />
-        <StatCard
-          label="Fleissigstes Bike"
-          value={bikeLabel}
-          description={bikeDesc}
-          accent={busiestBike ? "primary" : undefined}
+          description={
+            totalMotorcycles > 0
+              ? `Ø ${formatCurrency(costPerBike)} pro Bike`
+              : "Erfasste Wartungskosten"
+          }
         />
       </div>
-    </div>
+
+      {/* Secondary row: smaller, denser */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <MiniStat
+          label="Kilometer insgesamt"
+          value={`${formatNumber(totalKmOverall)} km`}
+        />
+        <MiniStat
+          label="Offene Mängel"
+          value={totalActiveIssues.toString()}
+          accent={totalActiveIssues > 0 ? "warning" : undefined}
+        />
+        <MiniStat
+          label="Veteranen-Bikes"
+          value={veteranCount.toString()}
+        />
+        <MiniNameStat
+          label="Fleissigstes Bike"
+          name={bikeLabel}
+          description={bikeDesc}
+        />
+      </div>
+    </section>
   );
 }
 
-function StatCard({
+function HeroStat({
   label,
   value,
   description,
@@ -92,27 +93,23 @@ function StatCard({
   label: string;
   value: string;
   description: string;
-  accent?: "primary" | "warning";
+  accent?: "primary";
 }) {
-  const accentBorder =
-    accent === "primary"
-      ? "border-t-primary dark:border-t-primary-light"
-      : accent === "warning"
-      ? "border-t-orange-500 dark:border-t-orange-400"
-      : "border-t-transparent";
-
   const valueColor =
     accent === "primary"
       ? "text-primary dark:text-primary-light"
-      : accent === "warning"
-      ? "text-orange-600 dark:text-orange-400"
       : "text-foreground dark:text-white";
+
+  const accentBorder =
+    accent === "primary"
+      ? "border-t-primary dark:border-t-primary-light"
+      : "border-t-transparent";
 
   return (
     <div
       className={clsx(
-        "flex flex-col justify-between rounded-2xl border border-gray-200 border-t-2 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-navy-700 dark:bg-navy-800",
-        accentBorder
+        "flex flex-col justify-between rounded-2xl border border-gray-200 border-t-2 bg-white p-4 shadow-sm motion-safe:transition-shadow hover:shadow-md dark:border-navy-700 dark:bg-navy-800",
+        accentBorder,
       )}
     >
       <div>
@@ -124,6 +121,56 @@ function StatCard({
         </dd>
       </div>
       <p className="mt-3 text-xs text-secondary/70 dark:text-navy-500">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: "warning";
+}) {
+  const valueColor =
+    accent === "warning"
+      ? "text-orange-600 dark:text-orange-400"
+      : "text-foreground dark:text-white";
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-secondary/80 dark:text-navy-400">
+        {label}
+      </dt>
+      <dd className={clsx("mt-1 text-lg font-bold tabular-nums leading-tight", valueColor)}>
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function MiniNameStat({
+  label,
+  name,
+  description,
+}: {
+  label: string;
+  name: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <dt className="text-[11px] font-semibold uppercase tracking-wide text-secondary/80 dark:text-navy-400">
+        {label}
+      </dt>
+      <dd className="mt-1 truncate text-sm font-semibold leading-tight text-foreground dark:text-white" title={name}>
+        {name}
+      </dd>
+      <p className="mt-0.5 truncate text-[11px] font-medium text-secondary/70 dark:text-navy-500" title={description}>
         {description}
       </p>
     </div>
