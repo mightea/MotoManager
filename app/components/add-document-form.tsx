@@ -5,7 +5,6 @@ import clsx from "clsx";
 import type { Document, Motorcycle } from "~/types/db";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone } from "react-dropzone";
-import { useIsOffline } from "~/utils/offline";
 import { getBackendAssetUrl } from "~/utils/backend";
 
 interface AddDocumentFormProps {
@@ -43,7 +42,6 @@ export function AddDocumentForm({
 
   const isEditMode = !!document;
   const isOwner = !document || document.ownerId === currentUserId;
-  const isOffline = useIsOffline();
 
   // Filter motorcycles: 
   // If owner: show all (to allow assigning to others)
@@ -323,17 +321,12 @@ export function AddDocumentForm({
         
         <Button
             type="submit"
-            disabled={isSubmitting || (!isEditMode && !file) || isOffline}
+            disabled={isSubmitting || (!isEditMode && !file)}
             className="w-full sm:w-auto"
         >
             {isSubmitting ? "Speichern..." : (isEditMode ? (isOwner ? "Speichern" : "Zuordnungen speichern") : "Hochladen")}
         </Button>
       </div>
-      {isOffline && (
-        <p className="mt-2 text-center text-xs font-bold text-orange-500 bg-orange-50 dark:bg-orange-950/20 py-2 rounded-lg border border-orange-200 dark:border-orange-900/50">
-          Dokumente können offline nicht hochgeladen werden.
-        </p>
-      )}
     </form>
   );
 }

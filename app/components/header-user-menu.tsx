@@ -1,15 +1,13 @@
 import { Link, useNavigate, useSubmit } from "react-router";
 import { ChevronDown, LogOut, Settings, Shield } from "lucide-react";
-import clsx from "clsx";
 import { type PublicUser } from "~/types/auth";
 import { DropdownMenu } from "./dropdown-menu";
 
 interface HeaderUserMenuProps {
   user: PublicUser | null;
-  isOffline: boolean;
 }
 
-export function HeaderUserMenu({ user, isOffline }: HeaderUserMenuProps) {
+export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
   const navigate = useNavigate();
   const submit = useSubmit();
 
@@ -35,13 +33,7 @@ export function HeaderUserMenu({ user, isOffline }: HeaderUserMenuProps) {
         trigger={
           <button
             type="button"
-            disabled={isOffline}
-            className={clsx(
-              "flex items-center gap-3 rounded-full py-1.5 pl-1.5 pr-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-              isOffline
-                ? "bg-base-200/50 cursor-not-allowed opacity-50"
-                : "bg-base-200 hover:bg-base-300"
-            )}
+            className="flex items-center gap-3 rounded-full bg-base-200 py-1.5 pl-1.5 pr-3 transition-all hover:bg-base-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
               {user.username.charAt(0).toUpperCase()}

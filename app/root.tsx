@@ -6,7 +6,6 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
-  useRevalidator,
 } from "react-router";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { UmamiProvider } from "~/components/umami-provider";
@@ -15,7 +14,6 @@ import { Button } from "~/components/button";
 import { getTheme } from "~/utils/theme.client";
 import { Theme } from "~/utils/theme";
 import { getCurrentSession } from "~/services/auth";
-import { initSync } from "~/utils/sync";
 import { getPublicBackendUrl, isRegistrationEnabled, getVersion, getUmamiWebsiteId, getUmamiScriptUrl } from "~/config";
 import { useEffect } from "react";
 import clsx from "clsx";
@@ -67,7 +65,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -101,31 +98,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const loaderData = useLoaderData<typeof clientLoader>();
   const theme = loaderData?.theme || Theme.LIGHT;
-  const revalidator = useRevalidator();
 
   useEffect(() => {
-    initSync();
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("pwa-cleanup-done") === "1") return;
 
-    const handleRevalidate = () => {
-      revalidator.revalidate();
-    };
-
-    window.addEventListener("moto-revalidate", handleRevalidate);
-
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(() => {
-          // SW registered
-        }).catch(() => {
-          // SW registration failed
-        });
-      });
-    }
-
-    return () => {
-      window.removeEventListener("moto-revalidate", handleRevalidate);
-    };
-  }, [revalidator]);
+    (async () => {
+      try {
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        indexedDB.deleteDatabase("MotoDatabase");
+      } finally {
+        localStorage.setItem("pwa-cleanup-done", "1");
+      }
+    })();
+  }, []);
 
   return (
     <ThemeProvider specifiedTheme={theme}>
@@ -158,8 +151,6 @@ export function ErrorBoundary({ error }: { error: unknown }) {
   let details = "Ein unerwarteter Fehler ist aufgetreten.";
   let stack: string | undefined;
 
-  const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
-
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? "404" : "Fehler";
     details =
@@ -167,13 +158,8 @@ export function ErrorBoundary({ error }: { error: unknown }) {
         ? "Die angeforderte Seite konnte nicht gefunden werden."
         : error.statusText || details;
   } else if (error instanceof Error) {
-    if (error.message.includes("fetch") || isOffline) {
-      message = "Offline";
-      details = "Diese Seite ist momentan nicht verfügbar, da du offline bist und die Daten nicht im Cache gespeichert sind.";
-    } else {
-      details = error.message;
-      stack = error.stack;
-    }
+    details = error.message;
+    stack = error.stack;
   }
 
   return (

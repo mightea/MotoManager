@@ -23,8 +23,6 @@
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.3.0",
     "clsx": "^2.1.1",
-    "dexie": "^4.4.2",
-    "dexie-react-hooks": "^4.4.0",
     "dotenv": "^17.4.2",
     "isbot": "^5.1.40",
     "leaflet": "^1.9.4",

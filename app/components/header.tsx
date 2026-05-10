@@ -2,19 +2,15 @@ import { useLocation } from "react-router";
 import { Menu as MenuIcon, X } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { type PublicUser } from "~/types/auth";
-import clsx from "clsx";
 import { useEffect, useId, useRef, useState } from "react";
 import { HeaderBrand } from "./header-brand";
 import { HeaderDesktopNav } from "./header-desktop-nav";
 import { HeaderMobilePanel } from "./header-mobile-panel";
 import { HeaderUserMenu } from "./header-user-menu";
-import { HeaderSyncIndicator } from "./header-sync-indicator";
-import { getNavItems } from "./header-nav-config";
-import { useIsOffline } from "~/utils/offline";
+import { NAV_ITEMS } from "./header-nav-config";
 
 export function Header({ user }: { user: PublicUser | null }) {
   const location = useLocation();
-  const isOffline = useIsOffline();
   const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
 
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -40,37 +36,23 @@ export function Header({ user }: { user: PublicUser | null }) {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const navItems = getNavItems(isOffline);
-
   return (
     <div
-      className={clsx(
-        "z-40 w-full print:hidden transition-all duration-300",
-        !isMotorcycleDetail ? "sticky top-0" : "relative",
-        isOffline
-          ? "border-b border-warning bg-warning/10 backdrop-blur-md"
-          : "border-b border-base-300 bg-base-100/90 backdrop-blur-md"
-      )}
+      className={
+        "z-40 w-full print:hidden transition-all duration-300 border-b border-base-300 bg-base-100/90 backdrop-blur-md " +
+        (!isMotorcycleDetail ? "sticky top-0" : "relative")
+      }
     >
       <header className="mx-auto w-full max-w-7xl relative">
-        {/* Motorsport Stripe / Offline Status Stripe */}
-        <div
-          className={clsx(
-            "absolute left-0 right-0 top-0 h-1.5 transition-all duration-500",
-            isOffline
-              ? "bg-warning"
-              : "bg-gradient-to-r from-primary via-secondary to-accent"
-          )}
-        />
+        <div className="absolute left-0 right-0 top-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-accent" />
 
         <div className="flex items-center justify-between p-3 pt-4">
-          <HeaderBrand isOffline={isOffline} onNavigate={closeMobileMenu} />
-          <HeaderDesktopNav items={navItems} />
+          <HeaderBrand onNavigate={closeMobileMenu} />
+          <HeaderDesktopNav items={NAV_ITEMS} />
 
           <div className="flex items-center gap-3 pr-2">
-            <HeaderSyncIndicator />
             <ThemeToggle />
-            <HeaderUserMenu user={user} isOffline={isOffline} />
+            <HeaderUserMenu user={user} />
 
             {/* Mobile Menu Toggle */}
             <button
@@ -91,9 +73,8 @@ export function Header({ user }: { user: PublicUser | null }) {
           id={mobilePanelId}
           isOpen={isMobileMenuOpen}
           onClose={closeMobileMenu}
-          items={navItems}
+          items={NAV_ITEMS}
           user={user}
-          isOffline={isOffline}
         />
       </header>
     </div>

@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import clsx from "clsx";
 import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucide-react";
 import { getBackendAssetUrl } from "~/utils/backend";
-import { useIsOffline } from "~/utils/offline";
 import { getSessionToken } from "~/services/auth";
 
 export type DocumentSummary = {
@@ -32,7 +31,6 @@ export function DocumentCard({
   onEdit,
   assignedMotorcycleNames = [],
 }: DocumentCardProps) {
-  const isOffline = useIsOffline();
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
   const previewUrl = getBackendAssetUrl(document.previewPath);
 
@@ -147,21 +145,10 @@ export function DocumentCard({
             <button
               type="button"
               onClick={() => onEdit(document)}
-              disabled={isOffline}
-              className={clsx(
-                "relative inline-flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
-                isOffline
-                  ? "border-gray-100 bg-gray-50 text-secondary/40 cursor-not-allowed dark:border-navy-700/50 dark:bg-navy-900/50 dark:text-navy-500"
-                  : "border-gray-200 text-secondary hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-              )}
+              className="relative inline-flex w-full items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
             >
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
               {isOwner ? "Bearbeiten" : "Zuordnen"}
-              {isOffline && (
-                <span className="absolute -top-2 -right-2 rounded-full bg-orange-500 px-1.5 py-0.5 text-[8px] font-black uppercase text-white shadow-sm">
-                  Offline
-                </span>
-              )}
             </button>
           </div>
         )}

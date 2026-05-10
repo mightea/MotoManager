@@ -1,10 +1,5 @@
 export type UserRole = "admin" | "user";
 
-/**
- * Utility type for items that may be pending sync.
- */
-export type Pending<T> = T & { isPending?: number };
-
 export interface User {
   id: number;
   email: string;

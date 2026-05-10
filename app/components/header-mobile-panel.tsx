@@ -10,7 +10,6 @@ interface HeaderMobilePanelProps {
   onClose: () => void;
   items: NavItem[];
   user: PublicUser | null;
-  isOffline: boolean;
 }
 
 export function HeaderMobilePanel({
@@ -19,7 +18,6 @@ export function HeaderMobilePanel({
   onClose,
   items,
   user,
-  isOffline,
 }: HeaderMobilePanelProps) {
   const location = useLocation();
   const submit = useSubmit();
@@ -43,27 +41,17 @@ export function HeaderMobilePanel({
         <nav className="flex flex-col gap-2">
           {items.map((item) => {
             const isActive = location.pathname === item.href;
-            const isDisabled = item.disabled;
 
             return (
               <Link
                 key={item.label}
-                to={isDisabled ? "#" : item.href}
-                onClick={(e) => {
-                  if (isDisabled) {
-                    e.preventDefault();
-                    return;
-                  }
-                  onClose();
-                }}
-                aria-disabled={isDisabled || undefined}
+                to={item.href}
+                onClick={onClose}
                 className={clsx(
                   "block rounded-lg px-4 py-3 text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                   isActive
                     ? "bg-primary/10 text-primary"
-                    : isDisabled
-                      ? "text-base-content/30 cursor-not-allowed"
-                      : "text-base-content/70 hover:bg-base-200 hover:text-base-content"
+                    : "text-base-content/70 hover:bg-base-200 hover:text-base-content"
                 )}
               >
                 {item.label}
@@ -72,12 +60,7 @@ export function HeaderMobilePanel({
           })}
 
           {user && (
-            <div
-              className={clsx(
-                "mt-4 border-t border-base-300 pt-4 transition-opacity",
-                isOffline && "opacity-50 pointer-events-none"
-              )}
-            >
+            <div className="mt-4 border-t border-base-300 pt-4">
               <div className="mb-4 flex items-center gap-3 px-2">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-base font-bold text-primary">
                   {user.username.charAt(0).toUpperCase()}

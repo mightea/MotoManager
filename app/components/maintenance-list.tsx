@@ -20,10 +20,9 @@ import {
   Hash,
   Fuel,
   Activity,
-  CloudOff
 } from "lucide-react";
 import { useState } from "react";
-import type { MaintenanceRecord, MaintenanceType, Location, Pending, FluidType, BatteryType } from "~/types/db";
+import type { MaintenanceRecord, MaintenanceType, Location, FluidType, BatteryType } from "~/types/db";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { parseDotCode } from "~/utils/maintenance-intervals";
@@ -53,7 +52,7 @@ interface GroupedMaintenanceRecord {
   cost: number;
   currency: string | null;
   summaries: string[];
-  originalRecords: Pending<MaintenanceRecord>[];
+  originalRecords: MaintenanceRecord[];
 }
 
 const getIconForType = (type: MaintenanceType) => {
@@ -274,15 +273,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                 }
 
                 const metric = getCollapsedMetric(group, currencyCode);
-                const isPending = group.originalRecords.some(r => r.isPending === 1);
 
                 return (
-                  <li key={group.id} className={clsx(
-                    "rounded-xl transition-colors",
-                    isPending 
-                      ? "bg-orange-50/40 hover:bg-orange-50/60 dark:bg-orange-950/10 dark:hover:bg-orange-950/20 border border-orange-200/50 dark:border-orange-900/30" 
-                      : "hover:bg-gray-50/50 dark:hover:bg-navy-700/30"
-                  )}>
+                  <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
                     <button
                       type="button"
                       onClick={() => toggleExpand(group.id)}
@@ -297,14 +290,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       <div className="flex-1 min-w-0 pt-0.5">
                         {/* Row 1: date left, odo + chevron right */}
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white">
-                              {dateFormatter.format(new Date(group.date))}
-                            </h3>
-                            {group.originalRecords.some(r => r.isPending === 1) && (
-                              <CloudOff className="h-3 w-3 text-orange-500" />
-                            )}
-                          </div>
+                          <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white">
+                            {dateFormatter.format(new Date(group.date))}
+                          </h3>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
                               {formatNumber(group.odo)} km
@@ -411,9 +399,6 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                 <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3 dark:border-navy-700">
                                   <h4 className="text-sm font-semibold text-foreground dark:text-white">
                                     {maintenanceTypeLabels[record.type] || record.type}
-                                    {record.isPending === 1 && (
-                                      <span className="ml-2 text-[10px] font-bold text-orange-500 uppercase tracking-wider">(Ausstehend)</span>
-                                    )}
                                   </h4>
                                   <button
                                     onClick={(e) => {

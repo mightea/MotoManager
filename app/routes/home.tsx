@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
-import { useIsOffline } from "~/utils/offline";
 import { DropdownMenu } from "~/components/dropdown-menu";
 import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
@@ -198,7 +197,6 @@ function matchesFilter(card: MotorcycleDashboardItem, filter: FilterKey): boolea
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { cards, stats, currencies } = loaderData;
-  const isOffline = useIsOffline();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -274,8 +272,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const toggleFilter = (next: FilterKey) => {
     updateParam("filter", currentFilter === next ? null : next);
   };
-
-  const offlineHint = "Offline – nur in Verbindung mit dem Server möglich.";
 
   return (
     <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12">
@@ -375,9 +371,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
         <Button
           onClick={() => setIsAddOpen(true)}
-          disabled={isOffline}
-          aria-disabled={isOffline}
-          title={isOffline ? offlineHint : undefined}
           className="relative hidden sm:inline-flex"
         >
           <Plus className="h-5 w-5" />
@@ -389,15 +382,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {!isAddOpen && (
         <button
           onClick={() => setIsAddOpen(true)}
-          disabled={isOffline}
-          aria-disabled={isOffline}
-          title={isOffline ? offlineHint : undefined}
-          className={clsx(
-            "fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full text-white shadow-lg motion-safe:transition-all motion-safe:active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950 sm:hidden",
-            isOffline
-              ? "bg-gray-400 cursor-not-allowed opacity-60"
-              : "bg-primary shadow-primary/30 hover:bg-primary-dark hover:shadow-xl"
-          )}
+          className="fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 motion-safe:transition-all motion-safe:active:scale-95 hover:bg-primary-dark hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950 sm:hidden"
           aria-label="Neues Motorrad hinzufügen"
         >
           <Plus className="h-6 w-6" />
@@ -417,12 +402,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               title="Keine Motorräder gefunden"
               description="Deine Garage ist leer. Füge dein erstes Motorrad hinzu."
               action={
-                <Button
-                  onClick={() => setIsAddOpen(true)}
-                  disabled={isOffline}
-                  aria-disabled={isOffline}
-                  title={isOffline ? offlineHint : undefined}
-                >
+                <Button onClick={() => setIsAddOpen(true)}>
                   <Plus className="h-4 w-4" />
                   Motorrad hinzufügen
                 </Button>

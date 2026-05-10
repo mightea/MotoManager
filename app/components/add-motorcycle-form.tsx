@@ -5,7 +5,6 @@ import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
 import { Modal } from "./modal";
 import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
-import { useIsOffline } from "~/utils/offline";
 import { Fuel } from "lucide-react";
 import { Button } from "./button";
 import { FormField } from "./form-field";
@@ -42,10 +41,9 @@ export function AddMotorcycleForm({
   const navigation = useNavigation();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
-  const isSubmitting = navigation.state === "submitting" && 
-                      (navigation.formData?.get("intent") === intent || 
+  const isSubmitting = navigation.state === "submitting" &&
+                      (navigation.formData?.get("intent") === intent ||
                        navigation.formData?.get("intent") === "importFuelData");
-  const isOffline = useIsOffline();
 
   const handleRoadTripImport = (selectedEntries: any[]) => {
     if (initialValues?.id) {
@@ -327,7 +325,6 @@ export function AddMotorcycleForm({
                 type="button"
                 variant="outline"
                 onClick={() => setImportDialogOpen(true)}
-                disabled={isOffline}
                 leftIcon={<Fuel className="h-4 w-4" />}
               >
                 RoadTrip Import
@@ -345,7 +342,6 @@ export function AddMotorcycleForm({
               type="button"
               variant="outline"
               onClick={onDelete}
-              disabled={isOffline}
               className="text-red-600 border-red-200 dark:border-red-900/40 dark:text-red-300"
             >
               Motorrad löschen
@@ -364,18 +360,12 @@ export function AddMotorcycleForm({
             <Button
               type="submit"
               isLoading={isSubmitting}
-              disabled={isOffline}
               className="px-6"
             >
               {submitLabel}
             </Button>
           </div>
         </div>
-        {isOffline && (
-          <p className="mt-2 text-center text-[10px] font-bold text-orange-500 bg-orange-50 dark:bg-orange-950/20 py-2 rounded-lg border border-orange-200 dark:border-orange-900/50">
-            Motorräder können offline nicht hinzugefügt oder bearbeitet werden.
-          </p>
-        )}
       </Form>
 
       <Modal isOpen={isCropping} onClose={() => setIsCropping(false)} title="Bild zuschneiden">
