@@ -9,7 +9,6 @@ import {
 } from "react-router";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { UmamiProvider } from "~/components/umami-provider";
-import { LoadingIndicator } from "~/components/loading-indicator";
 import { Button } from "~/components/button";
 import { getTheme } from "~/utils/theme.client";
 import { Theme } from "~/utils/theme";
@@ -92,7 +91,6 @@ export default function App() {
     <ThemeProvider specifiedTheme={theme}>
       <UmamiProvider>
         <AppWithTheme>
-          <LoadingIndicator />
           <Outlet />
         </AppWithTheme>
       </UmamiProvider>

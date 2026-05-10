@@ -7,6 +7,7 @@ import { HeaderBrand } from "./header-brand";
 import { HeaderDesktopNav } from "./header-desktop-nav";
 import { HeaderMobilePanel } from "./header-mobile-panel";
 import { HeaderUserMenu } from "./header-user-menu";
+import { LoadingIndicator } from "./loading-indicator";
 import { NAV_ITEMS } from "./header-nav-config";
 
 export function Header({ user }: { user: PublicUser | null }) {
@@ -77,6 +78,7 @@ export function Header({ user }: { user: PublicUser | null }) {
           user={user}
         />
       </header>
+      <LoadingIndicator />
     </div>
   );
 }
