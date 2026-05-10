@@ -7,11 +7,6 @@ import {
 export default [
   route("auth/login", "routes/auth.login.tsx"),
   route("auth/logout", "routes/auth.logout.tsx"),
-  route("api/*", "routes/api.proxy.ts"),
-  route(".well-known/appspecific/com.chrome.devtools.json", "routes/.well-known.appspecific.com.chrome.devtools.json.ts"),
-  route("data/images/:filename", "routes/images.$filename.ts"),
-  route("data/documents/:filename", "routes/data.documents.$filename.ts"),
-  route("data/previews/:filename", "routes/data.previews.$filename.ts"),
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
     route("fleet-stats", "routes/fleet-stats.tsx"),

@@ -40,7 +40,6 @@ import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
 import { fetchFromBackend } from "~/utils/backend";
 import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
-import { MotorcycleDetailSkeleton } from "~/components/skeleton";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -196,10 +195,6 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     formattedFirstRegistration,
     hasPurchaseDate
   });
-}
-
-export function HydrateFallback() {
-  return <MotorcycleDetailSkeleton />;
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {

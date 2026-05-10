@@ -32,16 +32,6 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const url = new URL(request.url);
-  const redirectTo = url.searchParams.get("redirectTo") ?? "/";
-  return data({
-    redirectTo,
-    isFirstUser: false,
-    version: getVersion(),
-  });
-}
-
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const url = new URL(request.url);
   const redirectTo = url.searchParams.get("redirectTo") ?? "/";

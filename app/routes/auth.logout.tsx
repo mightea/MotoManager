@@ -4,7 +4,7 @@ import {
   destroySessionFromRequest,
 } from "~/services/auth";
 
-export async function loader() {
+export async function clientLoader() {
   return redirect("/auth/login");
 }
 

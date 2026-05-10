@@ -14,32 +14,15 @@ import { Button } from "~/components/button";
 import { getTheme } from "~/utils/theme.client";
 import { Theme } from "~/utils/theme";
 import { getCurrentSession } from "~/services/auth";
-import { getPublicBackendUrl, isRegistrationEnabled, getVersion, getUmamiWebsiteId, getUmamiScriptUrl } from "~/config";
 import { useEffect } from "react";
 import clsx from "clsx";
 
 import "./app.css";
 
-export async function loader() {
-  return {
-    ENV: {
-      BACKEND_URL: getPublicBackendUrl(),
-      INTERNAL_BACKEND_URL: process.env.INTERNAL_BACKEND_URL,
-      ENABLE_REGISTRATION: isRegistrationEnabled(),
-      APP_VERSION: getVersion(),
-      UMAMI_WEBSITE_ID: getUmamiWebsiteId(),
-      UMAMI_SCRIPT_URL: getUmamiScriptUrl(),
-    },
-  };
-}
-
-export async function clientLoader({ serverLoaderData }: any) {
-  if (typeof window !== "undefined" && serverLoaderData?.ENV) {
-    (window as any).ENV = serverLoaderData.ENV;
-  }
+export async function clientLoader() {
   const theme = getTheme();
   await getCurrentSession();
-  return { ...serverLoaderData, theme };
+  return { theme };
 }
 
 export function HydrateFallback() {
@@ -69,22 +52,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
-        {data?.ENV && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
-            }}
-          />
-        )}
-        {data?.ENV?.UMAMI_SCRIPT_URL && data?.ENV?.UMAMI_WEBSITE_ID && (
-          <script
-            async
-            defer
-            src={data.ENV.UMAMI_SCRIPT_URL}
-            data-website-id={data.ENV.UMAMI_WEBSITE_ID}
-            data-auto-track="false"
-          />
-        )}
+        <script src="/config.js" />
       </head>
       <body className="bg-background font-sans antialiased text-foreground dark:bg-navy-950 dark:text-gray-50">
         {children}

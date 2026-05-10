@@ -12,7 +12,6 @@ import { fetchFromBackend } from "~/utils/backend";
 import clsx from "clsx";
 import { toast } from "~/hooks/use-toast";
 import { EmptyState } from "~/components/empty-state";
-import { DocumentCardSkeleton } from "~/components/skeleton";
 
 export function meta() {
   return [
@@ -27,19 +26,6 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const response = await fetchFromBackend<any>("/documents", {}, token);
 
   return data({ ...response, user });
-}
-
-export function HydrateFallback() {
-  return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-        {Array.from({ length: 8 }).map((_, i) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <DocumentCardSkeleton key={i} />
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {

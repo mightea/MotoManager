@@ -7,7 +7,6 @@ import clsx from "clsx";
 import { useState, Fragment, useRef, useEffect } from "react";
 import { fetchFromBackend } from "~/utils/backend";
 import { EmptyState } from "~/components/empty-state";
-import { StatRowSkeleton } from "~/components/skeleton";
 
 export function meta() {
   return [
@@ -21,18 +20,6 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const response = await fetchFromBackend<any>("/stats", {}, token);
 
   return data({ stats: response.stats });
-}
-
-export function HydrateFallback() {
-  return (
-    <div className="container mx-auto p-4 max-w-6xl space-y-6">
-      <div className="h-12" />
-      {Array.from({ length: 3 }).map((_, i) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <StatRowSkeleton key={i} />
-      ))}
-    </div>
-  );
 }
 
 function ChartSection({

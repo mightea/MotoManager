@@ -9,7 +9,6 @@ import { fetchFromBackend } from "~/utils/backend";
 import { Plus, Receipt, Calendar, Info, Pencil, Car } from "lucide-react";
 import { ExpenseDialog } from "~/components/expense-dialog";
 import { EmptyState } from "~/components/empty-state";
-import { ExpenseRowSkeleton } from "~/components/skeleton";
 import { formatCurrency } from "~/utils/numberUtils";
 import type { Expense, Motorcycle } from "~/types/db";
 
@@ -28,20 +27,6 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     motorcycles: motorcyclesResponse.motorcycles,
     user
   };
-}
-
-export function HydrateFallback() {
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-8 h-12" />
-      <div className="space-y-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <ExpenseRowSkeleton key={i} />
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {

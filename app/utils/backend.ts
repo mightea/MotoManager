@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
-import { getBackendUrl, getPublicBackendUrl } from "~/config";
+import { getBackendUrl } from "~/config";
 
 /**
  * Utility to fetch from the backend with Bearer token authentication.
@@ -9,11 +9,8 @@ export async function fetchFromBackend<T>(
   options: RequestInit = {},
   token?: string | null
 ): Promise<T> {
-  const isBrowser = typeof window !== "undefined";
-  const baseUrl = isBrowser ? "" : getBackendUrl();
   const safePath = typeof path === "string" ? (path.startsWith("/") ? path : `/${path}`) : "/";
-
-  const url = `${baseUrl}/api${safePath}`;
+  const url = `${getBackendUrl()}/api${safePath}`;
 
   const headers = new Headers(options.headers);
   if (token) {
@@ -55,7 +52,7 @@ export function getBackendAssetUrl(path: string | null | undefined): string | nu
   if (typeof path !== "string" || path.trim() === "") return null;
   if (path.startsWith("http")) return path;
 
-  const baseUrl = getPublicBackendUrl();
+  const baseUrl = getBackendUrl();
   const normalizedPath = (path.startsWith("/") ? path : `/${path}`).replace(/^\/data/, "");
 
   return `${baseUrl}${normalizedPath}`;

@@ -1,32 +1,22 @@
-FROM node:25-alpine AS base
+FROM node:25-alpine AS builder
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest --force && corepack enable && corepack prepare pnpm@10.2.1 --activate
 WORKDIR /app
-
-FROM base AS builder
 ARG APP_VERSION=0.0.0
 ENV APP_VERSION=$APP_VERSION
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
-RUN pnpm prune --prod --ignore-scripts
 
-FROM node:25-alpine AS runtime
+FROM caddy:2-alpine AS runtime
 ARG APP_VERSION=0.0.0
-ENV NODE_ENV=production
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
-RUN mkdir -p $PNPM_HOME \
-  && npm install -g corepack@latest --force \
-  && corepack enable \
-  && corepack prepare pnpm@10.2.1 --activate
-WORKDIR /app
 ENV APP_VERSION=$APP_VERSION
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/build ./build
+COPY --from=builder /app/build/client /usr/share/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 3000
-CMD ["pnpm", "start"]
+EXPOSE 80
+ENTRYPOINT ["/docker-entrypoint.sh"]
