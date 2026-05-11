@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.5.2](https://github.com/mightea/MotoManager/compare/2026.5.1...2026.5.2) (2026-05-11)
+
+
+### 🐛 Bug Fixes
+
+* move loading indicator to bottom edge of header ([a777896](https://github.com/mightea/MotoManager/commit/a777896e01039bb2139bd7a265bd3ba0a1f431b1))
+
+
+### ♻️ Code Refactoring
+
+* remove PWA and offline mode ([8bd2b51](https://github.com/mightea/MotoManager/commit/8bd2b516b4a505ba5b976b528e7e6a4ce75cccb6))
+* switch to SPA mode ([bf77868](https://github.com/mightea/MotoManager/commit/bf77868dc6826f7efec444c3e2124f432867bf0f))
+
 ## [2026.5.1](https://github.com/mightea/MotoManager/compare/2026.5.0...2026.5.1) (2026-05-09)
 
 
