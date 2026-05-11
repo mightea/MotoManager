@@ -15,6 +15,8 @@ import {
   Tag,
   Calendar,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Map as MapIcon,
   AlertTriangle,
   Wrench,
@@ -51,6 +53,10 @@ const FILTER_KEYS: ReadonlyArray<FilterKey> = [
   "issues",
   "veteran",
 ];
+
+// Matches the backend's DEFAULT_PAGE_SIZE for /api/motorcycles so the UX
+// stays consistent if the cards switch to server-side pagination later.
+const PAGE_SIZE = 20;
 
 export function meta() {
   return [
@@ -249,6 +255,40 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     return [...filtered].sort(compareCards(currentSort));
   }, [cards, currentSort, currentFilter]);
 
+  // Pagination — server-side contract (page/pageSize/total/totalPages) applied
+  // client-side over the /home payload so cards/filters/attention chips still
+  // have the enriched fields they need. Swap to a paginated backend call once
+  // /home or /motorcycles returns the enriched dashboard shape.
+  const totalPages = Math.max(1, Math.ceil(visibleCards.length / PAGE_SIZE));
+
+  const pageParam = searchParams.get("page");
+  const requestedPage = pageParam ? Number(pageParam) : 1;
+  const currentPage = Number.isFinite(requestedPage)
+    ? Math.min(Math.max(1, Math.trunc(requestedPage)), totalPages)
+    : 1;
+
+  // If the page number in the URL no longer points to a valid page (e.g. the
+  // user changed filter and the visible count shrank), normalize it.
+  useEffect(() => {
+    if (!pageParam) return;
+    if (!Number.isFinite(requestedPage) || requestedPage < 1 || requestedPage > totalPages) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        if (totalPages <= 1) next.delete("page");
+        else next.set("page", String(totalPages));
+        return next;
+      }, { replace: true, preventScrollReset: true });
+    }
+  }, [pageParam, requestedPage, totalPages, setSearchParams]);
+
+  const pagedCards = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return visibleCards.slice(start, start + PAGE_SIZE);
+  }, [visibleCards, currentPage]);
+
+  const pageStart = visibleCards.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const pageEnd = Math.min(currentPage * PAGE_SIZE, visibleCards.length);
+
   const sortOptions: { id: SortKey; label: string; icon: typeof Clock }[] = [
     { id: "updated", label: "Aktualität", icon: Clock },
     { id: "make", label: "Marke", icon: Tag },
@@ -260,17 +300,27 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const activeSortOption = sortOptions.find(o => o.id === currentSort);
   const ActiveSortIcon = activeSortOption?.icon;
 
-  const updateParam = (key: "sort" | "filter", value: string | null) => {
+  const updateParam = (key: "sort" | "filter" | "page", value: string | null) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       if (value && value !== "all") next.set(key, value);
       else next.delete(key);
+      // Sort and filter changes invalidate the current page index.
+      if (key === "sort" || key === "filter") next.delete("page");
       return next;
     }, { replace: true, preventScrollReset: true });
   };
 
   const toggleFilter = (next: FilterKey) => {
     updateParam("filter", currentFilter === next ? null : next);
+  };
+
+  const goToPage = (page: number) => {
+    const clamped = Math.min(Math.max(1, page), totalPages);
+    updateParam("page", clamped === 1 ? null : String(clamped));
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   return (
@@ -358,6 +408,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 onSelect={() => {
                   const p = new URLSearchParams(searchParams);
                   p.set("sort", option.id);
+                  // Re-sorting invalidates the current page index.
+                  p.delete("page");
                   navigate(`?${p.toString()}`, { replace: true, preventScrollReset: true });
                 }}
                 aria-current={isActive ? "true" : undefined}
@@ -427,13 +479,26 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             />
           </div>
         ) : (
-          visibleCards.map((moto: MotorcycleDashboardItem) => (
+          pagedCards.map((moto: MotorcycleDashboardItem) => (
             <MotorcycleCard
               key={moto.id}
               moto={moto} />
           ))
         )}
       </div>
+
+      {/* Pagination — only shown when more than one page exists */}
+      {visibleCards.length > PAGE_SIZE && (
+        <Pagination
+          className="order-3 sm:order-5"
+          page={currentPage}
+          totalPages={totalPages}
+          pageStart={pageStart}
+          pageEnd={pageEnd}
+          total={visibleCards.length}
+          onChange={goToPage}
+        />
+      )}
 
       <Modal
         isOpen={isAddOpen}
@@ -444,6 +509,71 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} currencies={currencies} />
       </Modal>
     </div>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  pageStart,
+  pageEnd,
+  total,
+  onChange,
+  className,
+}: {
+  page: number;
+  totalPages: number;
+  pageStart: number;
+  pageEnd: number;
+  total: number;
+  onChange: (page: number) => void;
+  className?: string;
+}) {
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
+
+  return (
+    <nav
+      aria-label="Seitennavigation"
+      className={clsx(
+        "flex flex-col items-center justify-between gap-3 sm:flex-row",
+        className,
+      )}
+    >
+      <p className="text-xs text-base-content/60 tabular-nums">
+        <span className="font-semibold text-base-content">{pageStart}–{pageEnd}</span> von{" "}
+        <span className="font-semibold text-base-content">{total}</span>
+      </p>
+
+      <div className="join">
+        <button
+          type="button"
+          onClick={() => onChange(page - 1)}
+          disabled={!canPrev}
+          className="btn btn-sm join-item"
+          aria-label="Vorherige Seite"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          <span className="hidden sm:inline">Zurück</span>
+        </button>
+        <span
+          className="btn btn-sm join-item pointer-events-none tabular-nums"
+          aria-current="page"
+        >
+          Seite {page} / {totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(page + 1)}
+          disabled={!canNext}
+          className="btn btn-sm join-item"
+          aria-label="Nächste Seite"
+        >
+          <span className="hidden sm:inline">Weiter</span>
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    </nav>
   );
 }
 
