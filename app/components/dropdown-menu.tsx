@@ -315,12 +315,12 @@ function Item({
 }
 
 function Separator({ className }: { className?: string }) {
+  // The <li> is presentational so the parent <ul role="menu"> structure stays
+  // valid HTML; the inner <hr> carries the actual separator semantics.
   return (
-    <li
-      role="separator"
-      aria-orientation="horizontal"
-      className={clsx("my-1 h-px bg-base-300", className)}
-    />
+    <li role="none" className={clsx("my-1", className)}>
+      <hr aria-orientation="horizontal" className="h-px border-0 bg-base-300" />
+    </li>
   );
 }
 
