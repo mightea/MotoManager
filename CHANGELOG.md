@@ -1,5 +1,27 @@
 # Changelog
 
+## [2026.5.3](https://github.com/mightea/MotoManager/compare/2026.5.2...2026.5.3) (2026-05-13)
+
+
+### ✨ Features
+
+* align Service-Intervalle card with design system kit ([d407557](https://github.com/mightea/MotoManager/commit/d407557e678cd3c09770f84f224f2d4962cbcb76))
+* paginate the home page motorcycle grid ([0e14a58](https://github.com/mightea/MotoManager/commit/0e14a581a19181a8946f2244b2b5694bd877d2c9))
+* tighten motorcycle card hierarchy and a11y ([4746c62](https://github.com/mightea/MotoManager/commit/4746c62da960a3444eb01ee7b518aba26e2a3e2d))
+* tighten open issues card to match design kit ([0033138](https://github.com/mightea/MotoManager/commit/003313827291acc8b35dcac1dc55980980ad3371))
+* tint maintenance log rows by category ([ab65aec](https://github.com/mightea/MotoManager/commit/ab65aec525752e05592af5b2481b728884df6ab8))
+
+
+### 🐛 Bug Fixes
+
+* re-inject umami tracker script in SPA mode ([1a32791](https://github.com/mightea/MotoManager/commit/1a327917a27d321c3f3987cbe2c162e5f5c34a41))
+* use group title pattern for release-please aggregate PR ([8cdf947](https://github.com/mightea/MotoManager/commit/8cdf947854b5efb6a1423535b6f3331caecb9a88))
+
+
+### ✏️ Miscellaneous Chores
+
+* upgrade all dependencies to latest ([cc5421c](https://github.com/mightea/MotoManager/commit/cc5421c4751d00df0133fe27738fa0ff8ef9dc82))
+
 ## [2026.5.2](https://github.com/mightea/MotoManager/compare/2026.5.1...2026.5.2) (2026-05-11)
 
 
