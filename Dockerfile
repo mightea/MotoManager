@@ -1,4 +1,4 @@
-FROM node:25-alpine AS builder
+FROM node:26-alpine AS builder
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest --force && corepack enable && corepack prepare pnpm@10.2.1 --activate
