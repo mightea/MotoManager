@@ -72,6 +72,31 @@ const getIconForType = (type: MaintenanceType) => {
   }
 };
 
+// Category tinting — design system maps each maintenance type to a
+// semantic colour so the icon tile and accent text identify the work
+// at a glance. Falls back to neutral surface for "general".
+type CategoryTone = {
+  /** Tailwind classes for the icon tile background. */
+  bg: string;
+  /** Tailwind classes for the icon glyph + the colored title accent. */
+  fg: string;
+};
+
+const TYPE_TONE: Record<MaintenanceType, CategoryTone> = {
+  service:    { bg: "bg-primary/10",      fg: "text-primary" },
+  inspection: { bg: "bg-info/10",         fg: "text-info" },
+  brakepad:   { bg: "bg-error/10",        fg: "text-error" },
+  brakerotor: { bg: "bg-error/10",        fg: "text-error" },
+  battery:    { bg: "bg-warning/10",      fg: "text-warning" },
+  fluid:      { bg: "bg-info/10",         fg: "text-info" },
+  repair:     { bg: "bg-warning/10",      fg: "text-warning" },
+  fuel:       { bg: "bg-success/10",      fg: "text-success" },
+  tire:       { bg: "bg-slate-500/10",    fg: "text-slate-600 dark:text-slate-300" },
+  chain:      { bg: "bg-slate-500/10",    fg: "text-slate-600 dark:text-slate-300" },
+  location:   { bg: "bg-info/10",         fg: "text-info" },
+  general:    { bg: "bg-base-200",        fg: "text-base-content/60" },
+};
+
 function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: Location[]): GroupedMaintenanceRecord[] {
   const groups = new Map<string, GroupedMaintenanceRecord>();
   const recordsById = new Map<number, MaintenanceRecord>(records.map(r => [r.id, r]));
@@ -262,6 +287,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
               {recordsByYear.get(year)!.map((group) => {
                 const Icon = getIconForType(group.type);
                 const isExpanded = expandedGroupId === group.id;
+                const tone = TYPE_TONE[group.type] ?? TYPE_TONE.general;
+                const typeLabel = maintenanceTypeLabels[group.type] || group.type;
 
                 // Determine display summary
                 let summary = "";
@@ -269,7 +296,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                 if (group.summaries.length > 0) {
                   summary = group.summaries.join(", ");
                 } else {
-                  summary = maintenanceTypeLabels[group.type] || group.type;
+                  summary = typeLabel;
                 }
 
                 const metric = getCollapsedMetric(group, currencyCode);
@@ -283,7 +310,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                       aria-controls={`maintenance-details-${group.id}`}
                       className="group flex w-full cursor-pointer items-start gap-3 py-2.5 pl-0 text-left"
                     >
-                      <div className="mt-0.5 grid h-11 w-11 place-items-center rounded-xl bg-gray-50 text-secondary transition-colors group-hover:bg-primary/10 group-hover:text-primary dark:bg-navy-700 dark:text-navy-300 dark:group-hover:bg-navy-600 dark:group-hover:text-primary-light shrink-0">
+                      <div className={clsx(
+                        "mt-0.5 grid h-11 w-11 place-items-center rounded-xl shrink-0 transition-transform group-hover:scale-105",
+                        tone.bg,
+                        tone.fg,
+                      )}>
                         <Icon className="h-5 w-5" />
                       </div>
 
@@ -301,21 +332,21 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                           </div>
                         </div>
 
-                        {/* Row 2: Context — summary left, metric right */}
+                        {/* Row 2: Context — summary left (category-coloured), metric · type right */}
                         <div className="flex items-center justify-between gap-3 mt-0.5">
-                          <p className="min-w-0 text-xs text-secondary dark:text-navy-400 line-clamp-1">
+                          <p className="min-w-0 text-xs line-clamp-1">
                             {group.count > 1 && (
                               <span className="mr-1.5 inline-flex items-center justify-center rounded-md bg-secondary/10 px-1.5 py-0.5 text-[10px] font-bold text-secondary dark:bg-navy-600 dark:text-navy-200 align-middle">
                                 {group.count}x
                               </span>
                             )}
-                            {summary}
-                          </p>
-                          {metric && (
-                            <span className="shrink-0 text-xs font-medium tabular-nums text-secondary/70 dark:text-navy-500">
-                              {metric}
+                            <span className={clsx("font-semibold", tone.fg)}>
+                              {summary}
                             </span>
-                          )}
+                          </p>
+                          <span className="shrink-0 text-xs font-medium tabular-nums text-secondary/70 dark:text-navy-500">
+                            {metric ? <>{metric} <span className="text-secondary/40 dark:text-navy-600">·</span> {typeLabel}</> : typeLabel}
+                          </span>
                         </div>
                       </div>
                     </button>
