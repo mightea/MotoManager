@@ -494,11 +494,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
                                     </div>
                                   )}
 
-                                  {record.latitude && record.longitude && (
+                                  {isExpanded && record.latitude && record.longitude && (
                                     <div className="mt-2">
-                                      <MapView 
-                                        latitude={record.latitude} 
-                                        longitude={record.longitude} 
+                                      <MapView
+                                        latitude={record.latitude}
+                                        longitude={record.longitude}
                                         title={record.locationName || "Tankstelle"}
                                       />
                                     </div>
