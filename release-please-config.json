@@ -5,7 +5,6 @@
   "versioning": "always-bump-patch",
   "include-component-in-tag": false,
   "separate-pull-requests": false,
-  "group-pull-request-title-pattern": "chore: release ${component}@${version}",
   "packages": {
     ".": {
       "package-name": "motomanager",
