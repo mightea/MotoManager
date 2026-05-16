@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.5.5](https://github.com/mightea/MotoManager/compare/2026.5.4...2026.5.5) (2026-05-16)
+
+
+### 🐛 Bug Fixes
+
+* revert to default release-please group title pattern ([05ad596](https://github.com/mightea/MotoManager/commit/05ad5962083ed915f58ad341f285564fb58501ef))
+
 ## [2026.5.4](https://github.com/mightea/MotoManager/compare/2026.5.3...2026.5.4) (2026-05-16)
 
 
