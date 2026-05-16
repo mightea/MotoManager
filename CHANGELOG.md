@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.5.4](https://github.com/mightea/MotoManager/compare/2026.5.3...2026.5.4) (2026-05-16)
+
+
+### 🐛 Bug Fixes
+
+* include component in release-please group title pattern ([eeca079](https://github.com/mightea/MotoManager/commit/eeca07960ea419d99e44a8557cc788c886bd8e1d))
+* only mount fuel-row map iframe when the row is expanded ([a4c5add](https://github.com/mightea/MotoManager/commit/a4c5add5faf93d8d85270ef60c5a9cb70eede795))
+
 ## [2026.5.3](https://github.com/mightea/MotoManager/compare/2026.5.2...2026.5.3) (2026-05-13)
 
 
