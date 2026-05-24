@@ -1,5 +1,34 @@
 # Changelog
 
+## [2026.5.5](https://github.com/mightea/MotoManager/compare/2026.5.4...2026.5.5) (2026-05-24)
+
+
+### ✨ Features
+
+* enable umami performance metrics tracking ([7b8735a](https://github.com/mightea/MotoManager/commit/7b8735a7a4cdcb29960132cc62856290a3da2c1c))
+
+
+### 🐛 Bug Fixes
+
+* ensure motorcycle picker shows user bikes when assigning public doc ([e63e448](https://github.com/mightea/MotoManager/commit/e63e448487cbcab5c9b6dac63e73dfcd3acca86a))
+* make document private checkbox visible in edit form ([b3a8790](https://github.com/mightea/MotoManager/commit/b3a8790aa468a250939cf9801712ef94a6e171e1))
+* refresh maintenance form state per record and enlarge description ([91d029b](https://github.com/mightea/MotoManager/commit/91d029bc7fae8b2dc9823859bd38ad83268f5dc8))
+* remount maintenance form on every dialog open ([c73062c](https://github.com/mightea/MotoManager/commit/c73062c107339a17b476416b4c1cb93950750943))
+* remount shared-expense form on every dialog open ([e377226](https://github.com/mightea/MotoManager/commit/e3772268610504817ef8e02d8240aa96a48da466))
+* restore torque-specs import button and reorder action buttons ([f4975c8](https://github.com/mightea/MotoManager/commit/f4975c8fa60f23c4b418adae519176ed729667bb))
+* revert to default release-please group title pattern ([05ad596](https://github.com/mightea/MotoManager/commit/05ad5962083ed915f58ad341f285564fb58501ef))
+* show only assigned documents on motorcycle documents tab ([aef85d9](https://github.com/mightea/MotoManager/commit/aef85d91cd636d82bb0af848a61f458a8c057b16))
+
+
+### ✏️ Miscellaneous Chores
+
+* upgrade dependencies to latest minor/patch versions ([0d3fc34](https://github.com/mightea/MotoManager/commit/0d3fc34fe9735f13c692be4d8c4c71ca64732084))
+
+
+### ♻️ Code Refactoring
+
+* lift empty-array prop defaults to stable module constants ([06df5c4](https://github.com/mightea/MotoManager/commit/06df5c4cbbcc98f3c26d48f55203fb42cb388b7f))
+
 ## [2026.5.4](https://github.com/mightea/MotoManager/compare/2026.5.3...2026.5.4) (2026-05-16)
 
 
