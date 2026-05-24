@@ -27,6 +27,7 @@ export function ExpenseDialog({
       description={initialData ? "Details zur Ausgabe anpassen." : "Füge eine Ausgabe hinzu, die mehrere Fahrzeuge betrifft (z.B. Versicherung)."}
     >
       <ExpenseForm
+        key={isOpen ? `open-${initialData?.id ?? "new"}` : "closed"}
         initialData={initialData}
         motorcycles={motorcycles}
         currencies={currencies}
