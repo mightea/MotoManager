@@ -18,6 +18,7 @@
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": "warn",
     "jsx-a11y/heading-has-content": "off",
+    "jsx-a11y/control-has-associated-label": "off",
     "vitest/require-mock-type-parameters": "off"
   },
   "settings": {
