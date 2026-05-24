@@ -1,15 +1,20 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "release-type": "node",
+  "release-type": "simple",
   "include-v-in-tag": false,
   "versioning": "always-bump-patch",
   "include-component-in-tag": false,
   "separate-pull-requests": false,
   "packages": {
     ".": {
-      "package-name": "motomanager",
-      "component": "",
       "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "package.json",
+          "jsonpath": "$.version"
+        }
+      ],
       "changelog-sections": [
         { "type": "feat", "section": "✨ Features" },
         { "type": "fix", "section": "🐛 Bug Fixes" },
