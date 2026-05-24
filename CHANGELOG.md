@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.5.6](https://github.com/mightea/MotoManager/compare/2026.5.5...2026.5.6) (2026-05-24)
+
+
+### 👷 Continuous Integration
+
+* pin release-please-action to v4.4.1 ([46b7f7a](https://github.com/mightea/MotoManager/commit/46b7f7a42777fbeaf21ac781d8b2bbfde70603ad))
+
 ## [2026.5.5](https://github.com/mightea/MotoManager/compare/2026.5.4...2026.5.5) (2026-05-24)
 
 
