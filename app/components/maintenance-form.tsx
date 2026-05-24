@@ -275,18 +275,6 @@ export function MaintenanceForm({
                     </div>
                 )}
 
-                <div className="space-y-1.5">
-                    <label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Beschreibung</label>
-                    <input
-                        type="text"
-                        name="description"
-                        id="description"
-                        placeholder="Optionale Notizen..."
-                        defaultValue={initialData?.description || ""}
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                    />
-                </div>
-
                 {/* Brand/Model - Show for technical types */}
                 {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
                     <>
@@ -587,6 +575,18 @@ export function MaintenanceForm({
                         <LocationFields />
                     </>
                 )}
+            </div>
+
+            <div className="space-y-1.5">
+                <label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Beschreibung</label>
+                <textarea
+                    name="description"
+                    id="description"
+                    rows={4}
+                    placeholder="Optionale Notizen..."
+                    defaultValue={initialData?.description || ""}
+                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                />
             </div>
 
             <div className="flex items-center justify-between pt-2">

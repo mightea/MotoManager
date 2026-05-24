@@ -46,6 +46,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
       description={initialData ? "Details zum Eintrag anpassen." : "Füge einen neuen Service, eine Reparatur oder Tankstopp hinzu."}
     >
       <MaintenanceForm
+        key={initialData?.id ?? "new"}
         motorcycleId={motorcycleId}
         initialData={initialData}
         currencyCode={currencyCode}
