@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router';
-import { getUmamiScriptUrl, getUmamiWebsiteId } from '~/config';
+import React, { createContext, useContext, useEffect, useMemo, useRef } from "react";
+import { useLocation } from "react-router";
+import { getUmamiScriptUrl, getUmamiWebsiteId } from "~/config";
 
 interface UmamiContextProps {
   /**
@@ -17,10 +17,10 @@ interface UmamiContextProps {
 
 const UmamiContext = createContext<UmamiContextProps | undefined>(undefined);
 
-const IS_PROD = process.env.NODE_ENV === 'production';
+const IS_PROD = process.env.NODE_ENV === "production";
 // Marker attribute used to keep the loader idempotent across StrictMode
 // double-mounts, HMR, and back-forward navigations.
-const LOADER_MARKER = 'data-umami-loader';
+const LOADER_MARKER = "data-umami-loader";
 
 /**
  * Provider component for Umami Analytics integration.
@@ -44,7 +44,7 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // 1. Inject the umami tracker script once per page load.
   useEffect(() => {
     if (!IS_PROD) return;
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (typeof window === "undefined" || typeof document === "undefined") return;
     if (window.umami) return;
 
     const scriptUrl = getUmamiScriptUrl();
@@ -53,14 +53,15 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     if (document.head.querySelector(`script[${LOADER_MARKER}]`)) return;
 
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.async = true;
     script.defer = true;
     script.src = scriptUrl;
     script.dataset.websiteId = websiteId;
-    script.dataset.autoTrack = 'false';
-    script.setAttribute(LOADER_MARKER, '');
-    script.addEventListener('load', () => {
+    script.dataset.autoTrack = "false";
+    script.dataset.performance = "true";
+    script.setAttribute(LOADER_MARKER, "");
+    script.addEventListener("load", () => {
       // If the route-change effect (below) already tracked the initial
       // page while the SDK was loading, don't track it again.
       if (initialTrackedRef.current) return;
@@ -86,24 +87,23 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [location.pathname, location.search]);
 
   // 3. Memoized Context Value
-  const value = useMemo(() => ({
-    trackEvent: (name: string, data?: Record<string, any>) => {
-      if (IS_PROD && window.umami) {
-        window.umami.track(name, data);
-      }
-    },
-    identifyUser: (data: Record<string, any>) => {
-      if (IS_PROD && window.umami) {
-        window.umami.identify(data);
-      }
-    }
-  }), []);
-
-  return (
-    <UmamiContext.Provider value={value}>
-      {children}
-    </UmamiContext.Provider>
+  const value = useMemo(
+    () => ({
+      trackEvent: (name: string, data?: Record<string, any>) => {
+        if (IS_PROD && window.umami) {
+          window.umami.track(name, data);
+        }
+      },
+      identifyUser: (data: Record<string, any>) => {
+        if (IS_PROD && window.umami) {
+          window.umami.identify(data);
+        }
+      },
+    }),
+    [],
   );
+
+  return <UmamiContext.Provider value={value}>{children}</UmamiContext.Provider>;
 };
 
 /**
@@ -113,7 +113,7 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 export const useUmami = () => {
   const context = useContext(UmamiContext);
   if (!context) {
-    throw new Error('useUmami must be used within an UmamiProvider');
+    throw new Error("useUmami must be used within an UmamiProvider");
   }
   return context;
 };
