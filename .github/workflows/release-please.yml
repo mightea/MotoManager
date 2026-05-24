@@ -62,7 +62,7 @@ jobs:
           git push origin HEAD:main
 
       - name: Run release-please
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v4.4.1
         with:
           token: ${{ secrets.RELEASE_PLEASE_PAT || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
