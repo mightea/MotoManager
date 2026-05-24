@@ -19,7 +19,9 @@ interface MaintenanceDialogProps {
   onDelete?: () => void;
 }
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = [], currencyCode, defaultOdo, userLocations, maintenanceLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
+const EMPTY_RECORDS: MaintenanceRecord[] = [];
+
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, maintenanceLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
   const { trackEvent } = useUmami();
 
   useEffect(() => {

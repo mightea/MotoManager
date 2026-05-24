@@ -7,6 +7,8 @@ import { Trash2 } from "lucide-react";
 
 type VariationType = "none" | "plus_minus" | "range";
 
+const EMPTY_CATEGORIES: string[] = [];
+
 interface TorqueSpecFormProps {
   motorcycleId: number;
   initialValues?: TorqueSpecification | null;
@@ -19,7 +21,7 @@ interface TorqueSpecFormProps {
 export function TorqueSpecForm({
   motorcycleId,
   initialValues,
-  existingCategories = [],
+  existingCategories = EMPTY_CATEGORIES,
   onClose,
   onSubmit,
   onDelete,

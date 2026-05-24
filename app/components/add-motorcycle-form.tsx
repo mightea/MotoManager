@@ -28,14 +28,17 @@ const formatDateInput = (value?: string | null) => {
   return value.split("T")[0] ?? "";
 };
 
+const EMPTY_CURRENCIES: CurrencySetting[] = [];
+const EMPTY_MAINTENANCE: MaintenanceRecord[] = [];
+
 export function AddMotorcycleForm({
   onSubmit,
   initialValues,
   intent = "createMotorcycle",
   submitLabel = "Speichern",
-  currencies = [],
+  currencies = EMPTY_CURRENCIES,
   onDelete,
-  existingMaintenance = [],
+  existingMaintenance = EMPTY_MAINTENANCE,
 }: AddMotorcycleFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();

@@ -14,11 +14,13 @@ interface ImportRoadTripDialogProps {
   existingMaintenance?: MaintenanceRecord[];
 }
 
+const EMPTY_MAINTENANCE: MaintenanceRecord[] = [];
+
 export function ImportRoadTripDialog({
   isOpen,
   onClose,
   onImport,
-  existingMaintenance = [],
+  existingMaintenance = EMPTY_MAINTENANCE,
 }: ImportRoadTripDialogProps) {
   const [entries, setEntries] = useState<(RoadTripFuelEntry & { selected: boolean; duplicate: boolean })[]>([]);
 

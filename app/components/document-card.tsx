@@ -24,12 +24,14 @@ type DocumentCardProps = {
   assignedMotorcycleNames?: string[];
 };
 
+const EMPTY_MOTORCYCLE_NAMES: string[] = [];
+
 export function DocumentCard({
   document,
   formatDate,
   isOwner,
   onEdit,
-  assignedMotorcycleNames = [],
+  assignedMotorcycleNames = EMPTY_MOTORCYCLE_NAMES,
 }: DocumentCardProps) {
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
   const previewUrl = getBackendAssetUrl(document.previewPath);

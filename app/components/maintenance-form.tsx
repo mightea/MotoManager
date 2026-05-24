@@ -34,6 +34,11 @@ interface MaintenanceFormProps {
     existingBundledItems?: string[];
 }
 
+const EMPTY_MAINTENANCE_LOCATIONS: MaintenanceLocation[] = [];
+const EMPTY_LOCATION_NAMES: string[] = [];
+const EMPTY_CURRENCIES: CurrencySetting[] = [];
+const EMPTY_BUNDLED_ITEMS: string[] = [];
+
 const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] = [
     { value: "tire", label: "Reifenwechsel", icon: CircleDashed },
     { value: "service", label: "Service", icon: ClipboardList },
@@ -57,13 +62,13 @@ export function MaintenanceForm({
     currencyCode, 
     defaultOdo, 
     userLocations, 
-    maintenanceLocations = [],
-    _locationNames = [], 
-    currencies = [], 
-    onSubmit, 
-    onCancel, 
+    maintenanceLocations = EMPTY_MAINTENANCE_LOCATIONS,
+    _locationNames = EMPTY_LOCATION_NAMES,
+    currencies = EMPTY_CURRENCIES,
+    onSubmit,
+    onCancel,
     onDelete,
-    existingBundledItems = []
+    existingBundledItems = EMPTY_BUNDLED_ITEMS
 }: MaintenanceFormProps) {
     const { trackEvent } = useUmami();
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");

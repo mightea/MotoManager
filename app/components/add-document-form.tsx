@@ -18,10 +18,12 @@ interface AddDocumentFormProps {
   currentUserId: number;
 }
 
+const EMPTY_MOTORCYCLE_IDS: number[] = [];
+
 export function AddDocumentForm({
   document,
   motorcycles,
-  assignedMotorcycleIds = [],
+  assignedMotorcycleIds = EMPTY_MOTORCYCLE_IDS,
   onSubmit,
   onDelete,
   onSubmitFormData,
