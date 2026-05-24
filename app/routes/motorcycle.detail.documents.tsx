@@ -50,10 +50,49 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid motorcycle ID", { status: 400 });
   }
 
-  const response = await fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token);
+  const [motoResponse, docsResponse] = await Promise.all([
+    fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
+    fetchFromBackend<any>(`/documents`, {}, token),
+  ]);
+
+  const allDocs: any[] = docsResponse.docs ?? [];
+  const allMotorcycles: any[] = docsResponse.allMotorcycles ?? [];
+  const assignments: DocumentAssignment[] = docsResponse.assignments ?? [];
+
+  const motorcycleNameById = new Map<number, string>(
+    allMotorcycles.map((moto: any) => {
+      const nameParts = [moto.make, moto.model].filter(Boolean);
+      const label = nameParts.length > 0 ? nameParts.join(" ") : `Motorrad #${moto.id}`;
+      return [moto.id, label];
+    }),
+  );
+
+  const namesByDocId: Record<number, string[]> = {};
+  for (const assignment of assignments) {
+    const label = motorcycleNameById.get(assignment.motorcycleId);
+    if (!label) continue;
+    const bucket = namesByDocId[assignment.documentId] ?? (namesByDocId[assignment.documentId] = []);
+    if (!bucket.includes(label)) bucket.push(label);
+  }
+
+  const decorate = (doc: any) => ({
+    ...doc,
+    assignedMotorcycleNames: namesByDocId[doc.id] ?? [],
+  });
+
+  const assignedIds = new Set(
+    assignments
+      .filter((a) => a.motorcycleId === motorcycleId)
+      .map((a) => a.documentId),
+  );
+
+  const assignedDocs = allDocs.filter((d) => assignedIds.has(d.id)).map(decorate);
 
   return data({
-    ...response,
+    ...motoResponse,
+    assignedDocs,
+    docAssignments: assignments,
+    allMotorcycles,
     userId: user.id,
   });
 }
@@ -64,7 +103,6 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
     nextInspection,
     currentLocationName,
     assignedDocs = [],
-    unassignedDocs = [],
     userId,
     allMotorcycles = [],
     docAssignments = [],
@@ -91,7 +129,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
       day: "2-digit",
     });
 
-  const documentsToDisplay = [...assignedDocs, ...unassignedDocs];
+  const documentsToDisplay = assignedDocs;
   const assignmentMap: Record<number, number[]> = {};
   for (const assignment of docAssignments) {
     if (!assignmentMap[assignment.documentId]) {
@@ -138,7 +176,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
           <div>
             <h2 className="text-2xl font-bold text-foreground dark:text-white">Dokumente</h2>
             <p className="text-sm text-secondary dark:text-navy-400">
-              Zugeordnete und allgemeine Dokumente für {motorcycle.make} {motorcycle.model}
+              Zugeordnete Dokumente für {motorcycle.make} {motorcycle.model}
             </p>
           </div>
           <Link
@@ -163,7 +201,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
               </p>
             </div>
           ) : (
-            documentsToDisplay.map((doc) => (
+            documentsToDisplay.map((doc: DocumentWithAssignment) => (
               <DocumentCard
                 key={doc.id}
                 document={doc}
