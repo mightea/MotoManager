@@ -249,17 +249,17 @@ export function AddDocumentForm({
         </div>
       </div>
 
-      <div className={clsx("flex items-center justify-between", !isOwner && "opacity-60")}>
+      <div className={clsx("flex items-center justify-between gap-3", !isOwner && "opacity-60")}>
         <label
           htmlFor="isPrivate"
-          className="block text-sm font-medium text-base-content cursor-pointer"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none"
         >
           Privat (nur für mich sichtbar) {!isOwner && "(Nur Besitzer)"}
         </label>
         <input
           id="isPrivate"
           type="checkbox"
-          className="toggle toggle-primary"
+          className="h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:checked:bg-primary"
           checked={isPrivate}
           onChange={(e) => setIsPrivate(e.target.checked)}
           disabled={!isOwner}
