@@ -50,13 +50,22 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid motorcycle ID", { status: 400 });
   }
 
-  const [motoResponse, docsResponse] = await Promise.all([
+  const [motoResponse, docsResponse, userMotosResponse] = await Promise.all([
     fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
     fetchFromBackend<any>(`/documents`, {}, token),
+    fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
   ]);
 
   const allDocs: any[] = docsResponse.docs ?? [];
-  const allMotorcycles: any[] = docsResponse.allMotorcycles ?? [];
+  const userMotoIds = new Set(
+    (userMotosResponse.motorcycles ?? []).map((m: any) => m.id),
+  );
+  const allMotorcycles: any[] = (docsResponse.allMotorcycles ?? []).map(
+    (m: any) => ({
+      ...m,
+      userId: m.userId ?? (userMotoIds.has(m.id) ? user.id : null),
+    }),
+  );
   const assignments: DocumentAssignment[] = docsResponse.assignments ?? [];
 
   const motorcycleNameById = new Map<number, string>(

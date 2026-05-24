@@ -23,9 +23,20 @@ export function meta() {
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
 
-  const response = await fetchFromBackend<any>("/documents", {}, token);
+  const [response, userMotosResponse] = await Promise.all([
+    fetchFromBackend<any>("/documents", {}, token),
+    fetchFromBackend<{ motorcycles: any[] }>("/motorcycles", {}, token),
+  ]);
 
-  return data({ ...response, user });
+  const userMotoIds = new Set(
+    (userMotosResponse.motorcycles ?? []).map((m: any) => m.id),
+  );
+  const allMotorcycles = (response.allMotorcycles ?? []).map((m: any) => ({
+    ...m,
+    userId: m.userId ?? (userMotoIds.has(m.id) ? user.id : null),
+  }));
+
+  return data({ ...response, allMotorcycles, user });
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
