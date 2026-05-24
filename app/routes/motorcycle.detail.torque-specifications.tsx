@@ -48,10 +48,36 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid motorcycle ID", { status: 400 });
   }
 
-  const response = await fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token);
+  const [response, allMotorcyclesResponse] = await Promise.all([
+    fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
+    fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
+  ]);
+
+  const otherMotorcycles = (allMotorcyclesResponse.motorcycles ?? [])
+    .filter((m: any) => m.id !== motorcycleId)
+    .map((m: any) => ({
+      id: m.id,
+      make: m.make,
+      model: m.model,
+      fabricationDate: m.fabricationDate ?? m.modelYear ?? null,
+    }));
+
+  const otherSpecsResponses = await Promise.all(
+    otherMotorcycles.map((m) =>
+      fetchFromBackend<{ torqueSpecs: TorqueSpecification[] }>(
+        `/motorcycles/${m.id}/torque-specs`,
+        {},
+        token,
+      ).catch(() => ({ torqueSpecs: [] as TorqueSpecification[] })),
+    ),
+  );
+  const otherSpecs = otherSpecsResponses.flatMap((r) => r.torqueSpecs ?? []);
 
   return data({
     ...response,
+    allMotorcycles: otherMotorcycles,
+    otherSpecs,
+    printDate: new Date().toLocaleDateString("de-CH"),
   });
 }
 
@@ -285,14 +311,6 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => window.print()}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
-              title="Drucken"
-            >
-              <Printer className="h-5 w-5" />
-              <span className="sr-only">Drucken</span>
-            </button>
             {otherMotorcycles.length > 0 && (
               <button
                 onClick={() => setIsImportModalOpen(true)}
@@ -308,6 +326,14 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             >
               <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>Hinzufügen</span>
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+              title="Drucken"
+            >
+              <Printer className="h-5 w-5" />
+              <span className="sr-only">Drucken</span>
             </button>
           </div>
         </div>
