@@ -8,6 +8,7 @@
   "packages": {
     ".": {
       "package-name": "motomanager",
+      "component": "",
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
         { "type": "feat", "section": "✨ Features" },
