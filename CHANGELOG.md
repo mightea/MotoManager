@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.5.7](https://github.com/mightea/MotoManager/compare/2026.5.6...2026.5.7) (2026-05-24)
+
+
+### 🐛 Bug Fixes
+
+* override release-please component to match parsed PR title ([0f283f5](https://github.com/mightea/MotoManager/commit/0f283f5fb4d1d496f41eafecc29f96149e8ceb01))
+
 ## [2026.5.6](https://github.com/mightea/MotoManager/compare/2026.5.5...2026.5.6) (2026-05-24)
 
 
