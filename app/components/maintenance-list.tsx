@@ -229,7 +229,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-4 dark:border-navy-700">
+      <div className="sticky top-16 z-20 -mx-4 flex items-center justify-between border-b border-gray-100 bg-white px-4 pb-3 pt-3 dark:border-navy-700 dark:bg-navy-800">
         <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-navy-900">
           <button
             onClick={() => setFilter("all")}
@@ -277,7 +277,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
       ) : (
         sortedYears.map((year) => (
           <div key={year} className="space-y-2">
-            <div className="flex items-center gap-4 py-1">
+            <div className="sticky top-32 z-10 -mx-4 flex items-center gap-4 bg-white px-4 py-2 dark:bg-navy-800">
               <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
               <span className="text-sm font-bold text-secondary dark:text-navy-500">{year}</span>
               <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>

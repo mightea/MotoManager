@@ -52,8 +52,9 @@ export function MotorcycleDetailHeader({
     if (typeof window === "undefined") return;
 
     const handleScroll = () => {
-      // Compact earlier now that it sticks to top-0
-      setIsCompact(window.scrollY > 60);
+      // 140px feels less twitchy than 60 — needs a deliberate scroll gesture
+      // (a few wheel notches) to flip, instead of compacting after a single tick.
+      setIsCompact(window.scrollY > 140);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });

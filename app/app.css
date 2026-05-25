@@ -202,3 +202,14 @@ a {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Sticky only when there is enough room to actually keep the element pinned —
+   avoids the "scroll the whole list before the sticky column starts moving"
+   trap on short wide laptops (1366x768 etc.) where the sticky element is
+   taller than the viewport. */
+@media (min-width: 48rem) and (min-height: 900px) {
+  .sticky-tall {
+    position: sticky;
+    top: 5rem;
+  }
+}
