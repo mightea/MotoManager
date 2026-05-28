@@ -41,7 +41,9 @@ export function Header({ user }: { user: PublicUser | null }) {
       className="sticky top-0 z-40 w-full print:hidden transition-all duration-300 border-b border-base-300 bg-base-100/90 backdrop-blur-md"
     >
       <header className="mx-auto w-full max-w-7xl relative">
-        <div className="absolute left-0 right-0 top-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-accent" />
+        {/* Structural motorsport flag — 3-band stripe, distinct from a
+            soft gradient. Acts as the global visual signature. */}
+        <div className="motorsport-stripe absolute left-0 right-0 top-0 h-[3px]" aria-hidden="true" />
 
         <div className="flex items-center justify-between p-3 pt-4">
           <HeaderBrand onNavigate={closeMobileMenu} />

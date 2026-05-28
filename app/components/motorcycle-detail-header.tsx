@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Link } from "react-router";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin, CalendarDays } from "lucide-react";
 import type { Motorcycle } from "~/types/db";
 import { getBackendAssetUrl } from "~/utils/backend";
 
@@ -33,6 +33,19 @@ interface MotorcycleDetailHeaderProps {
   ownerCount?: number;
 }
 
+/**
+ * Race-program cover header.
+ *
+ * - Wide cinematic hero photo, slightly desaturated, with a dark editorial scrim.
+ * - Hero text is split into two columns:
+ *     · Left (large): make/model in Anton, fabrication date as a mono stamp.
+ *     · Right (small, on desktop): MFK and location stats, mono labels above
+ *       tabular values, separated by hairline rules.
+ * - A motorsport stripe runs as a thin band at the bottom of the hero —
+ *   the signature element that ties the page to the rest of the app.
+ * - Sub-nav (Übersicht / Dokumente / Anzugsmomente) sits below the hero as
+ *   a tabular row of file tabs, NOT pills on the photo.
+ */
 export function MotorcycleDetailHeader({
   motorcycle,
   nextInspection,
@@ -40,172 +53,205 @@ export function MotorcycleDetailHeader({
   navLinks,
   backTo = "/",
   overviewLink,
-  ownerCount: _ownerCount,
 }: MotorcycleDetailHeaderProps) {
   const [imageError, setImageError] = useState(false);
-  const hasHeroImage = true;
   const imageUrl = getBackendAssetUrl(motorcycle.image);
+  const hasImage = Boolean(!imageError && imageUrl);
+
+  const allNavLinks = overviewLink
+    ? [{ label: overviewLink.label ?? "Übersicht", to: overviewLink.to, isActive: overviewLink.isActive }, ...navLinks]
+    : navLinks;
 
   return (
-    <div className="relative -mx-4 px-4 py-4 text-white md:mx-0 md:mt-2 md:overflow-hidden md:rounded-3xl md:px-8 md:py-6">
-      {hasHeroImage && (
-        <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden md:rounded-3xl">
-          <img
-            src={
-              !imageError && imageUrl
-                ? `${imageUrl}?width=1200`
-                : "/favicon.svg"
-            }
-            srcSet={
-              !imageError && imageUrl
-                ? `${imageUrl}?width=800 800w, ${imageUrl}?width=1600 1600w`
-                : undefined
-            }
-            sizes="(max-width: 768px) 100vw, 1200px"
-            alt={`${motorcycle.make} ${motorcycle.model}`}
-            className={clsx(
-              "h-full w-full object-cover",
-              (imageError || !imageUrl) &&
-              "p-32 object-contain opacity-50 grayscale dark:invert"
-            )}
-            onError={() => setImageError(true)}
-            fetchPriority="high"
+    <div className="-mx-4 md:mx-0">
+      {/* Hero plate */}
+      <div className="relative overflow-hidden md:rounded-sm">
+        {/* Background image */}
+        <div className="absolute inset-0 -z-10">
+          {hasImage ? (
+            <img
+              src={`${imageUrl}?width=1600`}
+              srcSet={`${imageUrl}?width=1200 1200w, ${imageUrl}?width=2000 2000w`}
+              sizes="100vw"
+              alt={`${motorcycle.make} ${motorcycle.model}`}
+              className="h-full w-full object-cover"
+              onError={() => setImageError(true)}
+              fetchPriority="high"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-[var(--color-secondary)] via-navy-900 to-base-300" />
+          )}
+          {/* Editorial scrim — top-left brightens, bottom-right darkens for legible text */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.55)_45%,rgba(0,0,0,0.85)_100%)]" />
+          {/* Subtle 1px scanline texture for the workshop feel */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg, white 0, white 1px, transparent 1px, transparent 3px)",
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30" />
         </div>
-      )}
 
-      <div className="relative flex items-center gap-4 pointer-events-auto">
-        <Link
-          to={backTo}
-          aria-label="Zurück"
-          className="group flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-white/20 text-white shadow-sm backdrop-blur-md transition-all hover:bg-white hover:text-primary"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-x-3">
-            <h1 className="text-xl md:text-2xl font-bold text-white truncate">
-              {motorcycle.make} {motorcycle.model}
-            </h1>
-            {motorcycle.isVeteran && (
-              <span className="inline-flex items-center rounded-full border border-white/30 bg-white/20 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-                Veteran
-              </span>
-            )}
+        <div className="relative px-4 pb-6 pt-4 text-white md:px-8 md:pb-8 md:pt-6">
+          {/* Top utility row: back arrow + section code */}
+          <div className="flex items-center justify-between">
+            <Link
+              to={backTo}
+              aria-label="Zurück zur Übersicht"
+              className="inline-flex items-center gap-2 rounded-sm border border-white/25 bg-white/10 px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            >
+              <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+              Garage
+            </Link>
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.25em] text-white/55 tabular-nums">
+              FILE · {String(motorcycle.id).padStart(4, "0")}
+            </span>
           </div>
 
-          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-200">
-            <span>
-              {motorcycle.fabricationDate ? `${motorcycle.fabricationDate}` : "Fabrikationsdatum unbekannt"}
-            </span>
+          {/* Title block */}
+          <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              {motorcycle.isVeteran && (
+                <span className="stamp mb-3">Veteran · Historisch</span>
+              )}
+              <h1 className="font-display text-[clamp(2.25rem,6vw,4rem)] uppercase leading-[0.95] tracking-wide text-white">
+                {motorcycle.make}
+              </h1>
+              <h2 className="font-display text-[clamp(1.75rem,4.5vw,3rem)] uppercase leading-[0.95] tracking-wide text-white/80">
+                {motorcycle.model}
+              </h2>
+              <p className="mt-3 inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-white/65">
+                <span className="h-px w-6 bg-white/40" aria-hidden="true" />
+                {motorcycle.fabricationDate ?? "Fabrikation unbekannt"}
+              </p>
+            </div>
 
-            {nextInspection && (
-              <>
-                <span className="hidden sm:inline text-white/40">•</span>
-                <div
+            {/* Right stats column — desktop only */}
+            <div className="hidden md:grid md:gap-2 md:text-right md:font-mono md:text-xs">
+              {nextInspection && (
+                <DatumLine
+                  icon={CalendarDays}
+                  label="MFK"
+                  value={nextInspection.relativeLabel}
+                  tone={nextInspection.isOverdue ? "alert" : "default"}
+                />
+              )}
+              {currentLocationName && (
+                <DatumLine
+                  icon={MapPin}
+                  label="Standort"
+                  value={currentLocationName}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Mobile stats row */}
+          {(nextInspection || currentLocationName) && (
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 md:hidden">
+              {nextInspection && (
+                <span
                   className={clsx(
-                    "flex items-center gap-1.5 font-medium",
-                    nextInspection.isOverdue ? "text-red-300" : "text-gray-200"
+                    "inline-flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.2em]",
+                    nextInspection.isOverdue ? "text-error/90" : "text-white/75"
                   )}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M8 2v4" />
-                    <path d="M16 2v4" />
-                    <rect width="18" height="18" x="3" y="4" rx="2" />
-                    <path d="M3 10h18" />
-                  </svg>
-                  <span>MFK: {nextInspection.relativeLabel}</span>
-                </div>
-              </>
-            )}
-
-            {currentLocationName && (
-              <>
-                <span className="hidden sm:inline text-white/40">•</span>
-                <span>{currentLocationName}</span>
-              </>
-            )}
-          </div>
+                  <CalendarDays className="h-3 w-3" aria-hidden="true" />
+                  MFK · {nextInspection.relativeLabel}
+                </span>
+              )}
+              {currentLocationName && (
+                <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-white/75">
+                  <MapPin className="h-3 w-3" aria-hidden="true" />
+                  {currentLocationName}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Sub-nav (Dokumente, Anzugsmomente) - desktop only, beside title */}
-        {(navLinks.length > 0 || overviewLink) && (
-          <div className="hidden md:flex gap-2">
-            {overviewLink && (
-              <Link
-                key="overview-link"
-                to={overviewLink.to}
-                className={clsx(
-                  "whitespace-nowrap rounded-full border px-3 py-1.5 md:px-4 text-[10px] md:text-xs font-semibold transition-all",
-                  overviewLink.isActive
-                    ? "border-white bg-white text-navy-900"
-                    : "border-white/40 bg-white/10 text-white hover:bg-white/20"
-                )}
-              >
-                {overviewLink.label ?? "Übersicht"}
-              </Link>
-            )}
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={clsx(
-                  "whitespace-nowrap rounded-full border px-3 py-1.5 md:px-4 text-[10px] md:text-xs font-semibold transition-all",
-                  link.isActive
-                    ? "border-white bg-white text-navy-900"
-                    : "border-white/40 bg-white/10 text-white hover:bg-white/20"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* Signature stripe at the bottom of the hero */}
+        <div className="motorsport-stripe relative h-[4px]" aria-hidden="true" />
       </div>
 
-      {/* Sub-nav - mobile (below title) */}
-      {(navLinks.length > 0 || overviewLink) && (
-        <div className="relative mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide md:hidden">
-          {overviewLink && (
-            <Link
-              key="overview-link-mobile"
-              to={overviewLink.to}
-              className={clsx(
-                "whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
-                overviewLink.isActive
-                  ? "border-white bg-white text-primary"
-                  : "border-white/40 bg-white/10 text-white hover:bg-white/20"
-              )}
-            >
-              {overviewLink.label ?? "Übersicht"}
-            </Link>
-          )}
-          {navLinks.map((link) => (
-            <Link
-              key={link.to + "-mobile"}
-              to={link.to}
-              className={clsx(
-                "whitespace-nowrap rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
-                link.isActive
-                  ? "border-white bg-white text-primary"
-                  : "border-white/40 bg-white/10 text-white hover:bg-white/20"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
+      {/* Sub-nav (file-tab style) */}
+      {allNavLinks.length > 0 && (
+        <nav
+          aria-label="Fahrzeug-Unterseiten"
+          className="relative -mt-px overflow-x-auto border-b border-base-300 bg-base-100 px-4 dark:border-navy-700 dark:bg-navy-900 md:px-8"
+        >
+          <ul className="flex items-stretch gap-1 py-0">
+            {allNavLinks.map((link, index) => {
+              const code = String(index + 1).padStart(2, "0");
+              return (
+                <li key={link.to} className="flex">
+                  <Link
+                    to={link.to}
+                    aria-current={link.isActive ? "page" : undefined}
+                    className={clsx(
+                      "group relative flex flex-col items-start gap-0.5 px-3 pb-2 pt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                      link.isActive
+                        ? "text-base-content"
+                        : "text-base-content/55 hover:text-base-content"
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        "font-mono text-[9px] tracking-[0.2em] uppercase",
+                        link.isActive ? "text-primary" : "text-base-content/40 group-hover:text-base-content/60"
+                      )}
+                    >
+                      {code}
+                    </span>
+                    <span className="font-display text-sm uppercase tracking-wider leading-none whitespace-nowrap">
+                      {link.label}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className={clsx(
+                        "motorsport-stripe absolute inset-x-2 -bottom-px h-[3px] origin-left transition-transform duration-300",
+                        link.isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-50"
+                      )}
+                    />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       )}
+    </div>
+  );
+}
+
+function DatumLine({
+  icon: Icon,
+  label,
+  value,
+  tone = "default",
+}: {
+  icon: typeof MapPin;
+  label: string;
+  value: string;
+  tone?: "default" | "alert";
+}) {
+  return (
+    <div className="flex items-center justify-end gap-3 text-white">
+      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.25em] text-white/55">
+        {label}
+      </span>
+      <span className="h-px w-4 bg-white/30" aria-hidden="true" />
+      <span
+        className={clsx(
+          "inline-flex items-center gap-1.5 font-numeric text-sm font-semibold",
+          tone === "alert" ? "text-error" : "text-white"
+        )}
+      >
+        <Icon className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
+        {value}
+      </span>
     </div>
   );
 }

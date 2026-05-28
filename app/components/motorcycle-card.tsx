@@ -24,6 +24,22 @@ interface MotorcycleCardProps {
   moto: DashboardCard;
 }
 
+/**
+ * Motorcycle ID card — modeled on a service-manual file divider.
+ *
+ *   ┌────────────────────────────────────┐
+ *   │  [stripe]    [stamp: VETERAN]      │
+ *   │                                    │
+ *   │             [hero photo]           │
+ *   │                                    │
+ *   │  MAKE / MODEL · 1985               │
+ *   ├──┬──────────┬──────────┬───────────┤
+ *   │██│ 12'345km │ 1'200 km │ MFK Jun 26│
+ *   │  │ TOTAL    │ THIS YR  │ INSPECT.  │
+ *   └──┴──────────┴──────────┴───────────┘
+ *
+ * Hover lifts the card and elevates the photo slightly.
+ */
 export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   const [imageError, setImageError] = useState(false);
   const slug = createMotorcycleSlug(moto.make, moto.model);
@@ -31,10 +47,10 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   const imageUrl = getBackendAssetUrl(moto.image);
   const hasImage = Boolean(!imageError && imageUrl);
 
-  const inspectionDateShort = moto.nextInspection?.dueDateISO
-    ? new Intl.DateTimeFormat("de-CH", { month: "short", year: "numeric" }).format(
-        new Date(moto.nextInspection.dueDateISO)
-      )
+  const inspectionShort = moto.nextInspection?.dueDateISO
+    ? new Intl.DateTimeFormat("de-CH", { month: "short", year: "2-digit" })
+        .format(new Date(moto.nextInspection.dueDateISO))
+        .replace(".", "")
     : null;
 
   const inspectionTier: InspectionTier = (() => {
@@ -59,158 +75,165 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
     <Link
       to={`/motorcycle/${slug}/${moto.id}`}
       aria-label={aria}
-      className="card card-bordered group overflow-hidden border-base-300 bg-base-100 shadow-sm motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-out hover:border-primary/30 hover:shadow-xl motion-safe:hover:-translate-y-1 motion-safe:active:scale-[0.99] active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200"
+      className="group relative flex flex-col overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] motion-safe:transition-[transform,box-shadow,border-color] motion-safe:duration-300 motion-safe:ease-out hover:border-base-content/25 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:bg-navy-800"
     >
-      {/* Image banner */}
-      <div className="relative h-36 w-full overflow-hidden bg-base-200">
-        {/* Veteran badge — identity badge, not a warning */}
-        {moto.isVeteran && (
-          <span className="absolute left-2.5 top-2.5 z-[1] rounded-full bg-base-100/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-base-content shadow-sm ring-1 ring-base-content/10">
-            Veteran
+      {/* Top file-tab — motorsport flag + ID code. The vertical stripe is
+          a 3-band motorsport flag rendered at the very top of the card. */}
+      <div className="relative flex items-center justify-between gap-2 border-b border-base-200 px-3 pb-1.5 pt-2 dark:border-navy-700">
+        <div className="flex items-center gap-2">
+          <span className="motorsport-stripe block h-2 w-7" aria-hidden="true" />
+          <span className="font-mono text-[9px] font-medium uppercase tracking-[0.2em] text-base-content/50 tabular-nums">
+            ID · {String(moto.id).padStart(4, "0")}
           </span>
-        )}
+        </div>
+        {moto.isVeteran && <span className="stamp">Veteran</span>}
+      </div>
 
+      {/* Hero photo */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-base-200 dark:bg-navy-900">
         {hasImage ? (
           <img
             src={`${imageUrl}?width=800`}
             srcSet={`${imageUrl}?width=400 400w, ${imageUrl}?width=800 800w`}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             alt=""
-            className="h-full w-full object-cover motion-safe:transition-[transform,brightness] motion-safe:duration-500 motion-safe:ease-out motion-safe:group-hover:scale-[1.04] motion-safe:group-hover:brightness-105"
+            className="h-full w-full object-cover motion-safe:transition-[transform,filter] motion-safe:duration-700 motion-safe:ease-out motion-safe:group-hover:scale-[1.06]"
             loading="lazy"
             onError={() => setImageError(true)}
           />
         ) : (
           <div
             aria-hidden="true"
-            className="grid h-full w-full place-items-center bg-gradient-to-br from-base-200 to-base-300 text-base-content/25"
+            className="grid h-full w-full place-items-center bg-gradient-to-br from-base-200 to-base-300 text-base-content/25 dark:from-navy-800 dark:to-navy-900"
           >
             <Bike className="h-14 w-14" strokeWidth={1.25} />
           </div>
         )}
 
-        {/* Gradient — kept for title legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent motion-safe:transition-opacity motion-safe:duration-300 motion-safe:group-hover:opacity-95" />
-
-        {/* Title overlay */}
-        <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-safe:group-hover:-translate-y-0.5">
-          <h3 className="truncate text-base font-bold leading-tight text-white drop-shadow-sm">
-            {moto.make} {moto.model}
+        {/* Bottom gradient + headline */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-3 pb-2 pt-8">
+          <h3 className="font-display text-[1.35rem] uppercase leading-none tracking-wide text-white drop-shadow-sm line-clamp-1">
+            {moto.make} <span className="text-white/85">{moto.model}</span>
           </h3>
-          <p className="text-[11px] font-medium text-white/75 motion-safe:transition-opacity motion-safe:duration-300 group-hover:text-white/90">
-            {moto.fabricationDate ?? "—"}
+          <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-white/65">
+            {moto.fabricationDate ?? "Fabrikation —"}
           </p>
         </div>
       </div>
 
-      {/* 3-column stats */}
-      <div className="grid grid-cols-3 divide-x divide-base-300">
-        {/* Odometer */}
-        <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
-          <Gauge
-            className="mb-0.5 h-3.5 w-3.5 text-base-content/40 motion-safe:transition-colors motion-safe:duration-300 group-hover:text-primary/60"
-            aria-hidden="true"
-          />
-          <span className="text-sm font-bold tabular-nums leading-none text-base-content">
-            {formatNumber(moto.odometer)}
-          </span>
-          <span className="text-[10px] font-medium text-base-content/60">km gesamt</span>
-        </div>
-
-        {/* This year */}
-        <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
-          <RouteIcon
-            className="mb-0.5 h-3.5 w-3.5 text-base-content/40 motion-safe:transition-colors motion-safe:duration-300 group-hover:text-primary/60"
-            aria-hidden="true"
-          />
-          <span
-            className={clsx(
-              "text-sm font-bold tabular-nums leading-none",
-              moto.odometerThisYear > 0
-                ? "text-base-content"
-                : "text-base-content/30"
-            )}
-          >
-            {moto.odometerThisYear > 0 ? formatNumber(moto.odometerThisYear) : "—"}
-          </span>
-          <span suppressHydrationWarning className="text-[10px] font-medium text-base-content/60">
-            km {currentYear}
-          </span>
-        </div>
-
-        {/* Next inspection */}
-        <div className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
-          <CalendarDays
-            className={clsx(
-              "mb-0.5 h-3.5 w-3.5 motion-safe:transition-colors motion-safe:duration-300",
-              inspectionTier === "overdue"
-                ? "text-error/80"
-                : inspectionTier === "due-soon"
-                  ? "text-warning"
-                  : "text-base-content/40 group-hover:text-primary/60"
-            )}
-            aria-hidden="true"
-          />
-          {moto.nextInspection ? (
-            <>
-              <span
-                className={clsx(
-                  "text-xs font-bold leading-none",
-                  inspectionTier === "overdue"
-                    ? "text-error"
-                    : inspectionTier === "due-soon"
-                      ? "text-warning"
-                      : "text-base-content"
-                )}
-              >
-                <span className="sr-only">MFK Status: </span>
-                {inspectionTier === "overdue" ? "Überfällig" : moto.nextInspection.relativeLabel}
-              </span>
-              <span
-                className={clsx(
-                  "text-[10px] font-medium",
-                  inspectionTier === "overdue"
-                    ? "text-error/70"
-                    : inspectionTier === "due-soon"
-                      ? "text-warning/80"
-                      : "text-base-content/60"
-                )}
-              >
-                {inspectionDateShort}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-sm font-bold leading-none text-base-content/30">—</span>
-              <span className="text-[10px] font-medium text-base-content/40">MFK</span>
-            </>
+      {/* Telemetry row — three slots separated by hairline dividers, each
+          with a tiny icon, a tabular-numeric value, and a mono caption. */}
+      <div className="grid grid-cols-[8px_1fr_1fr_1fr] items-stretch">
+        {/* Leading accent column tied to inspection tier */}
+        <div
+          aria-hidden="true"
+          className={clsx(
+            "h-full",
+            inspectionTier === "overdue"
+              ? "bg-error/80"
+              : inspectionTier === "due-soon"
+                ? "bg-[var(--color-workshop)]"
+                : "bg-primary/60"
           )}
-        </div>
+        />
+
+        <TelemetrySlot
+          icon={Gauge}
+          value={formatNumber(moto.odometer)}
+          caption="km · ODO"
+          tone="default"
+        />
+        <TelemetrySlot
+          icon={RouteIcon}
+          value={moto.odometerThisYear > 0 ? formatNumber(moto.odometerThisYear) : "—"}
+          caption={`km · ${currentYear}`}
+          tone={moto.odometerThisYear > 0 ? "default" : "muted"}
+        />
+        <TelemetrySlot
+          icon={CalendarDays}
+          value={
+            moto.nextInspection
+              ? inspectionTier === "overdue"
+                ? "Überfällig"
+                : inspectionShort ?? "—"
+              : "—"
+          }
+          caption="MFK"
+          tone={
+            inspectionTier === "overdue"
+              ? "alert"
+              : inspectionTier === "due-soon"
+                ? "warn"
+                : moto.nextInspection
+                  ? "default"
+                  : "muted"
+          }
+        />
       </div>
 
-      {/* Meta row: status + location, off the image so contrast is reliable */}
+      {/* Meta row — status pills + location */}
       {showMetaRow && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-base-300 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-base-200 px-3 py-2 dark:border-navy-700">
           {hasMaintenance && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-error">
-              <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-error">
+              <Wrench className="h-3 w-3 shrink-0" aria-hidden="true" />
               Wartung fällig
             </span>
           )}
           {hasIssues && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {moto.numberOfIssues} offene{moto.numberOfIssues === 1 ? "r Mangel" : " Mängel"}
+            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
+              <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
+              {moto.numberOfIssues} {moto.numberOfIssues === 1 ? "Mangel" : "Mängel"}
             </span>
           )}
           {hasLocation && (
-            <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-base-content/60">
-              <MapPin className="h-3 w-3 shrink-0 text-info/70" aria-hidden="true" />
+            <span className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-base-content/55">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
               {moto.currentLocationName}
             </span>
           )}
         </div>
       )}
     </Link>
+  );
+}
+
+function TelemetrySlot({
+  icon: Icon,
+  value,
+  caption,
+  tone = "default",
+}: {
+  icon: typeof Gauge;
+  value: string;
+  caption: string;
+  tone?: "default" | "muted" | "warn" | "alert";
+}) {
+  const valueColor = {
+    default: "text-base-content",
+    muted: "text-base-content/30",
+    warn: "text-[var(--color-workshop)]",
+    alert: "text-error",
+  }[tone];
+
+  const iconColor = {
+    default: "text-base-content/35",
+    muted: "text-base-content/20",
+    warn: "text-[var(--color-workshop)]",
+    alert: "text-error/80",
+  }[tone];
+
+  return (
+    <div className="flex flex-col justify-center gap-0.5 border-l border-base-200 px-2.5 py-2.5 first:border-l-0 dark:border-navy-700">
+      <div className="flex items-center gap-1.5">
+        <Icon className={clsx("h-3 w-3 shrink-0", iconColor)} aria-hidden="true" />
+        <span className={clsx("font-numeric text-[13px] font-semibold leading-none truncate", valueColor)}>
+          {value}
+        </span>
+      </div>
+      <span className="font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-base-content/50">
+        {caption}
+      </span>
+    </div>
   );
 }

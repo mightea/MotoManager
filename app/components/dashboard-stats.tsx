@@ -7,6 +7,11 @@ interface DashboardStatsProps {
   className?: string;
 }
 
+/**
+ * Fleet telemetry strip — a row of gauge-styled stat cards. Each card
+ * carries a leading vertical accent rail (toned by status), tabular
+ * numerics in the mono face, and a small uppercase mono caption.
+ */
 export function DashboardStats({ stats, className }: DashboardStatsProps) {
   const {
     year,
@@ -35,79 +40,117 @@ export function DashboardStats({ stats, className }: DashboardStatsProps) {
       </h2>
 
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        <StatCard
+        <Gauge
+          code="01"
           label={`Fahrstrecke ${year}`}
           value={formatNumber(totalKmThisYear)}
           unit="km"
-          accent="primary"
+          tone="primary"
         />
-        <StatCard
+        <Gauge
+          code="02"
           label={`Wartungskosten ${year}`}
           value={formatCurrency(totalMaintenanceCostThisYear)}
+          tone="violet"
         />
-        <StatCard
+        <Gauge
+          code="03"
           label="Gesamtkilometer"
           value={formatNumber(totalKmOverall)}
           unit="km"
+          tone="neutral"
         />
-        <StatCard
+        <Gauge
+          code="04"
           label="Offene Mängel"
           value={String(totalActiveIssues)}
           unit={totalActiveIssues === 1 ? "Mangel" : "Mängel"}
-          accent={totalActiveIssues > 0 ? "warning" : undefined}
+          tone={totalActiveIssues > 0 ? "alert" : "neutral"}
         />
-        <StatCard
+        <Gauge
+          code="05"
           label="Veteranen"
           value={String(veteranCount)}
           unit={veteranCount === 1 ? "Fahrzeug" : "Fahrzeuge"}
+          tone="workshop"
         />
-        <StatCard label="Fleissigstes Motorrad" value={bikeLabel} variant="text" />
+        <Gauge
+          code="06"
+          label="Fleissigstes Motorrad"
+          value={bikeLabel}
+          variant="text"
+          tone="neutral"
+        />
       </dl>
     </section>
   );
 }
 
-function StatCard({
+type GaugeTone = "primary" | "violet" | "alert" | "workshop" | "neutral";
+
+function Gauge({
+  code,
   label,
   value,
   unit,
-  accent,
+  tone = "neutral",
   variant = "number",
 }: {
+  code: string;
   label: string;
   value: string;
   unit?: string;
-  accent?: "primary" | "warning";
+  tone?: GaugeTone;
   variant?: "number" | "text";
 }) {
-  const valueColor =
-    accent === "primary"
-      ? "text-primary"
-      : accent === "warning"
-      ? "text-warning"
-      : "text-base-content";
+  const railClass = {
+    primary: "bg-primary",
+    violet: "bg-secondary",
+    alert: "bg-error",
+    workshop: "bg-[var(--color-workshop)]",
+    neutral: "bg-base-content/25",
+  }[tone];
+
+  const valueClass = {
+    primary: "text-primary",
+    violet: "text-secondary",
+    alert: "text-error",
+    workshop: "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]",
+    neutral: "text-base-content",
+  }[tone];
 
   return (
-    <div className="rounded-lg border border-base-300 bg-base-100 px-2.5 py-1.5 shadow-sm">
-      <dt className="text-[10px] font-semibold uppercase tracking-wide leading-tight text-base-content/60">
-        {label}
-      </dt>
-      <dd
-        className={clsx(
-          "mt-0.5 truncate leading-tight",
-          variant === "number" ? "text-sm" : "text-xs",
-        )}
-        title={variant === "text" ? value : undefined}
-      >
-        <span className={clsx("font-bold", variant === "number" && "tabular-nums", valueColor)}>
-          {value}
-        </span>
-        {unit && (
-          <span className="ml-1 text-[10px] font-medium text-base-content/60">
-            {unit}
+    <div className="group relative flex gap-2.5 rounded-sm border border-base-300/70 bg-base-100 px-2.5 py-2 shadow-[0_1px_0_0_rgba(0,0,0,0.02)] transition-colors hover:border-base-content/20 dark:bg-navy-800">
+      <div className={clsx("w-[3px] shrink-0 rounded-full", railClass)} aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <dt className="flex items-center gap-1.5 font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-base-content/55">
+          <span className="text-base-content/30 tabular-nums">{code}</span>
+          <span className="h-px w-1.5 bg-base-content/30" aria-hidden="true" />
+          <span className="truncate">{label}</span>
+        </dt>
+        <dd
+          className={clsx(
+            "mt-0.5 leading-tight truncate",
+            variant === "number" ? "text-[15px]" : "text-xs",
+          )}
+          title={variant === "text" ? value : undefined}
+        >
+          <span
+            className={clsx(
+              "font-semibold",
+              variant === "number" ? "font-numeric" : "font-display uppercase tracking-wide",
+              valueClass,
+            )}
+          >
+            {value}
           </span>
-        )}
-      </dd>
+          {unit && (
+            <span className="ml-1 font-mono text-[10px] font-medium tracking-wider uppercase text-base-content/50">
+              {unit}
+            </span>
+          )}
+        </dd>
+      </div>
     </div>
   );
 }

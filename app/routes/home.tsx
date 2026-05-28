@@ -326,14 +326,20 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12">
 
-      {/* Needs-attention chips: only render if anything is actionable.
-          Single row with horizontal scroll on small screens so wrap behavior
-          never reflows when something else (a popover, a scrollbar) shifts
-          the available width. */}
+      {/* § 01 — Aktion erforderlich. Single row with horizontal scroll on
+          small screens so wrap behavior never reflows when something else
+          (a popover, a scrollbar) shifts the available width. */}
       {(counts.overdueInspection + counts.overdueMaintenance + counts.openIssues) > 0 && (
-        <div className="order-1 -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <span className="mr-1 inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-secondary dark:text-navy-400">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
+        <div className="order-1 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <span className="label-tag" aria-hidden="true">
+              <span className="tabular-nums">§ 01</span>
+              <span>Aktion erforderlich</span>
+            </span>
+          </div>
+          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <span className="sr-only">
+            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
             Aktion erforderlich:
           </span>
           {counts.overdueInspection > 0 && (
@@ -373,71 +379,95 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               Filter aufheben
             </button>
           )}
+          </div>
         </div>
       )}
 
-      {/* Compact fleet stats — below the grid on mobile, above on desktop */}
+      {/* § 02 — FLEET TELEMETRY. Below the grid on mobile, above on desktop. */}
       {cards.length > 0 && stats && (
-        <DashboardStats stats={stats} className="order-4 sm:order-2" />
+        <div className="order-4 sm:order-2 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <span className="label-tag">
+              <span className="tabular-nums">§ 02</span>
+              <span>Flotten-Telemetrie · {new Date().getFullYear()}</span>
+            </span>
+          </div>
+          <DashboardStats stats={stats} />
+        </div>
       )}
 
-      {/* Header Actions */}
-      <div className="order-2 sm:order-3 flex items-center justify-between">
-        {/* Sort Dropdown */}
-        <DropdownMenu
-          align="start"
-          trigger={
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-x-2 rounded-xl border border-base-300 bg-base-100 px-4 py-3 text-sm font-medium text-base-content/70 shadow-sm hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            >
-              {ActiveSortIcon && <ActiveSortIcon className="h-4 w-4 text-base-content/60" aria-hidden="true" />}
-              <span className="hidden sm:inline text-base-content/60">Sortiert nach</span>
-              <span className="font-semibold text-base-content">{activeSortOption?.label ?? "Letzte Aktivität"}</span>
-              <ChevronDown className="h-4 w-4 text-base-content/60" aria-hidden="true" />
-            </button>
-          }
-        >
-          {sortOptions.map((option) => {
-            const Icon = option.icon;
-            const isActive = currentSort === option.id;
-            return (
-              <DropdownMenu.Item
-                key={option.id}
-                icon={<Icon className={clsx("h-4 w-4", isActive ? "text-primary" : "text-base-content/60")} />}
-                onSelect={() => {
-                  const p = new URLSearchParams(searchParams);
-                  p.set("sort", option.id);
-                  // Re-sorting invalidates the current page index.
-                  p.delete("page");
-                  navigate(`?${p.toString()}`, { replace: true, preventScrollReset: true });
-                }}
-                aria-current={isActive ? "true" : undefined}
-                className={clsx(isActive && "bg-primary/10 text-primary")}
-              >
-                {option.label}
-              </DropdownMenu.Item>
-            );
-          })}
-        </DropdownMenu>
+      {/* § 03 — Fleet header. Section label sits on its own row above the
+          sort/add controls; this gives the page a clear hierarchy. */}
+      <div className="order-2 sm:order-3 flex flex-col gap-2">
+        <div className="flex items-end justify-between gap-3">
+          <span className="label-tag">
+            <span className="tabular-nums">§ 03</span>
+            <span>Flotte · {cards.length} {cards.length === 1 ? "Eintrag" : "Einträge"}</span>
+          </span>
 
-        <Button
-          onClick={() => setIsAddOpen(true)}
-          className="relative hidden sm:inline-flex"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Neues Motorrad</span>
-        </Button>
+          <Button
+            onClick={() => setIsAddOpen(true)}
+            className="relative hidden sm:inline-flex"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Neues Motorrad</span>
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          {/* Sort Dropdown — slimmer, with a mono "SORT" label */}
+          <DropdownMenu
+            align="start"
+            trigger={
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-sm border border-base-300 bg-base-100 px-3 py-2 text-sm font-medium text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-800"
+              >
+                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-base-content/50">
+                  Sort
+                </span>
+                <span className="h-3 w-px bg-base-300 dark:bg-navy-600" aria-hidden="true" />
+                {ActiveSortIcon && <ActiveSortIcon className="h-3.5 w-3.5 text-base-content/60" aria-hidden="true" />}
+                <span className="font-semibold">{activeSortOption?.label ?? "Letzte Aktivität"}</span>
+                <ChevronDown className="h-3.5 w-3.5 text-base-content/50" aria-hidden="true" />
+              </button>
+            }
+          >
+            {sortOptions.map((option) => {
+              const Icon = option.icon;
+              const isActive = currentSort === option.id;
+              return (
+                <DropdownMenu.Item
+                  key={option.id}
+                  icon={<Icon className={clsx("h-4 w-4", isActive ? "text-primary" : "text-base-content/60")} />}
+                  onSelect={() => {
+                    const p = new URLSearchParams(searchParams);
+                    p.set("sort", option.id);
+                    p.delete("page");
+                    navigate(`?${p.toString()}`, { replace: true, preventScrollReset: true });
+                  }}
+                  aria-current={isActive ? "true" : undefined}
+                  className={clsx(isActive && "bg-primary/10 text-primary")}
+                >
+                  {option.label}
+                </DropdownMenu.Item>
+              );
+            })}
+          </DropdownMenu>
+        </div>
       </div>
 
-      {/* FAB on mobile — hidden while modal is open */}
+      {/* FAB on mobile — workshop-style "ADD" pill that doesn't compete
+          with the desktop button. */}
       {!isAddOpen && (
         <button
           onClick={() => setIsAddOpen(true)}
-          className="fixed bottom-6 right-6 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 motion-safe:transition-all motion-safe:active:scale-95 hover:bg-primary-dark hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950 sm:hidden"
+          className="group fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary px-4 py-3 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] motion-safe:transition-all motion-safe:active:scale-95 hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:focus-visible:ring-offset-navy-950 sm:hidden"
           aria-label="Neues Motorrad hinzufügen"
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-4 w-4" />
+          <span>Neu</span>
+          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-3 -bottom-px h-[3px]" />
         </button>
       )}
 
@@ -451,8 +481,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           <div className="col-span-full">
             <EmptyState
               icon={Gauge}
-              title="Keine Motorräder gefunden"
-              description="Deine Garage ist leer. Füge dein erstes Motorrad hinzu."
+              title="Garage leer"
+              description="Lege das erste Fahrzeug an, um Wartungen, Tanken und Mängel zu erfassen."
               action={
                 <Button onClick={() => setIsAddOpen(true)}>
                   <Plus className="h-4 w-4" />
