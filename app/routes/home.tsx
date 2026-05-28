@@ -344,27 +344,30 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </span>
           {counts.overdueInspection > 0 && (
             <AttentionChip
-              tone="red"
+              tone="critical"
               icon={CalendarDays}
-              label={`${counts.overdueInspection} überfällige MFK`}
+              count={counts.overdueInspection}
+              label="überfällige MFK"
               active={currentFilter === "overdue-inspection"}
               onClick={() => toggleFilter("overdue-inspection")}
             />
           )}
           {counts.overdueMaintenance > 0 && (
             <AttentionChip
-              tone="orange"
+              tone="alert"
               icon={Wrench}
-              label={`${counts.overdueMaintenance} Wartung fällig`}
+              count={counts.overdueMaintenance}
+              label="Wartung fällig"
               active={currentFilter === "overdue-maintenance"}
               onClick={() => toggleFilter("overdue-maintenance")}
             />
           )}
           {counts.openIssues > 0 && (
             <AttentionChip
-              tone="amber"
+              tone="warn"
               icon={AlertTriangle}
-              label={`${counts.openIssues} offene Mängel`}
+              count={counts.openIssues}
+              label="offene Mängel"
               active={currentFilter === "issues"}
               onClick={() => toggleFilter("issues")}
             />
@@ -607,34 +610,52 @@ function Pagination({
   );
 }
 
+type AttentionTone = "critical" | "alert" | "warn";
+
+/**
+ * Attention chip — sharp-cornered tag used in the "§ 01 — Aktion erforderlich"
+ * row on the home page. Three tones reflecting the Dakar palette's severity
+ * gradient:
+ *   critical → error red       (overdue MFK, must act)
+ *   alert    → vermillion       (maintenance due, urgent)
+ *   warn     → sand / workshop  (open issues, notable)
+ *
+ * Renders the count in font-numeric (JetBrains Mono tabular) and the label
+ * in sans semibold so the number reads as data and the rest stays scannable.
+ */
 function AttentionChip({
   tone,
   icon: Icon,
+  count,
   label,
   active,
   onClick,
 }: {
-  tone: "red" | "orange" | "amber";
+  tone: AttentionTone;
   icon: typeof Clock;
+  count: number;
   label: string;
   active: boolean;
   onClick: () => void;
 }) {
-  const tones: Record<typeof tone, { idle: string; activeCls: string; iconColor: string }> = {
-    red: {
-      idle: "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300",
-      activeCls: "border-red-500 bg-red-500/15 text-red-700 ring-1 ring-red-400/40 dark:bg-red-500/25 dark:text-red-200",
-      iconColor: "text-red-500",
+  const tones: Record<AttentionTone, { idle: string; activeCls: string; iconColor: string; railColor: string }> = {
+    critical: {
+      idle: "border-error/30 bg-error/5 text-error hover:bg-error/10 dark:border-error/40 dark:bg-error/10 dark:text-error",
+      activeCls: "border-error bg-error/15 text-error ring-1 ring-error/30 dark:bg-error/25 dark:text-error",
+      iconColor: "text-error",
+      railColor: "bg-error",
     },
-    orange: {
-      idle: "border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-900/50 dark:bg-orange-900/20 dark:text-orange-300",
-      activeCls: "border-orange-500 bg-orange-500/15 text-orange-700 ring-1 ring-orange-400/40 dark:bg-orange-500/25 dark:text-orange-200",
-      iconColor: "text-orange-500",
+    alert: {
+      idle: "border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red)]/5 text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 dark:border-[var(--color-brand-red)]/40 dark:bg-[var(--color-brand-red)]/10",
+      activeCls: "border-[var(--color-brand-red)] bg-[var(--color-brand-red)]/15 text-[var(--color-brand-red)] ring-1 ring-[var(--color-brand-red)]/30 dark:bg-[var(--color-brand-red)]/25",
+      iconColor: "text-[var(--color-brand-red)]",
+      railColor: "bg-[var(--color-brand-red)]",
     },
-    amber: {
-      idle: "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300",
-      activeCls: "border-amber-500 bg-amber-500/15 text-amber-700 ring-1 ring-amber-400/40 dark:bg-amber-500/25 dark:text-amber-200",
-      iconColor: "text-amber-500",
+    warn: {
+      idle: "border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 text-[var(--color-workshop-ink)] hover:bg-[var(--color-workshop)]/20 dark:border-[var(--color-workshop)]/50 dark:bg-[var(--color-workshop)]/15 dark:text-[var(--color-workshop-soft)]",
+      activeCls: "border-[var(--color-workshop)] bg-[var(--color-workshop)]/25 text-[var(--color-workshop-ink)] ring-1 ring-[var(--color-workshop)]/40 dark:bg-[var(--color-workshop)]/30 dark:text-[var(--color-workshop-soft)]",
+      iconColor: "text-[var(--color-workshop)]",
+      railColor: "bg-[var(--color-workshop)]",
     },
   };
   const t = tones[tone];
@@ -644,12 +665,20 @@ function AttentionChip({
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950",
+        "group relative inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border pl-2.5 pr-3 py-1.5 motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950",
         active ? t.activeCls : t.idle,
       )}
     >
-      <Icon className={clsx("h-3.5 w-3.5", t.iconColor)} aria-hidden="true" />
-      {label}
+      <Icon className={clsx("h-3.5 w-3.5 shrink-0", t.iconColor)} aria-hidden="true" />
+      <span className="font-numeric text-sm font-semibold tabular-nums leading-none">
+        {count}
+      </span>
+      <span className="text-xs font-semibold leading-none">
+        {label}
+      </span>
+      {active && (
+        <span aria-hidden="true" className={clsx("absolute inset-y-1 left-0 w-[3px] rounded-r-sm", t.railColor)} />
+      )}
     </button>
   );
 }
