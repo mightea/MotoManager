@@ -305,9 +305,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
               className="sticky z-10 -mx-4 flex items-center gap-4 bg-white px-4 py-2 dark:bg-navy-800"
               style={{ top: "calc(var(--app-header-h, 4rem) + 3.25rem)" }}
             >
-              <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
-              <span className="text-sm font-bold text-secondary dark:text-navy-500">{year}</span>
-              <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
+              <div className="h-px flex-1 bg-base-300 dark:bg-navy-700"></div>
+              <span className="font-subdisplay text-sm text-secondary dark:text-navy-300 tabular-nums">
+                {year}
+              </span>
+              <div className="h-px flex-1 bg-base-300 dark:bg-navy-700"></div>
             </div>
 
             <ul className="space-y-2">
@@ -329,7 +331,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                 const metric = getCollapsedMetric(group, currencyCode);
 
                 return (
-                  <li key={group.id} className="rounded-xl transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30">
+                  <li key={group.id} className="rounded-sm transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30">
                     <button
                       type="button"
                       onClick={() => toggleExpand(group.id)}
@@ -338,24 +340,24 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                       className="group flex w-full cursor-pointer items-start gap-3 py-2.5 pl-0 text-left"
                     >
                       <div className={clsx(
-                        "mt-0.5 grid h-11 w-11 place-items-center rounded-xl shrink-0 transition-transform group-hover:scale-105",
+                        "mt-0.5 grid h-10 w-10 place-items-center rounded-sm shrink-0 transition-transform group-hover:scale-105",
                         tone.bg,
                         tone.fg,
                       )}>
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-4 w-4" />
                       </div>
 
                       <div className="flex-1 min-w-0 pt-0.5">
                         {/* Row 1: date left, odo + chevron right */}
                         <div className="flex items-center justify-between gap-2">
-                          <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white">
+                          <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
                             {dateFormatter.format(new Date(group.date))}
                           </h3>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
-                              {formatNumber(group.odo)} km
+                            <span className="font-numeric text-sm font-semibold text-foreground dark:text-white">
+                              {formatNumber(group.odo)} <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">km</span>
                             </span>
-                            <ChevronDown className={clsx("h-4 w-4 text-secondary transition-transform dark:text-navy-400", isExpanded && "rotate-180")} />
+                            <ChevronDown className={clsx("h-4 w-4 text-base-content/45 transition-transform dark:text-navy-400", isExpanded && "rotate-180")} />
                           </div>
                         </div>
 
@@ -363,16 +365,18 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                         <div className="flex items-center justify-between gap-3 mt-0.5">
                           <p className="min-w-0 text-xs line-clamp-1">
                             {group.count > 1 && (
-                              <span className="mr-1.5 inline-flex items-center justify-center rounded-md bg-secondary/10 px-1.5 py-0.5 text-[10px] font-bold text-secondary dark:bg-navy-600 dark:text-navy-200 align-middle">
-                                {group.count}x
+                              <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-secondary/10 px-1.5 py-[1px] font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-secondary dark:bg-navy-600 dark:text-navy-200 align-middle">
+                                {group.count}×
                               </span>
                             )}
                             <span className={clsx("font-semibold", tone.fg)}>
                               {summary}
                             </span>
                           </p>
-                          <span className="shrink-0 text-xs font-medium tabular-nums text-secondary/70 dark:text-navy-500">
-                            {metric ? <>{metric} <span className="text-secondary/40 dark:text-navy-600">·</span> {typeLabel}</> : typeLabel}
+                          <span className="shrink-0 inline-flex items-center gap-1.5 text-xs text-base-content/60 dark:text-navy-500">
+                            {metric && <span className="font-numeric tabular-nums">{metric}</span>}
+                            {metric && <span aria-hidden="true" className="h-2.5 w-px bg-base-content/20" />}
+                            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">{typeLabel}</span>
                           </span>
                         </div>
                       </div>
@@ -453,9 +457,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                             ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 
                             return (
-                              <div key={record.id} className="rounded-xl bg-gray-50 p-3 dark:bg-navy-800">
-                                <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3 dark:border-navy-700">
-                                  <h4 className="text-sm font-semibold text-foreground dark:text-white">
+                              <div key={record.id} className="rounded-sm border border-base-200 bg-base-200/60 p-3 dark:border-navy-700 dark:bg-navy-900/40">
+                                <div className="flex items-center justify-between border-b border-base-300/70 pb-2 mb-3 dark:border-navy-700">
+                                  <h4 className="font-subdisplay text-sm text-foreground dark:text-white">
                                     {maintenanceTypeLabels[record.type] || record.type}
                                   </h4>
                                   <button
@@ -463,27 +467,28 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                                       e.stopPropagation();
                                       onEdit(record);
                                     }}
-                                    className="rounded-lg p-2 text-secondary hover:bg-gray-200 hover:text-primary dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-primary-light"
+                                    className="rounded-sm p-1.5 text-base-content/55 transition-colors hover:bg-base-300 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-primary-light"
                                     title="Bearbeiten"
+                                    aria-label="Eintrag bearbeiten"
                                   >
-                                    <Edit2 className="h-4 w-4" />
+                                    <Edit2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
 
                                 <div className="space-y-4">
                                   {metadataItems.length > 0 && (
-                                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2 text-sm">
+                                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
                                       {metadataItems.map((item) => {
                                         const ItemIcon = item.icon;
                                         return (
-                                          <div key={item.label} className="flex items-center justify-between gap-4 border-b border-gray-50 py-1 dark:border-navy-700/50">
+                                          <div key={item.label} className="flex items-center justify-between gap-4 border-b border-base-300/40 py-1.5 dark:border-navy-700/40">
                                             <div className="flex items-center gap-2 min-w-0">
-                                              <ItemIcon className="h-3.5 w-3.5 text-secondary/60 dark:text-navy-500 shrink-0" />
-                                              <dt className="text-xs font-medium text-secondary dark:text-navy-400 truncate">
+                                              <ItemIcon className="h-3 w-3 text-base-content/45 dark:text-navy-500 shrink-0" aria-hidden="true" />
+                                              <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 truncate">
                                                 {item.label}
                                               </dt>
                                             </div>
-                                            <dd suppressHydrationWarning className="text-xs font-semibold text-foreground dark:text-gray-200 text-right shrink-0">
+                                            <dd suppressHydrationWarning className="font-numeric text-[13px] font-semibold text-foreground dark:text-gray-100 text-right shrink-0">
                                               {item.value}
                                             </dd>
                                           </div>
@@ -493,15 +498,15 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                                   )}
 
                                   {childRecords.length > 0 && (
-                                    <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-navy-700">
+                                    <div className="space-y-2 pt-2 border-t border-base-300/70 dark:border-navy-700">
                                       <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-500">
                                         Eingeschlossene Arbeiten
                                       </span>
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                         {childRecords.map(child => (
-                                          <div key={child.id} className="flex items-center justify-between rounded-lg bg-white/50 px-3 py-2 text-xs dark:bg-navy-900/50">
+                                          <div key={child.id} className="flex items-center justify-between rounded-sm border border-base-200 bg-base-100 px-3 py-2 text-xs dark:border-navy-700 dark:bg-navy-900/40">
                                             <div className="flex items-center gap-2">
-                                              <Wrench className="h-3 w-3 text-secondary/60 dark:text-navy-500" />
+                                              <Wrench className="h-3 w-3 text-base-content/55 dark:text-navy-500" aria-hidden="true" />
                                               <span className="font-medium text-foreground dark:text-gray-200">
                                                 {summarizeMaintenanceRecord(child, userLocations)}
                                               </span>
@@ -511,7 +516,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                                                 e.stopPropagation();
                                                 onEdit(child);
                                               }}
-                                              className="text-secondary hover:text-primary dark:text-navy-400 dark:hover:text-primary-light"
+                                              aria-label="Eintrag bearbeiten"
+                                              className="text-base-content/55 transition-colors hover:text-primary dark:text-navy-400 dark:hover:text-primary-light"
                                             >
                                               <Edit2 className="h-3 w-3" />
                                             </button>
@@ -532,8 +538,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                                   )}
 
                                   {metadataItems.length === 0 && childRecords.length === 0 && (
-                                    <p className="text-sm text-secondary dark:text-navy-400">
-                                      Keine weiteren Details verfügbar.
+                                    <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+                                      Keine weiteren Details
                                     </p>
                                   )}
                                 </div>
