@@ -398,29 +398,16 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       )}
 
       {/* Fleet header. Section label sits on its own row above the
-          sort/add controls; this gives the page a clear hierarchy. */}
+          sort + add controls so the page has a clear hierarchy. */}
       <div className="order-2 sm:order-3 flex flex-col gap-2">
-        <div className="flex items-end justify-between gap-3">
-          <span className="label-tag">
-            <span>Flotte · {cards.length} {cards.length === 1 ? "Eintrag" : "Einträge"}</span>
-          </span>
+        <span className="label-tag">
+          <span>Flotte · {cards.length} {cards.length === 1 ? "Eintrag" : "Einträge"}</span>
+        </span>
 
-          {/* Wrap in a hidden div, not Button's own className.
-              The Button component's baseStyles include `inline-flex`,
-              which competes with `hidden` in the same display category
-              and wins (Tailwind generates inline-flex after hidden in
-              alphabetical order). A wrapper div with `hidden sm:block`
-              actually hides the button on mobile. */}
-          <div className="hidden sm:block">
-            <Button onClick={() => setIsAddOpen(true)}>
-              <Plus className="h-5 w-5" />
-              <span>Neues Motorrad</span>
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-3">
-          {/* Sort Dropdown — slimmer, with a mono "SORT" label */}
+        {/* Sort selector on the left, Neues-Motorrad on the right.
+            items-stretch keeps the button matching the sort trigger
+            height so they read as a single control row. */}
+        <div className="flex items-stretch justify-between gap-3">
           <DropdownMenu
             align="start"
             trigger={
@@ -459,22 +446,18 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               );
             })}
           </DropdownMenu>
+
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="relative inline-flex shrink-0 items-center gap-2 rounded-sm bg-primary px-4 font-subdisplay text-sm text-primary-content shadow-[0_8px_18px_-10px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_12px_28px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Neu<span className="hidden sm:inline">es Motorrad</span></span>
+            <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+          </button>
         </div>
       </div>
-
-      {/* FAB on mobile — workshop-style "ADD" pill that doesn't compete
-          with the desktop button. */}
-      {!isAddOpen && (
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="group fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] motion-safe:transition-all motion-safe:active:scale-95 hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:focus-visible:ring-offset-navy-950 sm:hidden"
-          aria-label="Neues Motorrad hinzufügen"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Neu</span>
-          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-3 -bottom-px h-[3px]" />
-        </button>
-      )}
 
       <div className="order-3 sm:order-4 grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {isLoading && cards.length > 0 ? (
