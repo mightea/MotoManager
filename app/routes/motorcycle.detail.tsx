@@ -675,7 +675,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   });
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 pb-16 pt-0 md:px-6 md:pb-12 md:pt-2 md:space-y-6 space-y-4">
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-0 pb-20 md:p-6 md:pb-12 md:space-y-6">
       <MotorcycleDetailHeader
         motorcycle={motorcycle}
         nextInspection={nextInspection}

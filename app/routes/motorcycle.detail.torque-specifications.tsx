@@ -227,7 +227,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   };
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 px-4 pb-24 pt-0 md:p-6 md:space-y-8 print:p-0 print:m-0 print:max-w-none print:!bg-white print:!text-black print:pb-0">
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-0 pb-20 md:p-6 md:pb-12 md:space-y-6 print:p-0 print:m-0 print:max-w-none print:!bg-white print:!text-black print:pb-0">
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           @page { margin: 1.5cm; }
