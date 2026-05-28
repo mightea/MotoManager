@@ -20,19 +20,22 @@ import {
   Hash,
   Fuel,
   Activity,
+  Plus,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location, FluidType, BatteryType } from "~/types/db";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { parseDotCode } from "~/utils/maintenance-intervals";
-import { 
-  maintenanceTypeLabels, 
-  fluidTypeLabels, 
+import {
+  maintenanceTypeLabels,
+  fluidTypeLabels,
   tirePositionLabels,
   batteryTypeLabels,
-  summarizeMaintenanceRecord 
+  summarizeMaintenanceRecord
   } from "~/utils/maintenance";
+import { EmptyState } from "./empty-state";
 
 import { MapView } from "./map-view";
 
@@ -41,6 +44,7 @@ interface MaintenanceListProps {
   currencyCode?: string | null;
   userLocations?: Location[];
   onEdit: (record: MaintenanceRecord) => void;
+  onAdd?: () => void;
 }
 
 interface GroupedMaintenanceRecord {
@@ -194,7 +198,7 @@ function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: stri
   return null;
 }
 
-export function MaintenanceList({ records, currencyCode, userLocations, onEdit }: MaintenanceListProps) {
+export function MaintenanceList({ records, currencyCode, userLocations, onEdit, onAdd }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "maintenance" | "fuel">("all");
 
@@ -229,55 +233,78 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-16 z-20 -mx-4 flex items-center justify-between border-b border-gray-100 bg-white px-4 pb-3 pt-3 dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-navy-900">
-          <button
+      <div
+        className="sticky z-20 -mx-4 flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-4 pb-3 pt-3 dark:border-navy-700 dark:bg-navy-800"
+        style={{ top: "var(--app-header-h, 4rem)" }}
+      >
+        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <FilterChip
+            label="Alle"
+            icon={Layers}
+            active={filter === "all"}
             onClick={() => setFilter("all")}
-            className={clsx(
-              "rounded-md px-3 py-1 text-xs font-bold transition-all",
-              filter === "all" 
-                ? "bg-white text-primary shadow-sm dark:bg-navy-800 dark:text-primary-light" 
-                : "text-secondary hover:text-foreground dark:text-navy-400 dark:hover:text-navy-200"
-            )}
-          >
-            Alle
-          </button>
-          <button
+          />
+          <FilterChip
+            label="Wartung"
+            icon={Wrench}
+            active={filter === "maintenance"}
             onClick={() => setFilter("maintenance")}
-            className={clsx(
-              "rounded-md px-3 py-1 text-xs font-bold transition-all",
-              filter === "maintenance" 
-                ? "bg-white text-primary shadow-sm dark:bg-navy-800 dark:text-primary-light" 
-                : "text-secondary hover:text-foreground dark:text-navy-400 dark:hover:text-navy-200"
-            )}
-          >
-            Wartung
-          </button>
-          <button
+          />
+          <FilterChip
+            label="Tanken"
+            icon={Fuel}
+            active={filter === "fuel"}
             onClick={() => setFilter("fuel")}
-            className={clsx(
-              "rounded-md px-3 py-1 text-xs font-bold transition-all",
-              filter === "fuel" 
-                ? "bg-white text-primary shadow-sm dark:bg-navy-800 dark:text-primary-light" 
-                : "text-secondary hover:text-foreground dark:text-navy-400 dark:hover:text-navy-200"
-            )}
-          >
-            Tanken
-          </button>
+          />
         </div>
-        <div className="text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500">
+        <div className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500">
           {groupedRecords.length} {groupedRecords.length === 1 ? 'Eintrag' : 'Einträge'}
         </div>
       </div>
 
       {groupedRecords.length === 0 ? (
-        <p className="text-sm text-secondary dark:text-navy-400 py-4 text-center">
-          Keine Einträge vorhanden.
-        </p>
+        records.length === 0 ? (
+          <EmptyState
+            size="sm"
+            icon={Wrench}
+            title="Noch keine Einträge"
+            description="Erfasse die erste Wartung, Inspektion oder Tankfüllung für dieses Motorrad."
+            action={
+              onAdd ? (
+                <button
+                  type="button"
+                  onClick={onAdd}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-content shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                  Eintrag erstellen
+                </button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <EmptyState
+            size="sm"
+            title="Keine Einträge im aktuellen Filter"
+            action={
+              <button
+                type="button"
+                onClick={() => setFilter("all")}
+                className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                Filter aufheben
+              </button>
+            }
+          />
+        )
       ) : (
         sortedYears.map((year) => (
           <div key={year} className="space-y-2">
-            <div className="sticky top-32 z-10 -mx-4 flex items-center gap-4 bg-white px-4 py-2 dark:bg-navy-800">
+            <div
+              className="sticky z-10 -mx-4 flex items-center gap-4 bg-white px-4 py-2 dark:bg-navy-800"
+              style={{ top: "calc(var(--app-header-h, 4rem) + 3.25rem)" }}
+            >
               <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
               <span className="text-sm font-bold text-secondary dark:text-navy-500">{year}</span>
               <div className="h-px flex-1 bg-gray-100 dark:bg-navy-700"></div>
@@ -524,5 +551,34 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit }
         ))
       )}
     </div>
+  );
+}
+
+function FilterChip({
+  label,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon: typeof Wrench;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={clsx(
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        active
+          ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
+          : "border-base-300 bg-base-100 text-base-content/70 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800"
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      {label}
+    </button>
   );
 }

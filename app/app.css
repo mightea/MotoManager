@@ -133,6 +133,11 @@
 html {
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
+  /* Height of the global app header — referenced by sticky offsets
+     downstream (maintenance filter, year separators) so they stay
+     coherent if the header is ever resized. Keep in sync with the
+     padding/content in app/components/header.tsx. */
+  --app-header-h: 4rem;
 }
 
 /* Prevent iOS Safari from zooming in on form fields */

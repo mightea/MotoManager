@@ -167,7 +167,7 @@ function compareCards(sort: SortKey) {
         return ageMs(b) - ageMs(a);
       }
       case "age":
-        return ageMs(a) - ageMs(b);
+        return ageMs(b) - ageMs(a);
       case "make":
         return a.make.localeCompare(b.make) || a.model.localeCompare(b.model);
       case "inspection": {
@@ -290,11 +290,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const pageEnd = Math.min(currentPage * PAGE_SIZE, visibleCards.length);
 
   const sortOptions: { id: SortKey; label: string; icon: typeof Clock }[] = [
-    { id: "updated", label: "Aktualität", icon: Clock },
-    { id: "make", label: "Marke", icon: Tag },
-    { id: "age", label: "Alter", icon: Calendar },
+    { id: "updated", label: "Letzte Aktivität", icon: Clock },
+    { id: "make", label: "Marke (A–Z)", icon: Tag },
+    { id: "age", label: "Baujahr (neu → alt)", icon: Calendar },
     { id: "location", label: "Standort", icon: MapIcon },
-    { id: "inspection", label: "MFK", icon: CalendarDays },
+    { id: "inspection", label: "MFK (fällig zuerst)", icon: CalendarDays },
   ];
 
   const activeSortOption = sortOptions.find(o => o.id === currentSort);
@@ -393,7 +393,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             >
               {ActiveSortIcon && <ActiveSortIcon className="h-4 w-4 text-base-content/60" aria-hidden="true" />}
               <span className="hidden sm:inline text-base-content/60">Sortiert nach</span>
-              <span className="font-semibold text-base-content">{activeSortOption?.label ?? "Aktualität"}</span>
+              <span className="font-semibold text-base-content">{activeSortOption?.label ?? "Letzte Aktivität"}</span>
               <ChevronDown className="h-4 w-4 text-base-content/60" aria-hidden="true" />
             </button>
           }
@@ -441,7 +441,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </button>
       )}
 
-      <div className="order-3 sm:order-4 grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="order-3 sm:order-4 grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {isLoading && cards.length > 0 ? (
           [...Array(Math.min(cards.length, 6))].map((_, i) => (
             // eslint-disable-next-line react/no-array-index-key

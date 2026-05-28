@@ -582,6 +582,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     hasPurchaseDate
   } = loaderData;
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
+  const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [deleteMaintenanceConfirmationOpen, setDeleteMaintenanceConfirmationOpen] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
@@ -700,6 +701,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             estimatedRange={estimatedRange}
             totalLifetimeCost={totalLifetimeCost}
             onEdit={() => setEditMotorcycleDialogOpen(true)}
+            onShowDetails={() => setInfoSheetOpen(true)}
             previousOwnersList={previousOwnersList}
             onAddPreviousOwner={() => {
               setSelectedPreviousOwner(null);
@@ -712,15 +714,16 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             ownerCount={ownerCount}
           />
           <MaintenanceInsightsCard insights={insights} />
+        </div>
+
+        <div className="space-y-5 md:col-span-2">
           <OpenIssuesCard
             issues={openIssues}
             dateFormatter={dateFormatter}
             onAddIssue={() => openIssueDialog(null)}
             onIssueSelect={(issue) => openIssueDialog(issue)}
           />
-        </div>
 
-        <div className="space-y-5 md:col-span-2">
           {/* Maintenance History Card */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
@@ -742,6 +745,10 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               userLocations={userLocations}
               onEdit={(record) => {
                 setSelectedMaintenance(record);
+                setMaintenanceDialogOpen(true);
+              }}
+              onAdd={() => {
+                setSelectedMaintenance(null);
                 setMaintenanceDialogOpen(true);
               }}
             />
@@ -788,6 +795,43 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={infoSheetOpen}
+        onClose={() => setInfoSheetOpen(false)}
+        title="Fahrzeugdaten"
+        description={`${motorcycle.make} ${motorcycle.model}`}
+      >
+        <MotorcycleInfoCard
+          variant="details"
+          motorcycle={motorcycle}
+          formattedFirstRegistration={formattedFirstRegistration}
+          formattedPurchaseDate={formattedPurchaseDate}
+          ownershipLabel={ownershipLabel}
+          kmDriven={kmDriven}
+          avgKmPerYear={avgKmPerYear ?? 0}
+          yearsOwned={yearsOwned}
+          hasPurchaseDate={hasPurchaseDate}
+          avgFuelConsumption={avgFuelConsumption}
+          avgTripDistance={avgTripDistance}
+          estimatedRange={estimatedRange}
+          totalLifetimeCost={totalLifetimeCost}
+          onEdit={() => {
+            setInfoSheetOpen(false);
+            setEditMotorcycleDialogOpen(true);
+          }}
+          previousOwnersList={previousOwnersList}
+          onAddPreviousOwner={() => {
+            setSelectedPreviousOwner(null);
+            setPreviousOwnerDialogOpen(true);
+          }}
+          onEditPreviousOwner={(owner) => {
+            setSelectedPreviousOwner(owner);
+            setPreviousOwnerDialogOpen(true);
+          }}
+          ownerCount={ownerCount}
+        />
+      </Modal>
 
       <Modal
         isOpen={editMotorcycleDialogOpen}

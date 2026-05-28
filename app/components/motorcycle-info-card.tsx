@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { ChevronDown, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Plus, Fuel, Route, Navigation2 } from "lucide-react";
-import clsx from "clsx";
+import { ChevronRight, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Plus, Fuel, Route, Navigation2 } from "lucide-react";
 import type { Motorcycle, PreviousOwner } from "~/types/db";
 import { StatisticEntry } from "./statistic-entry";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
@@ -23,11 +21,20 @@ interface MotorcycleInfoCardProps {
   avgTripDistance?: number | null;
   estimatedRange?: number | null;
   totalLifetimeCost?: number;
+  /**
+   * "summary" (default) — compact card showing summary chips + buttons to edit
+   *   the motorcycle or open the full data sheet. Renders inline on the page.
+   * "details" — full data dump (all stat entries, fuel/usage groups, previous
+   *   owners). Renders inside a Modal sheet, opened on demand.
+   */
+  variant?: "summary" | "details";
+  onShowDetails?: () => void;
 }
 
 /**
- * A card component displaying technical and ownership details for a motorcycle.
- * Supports expanding/collapsing for detailed information.
+ * Displays technical and ownership details for a motorcycle. Renders two variants:
+ * a compact summary card for the detail page, and a full "details" view designed
+ * to live inside a Modal sheet.
  */
 export function MotorcycleInfoCard({
   motorcycle,
@@ -47,9 +54,9 @@ export function MotorcycleInfoCard({
   avgTripDistance,
   estimatedRange,
   totalLifetimeCost,
+  variant = "summary",
+  onShowDetails,
 }: MotorcycleInfoCardProps) {
-  const [detailsExpanded, setDetailsExpanded] = useState(false);
-
   const summaryItems = [
     hasPurchaseDate && kmDriven > 0 ? `${formatNumber(kmDriven)} km gefahren` : null,
     ownerCount !== undefined && ownerCount > 0 ? `${ownerCount}. Hand` : null,
@@ -57,41 +64,53 @@ export function MotorcycleInfoCard({
     avgFuelConsumption ? `${avgFuelConsumption.toFixed(2)} L/100km` : null,
   ].filter((item): item is string => Boolean(item));
 
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-      <div className="flex items-center gap-2 pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
-        <button
-          type="button"
-          onClick={() => setDetailsExpanded((prev) => !prev)}
-          className="flex flex-1 items-center justify-between text-left text-sm font-semibold text-foreground transition-colors hover:text-primary dark:text-white"
-          aria-expanded={detailsExpanded}
-        >
-          <span>Fahrzeugdaten</span>
-          <ChevronDown
-            className={clsx("h-5 w-5 transition-transform", {
-              "rotate-180": detailsExpanded,
-            })}
-          />
-        </button>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-secondary transition-all hover:border-primary hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-        >
-          Bearbeiten
-        </button>
-      </div>
+  if (variant === "summary") {
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
+          <h2 className="text-sm font-semibold text-foreground dark:text-white">
+            Fahrzeugdaten
+          </h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onShowDetails}
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
+            >
+              Details
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={onEdit}
+              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-secondary transition-all hover:border-primary hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+            >
+              Bearbeiten
+            </button>
+          </div>
+        </div>
 
-      <div
-        className={clsx(
-          "grid transition-all duration-300 ease-in-out",
-          detailsExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        {summaryItems.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary dark:text-navy-300">
+            {summaryItems.map((item, index) => (
+              <div key={item} className="flex items-center gap-x-2">
+                {index > 0 && <span className="text-gray-300 dark:text-navy-600">•</span>}
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs italic text-secondary dark:text-navy-400">
+            Noch keine Statistiken — füge Wartungs- oder Tank-Einträge hinzu, um Daten zu sehen.
+          </p>
         )}
-      >
-        <div className="overflow-hidden">
-        <div className="mt-3 space-y-2">
-        <div className="mt-4 space-y-6">
-          <div className="space-y-2">
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
             <StatisticEntry
               icon={Hash}
               label="Kennzeichen"
@@ -253,29 +272,6 @@ export function MotorcycleInfoCard({
               </p>
             )}
           </div>
-        </div>
-        </div>
-        </div>
-      </div>
-
-      {/* Collapsed Summary */}
-      <div
-        className={clsx(
-          "grid transition-all duration-300 ease-in-out",
-          !detailsExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-secondary dark:text-navy-300">
-            {summaryItems.map((item, index) => (
-              <div key={item} className="flex items-center gap-x-2">
-                {index > 0 && <span className="text-gray-300 dark:text-navy-600">•</span>}
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

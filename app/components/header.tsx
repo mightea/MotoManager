@@ -12,7 +12,6 @@ import { NAV_ITEMS } from "./header-nav-config";
 
 export function Header({ user }: { user: PublicUser | null }) {
   const location = useLocation();
-  const isMotorcycleDetail = location.pathname.startsWith("/motorcycle/");
 
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -39,10 +38,7 @@ export function Header({ user }: { user: PublicUser | null }) {
 
   return (
     <div
-      className={
-        "z-40 w-full print:hidden transition-all duration-300 border-b border-base-300 bg-base-100/90 backdrop-blur-md " +
-        (!isMotorcycleDetail ? "sticky top-0" : "relative")
-      }
+      className="sticky top-0 z-40 w-full print:hidden transition-all duration-300 border-b border-base-300 bg-base-100/90 backdrop-blur-md"
     >
       <header className="mx-auto w-full max-w-7xl relative">
         <div className="absolute left-0 right-0 top-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-accent" />
