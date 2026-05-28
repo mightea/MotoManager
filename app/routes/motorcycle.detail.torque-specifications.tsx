@@ -19,6 +19,8 @@ import { Modal } from "~/components/modal";
 import { TorqueSpecForm } from "~/components/torque-spec-form";
 import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
+import { Card } from "~/components/card";
+import { EmptyState } from "~/components/empty-state";
 import {
   createTorqueSpecification,
   updateTorqueSpecification,
@@ -307,45 +309,32 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       </div>
 
       <div className="space-y-6 print:space-y-0 print:bg-white">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between print:hidden">
-          <div>
-            <span className="label-tag mb-2">
-              <span>Service-Werte</span>
-            </span>
-            <h2 className="font-display text-3xl uppercase tracking-wide leading-none text-base-content dark:text-white">
-              Anzugsmomente
-            </h2>
-            <p className="mt-2 text-sm text-base-content/65 dark:text-navy-400">
-              Spezifikationen für {motorcycle.make} {motorcycle.model}.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {otherMotorcycles.length > 0 && (
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-              >
-                <Import className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Importieren</span>
-              </button>
-            )}
+        <div className="flex flex-wrap items-center justify-end gap-2 print:hidden">
+          <button
+            onClick={() => window.print()}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+            title="Drucken"
+            aria-label="Drucken"
+          >
+            <Printer className="h-4 w-4" />
+          </button>
+          {otherMotorcycles.length > 0 && (
             <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+              onClick={() => setIsImportModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
             >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              <span>Hinzufügen</span>
-              <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+              <Import className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Importieren</span>
             </button>
-            <button
-              onClick={() => window.print()}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-              title="Drucken"
-              aria-label="Drucken"
-            >
-              <Printer className="h-4 w-4" />
-            </button>
-          </div>
+          )}
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            <span>Hinzufügen</span>
+            <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+          </button>
         </div>
 
         {actionData && "error" in actionData && (
@@ -357,61 +346,64 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
         )}
 
         {specs.length === 0 ? (
-          <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50 print:hidden">
-            <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">
-              <Wrench className="h-8 w-8 text-gray-400 dark:text-navy-300" />
-            </div>
-            <h3 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
-              Keine Anzugsmomente vorhanden
-            </h3>
-            <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
-              Es wurden noch keine Drehmoment-Spezifikationen für dieses Fahrzeug hinterlegt.
-            </p>
-            <div className="mt-6 flex gap-3">
-              {otherMotorcycles.length > 0 && (
-                <button
-                  onClick={() => setIsImportModalOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
-                >
-                  <Import className="h-5 w-5" />
-                  Importieren
-                </button>
-              )}
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
-              >
-                <Plus className="h-5 w-5" />
-                Ersten Eintrag erstellen
-              </button>
-            </div>
+          <div className="print:hidden">
+            <EmptyState
+              icon={Wrench}
+              title="Keine Anzugsmomente"
+              description="Es wurden noch keine Drehmoment-Spezifikationen für dieses Fahrzeug hinterlegt."
+              action={
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {otherMotorcycles.length > 0 && (
+                    <button
+                      onClick={() => setIsImportModalOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                    >
+                      <Import className="h-3.5 w-3.5" aria-hidden="true" />
+                      Importieren
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Ersten Eintrag erstellen
+                    <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+                  </button>
+                </div>
+              }
+            />
           </div>
         ) : (
-          <div className="grid gap-6 print:block print:block print:gap-0 print:!bg-white">
+          <div className="grid gap-6 print:block print:gap-0 print:!bg-white">
             {/* Group by category */}
             {Array.from(new Set((specs as any[]).map((s: any) => s.category))).map((category: any) => (
-              <div key={category as string} className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800 overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:print-force-white print:shadow-none">
-                <div className="bg-gray-50/80 backdrop-blur-sm px-5 py-3 border-b border-gray-100 dark:border-navy-700 font-bold text-xs uppercase tracking-widest text-secondary dark:bg-navy-900/50 dark:text-navy-300 print-no-blur print:print-force-gray print:!text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
+              <Card
+                key={category as string}
+                className="overflow-hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6 print:break-inside-avoid print:print-force-white print:shadow-none"
+              >
+                <div className="border-b border-base-200 px-4 py-3 font-subdisplay text-sm text-base-content dark:border-navy-700 dark:text-white print-no-blur print:print-force-gray print:!text-black print:border-b-[1.5px] print:border-black print:text-[12px] print:py-2">
                   {category as string}
                 </div>
-                <div className="divide-y divide-gray-100 dark:divide-navy-700 print:divide-gray-300">
+                <div className="divide-y divide-base-200 dark:divide-navy-700 print:divide-gray-300">
                   {specs.filter((s: any) => s.category === category).map((spec: TorqueSpecification) => (
-                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2 sm:px-5 sm:py-4 transition-colors hover:bg-gray-50/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:!bg-white print:!text-black print:border-0">
+                    <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5 sm:py-4 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:!bg-white print:!text-black print:border-0">
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
+                          <h3 className="font-semibold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
                             {spec.name}
                           </h3>
                           <button
                             onClick={() => setEditingSpec(spec)}
-                            className="rounded-lg p-1 text-secondary sm:opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light focus:opacity-100 print:hidden"
+                            className="rounded-sm p-1 text-base-content/55 sm:opacity-0 transition-all hover:bg-base-200 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 print:hidden"
                             title="Bearbeiten"
+                            aria-label="Eintrag bearbeiten"
                           >
                             <Pencil className="h-3 w-3" />
                           </button>
                         </div>
                         {spec.description && (
-                          <p className="text-[10px] sm:text-xs text-secondary dark:text-navy-400 max-w-xl italic truncate sm:whitespace-normal print:text-[11px] print:!text-gray-700 print:italic print:mt-0.5 print:block print:overflow-visible print:whitespace-normal">
+                          <p className="text-[10px] sm:text-xs text-base-content/60 dark:text-navy-400 max-w-xl italic truncate sm:whitespace-normal print:text-[11px] print:!text-gray-700 print:italic print:mt-0.5 print:block print:overflow-visible print:whitespace-normal">
                             {spec.description}
                           </p>
                         )}
@@ -420,29 +412,29 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                       <div className="flex items-center justify-end gap-3 sm:gap-8 shrink-0 print:flex print:gap-8 print:items-start print:text-right print:border-0 print:pt-0">
                         {spec.toolSize && (
                           <div className="flex flex-col items-end sm:gap-0.5">
-                            <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-secondary/40 dark:text-navy-500 print:block print:text-[10px] print:!text-gray-600 print:mb-0.5">Werkzeug</span>
-                            <div className="flex items-center gap-1.5 rounded-lg bg-gray-50/50 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/40 dark:border-navy-700 shadow-sm print:!bg-white print:border-none print:shadow-none print:p-0 print:text-[14px] print:font-bold print:!text-black">
-                              <Wrench className="h-3 w-3 text-secondary/70 dark:text-navy-400 print:hidden" />
+                            <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500 print:block print:text-[10px] print:!text-gray-600 print:mb-0.5">Werkzeug</span>
+                            <div className="flex items-center gap-1.5 rounded-sm border border-base-300 bg-base-100 px-2.5 py-1 font-numeric text-[11px] sm:text-xs font-semibold text-foreground dark:border-navy-700 dark:bg-navy-900 dark:text-navy-100 print:!bg-white print:border-none print:shadow-none print:p-0 print:text-[14px] print:font-bold print:!text-black">
+                              <Wrench className="h-3 w-3 text-base-content/55 dark:text-navy-400 print:hidden" aria-hidden="true" />
                               <span>{spec.toolSize}</span>
                             </div>
                           </div>
                         )}
 
                         <div className="flex flex-col items-end min-w-[65px] sm:min-w-[80px]">
-                          <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-secondary/40 dark:text-navy-500 mb-0.5 print:block print:text-[10px] print:!text-gray-600">Drehmoment</span>
+                          <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500 mb-0.5 print:block print:text-[10px] print:!text-gray-600">Drehmoment</span>
                           <div className="flex items-center gap-1.5 sm:gap-2">
-                            <div className="flex items-baseline gap-0.5 sm:gap-1">
-                              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none print:text-[14px] print:font-bold print:!text-black">
+                            <div className="flex items-baseline gap-1">
+                              <span className="font-numeric text-xl sm:text-2xl font-semibold tracking-tight text-foreground dark:text-white leading-none print:text-[14px] print:font-bold print:!text-black">
                                 {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
                               </span>
                               {!spec.variation && (
-                                <span className="text-[10px] sm:text-xs font-bold text-secondary dark:text-navy-400 uppercase print:!text-black print:text-sm">Nm</span>
+                                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 print:!text-black print:text-sm">Nm</span>
                               )}
                             </div>
                             {spec.variation && (
-                              <div className="flex items-baseline gap-0.5 text-[10px] sm:text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded border border-amber-100/30 dark:border-amber-900/30 tabular-nums whitespace-nowrap print:!bg-white print:!text-black print:border-none print:p-0">
+                              <div className="inline-flex items-baseline gap-0.5 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 sm:px-2 sm:py-1 font-numeric text-[10px] sm:text-[11px] font-semibold text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] whitespace-nowrap print:!bg-white print:!text-black print:border-none print:p-0">
                                 <span className="print:text-[14px] print:font-bold">± {spec.variation}</span>
-                                <span className="text-[8px] uppercase opacity-60 print:text-[10px] print:opacity-100">Nm</span>
+                                <span className="font-mono text-[9px] uppercase opacity-70 print:text-[10px] print:opacity-100">Nm</span>
                               </div>
                             )}
                           </div>
@@ -451,7 +443,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
