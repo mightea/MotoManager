@@ -19,7 +19,7 @@ export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
     return (
       <Link
         to="/auth/login"
-        className="relative hidden h-10 items-center rounded-sm bg-primary px-4 font-subdisplay text-sm text-primary-content shadow-[0_8px_18px_-10px_rgba(47,91,232,0.7)] transition-all hover:brightness-105 md:inline-flex"
+        className="relative hidden h-10 items-center rounded-sm bg-primary px-4 font-subdisplay text-sm text-primary-content shadow-[0_8px_18px_-10px_rgba(30,91,255,0.7)] transition-all hover:brightness-105 md:inline-flex"
       >
         Login
         <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />

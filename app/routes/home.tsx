@@ -462,7 +462,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {!isAddOpen && (
         <button
           onClick={() => setIsAddOpen(true)}
-          className="group fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(47,91,232,0.7)] motion-safe:transition-all motion-safe:active:scale-95 hover:shadow-[0_18px_42px_-14px_rgba(47,91,232,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:focus-visible:ring-offset-navy-950 sm:hidden"
+          className="group fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] motion-safe:transition-all motion-safe:active:scale-95 hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:focus-visible:ring-offset-navy-950 sm:hidden"
           aria-label="Neues Motorrad hinzufügen"
         >
           <Plus className="h-4 w-4" />

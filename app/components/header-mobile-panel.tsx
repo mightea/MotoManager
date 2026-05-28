@@ -138,7 +138,7 @@ export function HeaderMobilePanel({
           <Link
             to="/auth/login"
             onClick={onClose}
-            className="relative mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(47,91,232,0.7)]"
+            className="relative mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)]"
           >
             Login
             <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />

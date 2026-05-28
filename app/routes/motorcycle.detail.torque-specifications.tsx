@@ -328,7 +328,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             )}
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(47,91,232,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(47,91,232,0.85)] hover:brightness-105 active:scale-[0.98]"
+              className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               <span>Hinzufügen</span>

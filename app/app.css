@@ -18,24 +18,24 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-/* MotoManager "Garage Flag" palette — four distinct hues drawn from the
-   workshop and motorsport tradition without copying any one team's mark:
-     Blue   #2F5BE8 — primary action / link / focus
-     Violet #5A2A9A — depth / secondary surfaces / chrome accent
-     Amber  #DCA853 — workshop / warnings / stamps / paper tint
-     Coral  #E84B36 — accent / destructive / alarm-state highlights
-   The 4-band flag rendered by .motorsport-stripe ties these together. */
+/* MotoManager "Dakar" palette — canonical four-band hue set, deliberately
+   hue-shifted out of the BMW M trademark range and rendered as four bands
+   (never three). The four bands of .motorsport-stripe are:
+     Ultramarine #1E5BFF — primary action / link / focus
+     Plum        #5B1D7A — depth / hover state / second stripe band
+     Sand        #E8A341 — fourth-band highlight / Veteran badge / warm accent
+     Vermillion  #FF4124 — destructive / overdue / alarm states */
 @plugin "daisyui/theme" {
   name: "motomanager";
   default: true;
   prefersdark: false;
   color-scheme: light;
 
-  --color-primary: #2F5BE8;          /* Garage Blue */
+  --color-primary: #1E5BFF;          /* Ultramarine */
   --color-primary-content: #ffffff;
-  --color-secondary: #5A2A9A;        /* Garage Violet */
+  --color-secondary: #5B1D7A;        /* Plum */
   --color-secondary-content: #ffffff;
-  --color-accent: #E84B36;           /* Coral */
+  --color-accent: #FF4124;           /* Vermillion */
   --color-accent-content: #ffffff;
   --color-neutral: #64748b;          /* Slate */
   --color-neutral-content: #ffffff;
@@ -65,11 +65,11 @@
   prefersdark: true;
   color-scheme: dark;
 
-  --color-primary: #6E8FF0;          /* Garage Blue, lifted for dark legibility */
+  --color-primary: #6485FF;          /* Ultramarine, lifted for dark legibility */
   --color-primary-content: #0a0711;
-  --color-secondary: #8757D3;        /* Garage Violet, lifted */
+  --color-secondary: #5B1D7A;        /* Plum */
   --color-secondary-content: #ffffff;
-  --color-accent: #F26C58;           /* Coral, lifted */
+  --color-accent: #FF4124;           /* Vermillion */
   --color-accent-content: #ffffff;
   --color-neutral: #262134;          /* navy-700 */
   --color-neutral-content: #e5e3eb;  /* navy-50 */
@@ -98,31 +98,32 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Menlo", monospace;
   --font-display: "Anton", "IBM Plex Sans Condensed", "Helvetica Neue Condensed", "Arial Narrow", sans-serif;
 
-  /* Workshop amber — the 3rd band of the Garage Flag, also used standalone
-     for stamps, warning rails, and the kraft-paper card variant. */
-  --color-workshop: #DCA853;
-  --color-workshop-soft: #f4d8a3;
+  /* Sand (Highlight) — the 3rd band of the Dakar stripe, also used
+     standalone for Veteran badges, stamps, warning rails, and the
+     kraft-paper card variant. */
+  --color-workshop: #E8A341;        /* Sand */
+  --color-workshop-soft: #F2C277;
   --color-workshop-ink: #4a2f10;
 
-  /* MotoManager Garage Flag palette
-     Blue → Violet → Amber → Coral. Four distinct hues that compose the
-     .motorsport-stripe signature without overlapping any one team's mark. */
+  /* MotoManager Dakar palette
+     Ultramarine → Plum → Sand → Vermillion. Four distinct hues, never
+     three, hue-shifted out of the BMW M trademark range. */
 
-  /* Garage Blue - primary action color */
-  --color-primary: #2F5BE8;
+  /* Ultramarine — primary action color */
+  --color-primary: #1E5BFF;
 
-  /* Hover / deep interaction — a more saturated edge of the Garage Violet */
-  --color-primary-dark: #5A2A9A;
+  /* Plum — hover / depth / second-band */
+  --color-primary-dark: #5B1D7A;
 
-  /* Lifted blue for dark-mode text and accents */
-  --color-primary-light: #6E8FF0;
+  /* Lifted ultramarine for dark-mode text and accents */
+  --color-primary-light: #6485FF;
 
   --color-secondary: #64748b;
 
-  /* Coral brand accent — namespaced so it doesn't override Tailwind's
+  /* Vermillion brand accent — namespaced so it doesn't override Tailwind's
      red-* scale (which forms have to keep using for inputs/borders). */
-  --color-brand-red: #E84B36;
-  --color-brand-red-soft: #ff7a6a;
+  --color-brand-red: #FF4124;
+  --color-brand-red-soft: #FF7B61;
 
   /* Semantic status tokens — used by toasts, badges, sync indicators.
      Keep these wired up in @theme so dark-mode variants flow through `dark:` classes. */
@@ -138,7 +139,7 @@
   --color-background: #f8fafc; /* Alpine White-ish (Slate 50) */
   --color-foreground: #0f172a;
 
-  /* Dark Mode Navy Palette - the deep ink surface beneath the Garage Flag */
+  /* Dark Mode Navy Palette — the deep ink surface beneath the Dakar stripe */
   --color-navy-50: #e5e3eb;
   --color-navy-100: #d1ceda;
   --color-navy-200: #b1adbd;
@@ -183,7 +184,7 @@ a {
 
 /* Brand selection color */
 ::selection {
-  background-color: rgba(47,91,232, 0.25);
+  background-color: rgba(30,91,255, 0.25);
   color: inherit;
 }
 
@@ -247,19 +248,19 @@ a {
    DESIGN MOTIFS — service-manual / motorsport telemetry
    ============================================================ */
 
-/* The Garage Flag — four equal bands (Blue · Violet · Amber · Coral).
-   Distinct from any single motorsport team's three-band mark. Use as a
-   section divider, brand signature, or a sliver of color under a card
-   edge. The class name is kept for source-code stability; the visual
-   is the 4-band flag. */
+/* The Dakar stripe — four equal hard-edge bands rendered with the brand
+   palette (Ultramarine · Plum · Sand · Vermillion). Always four bands;
+   three is reserved for other people's brands. Use as the structural
+   signature at the top of every authenticated page, as a section
+   divider, or as a sliver of color under a card edge. */
 .motorsport-stripe {
   background:
     linear-gradient(
       to right,
-      var(--color-primary)   0%,    var(--color-primary)   25%,
-      var(--color-secondary) 25%,   var(--color-secondary) 50%,
-      var(--color-workshop)  50%,   var(--color-workshop)  75%,
-      var(--color-accent)    75%,   var(--color-accent)    100%
+      var(--color-primary)      0%,    var(--color-primary)      25%,
+      var(--color-primary-dark) 25%,   var(--color-primary-dark) 50%,
+      var(--color-workshop)     50%,   var(--color-workshop)     75%,
+      var(--color-brand-red)    75%,   var(--color-brand-red)    100%
     );
 }
 
@@ -268,10 +269,24 @@ a {
   background:
     linear-gradient(
       to bottom,
-      var(--color-primary)   0%,    var(--color-primary)   25%,
-      var(--color-secondary) 25%,   var(--color-secondary) 50%,
-      var(--color-workshop)  50%,   var(--color-workshop)  75%,
-      var(--color-accent)    75%,   var(--color-accent)    100%
+      var(--color-primary)      0%,    var(--color-primary)      25%,
+      var(--color-primary-dark) 25%,   var(--color-primary-dark) 50%,
+      var(--color-workshop)     50%,   var(--color-workshop)     75%,
+      var(--color-brand-red)    75%,   var(--color-brand-red)    100%
+    );
+}
+
+/* Smooth four-band gradient — same hue progression with no hard edges.
+   Use inside header chrome and hero bars where the bands should blur
+   together rather than sit as discrete blocks. */
+.motorsport-stripe-smooth {
+  background:
+    linear-gradient(
+      to right,
+      var(--color-primary),
+      var(--color-primary-dark),
+      var(--color-workshop),
+      var(--color-brand-red)
     );
 }
 
