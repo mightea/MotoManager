@@ -55,7 +55,7 @@ export function TorqueSpecForm({
       {initialValues && <input type="hidden" name="torqueId" value={initialValues.id} />}
 
       <div className="space-y-1.5">
-        <label htmlFor="category" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+        <label htmlFor="category" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
           Kategorie
         </label>
         <input
@@ -66,7 +66,7 @@ export function TorqueSpecForm({
           placeholder="z.B. Motor, Fahrwerk, Bremsen"
           list="category-suggestions"
           defaultValue={initialValues?.category}
-          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
         <datalist id="category-suggestions">
           {combinedCategories.map(cat => (
@@ -76,7 +76,7 @@ export function TorqueSpecForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+        <label htmlFor="name" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
           Bezeichnung
         </label>
         <input
@@ -86,12 +86,12 @@ export function TorqueSpecForm({
           required
           placeholder="z.B. Ölablassschraube"
           defaultValue={initialValues?.name}
-          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="toolSize" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+        <label htmlFor="toolSize" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
           Werkzeuggröße (Optional)
         </label>
         <input
@@ -100,19 +100,19 @@ export function TorqueSpecForm({
           id="toolSize"
           placeholder="z.B. 17mm, T40, H6"
           defaultValue={initialValues?.toolSize ?? ""}
-          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="torque" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+        <label htmlFor="torque" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
           Wert
         </label>
         <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={variationType}
             onChange={(e) => setVariationType(e.target.value as VariationType)}
-            className="rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+            className="rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
           >
             <option value="none">Festwert</option>
             <option value="plus_minus">± Toleranz</option>
@@ -127,7 +127,7 @@ export function TorqueSpecForm({
               step="0.1"
               placeholder="Wert (Nm)"
               defaultValue={initialValues?.torque}
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+              className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
             />
 
             {variationType === "plus_minus" && (
@@ -141,7 +141,7 @@ export function TorqueSpecForm({
                   step="0.1"
                   placeholder="Tol."
                   defaultValue={initialValues?.variation ?? ""}
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
               </>
             )}
@@ -156,7 +156,7 @@ export function TorqueSpecForm({
                   step="0.1"
                   placeholder="Max"
                   defaultValue={initialValues?.torqueEnd ?? ""}
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
               </>
             )}
@@ -165,7 +165,7 @@ export function TorqueSpecForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+        <label htmlFor="description" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
           Beschreibung (Optional)
         </label>
         <textarea
@@ -173,7 +173,7 @@ export function TorqueSpecForm({
           id="description"
           rows={2}
           defaultValue={initialValues?.description ?? ""}
-          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>
 

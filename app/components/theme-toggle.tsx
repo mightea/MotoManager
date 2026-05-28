@@ -13,13 +13,13 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="grid h-10 w-10 place-items-center rounded-xl border border-gray-200 bg-white text-secondary hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
+      className="grid h-10 w-10 place-items-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/65 transition-colors hover:border-base-content/35 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
       aria-label={theme === Theme.LIGHT ? "Dunkelmodus aktivieren" : "Hellmodus aktivieren"}
     >
       {theme === Theme.LIGHT ? (
-        <Moon className="h-5 w-5" />
+        <Moon className="h-4 w-4" />
       ) : (
-        <Sun className="h-5 w-5" />
+        <Sun className="h-4 w-4" />
       )}
     </button>
   );

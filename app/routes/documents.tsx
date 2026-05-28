@@ -247,24 +247,31 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto space-y-6 p-4 pb-24">
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground dark:text-white">Dokumente</h1>
-          <p className="text-secondary dark:text-navy-400">
-            Verwalte deine Dokumente und sehe öffentliche Dokumente anderer Nutzer.
+          <span className="label-tag mb-2">
+            <span className="tabular-nums">§ 07</span>
+            <span>Dokumentenarchiv</span>
+          </span>
+          <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">
+            Dokumente
+          </h1>
+          <p className="mt-2 text-base-content/65 dark:text-navy-400">
+            Eigene Dokumente verwalten · öffentliche Dokumente einsehen.
           </p>
         </div>
         <button
           onClick={openCreateDialog}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+          className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Hochladen</span>
+          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
         </button>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 pb-2 dark:border-navy-700">
+      <div className="flex flex-wrap items-center gap-2 border-b border-base-300 pb-2 dark:border-navy-700">
         {filters.map((f) => {
           const Icon = f.icon;
           const isActive = filter === f.id;
@@ -273,21 +280,23 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={clsx(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors",
                 isActive
-                  ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
-                  : "text-secondary hover:bg-gray-50 hover:text-foreground dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-white"
+                  ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
+                  : "border-base-300 bg-base-100 text-base-content/65 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800"
               )}
             >
-              <Icon className={clsx("h-4 w-4", isActive ? "text-primary dark:text-primary-light" : "text-secondary/70 dark:text-navy-400")} />
+              <Icon className={clsx("h-3.5 w-3.5", isActive ? "text-primary dark:text-primary-light" : "text-base-content/55 dark:text-navy-400")} aria-hidden="true" />
               {f.label}
               {f.count > 0 && (
-                <span className={clsx(
-                  "ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
-                  isActive
-                    ? "bg-primary text-white dark:bg-primary-light dark:text-navy-900"
-                    : "bg-gray-100 text-secondary dark:bg-navy-700 dark:text-navy-300"
-                )}>
+                <span
+                  className={clsx(
+                    "ml-1 inline-flex h-4 min-w-[1.25rem] items-center justify-center rounded-sm px-1 font-numeric text-[10px] font-semibold tabular-nums",
+                    isActive
+                      ? "bg-primary text-primary-content"
+                      : "bg-base-200 text-base-content/60 dark:bg-navy-700 dark:text-navy-300",
+                  )}
+                >
                   {f.count}
                 </span>
               )}

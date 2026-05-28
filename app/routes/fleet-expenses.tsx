@@ -100,22 +100,26 @@ export default function FleetExpenses() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
-            <Receipt className="h-6 w-6 text-primary" />
-            Gemeinsame Ausgaben
+          <span className="label-tag mb-2">
+            <span className="tabular-nums">§ 06</span>
+            <span>Gemeinsame Ausgaben</span>
+          </span>
+          <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">
+            Ausgaben
           </h1>
-          <p className="text-sm text-secondary dark:text-navy-400 mt-1">
-            Verwalte Ausgaben wie Versicherungen oder Steuern, die mehrere Fahrzeuge betreffen.
+          <p className="mt-2 text-sm text-base-content/65 dark:text-navy-400">
+            Versicherungen, Steuern und andere Ausgaben, die mehrere Fahrzeuge betreffen.
           </p>
         </div>
         <button
           onClick={openAddDialog}
-          className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95"
+          className="relative inline-flex items-center justify-center gap-2 self-start rounded-sm bg-primary px-4 py-2.5 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
-          Ausgabe hinzufügen
+          Neue Ausgabe
+          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
         </button>
       </div>
 

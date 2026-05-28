@@ -39,6 +39,20 @@ const variantConfig: Record<
   },
 };
 
+const variantCode: Record<ToastVariant, string> = {
+  success: "OK",
+  error: "ERR",
+  info: "INFO",
+  warning: "WARN",
+};
+
+const variantRailColor: Record<ToastVariant, string> = {
+  success: "bg-success",
+  error: "bg-error",
+  info: "bg-info",
+  warning: "bg-warning",
+};
+
 function ToastItem({ toast }: { toast: Toast }) {
   const config = variantConfig[toast.variant];
   const Icon = config.icon;
@@ -48,24 +62,33 @@ function ToastItem({ toast }: { toast: Toast }) {
       role={config.role}
       aria-live={config.role === "alert" ? "assertive" : "polite"}
       className={clsx(
-        "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-box border p-4 text-base-content shadow-lg backdrop-blur-sm motion-safe:animate-fade-in",
-        config.container
+        "pointer-events-auto relative flex w-full max-w-sm items-start gap-3 rounded-sm border bg-base-100 px-4 py-3 text-base-content shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] motion-safe:animate-fade-in dark:bg-navy-800",
+        config.container,
       )}
     >
-      <Icon className={clsx("mt-0.5 h-5 w-5 shrink-0", config.iconColor)} aria-hidden="true" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold leading-tight">{toast.title}</p>
+      <span aria-hidden="true" className={clsx("absolute inset-y-2 left-0 w-[3px] rounded-r-sm", variantRailColor[toast.variant])} />
+      <span className="pt-0.5">
+        <Icon className={clsx("h-4 w-4", config.iconColor)} aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className={clsx("font-mono text-[10px] font-semibold uppercase tracking-[0.22em] tabular-nums", config.iconColor)}>
+            {variantCode[toast.variant]}
+          </span>
+          <span aria-hidden="true" className="h-px w-3 bg-base-content/20" />
+          <p className="font-display text-sm uppercase tracking-wide leading-none truncate">{toast.title}</p>
+        </div>
         {toast.description && (
-          <p className="mt-1 text-xs opacity-75 leading-snug">{toast.description}</p>
+          <p className="mt-1.5 text-xs leading-snug text-base-content/70">{toast.description}</p>
         )}
       </div>
       <button
         type="button"
         onClick={() => dismissToast(toast.id)}
         aria-label="Schließen"
-        className="grid h-6 w-6 shrink-0 place-items-center rounded-md opacity-60 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40"
+        className="grid h-6 w-6 shrink-0 place-items-center rounded-sm text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40 dark:hover:bg-navy-700"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5" />
       </button>
     </div>
   );

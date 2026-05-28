@@ -172,36 +172,44 @@ export default function Settings() {
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-8 p-4 pt-4 sm:pt-28 pb-20">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground dark:text-white">
+    <div className="mx-auto w-full max-w-3xl space-y-6 p-4 pt-4 sm:pt-10 pb-20">
+      <div className="space-y-3">
+        <span className="label-tag">
+          <span className="tabular-nums">§ 04</span>
+          <span>Konfiguration</span>
+        </span>
+        <h1 className="font-display text-4xl uppercase leading-none tracking-wide text-base-content dark:text-white">
           Einstellungen
         </h1>
-        <p className="text-secondary dark:text-navy-300">
-          Verwalte deine Kontoeinstellungen und Lagerorte.
+        <p className="text-base-content/65 dark:text-navy-300">
+          Konto, Service-Intervalle, Lagerorte.
         </p>
       </div>
 
       {actionData && "error" in actionData && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
-          {actionData.error}
+        <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
+          <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] pt-0.5 opacity-70">ERR</span>
+          <span>{actionData.error}</span>
         </div>
       )}
 
       {actionData && "success" in actionData && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-green-600 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">
-          {(actionData as any).success}
+        <div className="relative flex items-start gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3 text-sm text-success dark:border-success/40 dark:bg-success/10">
+          <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-success" />
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] pt-0.5 opacity-70">OK</span>
+          <span>{(actionData as any).success}</span>
         </div>
       )}
 
       {/* Password Change Section */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-center gap-3 mb-6">
           <div className="rounded-lg bg-orange-100 p-2 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
             <Lock className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
               Passwort ändern
             </h2>
             <p className="text-sm text-secondary dark:text-navy-300">
@@ -214,7 +222,7 @@ export default function Settings() {
           <div className="space-y-1.5">
             <label
               htmlFor="currentPassword"
-              className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+              className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
             >
               Aktuelles Passwort
             </label>
@@ -223,14 +231,14 @@ export default function Settings() {
               name="currentPassword"
               id="currentPassword"
               required
-              className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+              className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label
                 htmlFor="newPassword"
-                className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+                className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
               >
                 Neues Passwort
               </label>
@@ -239,13 +247,13 @@ export default function Settings() {
                 name="newPassword"
                 id="newPassword"
                 required
-                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
               />
             </div>
             <div className="space-y-1.5">
               <label
                 htmlFor="confirmPassword"
-                className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+                className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
               >
                 Passwort bestätigen
               </label>
@@ -254,7 +262,7 @@ export default function Settings() {
                 name="confirmPassword"
                 id="confirmPassword"
                 required
-                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
               />
             </div>
           </div>
@@ -267,14 +275,14 @@ export default function Settings() {
       </section>
 
       {/* Passkeys Section */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
               <Fingerprint className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-foreground dark:text-white">Passkeys</h2>
+              <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">Passkeys</h2>
               <p className="text-sm text-secondary dark:text-navy-300">
                 Logge dich schneller und sicherer mit Biometrie ein.
               </p>
@@ -336,13 +344,13 @@ export default function Settings() {
       </section>
 
       {/* Storage Locations Section */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-center gap-3 mb-6">
           <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
             <MapPin className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
               Lagerorte verwalten
             </h2>
             <p className="text-sm text-secondary dark:text-navy-300">
@@ -359,7 +367,7 @@ export default function Settings() {
             name="name"
             placeholder="Neuer Lagerort..."
             required
-            className="block w-full flex-[3] rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+            className="block w-full flex-[3] rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
           />
           <input
             type="text"
@@ -470,13 +478,13 @@ export default function Settings() {
       </section>
 
       {/* Maintenance Intervals Section */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-center gap-3 mb-6">
           <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
             <Activity className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">Service-Intervalle</h2>
+            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">Service-Intervalle</h2>
             <p className="text-sm text-secondary dark:text-navy-300">
               Konfiguriere die Zeitabstände (in Jahren) für deine Service-Erinnerungen.
             </p>
@@ -501,7 +509,7 @@ export default function Settings() {
                     min="1"
                     max="20"
                     required
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -514,7 +522,7 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -529,7 +537,7 @@ export default function Settings() {
                   min="1"
                   max="20"
                   required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                 />
               </div>
 
@@ -543,7 +551,7 @@ export default function Settings() {
                   min="1"
                   max="20"
                   required
-                  className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                 />
               </div>
             </div>
@@ -562,7 +570,7 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -575,7 +583,7 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -591,7 +599,7 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -604,7 +612,7 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -620,7 +628,7 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -633,7 +641,7 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -649,7 +657,7 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -662,7 +670,7 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -678,7 +686,7 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -691,7 +699,7 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -707,7 +715,7 @@ export default function Settings() {
                     min="1"
                     max="10"
                     required
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -720,7 +728,7 @@ export default function Settings() {
                     min="1000"
                     step="1000"
                     placeholder="Optional"
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -741,7 +749,7 @@ export default function Settings() {
                       min="1"
                       max="10"
                       required
-                      className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -754,7 +762,7 @@ export default function Settings() {
                       min="500"
                       step="500"
                       placeholder="Optional"
-                      className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                     />
                   </div>
                 </div>

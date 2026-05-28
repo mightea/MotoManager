@@ -1,6 +1,7 @@
 import { ChevronRight, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Plus, Fuel, Route, Navigation2 } from "lucide-react";
 import type { Motorcycle, PreviousOwner } from "~/types/db";
 import { StatisticEntry } from "./statistic-entry";
+import { Card, CardAction, CardHeading } from "./card";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 
 interface MotorcycleInfoCardProps {
@@ -66,45 +67,46 @@ export function MotorcycleInfoCard({
 
   if (variant === "summary") {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
-          <h2 className="text-sm font-semibold text-foreground dark:text-white">
-            Fahrzeugdaten
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onShowDetails}
-              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
-            >
-              Details
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={onEdit}
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-secondary transition-all hover:border-primary hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-600 dark:text-navy-200 dark:hover:border-primary-light dark:hover:text-primary-light"
-            >
-              Bearbeiten
-            </button>
-          </div>
-        </div>
+      <Card>
+        <CardHeading
+          code="02"
+          title="Fahrzeugdaten"
+          trailing={
+            <div className="flex items-center gap-1.5">
+              <CardAction onClick={onShowDetails} aria-label="Vollständige Fahrzeugdaten anzeigen">
+                Details
+                <ChevronRight className="h-3 w-3" aria-hidden="true" />
+              </CardAction>
+              <button
+                type="button"
+                onClick={onEdit}
+                className="inline-flex items-center rounded-sm border border-base-content/15 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-200"
+              >
+                Bearbeiten
+              </button>
+            </div>
+          }
+        />
 
-        {summaryItems.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-secondary dark:text-navy-300">
-            {summaryItems.map((item, index) => (
-              <div key={item} className="flex items-center gap-x-2">
-                {index > 0 && <span className="text-gray-300 dark:text-navy-600">•</span>}
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs italic text-secondary dark:text-navy-400">
-            Noch keine Statistiken — füge Wartungs- oder Tank-Einträge hinzu, um Daten zu sehen.
-          </p>
-        )}
-      </div>
+        <div className="px-4 py-4">
+          {summaryItems.length > 0 ? (
+            <ul className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/70 dark:text-navy-300">
+              {summaryItems.map((item, index) => (
+                <li key={item} className="flex items-center gap-3">
+                  {index > 0 && (
+                    <span aria-hidden="true" className="h-3 w-px bg-base-content/20" />
+                  )}
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/55">
+              Keine Daten · Wartungs- oder Tank-Einträge hinzufügen
+            </p>
+          )}
+        </div>
+      </Card>
     );
   }
 
@@ -151,9 +153,10 @@ export function MotorcycleInfoCard({
 
           {/* Fuel Consumption Group */}
           {(avgFuelConsumption || avgTripDistance || motorcycle.fuelTankSize) && (
-            <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-secondary mb-3 px-1">
-                Treibstoff & Verbrauch
+            <div className="border-t border-base-300 pt-4 dark:border-navy-700">
+              <h3 className="label-tag mb-3">
+                <span className="tabular-nums">02·1</span>
+                <span>Treibstoff &amp; Verbrauch</span>
               </h3>
               <StatisticEntry
                 icon={Fuel}
@@ -179,9 +182,10 @@ export function MotorcycleInfoCard({
           )}
 
           {/* Purchase & Usage Group */}
-          <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-secondary mb-3 px-1">
-              Kauf & Nutzung
+          <div className="border-t border-base-300 pt-4 dark:border-navy-700">
+            <h3 className="label-tag mb-3">
+              <span className="tabular-nums">02·2</span>
+              <span>Kauf &amp; Nutzung</span>
             </h3>
             <StatisticEntry
               icon={Calendar}
@@ -227,48 +231,46 @@ export function MotorcycleInfoCard({
           </div>
 
           {/* Previous Owners Group */}
-          <div className="pt-4 border-t border-gray-100 dark:border-navy-700 space-y-2">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-secondary">
-                Vorbesitzer
+          <div className="border-t border-base-300 pt-4 dark:border-navy-700">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="label-tag">
+                <span className="tabular-nums">02·3</span>
+                <span>Vorbesitzer</span>
               </h3>
-              <button
-                type="button"
-                onClick={onAddPreviousOwner}
-                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-dark transition-colors"
-              >
-                <Plus className="h-3 w-3" />
+              <CardAction onClick={onAddPreviousOwner} aria-label="Vorbesitzer hinzufügen">
+                <Plus className="h-3 w-3" aria-hidden="true" />
                 Hinzufügen
-              </button>
+              </CardAction>
             </div>
             {previousOwnersList.length > 0 ? (
-              <div className="space-y-3">
+              <ul className="space-y-2">
                 {previousOwnersList.map((owner) => (
-                  <div
+                  <li
                     key={owner.id}
-                    className="group relative flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:border-primary/20 hover:bg-white dark:border-navy-700 dark:bg-navy-900/50 dark:hover:border-primary/30 dark:hover:bg-navy-900"
+                    className="group relative flex items-center justify-between gap-3 rounded-sm border border-base-300 bg-base-100 px-3 py-2.5 transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-900/50"
                   >
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-foreground dark:text-white">
+                    <div className="min-w-0">
+                      <p className="font-display text-sm uppercase tracking-wide text-base-content dark:text-white truncate">
                         {owner.name} {owner.surname}
                       </p>
-                      <p className="text-xs text-secondary dark:text-navy-300">
-                        Kaufdatum: {owner.purchaseDate}
+                      <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-base-content/55">
+                        Kauf · {owner.purchaseDate}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => onEditPreviousOwner(owner)}
-                      className="rounded-md p-1.5 text-secondary opacity-0 transition-all hover:bg-gray-100 hover:text-primary group-hover:opacity-100 dark:text-navy-400 dark:hover:bg-navy-700"
+                      aria-label={`${owner.name} ${owner.surname} bearbeiten`}
+                      className="rounded-sm p-1.5 text-base-content/50 transition-all hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
                     >
                       <Info className="h-4 w-4" />
                     </button>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
-              <p className="px-1 text-xs text-secondary italic">
-                Keine Vorbesitzer eingetragen.
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-base-content/55">
+                Keine Vorbesitzer · 1. Hand
               </p>
             )}
           </div>

@@ -71,7 +71,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
         <div className="space-y-1.5">
           <label
             htmlFor="date"
-            className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+            className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
           >
             Datum
           </label>
@@ -81,13 +81,13 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
             name="date"
             id="date"
             defaultValue={initialIssue?.date ?? today}
-            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]"
+            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]"
           />
         </div>
         <div className="space-y-1.5">
           <label
             htmlFor="odo"
-            className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+            className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
           >
             Kilometerstand
           </label>
@@ -97,7 +97,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
             id="odo"
             required
             defaultValue={initialIssue?.odo ?? defaultOdo ?? ""}
-            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
           />
         </div>
       </div>
@@ -105,7 +105,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="status"
-          className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+          className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
         >
           Status
         </label>
@@ -113,7 +113,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
           id="status"
           name="status"
           defaultValue={initialIssue?.status ?? "new"}
-          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         >
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -126,7 +126,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="priority"
-          className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+          className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
         >
           Priorität
         </label>
@@ -134,7 +134,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
           id="priority"
           name="priority"
           defaultValue={initialIssue?.priority ?? "medium"}
-          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         >
           {priorityOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -147,7 +147,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="description"
-          className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300"
+          className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
         >
           Beschreibung
         </label>
@@ -157,7 +157,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
           rows={4}
           placeholder="Beschreibe den Mangel..."
           defaultValue={initialIssue?.description ?? ""}
-          className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
           required
         />
       </div>

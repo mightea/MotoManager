@@ -1,4 +1,4 @@
-import { AlertTriangle, CircleAlert, Info } from "lucide-react";
+import { AlertTriangle, CircleAlert, Info, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import type { Issue } from "~/types/db";
 
@@ -12,28 +12,34 @@ type PriorityKey = "high" | "medium" | "low";
 
 const PRIORITY_CONFIG: Record<
   PriorityKey,
-  { Icon: typeof CircleAlert; iconClass: string; badgeClass: string; label: string }
+  { Icon: typeof CircleAlert; tone: string; railTone: string; label: string }
 > = {
   high: {
     Icon: CircleAlert,
-    iconClass: "text-red-500",
-    badgeClass: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    tone: "text-error",
+    railTone: "bg-error",
     label: "Hoch",
   },
   medium: {
     Icon: AlertTriangle,
-    iconClass: "text-orange-500",
-    badgeClass: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+    tone: "text-[var(--color-workshop)]",
+    railTone: "bg-[var(--color-workshop)]",
     label: "Mittel",
   },
   low: {
     Icon: Info,
-    iconClass: "text-blue-500",
-    badgeClass: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+    tone: "text-info",
+    railTone: "bg-info/70",
     label: "Niedrig",
   },
 };
 
+/**
+ * IssueItem — a service-manual defect line.
+ *
+ *  █ [icon]  Description, truncated at one line ........... HOCH    ›
+ *           [Datum · 12'500 km]
+ */
 export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
   const cfg = PRIORITY_CONFIG[issue.priority as PriorityKey] ?? PRIORITY_CONFIG.low;
   const PriorityIcon = cfg.Icon;
@@ -42,29 +48,33 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
     <button
       type="button"
       onClick={() => onSelect?.(issue)}
-      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-base-200/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700/50"
       aria-label="Mangel bearbeiten"
+      className="group relative flex w-full items-center gap-3 rounded-sm border border-base-200 bg-base-100 px-3 py-2.5 text-left transition-colors hover:border-base-content/20 hover:bg-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:hover:bg-navy-700/40"
     >
-      <PriorityIcon className={clsx("h-5 w-5 shrink-0", cfg.iconClass)} aria-hidden="true" />
+      <span aria-hidden="true" className={clsx("absolute inset-y-2 left-0 w-[3px] rounded-r-sm", cfg.railTone)} />
+      <PriorityIcon className={clsx("h-4 w-4 shrink-0 ml-1", cfg.tone)} aria-hidden="true" />
+
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium leading-tight text-foreground dark:text-gray-200">
+        <p className="truncate text-sm font-medium leading-tight text-base-content dark:text-gray-100">
           {issue.description || "Beschreibung fehlt"}
         </p>
         <p
           suppressHydrationWarning
-          className="mt-0.5 text-[11px] leading-snug text-secondary dark:text-navy-400"
+          className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-base-content/55 dark:text-navy-400"
         >
           {issue.date ? dateFormatter.format(new Date(issue.date)) : "Datum unbekannt"}
         </p>
       </div>
+
       <span
         className={clsx(
-          "rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-          cfg.badgeClass,
+          "shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.18em]",
+          cfg.tone,
         )}
       >
         {cfg.label}
       </span>
+      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-base-content/30 transition-transform group-hover:translate-x-0.5 dark:text-navy-500" aria-hidden="true" />
     </button>
   );
 }

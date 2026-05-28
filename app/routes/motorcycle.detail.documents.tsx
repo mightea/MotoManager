@@ -14,6 +14,7 @@ import { DocumentCard } from "~/components/document-card";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { FileText } from "lucide-react";
+import { EmptyState } from "~/components/empty-state";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
@@ -181,16 +182,22 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
       />
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-foreground dark:text-white">Dokumente</h2>
-            <p className="text-sm text-secondary dark:text-navy-400">
-              Zugeordnete Dokumente für {motorcycle.make} {motorcycle.model}
+            <span className="label-tag mb-2">
+              <span className="tabular-nums">§ A</span>
+              <span>Dokumentenarchiv</span>
+            </span>
+            <h2 className="font-display text-3xl uppercase tracking-wide leading-none text-base-content dark:text-white">
+              Dokumente
+            </h2>
+            <p className="mt-2 text-sm text-base-content/65 dark:text-navy-400">
+              Zugeordnete Dokumente für {motorcycle.make} {motorcycle.model}.
             </p>
           </div>
           <Link
             to="/documents"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+            className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
           >
             Alle Dokumente
           </Link>
@@ -198,16 +205,13 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           {documentsToDisplay.length === 0 ? (
-            <div className="col-span-full flex min-h-[300px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-12 text-center dark:border-navy-700 dark:bg-navy-800/50">
-              <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">
-                <FileText className="h-8 w-8 text-gray-400 dark:text-navy-300" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground dark:text-white">
-                Keine Dokumente gefunden
-              </h3>
-              <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">
-                Es sind momentan keine Dokumente verfügbar.
-              </p>
+            <div className="col-span-full">
+              <EmptyState
+                icon={FileText}
+                title="Keine Dokumente"
+                description="Es sind momentan keine Dokumente verfügbar."
+                code="A · 00"
+              />
             </div>
           ) : (
             documentsToDisplay.map((doc: DocumentWithAssignment) => (

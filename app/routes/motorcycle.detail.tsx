@@ -7,7 +7,6 @@ import {
   useSubmit,
   useLocation,
   useParams,
-  Link,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import { 
@@ -37,6 +36,7 @@ import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
+import { Card, CardAction, CardHeading } from "~/components/card";
 import { fetchFromBackend } from "~/utils/backend";
 import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
@@ -725,73 +725,91 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           />
 
           {/* Maintenance History Card */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
-              <h2 className="text-sm font-semibold text-foreground dark:text-white">Historie</h2>
-              <button
-                onClick={() => {
+          <Card>
+            <CardHeading
+              code="05"
+              title="Historie"
+              meta={maintenanceHistory.length > 0 ? `${maintenanceHistory.length} ${maintenanceHistory.length === 1 ? "Eintrag" : "Einträge"}` : undefined}
+              trailing={
+                <CardAction
+                  onClick={() => {
+                    setSelectedMaintenance(null);
+                    setMaintenanceDialogOpen(true);
+                  }}
+                  aria-label="Neuen Eintrag hinzufügen"
+                >
+                  <Plus className="h-3 w-3" aria-hidden="true" />
+                  Neuer Eintrag
+                </CardAction>
+              }
+            />
+            <div className="px-4 py-4">
+              <MaintenanceList
+                records={maintenanceHistory}
+                currencyCode={motorcycle.currencyCode}
+                userLocations={userLocations}
+                onEdit={(record) => {
+                  setSelectedMaintenance(record);
+                  setMaintenanceDialogOpen(true);
+                }}
+                onAdd={() => {
                   setSelectedMaintenance(null);
                   setMaintenanceDialogOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-700 dark:text-primary-light dark:hover:bg-navy-600"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Eintrag
-              </button>
+              />
             </div>
-            <MaintenanceList
-              records={maintenanceHistory}
-              currencyCode={motorcycle.currencyCode}
-              userLocations={userLocations}
-              onEdit={(record) => {
-                setSelectedMaintenance(record);
-                setMaintenanceDialogOpen(true);
-              }}
-              onAdd={() => {
-                setSelectedMaintenance(null);
-                setMaintenanceDialogOpen(true);
-              }}
-            />
-          </div>
+          </Card>
 
           {/* Shared Expenses Card */}
           {motorcycleExpenses.length > 0 && (
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-navy-700">
-                <h2 className="text-sm font-semibold text-foreground dark:text-white">Gemeinsame Ausgaben</h2>
-                <Link
-                  to="/fleet-expenses"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-semibold text-secondary transition-all hover:bg-gray-200 active:scale-[0.98] dark:bg-navy-700 dark:text-navy-300 dark:hover:bg-navy-600"
-                >
-                  Verwalten
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {motorcycleExpenses.map(expense => {
-                  const factor = expense.motorcycleIds?.length || 1;
-                  const proratedAmount = expense.amount / factor;
-                  return (
-                    <div key={expense.id} className="flex items-center justify-between gap-4 rounded-lg border border-gray-50 bg-gray-50/30 p-3 dark:border-navy-700/50 dark:bg-navy-900/30">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground dark:text-white">{expense.category}</span>
-                          <span className="text-[10px] text-secondary/50 dark:text-navy-500">{new Date(expense.date).toLocaleDateString("de-CH")}</span>
-                        </div>
-                        {expense.description && <p className="text-[10px] text-secondary dark:text-navy-400 mt-0.5 line-clamp-1">{expense.description}</p>}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-bold text-foreground dark:text-white">{formatCurrency(proratedAmount, expense.currency)}</div>
-                        {factor > 1 && (
-                          <div className="text-[10px] text-secondary/50 dark:text-navy-500">
-                            (1/{factor} von {formatCurrency(expense.amount, expense.currency)})
+            <Card>
+              <CardHeading
+                code="06"
+                title="Gemeinsame Ausgaben"
+                meta={`${motorcycleExpenses.length} ${motorcycleExpenses.length === 1 ? "Eintrag" : "Einträge"}`}
+                trailing={<CardAction href="/fleet-expenses">Verwalten</CardAction>}
+              />
+              <div className="px-4 py-4">
+                <ul className="space-y-2">
+                  {motorcycleExpenses.map(expense => {
+                    const factor = expense.motorcycleIds?.length || 1;
+                    const proratedAmount = expense.amount / factor;
+                    return (
+                      <li
+                        key={expense.id}
+                        className="flex items-center justify-between gap-4 rounded-sm border border-base-200 bg-base-100 px-3 py-2.5 dark:border-navy-700 dark:bg-navy-900/40"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-display text-sm uppercase tracking-wide text-base-content dark:text-white">
+                              {expense.category}
+                            </span>
+                            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-base-content/45">
+                              {new Date(expense.date).toLocaleDateString("de-CH")}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                          {expense.description && (
+                            <p className="mt-0.5 line-clamp-1 text-xs text-base-content/65 dark:text-navy-400">
+                              {expense.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="font-numeric text-sm font-semibold text-base-content dark:text-white">
+                            {formatCurrency(proratedAmount, expense.currency)}
+                          </div>
+                          {factor > 1 && (
+                            <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-base-content/45">
+                              1/{factor} von {formatCurrency(expense.amount, expense.currency)}
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
-            </div>
+            </Card>
           )}
         </div>
       </div>

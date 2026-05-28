@@ -81,12 +81,12 @@ export function ImportTorqueSpecsDialog({
       <div className="space-y-4">
         {/* Step 1: Select Motorcycle */}
         <div className="space-y-1.5">
-          <label htmlFor="source-motorcycle" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+          <label htmlFor="source-motorcycle" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
             Quelle wählen
           </label>
           <select
             id="source-motorcycle"
-            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
             value={selectedMotorcycleId ?? ""}
             onChange={(e) => {
               setSelectedMotorcycleId(Number(e.target.value) || null);

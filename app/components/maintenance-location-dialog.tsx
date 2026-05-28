@@ -57,7 +57,7 @@ export function MaintenanceLocationDialog({ isOpen, onClose, onSave }: Maintenan
         >
             <div className="space-y-6">
                 <div className="space-y-1.5">
-                    <label htmlFor="modalLocationName" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                    <label htmlFor="modalLocationName" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
                         Name des Standorts
                     </label>
                     <input
@@ -66,12 +66,12 @@ export function MaintenanceLocationDialog({ isOpen, onClose, onSave }: Maintenan
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="z.B. Garage, Shell, STVA"
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                     />
                 </div>
 
                 <div className="space-y-1.5">
-                    <span className="block text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Koordinaten (optional)</span>
+                    <span className="block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Koordinaten (optional)</span>
                     <div className="flex flex-wrap gap-2">
                         <div className="flex-1 min-w-[200px] rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm text-secondary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-400">
                             {lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : "Kein genauer Standort erfasst"}

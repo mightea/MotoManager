@@ -197,7 +197,7 @@ export default function AdminSettings() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-foreground dark:text-white">
+          <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">
             Admin-Bereich
           </h1>
           <p className="text-secondary dark:text-navy-300">
@@ -207,7 +207,7 @@ export default function AdminSettings() {
       </div>
 
       {/* Server Stats Link */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-primary/50 hover:shadow-md dark:border-navy-700 dark:bg-navy-800 dark:hover:border-primary/50">
+      <div className="rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
         <Link to="/settings/server-stats" className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-purple-100 p-2 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
@@ -248,13 +248,13 @@ export default function AdminSettings() {
       )}
 
       {/* User Management */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
               <Shield className="h-6 w-6" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
               Benutzerverwaltung
             </h2>
           </div>
@@ -331,13 +331,13 @@ export default function AdminSettings() {
       />
 
       {/* Currency Management */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
               <Coins className="h-6 w-6" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground dark:text-white">
+            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
               Währungen
             </h2>
           </div>
@@ -480,12 +480,12 @@ export default function AdminSettings() {
       </section>
 
       {/* System Maintenance */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="mb-6 flex items-center gap-3">
           <div className="rounded-lg bg-orange-100 p-2 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
             <Shield className="h-6 w-6" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground dark:text-white">
+          <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
             Systemwartung
           </h2>
         </div>

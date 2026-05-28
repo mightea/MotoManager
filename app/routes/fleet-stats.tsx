@@ -62,7 +62,7 @@ function ChartSection({
         <h2 className="text-lg font-bold text-foreground dark:text-white">{title}</h2>
       </div>
 
-      <div className="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+      <div className="relative relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         {/* Grid Lines */}
         <div className="absolute inset-x-6 bottom-14 top-6 flex flex-col justify-between pointer-events-none">
           {[0, 1, 2, 3].map((i) => (
@@ -115,7 +115,7 @@ function YearlyDetails({ yearStats }: { yearStats: any }) {
         <h4 className="text-xs font-bold uppercase tracking-wider text-secondary dark:text-navy-500">Fahrzeuge in {yearStats.year}</h4>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {yearStats.motorcycles.map((m: any) => (
-            <div key={m.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+            <div key={m.id} className="relative rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] dark:border-navy-700 dark:bg-navy-800">
               <div className="font-bold text-foreground dark:text-white mb-2">{m.make} {m.model}</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
@@ -170,33 +170,38 @@ export default function FleetStatsPage() {
       <div className="flex items-center gap-4">
         <Link
           to="/"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-secondary shadow-sm transition-all hover:border-primary hover:text-primary active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+          aria-label="Zurück zur Übersicht"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/70 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-all hover:border-base-content/35 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground dark:text-white">Statistiken</h1>
-          <p className="text-secondary dark:text-navy-400">Entwicklung deiner Garage über die Jahre.</p>
+          <span className="label-tag mb-1">
+            <span className="tabular-nums">§ 05</span>
+            <span>Telemetrie · Multi-Jahr</span>
+          </span>
+          <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">Statistiken</h1>
+          <p className="mt-1 text-base-content/65 dark:text-navy-400">Entwicklung deiner Garage über die Jahre.</p>
         </div>
       </div>
 
       {/* Overall Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
           <div className="flex items-center gap-3 text-primary dark:text-primary-light mb-2">
             <TrendingUp className="h-5 w-5" />
-            <span className="text-xs font-bold uppercase tracking-wider">Gesamtdistanz</span>
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em]">Gesamtdistanz</span>
           </div>
-          <div className="text-3xl font-bold text-foreground dark:text-white tabular-nums">
+          <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
             {formatNumber(stats.overall.totalDistance)} km
           </div>
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
           <div className="flex items-center gap-3 text-emerald-500 mb-2">
             <Wallet className="h-5 w-5" />
-            <span className="text-xs font-bold uppercase tracking-wider">Gesamtkosten</span>
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em]">Gesamtkosten</span>
           </div>
-          <div className="text-3xl font-bold text-foreground dark:text-white tabular-nums">
+          <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
             {formatCurrency(stats.overall.totalCost)}
           </div>
           {stats.yearly[0]?.motorcycleCount > 0 && (
@@ -205,12 +210,12 @@ export default function FleetStatsPage() {
             </div>
           )}
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
           <div className="flex items-center gap-3 text-amber-500 mb-2">
             <Bike className="h-5 w-5" />
-            <span className="text-xs font-bold uppercase tracking-wider">Aktueller Fuhrpark</span>
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em]">Aktueller Fuhrpark</span>
           </div>
-          <div className="text-3xl font-bold text-foreground dark:text-white tabular-nums">
+          <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
             {stats.yearly[0]?.motorcycleCount || 0} Bikes
           </div>
         </div>

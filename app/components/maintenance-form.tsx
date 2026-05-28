@@ -133,7 +133,7 @@ export function MaintenanceForm({
     const LocationFields = () => (
         <>
             <div className="space-y-1.5 sm:col-span-2">
-                <label htmlFor="locationName" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                <label htmlFor="locationName" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
                     {type === "service" ? "Werkstatt / Ort" : "Standort"}
                 </label>
                 <div className="flex gap-2">
@@ -151,7 +151,7 @@ export function MaintenanceForm({
                                     setLng(loc.longitude);
                                 }
                             }}
-                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         >
                             <option value="" disabled>{type === "service" ? "Wähle eine Werkstatt..." : "Wähle einen Standort..."}</option>
                             {localMaintenanceLocations.map(loc => (
@@ -182,12 +182,12 @@ export function MaintenanceForm({
              
                          {/* Type Selection */}
                          <div className="space-y-1.5">
-                             <label htmlFor="type" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Typ</label>
+                             <label htmlFor="type" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Typ</label>
                              <select
                                  name="type"
                                  id="type"                    value={type}
                     onChange={(e) => setType(e.target.value as MaintenanceType)}
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 >
                     {maintenanceTypes.map((t) => (
                         <option key={t.value} value={t.value}>
@@ -200,7 +200,7 @@ export function MaintenanceForm({
             <div className="grid gap-5 sm:grid-cols-2">
                 {/* Common Fields */}
                 <div className="space-y-1.5">
-                    <label htmlFor="date" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Datum</label>
+                    <label htmlFor="date" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Datum</label>
                     <input
                         suppressHydrationWarning
                         type="date"
@@ -208,24 +208,24 @@ export function MaintenanceForm({
                         id="date"
                         required
                         defaultValue={initialData?.date || today}
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]"
+                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]"
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label htmlFor="odo" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kilometerstand</label>
+                    <label htmlFor="odo" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Kilometerstand</label>
                     <input
                         type="number"
                         name="odo"
                         id="odo"
                         required
                         defaultValue={initialData?.odo ?? defaultOdo ?? ""}
-                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                     />
                 </div>
 
                 {type !== "location" && type !== "fuel" && (
                     <div className="space-y-1.5">
-                        <label htmlFor="cost" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kosten</label>
+                        <label htmlFor="cost" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Kosten</label>
                         <div className="flex rounded-xl shadow-sm">
                             <input
                                 type="number"
@@ -253,7 +253,7 @@ export function MaintenanceForm({
 
                 {type === "fuel" && (
                     <div className="space-y-1.5">
-                        <label htmlFor="cost" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Gesamtkosten</label>
+                        <label htmlFor="cost" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Gesamtkosten</label>
                         <div className="flex rounded-xl shadow-sm">
                             <input
                                 type="number"
@@ -284,25 +284,25 @@ export function MaintenanceForm({
                 {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="brand" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Marke / Hersteller</label>
+                            <label htmlFor="brand" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Marke / Hersteller</label>
                             <input
                                 type="text"
                                 name="brand"
                                 id="brand"
                                 placeholder={type === "tire" ? "z.B. Michelin" : "Hersteller..."}
                                 defaultValue={initialData?.brand || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="model" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Modell / Typ</label>
+                            <label htmlFor="model" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Modell / Typ</label>
                             <input
                                 type="text"
                                 name="model"
                                 id="model"
                                 placeholder={type === "tire" ? "z.B. Road 6" : "Modellbezeichnung..."}
                                 defaultValue={initialData?.model || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
                     </>
@@ -312,7 +312,7 @@ export function MaintenanceForm({
                     <>
                         <LocationFields />
                         <div className="space-y-3 sm:col-span-2">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300 block">
+                            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400 block">
                                 Ausgeführte Arbeiten (werden als separate Einträge erfasst)
                             </span>
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -364,7 +364,7 @@ export function MaintenanceForm({
                 {/* Location Specifics */}
                 {type === "location" && (
                     <div className="space-y-1.5 sm:col-span-2">
-                        <label htmlFor="locationId" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">
+                        <label htmlFor="locationId" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
                             Standort
                         </label>
                         <div className="space-y-2">
@@ -374,7 +374,7 @@ export function MaintenanceForm({
                                         name="locationId"
                                         id="locationId"
                                         defaultValue={initialData?.locationId || ""}
-                                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                                     >
                                         <option value="" disabled>Wähle einen Standort...</option>
                                         {userLocations.map(loc => (
@@ -396,7 +396,7 @@ export function MaintenanceForm({
                                         name="newLocationName"
                                         id="newLocationName"
                                         placeholder="Neuer Standort Name (z.B. Garage)"
-                                        className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                                     />
                                     {(userLocations && userLocations.length > 0) && (
                                         <button
@@ -417,12 +417,12 @@ export function MaintenanceForm({
                 {type === "tire" && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="tirePosition" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Position</label>
+                            <label htmlFor="tirePosition" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Position</label>
                             <select
                                 name="tirePosition"
                                 id="tirePosition"
                                 defaultValue={initialData?.tirePosition || "rear"}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             >
                                 <option value="front">Vorne</option>
                                 <option value="rear">Hinten</option>
@@ -430,25 +430,25 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="tireSize" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Grösse</label>
+                            <label htmlFor="tireSize" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Grösse</label>
                             <input
                                 type="text"
                                 name="tireSize"
                                 id="tireSize"
                                 placeholder="z.B. 180/55 ZR 17"
                                 defaultValue={initialData?.tireSize || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="dotCode" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">DOT Code</label>
+                            <label htmlFor="dotCode" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">DOT Code</label>
                             <input
                                 type="text"
                                 name="dotCode"
                                 id="dotCode"
                                 placeholder="z.B. 4223"
                                 defaultValue={initialData?.dotCode || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
                     </>
@@ -458,12 +458,12 @@ export function MaintenanceForm({
                 {type === "fluid" && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="fluidType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Art</label>
+                            <label htmlFor="fluidType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Art</label>
                             <select
                                 name="fluidType"
                                 id="fluidType"
                                 defaultValue={initialData?.fluidType || "engineoil"}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             >
                                 <option value="engineoil">Motoröl</option>
                                 <option value="gearboxoil">Getriebeöl</option>
@@ -474,12 +474,12 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="oilType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Öl-Typ</label>
+                            <label htmlFor="oilType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Öl-Typ</label>
                             <select
                                 name="oilType"
                                 id="oilType"
                                 defaultValue={initialData?.oilType || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             >
                                 <option value="">Keine Angabe</option>
                                 <option value="synthetic">Synthetisch</option>
@@ -488,14 +488,14 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="viscosity" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Viskosität</label>
+                            <label htmlFor="viscosity" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Viskosität</label>
                             <input
                                 type="text"
                                 name="viscosity"
                                 id="viscosity"
                                 placeholder="z.B. 10W-40"
                                 defaultValue={initialData?.viscosity || ""}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
                     </>
@@ -504,12 +504,12 @@ export function MaintenanceForm({
                 {/* Battery Specifics */}
                 {type === "battery" && (
                     <div className="space-y-1.5">
-                        <label htmlFor="batteryType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Batterietyp</label>
+                        <label htmlFor="batteryType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Batterietyp</label>
                         <select
                             name="batteryType"
                             id="batteryType"
                             defaultValue={initialData?.batteryType || "lead-acid"}
-                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         >
                             <option value="lead-acid">Blei-Säure</option>
                             <option value="gel">Gel</option>
@@ -523,14 +523,14 @@ export function MaintenanceForm({
                 {/* Inspection Specifics */}
                 {type === "inspection" && (
                     <div className="space-y-1.5 sm:col-span-2">
-                        <label htmlFor="inspectionLocation" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Prüfstelle</label>
+                        <label htmlFor="inspectionLocation" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Prüfstelle</label>
                         <input
                             type="text"
                             name="inspectionLocation"
                             id="inspectionLocation"
                             placeholder="z.B. STVA Zürich"
                             defaultValue={initialData?.inspectionLocation || ""}
-                            className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         />
                     </div>
                 )}
@@ -539,12 +539,12 @@ export function MaintenanceForm({
                 {type === "fuel" && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="fuelType" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Kraftstoffart</label>
+                            <label htmlFor="fuelType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Kraftstoffart</label>
                             <select
                                 name="fuelType"
                                 id="fuelType"
                                 defaultValue={initialData?.fuelType || "95E10"}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             >
                                 <option value="95E10">Bleifrei 95</option>
                                 <option value="98E5">Super Plus</option>
@@ -552,7 +552,7 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="fuelAmount" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Menge (Liter)</label>
+                            <label htmlFor="fuelAmount" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Menge (Liter)</label>
                             <input
                                 type="number"
                                 name="fuelAmount"
@@ -561,11 +561,11 @@ export function MaintenanceForm({
                                 placeholder="0.00"
                                 value={fuelAmount}
                                 onChange={(e) => handleFuelAmountChange(e.target.value)}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="pricePerUnit" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Preis pro Liter</label>
+                            <label htmlFor="pricePerUnit" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Preis pro Liter</label>
                             <input
                                 type="number"
                                 name="pricePerUnit"
@@ -574,7 +574,7 @@ export function MaintenanceForm({
                                 placeholder="0.000"
                                 value={pricePerUnit}
                                 onChange={(e) => handlePricePerUnitChange(e.target.value)}
-                                className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
                         <LocationFields />
@@ -583,14 +583,14 @@ export function MaintenanceForm({
             </div>
 
             <div className="space-y-1.5">
-                <label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-secondary dark:text-navy-300">Beschreibung</label>
+                <label htmlFor="description" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Beschreibung</label>
                 <textarea
                     name="description"
                     id="description"
                     rows={4}
                     placeholder="Optionale Notizen..."
                     defaultValue={initialData?.description || ""}
-                    className="block w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
             </div>
 

@@ -36,7 +36,7 @@ export default function ServerStats() {
                     <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-bold text-foreground dark:text-white">
+                    <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">
                         Server Statistiken
                     </h1>
                     <p className="text-secondary dark:text-navy-300">
@@ -191,7 +191,7 @@ function StatCard({
     };
 
     return (
-        <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-navy-700 dark:bg-navy-800">
+        <div className="group relative flex flex-col justify-between overflow-hidden rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/25 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.2)] dark:border-navy-700 dark:bg-navy-800">
             <div className="flex items-start justify-between">
                 <div className="space-y-4">
                     <div>

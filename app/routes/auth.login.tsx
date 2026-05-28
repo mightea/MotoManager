@@ -1,4 +1,4 @@
-import { Bike, Mail, User, Lock, ArrowRight, Fingerprint } from "lucide-react";
+import { Mail, User, Lock, ArrowRight, Fingerprint } from "lucide-react";
 import {
   Form,
   data,
@@ -234,54 +234,63 @@ export default function Login() {
   }, [isLoginSubmitting, isRegisterSubmitting]);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 p-4 dark:bg-navy-950">
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-primary/5 blur-3xl dark:bg-primary/10" />
-        <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-red-500/5 blur-3xl dark:bg-red-500/10" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] dark:opacity-[0.05]" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-base-200 p-4 dark:bg-navy-950">
+      {/* Atmospheric backdrop — soft Motorsport colored light pools, subtle
+          paper-like carbon weave. The motorsport flag at the top is the
+          structural anchor, drawn from the design system. */}
+      <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl dark:bg-primary/15" />
+        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15" />
+        <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/8 blur-3xl dark:bg-secondary/20" />
+        {/* Subtle paper grain */}
+        <div
+          className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(45deg, transparent 0, transparent 2px, currentColor 2px, currentColor 3px)",
+          }}
+        />
       </div>
 
-      {/* Motorsport accent stripe */}
-      <div className="fixed inset-x-0 top-0 z-50 h-1.5 flex shadow-sm">
-        <div className="flex-1 bg-[#008AC9]" />
-        <div className="flex-1 bg-[#2B115A]" />
-        <div className="flex-1 bg-[#F11A22]" />
-      </div>
+      {/* Motorsport flag — structural top edge */}
+      <div className="motorsport-stripe fixed inset-x-0 top-0 z-50 h-[3px] shadow-sm" aria-hidden="true" />
 
-      <div className="z-10 w-full max-w-[440px] animate-fade-in px-4">
-        <div className="overflow-hidden rounded-3xl border border-white/60 bg-white/70 shadow-2xl ring-1 ring-black/5 backdrop-blur-2xl transition-all dark:border-navy-700/50 dark:bg-navy-900/80 dark:ring-white/5">
-          {/* Header Section */}
-          <div className="bg-gradient-to-b from-white/50 to-transparent p-8 pb-4 dark:from-white/5">
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="relative">
-                <div className="absolute inset-0 animate-pulse rounded-2xl bg-primary/20 blur-xl dark:bg-primary/40" />
-                <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-white text-primary shadow-xl ring-1 ring-black/5 dark:bg-navy-800 dark:text-primary-light dark:ring-white/10">
-                  <Bike className="h-8 w-8" />
-                </span>
-              </div>
-
+      <div className="z-10 w-full max-w-[460px] animate-fade-in px-4">
+        <div className="overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_30px_60px_-30px_rgba(15,23,42,0.35)] dark:border-navy-700 dark:bg-navy-900">
+          {/* Service-manual cover — monogram + service code */}
+          <div className="relative border-b border-base-300 px-8 pb-6 pt-8 dark:border-navy-700">
+            <span aria-hidden="true" className="motorsport-stripe absolute inset-x-0 top-0 h-[3px]" />
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-secondary/60 dark:text-navy-400">
-                  MotoManager
+                <p className="font-mono text-[10px] font-medium uppercase tracking-[0.25em] text-base-content/55">
+                  § 00 / Login · Garage
                 </p>
-                <h1 className="mt-1 text-3xl font-black tracking-tight text-foreground dark:text-gray-50">
-                  Garagenverwaltung
+                <h1 className="mt-2 font-display text-4xl uppercase leading-[0.95] tracking-wide text-base-content dark:text-white">
+                  Moto<span className="text-primary">Manager</span>
                 </h1>
+                <p className="mt-2 font-sans text-sm text-base-content/65 dark:text-navy-300">
+                  Werkstattbuch &amp; Flottenmanagement
+                </p>
+              </div>
+              <div className="relative grid h-14 w-14 shrink-0 place-items-center rounded-sm border border-base-content/15 bg-base-100 dark:bg-navy-800">
+                <span className="font-display text-3xl leading-none">MM</span>
+                <span aria-hidden="true" className="absolute -bottom-px -right-px h-1.5 w-1.5 bg-primary" />
               </div>
             </div>
           </div>
 
-          <div className="p-8 pt-4">
+          <div className="p-8 pt-6">
             {isFirstUser ? (
               <div className="space-y-6">
-                <div className="rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-5 dark:border-primary/40 dark:bg-primary/10">
-                  <h2 className="text-base font-bold text-foreground dark:text-gray-100">
-                    Administrator Setup
+                <div className="relative rounded-sm border border-dashed border-primary/40 bg-primary/5 p-4 dark:border-primary/40 dark:bg-primary/10">
+                  <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-primary">
+                    § A · Administrator-Setup
+                  </p>
+                  <h2 className="mt-1 font-display text-lg uppercase tracking-wide text-base-content dark:text-gray-100">
+                    Erstes Konto
                   </h2>
-                  <p className="mt-1 text-xs leading-relaxed text-secondary dark:text-navy-300">
-                    Willkommen! Erstelle das erste Administrationskonto, um deine Garage zu
-                    verwalten.
+                  <p className="mt-1.5 text-xs leading-relaxed text-base-content/65 dark:text-navy-300">
+                    Erstelle das Administrationskonto, um deine Garage zu eröffnen.
                   </p>
                 </div>
 
@@ -293,7 +302,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="name"
-                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
                       >
                         Vollständiger Name
                       </label>
@@ -305,14 +314,14 @@ export default function Login() {
                           autoComplete="name"
                           placeholder="Max Mustermann"
                           className={clsx(
-                            "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
+                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                             fieldErrors?.name &&
-                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
+                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
                           )}
                         />
                       </div>
                       {fieldErrors?.name && (
-                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
                           {fieldErrors.name}
                         </p>
                       )}
@@ -321,7 +330,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="email"
-                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
                       >
                         E-Mail Adresse
                       </label>
@@ -334,14 +343,14 @@ export default function Login() {
                           autoComplete="email"
                           placeholder="email@beispiel.ch"
                           className={clsx(
-                            "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
+                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                             fieldErrors?.email &&
-                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
+                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
                           )}
                         />
                       </div>
                       {fieldErrors?.email && (
-                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
                           {fieldErrors.email}
                         </p>
                       )}
@@ -350,7 +359,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="username"
-                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
                       >
                         Benutzername
                       </label>
@@ -364,14 +373,14 @@ export default function Login() {
                           autoComplete="username"
                           placeholder="benutzername"
                           className={clsx(
-                            "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
+                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                             fieldErrors?.username &&
-                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
+                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
                           )}
                         />
                       </div>
                       {fieldErrors?.username && (
-                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
                           {fieldErrors.username}
                         </p>
                       )}
@@ -381,7 +390,7 @@ export default function Login() {
                       <div className="group relative">
                         <label
                           htmlFor="new-password"
-                          className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                          className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
                         >
                           Passwort
                         </label>
@@ -393,14 +402,14 @@ export default function Login() {
                             type="password"
                             autoComplete="new-password"
                             className={clsx(
-                              "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
+                              "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                               fieldErrors?.password &&
-                                "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
+                                "border-error focus:border-error focus:ring-error/30 dark:border-error",
                             )}
                           />
                         </div>
                         {fieldErrors?.password && (
-                          <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
                             {fieldErrors.password}
                           </p>
                         )}
@@ -408,7 +417,7 @@ export default function Login() {
                       <div className="group relative">
                         <label
                           htmlFor="confirm-password"
-                          className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                          className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
                         >
                           Bestätigen
                         </label>
@@ -420,14 +429,14 @@ export default function Login() {
                             type="password"
                             autoComplete="new-password"
                             className={clsx(
-                              "block w-full rounded-2xl border-gray-100 bg-white/50 py-3 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
+                              "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                               fieldErrors?.confirmPassword &&
-                                "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
+                                "border-error focus:border-error focus:ring-error/30 dark:border-error",
                             )}
                           />
                         </div>
                         {fieldErrors?.confirmPassword && (
-                          <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                          <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
                             {fieldErrors.confirmPassword}
                           </p>
                         )}
@@ -436,8 +445,9 @@ export default function Login() {
                   </div>
 
                   {registerError && (
-                    <div className="flex animate-fade-in items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-                      <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />
+                    <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
+                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
+                      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-error/70 pt-0.5">ERR</span>
                       {registerError}
                     </div>
                   )}
@@ -446,7 +456,7 @@ export default function Login() {
                     type="submit"
                     onClick={() => trackEvent("register_submit")}
                     disabled={isRegisterSubmitting}
-                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
+                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                   >
                     <span className="relative z-10">
                       {isRegisterSubmitting ? "Wird erstellt..." : "System initialisieren"}
@@ -468,7 +478,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="identifier"
-                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
                       >
                         E-Mail oder Benutzername
                       </label>
@@ -482,14 +492,14 @@ export default function Login() {
                           onChange={(e) => setIdentifier(e.target.value)}
                           placeholder="E-Mail / @username"
                           className={clsx(
-                            "block w-full rounded-2xl border-gray-100 bg-white/50 py-3.5 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
+                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3.5 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                             fieldErrors?.identifier &&
-                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
+                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
                           )}
                         />
                       </div>
                       {fieldErrors?.identifier && (
-                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
                           {fieldErrors.identifier}
                         </p>
                       )}
@@ -498,7 +508,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="password"
-                        className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
                       >
                         Passwort
                       </label>
@@ -511,14 +521,14 @@ export default function Login() {
                           autoComplete="current-password"
                           placeholder="••••••••"
                           className={clsx(
-                            "block w-full rounded-2xl border-gray-100 bg-white/50 py-3.5 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-navy-700 dark:bg-navy-800/50 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:bg-navy-800 dark:focus:ring-primary-light/10",
+                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3.5 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                             fieldErrors?.password &&
-                              "border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/50",
+                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
                           )}
                         />
                       </div>
                       {fieldErrors?.password && (
-                        <p className="mt-1 text-[10px] font-bold text-red-600 dark:text-red-400">
+                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
                           {fieldErrors.password}
                         </p>
                       )}
@@ -526,15 +536,17 @@ export default function Login() {
                   </div>
 
                   {loginError && (
-                    <div className="flex animate-fade-in items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-                      <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />
+                    <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
+                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
+                      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-error/70 pt-0.5">ERR</span>
                       {loginError}
                     </div>
                   )}
 
                   {passkeyError && (
-                    <div className="flex animate-fade-in items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
-                      <div className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-4 py-3 text-sm text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
+                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-[var(--color-workshop)]" />
+                      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-workshop)] pt-0.5">WARN</span>
                       {passkeyError}
                     </div>
                   )}
@@ -544,7 +556,7 @@ export default function Login() {
                       type="submit"
                       onClick={() => trackEvent("login_submit")}
                       disabled={isLoginSubmitting}
-                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-primary px-4 py-4 text-sm font-black text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] disabled:opacity-60 dark:shadow-primary/5"
+                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                     >
                       <span className="relative z-10">
                         {isLoginSubmitting ? "Authentifizierung..." : "Login"}
@@ -558,7 +570,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={handlePasskeyLogin}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white/80 px-4 py-3 text-sm font-bold text-secondary transition-all hover:bg-white hover:text-primary hover:shadow-md dark:border-navy-700 dark:bg-navy-800/50 dark:text-navy-300 dark:hover:bg-navy-800 dark:hover:text-primary-light"
+                      className="flex w-full items-center justify-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-base-content/75 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800/60 dark:text-navy-300 dark:hover:border-navy-500 dark:hover:text-white"
                     >
                       <Fingerprint className="h-4 w-4" />
                       <span>Passkey-Login</span>
@@ -569,9 +581,9 @@ export default function Login() {
             )}
           </div>
 
-          <div className="border-t border-gray-100 bg-gray-50/50 p-6 text-center dark:border-navy-700/50 dark:bg-navy-950/30">
-            <p className="text-[10px] font-medium text-secondary/50 dark:text-navy-500">
-              © {new Date().getFullYear()} MotoManager • Garagenverwaltung • v{version}
+          <div className="border-t border-base-300 bg-base-200/50 px-6 py-4 text-center dark:border-navy-700 dark:bg-navy-950/40">
+            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-base-content/50 dark:text-navy-400">
+              © {new Date().getFullYear()} · MotoManager · v{version}
             </p>
           </div>
         </div>

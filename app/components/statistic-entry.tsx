@@ -10,6 +10,11 @@ interface StatisticEntryProps {
   checkValue?: any; // Used to check for null/empty/zero if different from value
 }
 
+/**
+ * StatisticEntry — one row of a service-manual stat list.
+ * Label in IBM Plex Sans + uppercase mono caption pairing.
+ * Value in IBM Plex Mono (tabular figures) so columns align.
+ */
 export function StatisticEntry({
   icon: Icon,
   label,
@@ -29,18 +34,18 @@ export function StatisticEntry({
   }
 
   return (
-    <div className="flex items-center justify-between px-1">
-      <div className="flex items-center gap-2 text-secondary dark:text-navy-400">
-        <Icon className="h-4 w-4" />
-        <span className="text-sm font-medium">{label}</span>
+    <div className="flex items-center justify-between gap-4 py-1.5">
+      <div className="flex items-center gap-2 text-base-content/65 dark:text-navy-300 min-w-0">
+        <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
+        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] truncate">
+          {label}
+        </span>
       </div>
       <span
         suppressHydrationWarning
         className={clsx(
-          "text-sm font-semibold",
-          valueClassName
-            ? valueClassName
-            : "text-foreground dark:text-gray-100"
+          "font-numeric text-[13px] font-semibold text-right",
+          valueClassName ? valueClassName : "text-base-content dark:text-gray-100",
         )}
       >
         {value}

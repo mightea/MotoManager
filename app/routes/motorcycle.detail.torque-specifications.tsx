@@ -303,44 +303,53 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       </div>
 
       <div className="space-y-6 print:space-y-0 print:bg-white">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between print:hidden">
           <div>
-            <h2 className="text-2xl font-bold text-foreground dark:text-white">Anzugsmomente</h2>
-            <p className="text-sm text-secondary dark:text-navy-400">
-              Spezifikationen für {motorcycle.make} {motorcycle.model}
+            <span className="label-tag mb-2">
+              <span className="tabular-nums">§ B</span>
+              <span>Service-Werte</span>
+            </span>
+            <h2 className="font-display text-3xl uppercase tracking-wide leading-none text-base-content dark:text-white">
+              Anzugsmomente
+            </h2>
+            <p className="mt-2 text-sm text-base-content/65 dark:text-navy-400">
+              Spezifikationen für {motorcycle.make} {motorcycle.model}.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {otherMotorcycles.length > 0 && (
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-semibold text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
               >
-                <Import className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Import className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Importieren</span>
               </button>
             )}
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 sm:px-4 sm:py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+              className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98]"
             >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               <span>Hinzufügen</span>
+              <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
             </button>
             <button
               onClick={() => window.print()}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-secondary transition-all hover:bg-gray-50 hover:text-foreground dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700 dark:hover:text-white"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
               title="Drucken"
+              aria-label="Drucken"
             >
-              <Printer className="h-5 w-5" />
-              <span className="sr-only">Drucken</span>
+              <Printer className="h-4 w-4" />
             </button>
           </div>
         </div>
 
         {actionData && "error" in actionData && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300 print:hidden">
-            {actionData.error}
+          <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10 print:hidden">
+            <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] pt-0.5 opacity-70">ERR</span>
+            <span>{actionData.error}</span>
           </div>
         )}
 
@@ -349,7 +358,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-gray-100 dark:bg-navy-700">
               <Wrench className="h-8 w-8 text-gray-400 dark:text-navy-300" />
             </div>
-            <h3 className="text-xl font-semibold text-foreground dark:text-white">
+            <h3 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
               Keine Anzugsmomente vorhanden
             </h3>
             <p className="mt-2 max-w-sm text-secondary dark:text-navy-400">

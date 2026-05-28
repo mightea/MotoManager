@@ -8,8 +8,18 @@ interface EmptyStateProps {
   action?: ReactNode;
   size?: "sm" | "md";
   className?: string;
+  /**
+   * Optional mono code rendered above the title (e.g. "VOID", "00 / 00").
+   * Adds the service-manual "blank page" feel.
+   */
+  code?: string;
 }
 
+/**
+ * EmptyState — modeled on a blank service-manual page: dashed border on a
+ * paper-tinted surface, a mono "VOID" code above the title, the title set
+ * in the display face, and the action slot rendered prominently below.
+ */
 export function EmptyState({
   icon: Icon,
   title,
@@ -17,43 +27,49 @@ export function EmptyState({
   action,
   size = "md",
   className,
+  code = "VOID",
 }: EmptyStateProps) {
   return (
     <div
       className={clsx(
-        "flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 text-center dark:border-navy-700 dark:bg-navy-800/50",
-        size === "md" ? "min-h-[220px] p-10" : "min-h-[160px] p-8",
-        className
+        "paper relative flex flex-col items-center justify-center rounded-sm border border-dashed border-base-content/20 text-center dark:border-navy-600",
+        size === "md" ? "min-h-[220px] px-8 py-10" : "min-h-[160px] px-6 py-8",
+        className,
       )}
     >
+      <span
+        aria-hidden="true"
+        className="absolute left-3 top-3 font-mono text-[9px] font-medium uppercase tracking-[0.25em] text-base-content/35 tabular-nums"
+      >
+        § {code}
+      </span>
+
       {Icon && (
         <div
           className={clsx(
-            "mb-3 grid place-items-center rounded-xl bg-gray-100 dark:bg-navy-700",
-            size === "md" ? "h-12 w-12" : "h-10 w-10"
+            "mb-3 grid place-items-center rounded-sm border border-base-content/15 bg-base-100/60 text-base-content/40 dark:bg-navy-900/60 dark:text-navy-300",
+            size === "md" ? "h-12 w-12" : "h-10 w-10",
           )}
         >
-          <Icon
-            className={clsx(
-              "text-gray-400 dark:text-navy-300",
-              size === "md" ? "h-6 w-6" : "h-5 w-5"
-            )}
-          />
+          <Icon className={clsx(size === "md" ? "h-6 w-6" : "h-5 w-5")} />
         </div>
       )}
+
       <h3
         className={clsx(
-          "font-semibold text-foreground dark:text-white",
-          size === "md" ? "text-base" : "text-sm"
+          "font-display uppercase tracking-wide text-base-content",
+          size === "md" ? "text-lg" : "text-base",
         )}
       >
         {title}
       </h3>
+
       {description && (
-        <p className="mt-1.5 max-w-sm text-sm text-secondary dark:text-navy-400">
+        <p className="mt-2 max-w-sm font-sans text-sm leading-relaxed text-base-content/60 dark:text-navy-400">
           {description}
         </p>
       )}
+
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
