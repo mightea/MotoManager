@@ -246,51 +246,52 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   ];
 
   return (
-    <div className="container mx-auto space-y-6 p-4 pb-24">
-      <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="container mx-auto space-y-4 px-4 pt-3 pb-24">
+      {/* Filter Tabs + Upload — single row so the button has a real
+          neighbor instead of floating in a separate band of whitespace. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-3 dark:border-navy-700">
+        <div className="flex flex-wrap items-center gap-2">
+          {filters.map((f) => {
+            const Icon = f.icon;
+            const isActive = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={clsx(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
+                  isActive
+                    ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
+                    : "border-base-300 bg-base-100 text-base-content/65 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800",
+                )}
+              >
+                <Icon className={clsx("h-3.5 w-3.5", isActive ? "text-primary dark:text-primary-light" : "text-base-content/55 dark:text-navy-400")} aria-hidden="true" />
+                {f.label}
+                {f.count > 0 && (
+                  <span
+                    className={clsx(
+                      "ml-1 inline-flex h-4 min-w-[1.25rem] items-center justify-center rounded-sm px-1 font-numeric text-[10px] font-semibold tabular-nums",
+                      isActive
+                        ? "bg-primary text-primary-content"
+                        : "bg-base-200 text-base-content/60 dark:bg-navy-700 dark:text-navy-300",
+                    )}
+                  >
+                    {f.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         <button
           onClick={openCreateDialog}
-          className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          className="relative inline-flex shrink-0 items-center gap-2 rounded-sm bg-primary px-4 py-2 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
           <span>Hochladen</span>
           <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
         </button>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-base-300 pb-2 dark:border-navy-700">
-        {filters.map((f) => {
-          const Icon = f.icon;
-          const isActive = filter === f.id;
-          return (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={clsx(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
-                isActive
-                  ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
-                  : "border-base-300 bg-base-100 text-base-content/65 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800"
-              )}
-            >
-              <Icon className={clsx("h-3.5 w-3.5", isActive ? "text-primary dark:text-primary-light" : "text-base-content/55 dark:text-navy-400")} aria-hidden="true" />
-              {f.label}
-              {f.count > 0 && (
-                <span
-                  className={clsx(
-                    "ml-1 inline-flex h-4 min-w-[1.25rem] items-center justify-center rounded-sm px-1 font-numeric text-[10px] font-semibold tabular-nums",
-                    isActive
-                      ? "bg-primary text-primary-content"
-                      : "bg-base-200 text-base-content/60 dark:bg-navy-700 dark:text-navy-300",
-                  )}
-                >
-                  {f.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
