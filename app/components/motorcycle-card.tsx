@@ -77,9 +77,10 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
       aria-label={aria}
       className="group relative flex flex-col overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] motion-safe:transition-[transform,box-shadow,border-color] motion-safe:duration-300 motion-safe:ease-out hover:border-base-content/25 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:bg-navy-800"
     >
-      {/* Top file-tab — motorsport flag + ID code. The vertical stripe is
-          a 3-band motorsport flag rendered at the very top of the card. */}
-      <div className="relative flex items-center justify-between gap-2 border-b border-base-200 px-3 pb-1.5 pt-2 dark:border-navy-700">
+      {/* Top file-tab — Dakar flag + ID code, optional Veteran stamp on the
+          trailing edge. min-h is fixed so the header reads the same height
+          whether or not a stamp is present. */}
+      <div className="relative flex min-h-9 items-center justify-between gap-2 border-b border-base-200 px-3 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <span className="motorsport-stripe block h-2 w-7" aria-hidden="true" />
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 tabular-nums">

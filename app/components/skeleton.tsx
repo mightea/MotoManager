@@ -24,7 +24,7 @@ export function Skeleton({ className, variant = "rect" }: SkeletonProps) {
 export function MotorcycleCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] dark:bg-navy-800">
-      <div className="flex items-center justify-between border-b border-base-200 px-3 pb-1.5 pt-2 dark:border-navy-700">
+      <div className="flex min-h-9 items-center justify-between border-b border-base-200 px-3 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <Skeleton className="h-2 w-7 rounded-none" />
           <Skeleton variant="text" className="w-16 h-2.5" />

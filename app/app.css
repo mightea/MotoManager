@@ -315,8 +315,9 @@ a {
   opacity: 0.5;
 }
 
-/* Stamp — workshop-amber rectangle, slightly rotated, mono text. Use for
-   "VETERAN", "ARCHIVED", odometer/VIN identity badges. */
+/* Stamp — Sand-tinted rectangle with mono uppercase text. Use for
+   "VETERAN", "ARCHIVED", odometer/VIN identity badges. Sits flat
+   (no rotation) so it lines up cleanly inside card headers. */
 .stamp {
   display: inline-flex;
   align-items: center;
@@ -331,7 +332,6 @@ a {
   background: var(--color-workshop-soft);
   border: 1px solid color-mix(in srgb, var(--color-workshop) 50%, transparent);
   border-radius: 0.125rem;
-  transform: rotate(-1.5deg);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--color-workshop) 30%, transparent);
 }
 
