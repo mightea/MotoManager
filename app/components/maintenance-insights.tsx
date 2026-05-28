@@ -79,7 +79,6 @@ export function MaintenanceInsightsCard({
   return (
     <Card className={className} accent={accent}>
       <CardHeading
-        code="03"
         title="Service-Intervalle"
         trailing={
           !isEmpty && (

@@ -21,7 +21,6 @@ export default function OpenIssuesCard({
   return (
     <Card className={className} accent={issues.length > 0 ? "error" : undefined}>
       <CardHeading
-        code="04"
         title="Offene Mängel"
         meta={issues.length > 0 ? `${issues.length} ${issues.length === 1 ? "Eintrag" : "Einträge"}` : undefined}
         trailing={

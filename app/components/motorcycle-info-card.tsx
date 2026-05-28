@@ -69,7 +69,6 @@ export function MotorcycleInfoCard({
     return (
       <Card>
         <CardHeading
-          code="02"
           title="Fahrzeugdaten"
           trailing={
             <div className="flex items-center gap-1.5">

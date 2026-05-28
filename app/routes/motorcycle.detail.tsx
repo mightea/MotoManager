@@ -727,7 +727,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           {/* Maintenance History Card */}
           <Card>
             <CardHeading
-              code="05"
               title="Historie"
               meta={maintenanceHistory.length > 0 ? `${maintenanceHistory.length} ${maintenanceHistory.length === 1 ? "Eintrag" : "Einträge"}` : undefined}
               trailing={
@@ -764,7 +763,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           {motorcycleExpenses.length > 0 && (
             <Card>
               <CardHeading
-                code="06"
                 title="Gemeinsame Ausgaben"
                 meta={`${motorcycleExpenses.length} ${motorcycleExpenses.length === 1 ? "Eintrag" : "Einträge"}`}
                 trailing={<CardAction href="/fleet-expenses">Verwalten</CardAction>}
