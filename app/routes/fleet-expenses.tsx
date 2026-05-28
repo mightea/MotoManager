@@ -100,7 +100,10 @@ export default function FleetExpenses() {
 
   return (
     <div className="container mx-auto max-w-4xl space-y-4 px-4 pt-3 pb-24">
-      <div className="flex flex-wrap items-center justify-end gap-2 border-b border-base-300 pb-3 dark:border-navy-700">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-3 dark:border-navy-700">
+        <p className="min-w-0 flex-1 text-sm text-base-content/65 dark:text-navy-400">
+          Versicherungen, Steuern und andere Ausgaben, die mehrere Motorräder gemeinsam betreffen.
+        </p>
         <button
           onClick={openAddDialog}
           className="relative inline-flex shrink-0 items-center gap-2 rounded-sm bg-primary px-4 py-2 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
