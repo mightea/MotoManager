@@ -175,7 +175,6 @@ export default function Settings() {
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4 pt-4 sm:pt-10 pb-20">
       <div className="space-y-3">
         <span className="label-tag">
-          <span className="tabular-nums">§ 04</span>
           <span>Konfiguration</span>
         </span>
         <h1 className="font-display text-4xl uppercase leading-none tracking-wide text-base-content dark:text-white">

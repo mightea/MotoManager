@@ -177,7 +177,6 @@ export default function FleetStatsPage() {
         </Link>
         <div>
           <span className="label-tag mb-1">
-            <span className="tabular-nums">§ 05</span>
             <span>Telemetrie · Multi-Jahr</span>
           </span>
           <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">Statistiken</h1>

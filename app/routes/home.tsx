@@ -326,14 +326,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12">
 
-      {/* § 01 — Aktion erforderlich. Single row with horizontal scroll on
-          small screens so wrap behavior never reflows when something else
-          (a popover, a scrollbar) shifts the available width. */}
+      {/* Aktion erforderlich. Single row with horizontal scroll on small
+          screens so wrap behavior never reflows when something else (a
+          popover, a scrollbar) shifts the available width. */}
       {(counts.overdueInspection + counts.overdueMaintenance + counts.openIssues) > 0 && (
         <div className="order-1 flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <span className="label-tag" aria-hidden="true">
-              <span className="tabular-nums">§ 01</span>
               <span>Aktion erforderlich</span>
             </span>
           </div>
@@ -386,12 +385,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      {/* § 02 — FLEET TELEMETRY. Below the grid on mobile, above on desktop. */}
+      {/* Fleet telemetry — below the grid on mobile, above on desktop. */}
       {cards.length > 0 && stats && (
         <div className="order-4 sm:order-2 flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <span className="label-tag">
-              <span className="tabular-nums">§ 02</span>
               <span>Flotten-Telemetrie · {new Date().getFullYear()}</span>
             </span>
           </div>
@@ -399,12 +397,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      {/* § 03 — Fleet header. Section label sits on its own row above the
+      {/* Fleet header. Section label sits on its own row above the
           sort/add controls; this gives the page a clear hierarchy. */}
       <div className="order-2 sm:order-3 flex flex-col gap-2">
         <div className="flex items-end justify-between gap-3">
           <span className="label-tag">
-            <span className="tabular-nums">§ 03</span>
             <span>Flotte · {cards.length} {cards.length === 1 ? "Eintrag" : "Einträge"}</span>
           </span>
 

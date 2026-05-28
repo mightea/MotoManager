@@ -306,7 +306,6 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between print:hidden">
           <div>
             <span className="label-tag mb-2">
-              <span className="tabular-nums">§ B</span>
               <span>Service-Werte</span>
             </span>
             <h2 className="font-display text-3xl uppercase tracking-wide leading-none text-base-content dark:text-white">

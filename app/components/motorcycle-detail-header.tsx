@@ -183,28 +183,19 @@ export function MotorcycleDetailHeader({
           className="relative -mt-px overflow-x-auto border-b border-base-300 bg-base-100 px-4 dark:border-navy-700 dark:bg-navy-900 md:px-8"
         >
           <ul className="flex items-stretch gap-1 py-0">
-            {allNavLinks.map((link, index) => {
-              const code = String(index + 1).padStart(2, "0");
+            {allNavLinks.map((link) => {
               return (
                 <li key={link.to} className="flex">
                   <Link
                     to={link.to}
                     aria-current={link.isActive ? "page" : undefined}
                     className={clsx(
-                      "group relative flex flex-col items-start gap-0.5 px-3 pb-2 pt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                      "group relative flex items-center px-3 pb-2 pt-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                       link.isActive
                         ? "text-base-content"
-                        : "text-base-content/55 hover:text-base-content"
+                        : "text-base-content/55 hover:text-base-content",
                     )}
                   >
-                    <span
-                      className={clsx(
-                        "font-mono text-[10px] font-semibold tracking-[0.14em] uppercase tabular-nums",
-                        link.isActive ? "text-primary" : "text-base-content/45 group-hover:text-base-content/65"
-                      )}
-                    >
-                      {code}
-                    </span>
                     <span className="font-subdisplay text-sm leading-none whitespace-nowrap">
                       {link.label}
                     </span>
@@ -212,7 +203,7 @@ export function MotorcycleDetailHeader({
                       aria-hidden="true"
                       className={clsx(
                         "motorsport-stripe absolute inset-x-2 -bottom-px h-[3px] origin-left transition-transform duration-300",
-                        link.isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-50"
+                        link.isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-50",
                       )}
                     />
                   </Link>

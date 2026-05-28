@@ -103,7 +103,6 @@ export default function FleetExpenses() {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="label-tag mb-2">
-            <span className="tabular-nums">§ 06</span>
             <span>Gemeinsame Ausgaben</span>
           </span>
           <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">

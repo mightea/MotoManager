@@ -263,7 +263,7 @@ export default function Login() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
-                  § 00 / Login · Garage
+                  Login · Garage
                 </p>
                 <h1 className="mt-2 font-display text-4xl uppercase leading-[0.95] tracking-wide text-base-content dark:text-white">
                   Moto<span className="text-primary">Manager</span>
@@ -284,7 +284,7 @@ export default function Login() {
               <div className="space-y-6">
                 <div className="relative rounded-sm border border-dashed border-primary/40 bg-primary/5 p-4 dark:border-primary/40 dark:bg-primary/10">
                   <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
-                    § A · Administrator-Setup
+                    Administrator-Setup
                   </p>
                   <h2 className="mt-1 font-subdisplay text-lg text-base-content dark:text-gray-100">
                     Erstes Konto

@@ -185,7 +185,6 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
         <div className="flex items-end justify-between gap-4">
           <div>
             <span className="label-tag mb-2">
-              <span className="tabular-nums">§ A</span>
               <span>Dokumentenarchiv</span>
             </span>
             <h2 className="font-display text-3xl uppercase tracking-wide leading-none text-base-content dark:text-white">
@@ -210,7 +209,6 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
                 icon={FileText}
                 title="Keine Dokumente"
                 description="Es sind momentan keine Dokumente verfügbar."
-                code="A · 00"
               />
             </div>
           ) : (

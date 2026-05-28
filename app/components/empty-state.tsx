@@ -8,17 +8,12 @@ interface EmptyStateProps {
   action?: ReactNode;
   size?: "sm" | "md";
   className?: string;
-  /**
-   * Optional mono code rendered above the title (e.g. "VOID", "00 / 00").
-   * Adds the service-manual "blank page" feel.
-   */
-  code?: string;
 }
 
 /**
  * EmptyState — modeled on a blank service-manual page: dashed border on a
- * paper-tinted surface, a mono "VOID" code above the title, the title set
- * in the display face, and the action slot rendered prominently below.
+ * paper-tinted surface, the title set in the display face, and the action
+ * slot rendered prominently below.
  */
 export function EmptyState({
   icon: Icon,
@@ -27,7 +22,6 @@ export function EmptyState({
   action,
   size = "md",
   className,
-  code = "VOID",
 }: EmptyStateProps) {
   return (
     <div
@@ -37,13 +31,6 @@ export function EmptyState({
         className,
       )}
     >
-      <span
-        aria-hidden="true"
-        className="absolute left-3 top-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/35 tabular-nums"
-      >
-        § {code}
-      </span>
-
       {Icon && (
         <div
           className={clsx(

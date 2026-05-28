@@ -250,7 +250,6 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
       <div className="flex items-end justify-between gap-4">
         <div>
           <span className="label-tag mb-2">
-            <span className="tabular-nums">§ 07</span>
             <span>Dokumentenarchiv</span>
           </span>
           <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">

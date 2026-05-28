@@ -44,15 +44,13 @@ export function HeaderMobilePanel({
     >
       <div className="p-4">
         <span className="label-tag mb-3">
-          <span className="tabular-nums">§ NAV</span>
           <span>Sektionen</span>
         </span>
 
         <nav>
           <ul className="space-y-1">
-            {items.map((item, index) => {
+            {items.map((item) => {
               const isActive = location.pathname === item.href;
-              const code = String(index + 1).padStart(2, "0");
 
               return (
                 <li key={item.label}>
@@ -70,15 +68,6 @@ export function HeaderMobilePanel({
                     {isActive && (
                       <span aria-hidden="true" className="motorsport-stripe-v absolute inset-y-2 left-0 w-[3px] rounded-r-sm" />
                     )}
-                    <span
-                      className={clsx(
-                        "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums",
-                        isActive ? "text-primary" : "text-base-content/40",
-                      )}
-                    >
-                      {code}
-                    </span>
-                    <span className="h-3 w-px bg-base-content/15" aria-hidden="true" />
                     <span className="font-subdisplay text-base">{item.label}</span>
                   </Link>
                 </li>
