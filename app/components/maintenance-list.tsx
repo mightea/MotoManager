@@ -304,7 +304,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
           <div key={year} className="space-y-2">
             <div
               className="sticky z-10 -mx-4 flex items-center gap-4 bg-white px-4 py-2 dark:bg-navy-800"
-              style={{ top: "calc(var(--app-header-h, 4rem) + 3.25rem)" }}
+              style={{ top: "calc(var(--app-header-h, 4rem) + 3.5rem)" }}
             >
               <div className="h-px flex-1 bg-base-300 dark:bg-navy-700"></div>
               <span className="font-subdisplay text-sm text-secondary dark:text-navy-300 tabular-nums">

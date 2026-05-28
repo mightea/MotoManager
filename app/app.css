@@ -161,8 +161,9 @@ html {
   /* Height of the global app header — referenced by sticky offsets
      downstream (maintenance filter, year separators) so they stay
      coherent if the header is ever resized. Keep in sync with the
-     padding/content in app/components/header.tsx. */
-  --app-header-h: 4rem;
+     padding/content in app/components/header.tsx (currently 16 px
+     top pad + 40 px brand row + 12 px bottom pad + 1 px border-b = 69). */
+  --app-header-h: 69px;
 }
 
 /* Prevent iOS Safari from zooming in on form fields */
