@@ -9,7 +9,6 @@ import { fetchFromBackend } from "~/utils/backend";
 import { Plus, Receipt, Calendar, Pencil, Car } from "lucide-react";
 import { ExpenseDialog } from "~/components/expense-dialog";
 import { EmptyState } from "~/components/empty-state";
-import { CardAction } from "~/components/card";
 import { formatCurrency } from "~/utils/numberUtils";
 import type { Expense, Motorcycle } from "~/types/db";
 
@@ -169,14 +168,19 @@ export default function FleetExpenses() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => openEditDialog(expense)}
+                    aria-label="Ausgabe bearbeiten"
+                    className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
+                  >
+                    <Pencil className="h-3 w-3" aria-hidden="true" />
+                    Bearbeiten
+                  </button>
                   <span className="font-numeric text-base sm:text-lg font-semibold tabular-nums text-foreground dark:text-white whitespace-nowrap">
                     {formatCurrency(expense.amount, expense.currency)}
                   </span>
-                  <CardAction onClick={() => openEditDialog(expense)} aria-label="Ausgabe bearbeiten">
-                    <Pencil className="h-3 w-3" aria-hidden="true" />
-                    Bearbeiten
-                  </CardAction>
                 </div>
               </div>
             );
