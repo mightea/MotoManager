@@ -2,7 +2,7 @@ import { data, useLoaderData, Link } from "react-router";
 import type { Route } from "./+types/fleet-stats";
 import { requireUser } from "~/services/auth";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
-import { BarChart3, TrendingUp, Wallet, Bike, ArrowLeft, ChevronDown } from "lucide-react";
+import { BarChart3, TrendingUp, Wallet, Bike, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import { useState, Fragment, useRef, useEffect } from "react";
 import { fetchFromBackend } from "~/utils/backend";
@@ -216,16 +216,6 @@ export default function FleetStatsPage() {
 
   return (
     <div className="container mx-auto max-w-6xl space-y-6 px-4 pt-3 pb-24 animate-fade-in md:p-6 md:space-y-8">
-      <div className="flex flex-wrap items-center justify-start gap-2 border-b border-base-300 pb-3 dark:border-navy-700">
-        <Link
-          to="/"
-          aria-label="Zurück zur Übersicht"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-      </div>
-
       {/* Overall Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <SummaryCard
