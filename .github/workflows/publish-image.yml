@@ -29,14 +29,14 @@ jobs:
         uses: GitTools/actions/gitversion/execute@v4
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 25
           cache: pnpm
 
       - name: Install dependencies
