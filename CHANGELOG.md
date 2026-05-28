@@ -1,5 +1,71 @@
 # Changelog
 
+## [2026.5.8](https://github.com/mightea/MotoManager/compare/2026.5.7...2026.5.8) (2026-05-28)
+
+
+### ✨ Features
+
+* add page description to fleet expenses header row ([6729e4f](https://github.com/mightea/MotoManager/commit/6729e4f70d9ebd9e5d0664b72b5cc91298a7d93a))
+* redesign — service-manual precision meets race telemetry ([e0cc22e](https://github.com/mightea/MotoManager/commit/e0cc22e52c130940ff6224832c22e1a165b903cd))
+
+
+### 🐛 Bug Fixes
+
+* broad UX cleanup — detail page, sticky offsets, chip language ([869332f](https://github.com/mightea/MotoManager/commit/869332fb5c0e74da7ad8e8522854efd77a8957f6))
+* drop .menu class from DropdownMenu to stop daisyUI from inflating children ([c5cb965](https://github.com/mightea/MotoManager/commit/c5cb96537d169c5a818aab0afa5998945b0c034e))
+* equalize motorcycle card header height; un-tilt veteran stamp ([e3b2f5c](https://github.com/mightea/MotoManager/commit/e3b2f5c0338fabf82ff554077f58d36b895dfc3a))
+* hide desktop add-button on phones; truncate motorcycle-card location ([4ed64a5](https://github.com/mightea/MotoManager/commit/4ed64a536200a7fb1f03e4363aba2e018fe1a366))
+* phone-breakpoint polish from in-browser audit ([7403661](https://github.com/mightea/MotoManager/commit/7403661e40191d0038624d86497e5be28f4e223b))
+* restore floating DropdownMenu — remove `relative` from panel ([5a4c4e3](https://github.com/mightea/MotoManager/commit/5a4c4e39c794fd1915d42664fb2c762e6b97e69d))
+* stable motorcycle hero across sub-tabs by computing stats in every loader ([57648ba](https://github.com/mightea/MotoManager/commit/57648ba6e38908d9b0b1116a6dc5df7096047050))
+* swap mono font + beef up small uppercase labels for legibility ([ce71a03](https://github.com/mightea/MotoManager/commit/ce71a039b95afb84b6e8e09f4e216064a752608c))
+* switch release-please to simple type to bypass package.json component fallback ([8647638](https://github.com/mightea/MotoManager/commit/86476388aa6e98f1150b388b322489dcdf0b3f7a))
+* unify outer container across motorcycle sub-tabs to stop layout shift ([52fbf8b](https://github.com/mightea/MotoManager/commit/52fbf8b197199e39dc5d6c10afa582af923fa089))
+* untangle motorcycle detail page scroll UX ([db7565d](https://github.com/mightea/MotoManager/commit/db7565dcb87b07a8fbc529bcc1422f857ce02add))
+
+
+### ⏪ Reverts
+
+* restore navigation index numerals ([d2384d5](https://github.com/mightea/MotoManager/commit/d2384d57744c09d8de413682853c995e85fda1fe))
+
+
+### ✏️ Miscellaneous Chores
+
+* bump dependencies to latest ([1f0bd63](https://github.com/mightea/MotoManager/commit/1f0bd63657d21a648dabcae7dc47197d9b36cb65))
+
+
+### ♻️ Code Refactoring
+
+* 4-band Garage Flag palette, distinct from BMW Motorsport mark ([85bfc6b](https://github.com/mightea/MotoManager/commit/85bfc6bd858827f5904fd42dcfaa2799789a3f91))
+* align expenses and statistics page widths with documents ([c6b7f2e](https://github.com/mightea/MotoManager/commit/c6b7f2e562ca3d992e973a9815ba656b54e915ec))
+* align fleet expenses page with the new design vocabulary ([e128e85](https://github.com/mightea/MotoManager/commit/e128e85c27db2452c3cc5b9ba17a67642097a25e))
+* align fleet statistics page with the new design vocabulary ([2c21e00](https://github.com/mightea/MotoManager/commit/2c21e009878140cc05d68a15465e60315fb59e20))
+* align torque-spec row title and description with system patterns ([f75fd7a](https://github.com/mightea/MotoManager/commit/f75fd7a43ad1d909b522116b52b283dfc1ca6403))
+* apply service-manual style consistently across all pages ([c6bdbfd](https://github.com/mightea/MotoManager/commit/c6bdbfde39c40afa7d9d50b7551f187cee76226d))
+* bring attention chips into the new design vocabulary ([108f268](https://github.com/mightea/MotoManager/commit/108f268ca831b04f132afc32a3582893b7d19f74))
+* bring DropdownMenu into the new design vocabulary ([6d83276](https://github.com/mightea/MotoManager/commit/6d832767845bfa4e633acbfcc0d92a0a6437fd5d))
+* bring maintenance list into the new design vocabulary ([53818db](https://github.com/mightea/MotoManager/commit/53818dbe5c4eaa8e31cf83dccb4657d14b1a9cdb))
+* bring torque-specs page into the new design vocabulary ([82672e9](https://github.com/mightea/MotoManager/commit/82672e9659027dcaa398a12570691a711af095f6))
+* compact expense card with description-first heading ([96525d1](https://github.com/mightea/MotoManager/commit/96525d1a19ab6871c48ffc7287d18c808cafc820))
+* dial color tokens to canonical Dakar palette ([ce70fcd](https://github.com/mightea/MotoManager/commit/ce70fcd2e8e1045f7d24da28044fb0e7e9a55656))
+* drop § section markings and nav index numerals ([fabae3b](https://github.com/mightea/MotoManager/commit/fabae3bc7115b9d7f558edbab9ece9fc69d92e0b))
+* drop back button from statistics page ([92ac375](https://github.com/mightea/MotoManager/commit/92ac3752873ca8b89cad70bfd4725f529248637c))
+* drop leading numerals from CardHeading titles ([de17204](https://github.com/mightea/MotoManager/commit/de17204fbeb8fc5d357a270f424727e8d7d5d550))
+* drop title block on motorcycle documents page ([f1a92a9](https://github.com/mightea/MotoManager/commit/f1a92a94740fd4f8bccafdec7b8048fc421dd6a6))
+* refine maintenance list filters, layout, and expanded button ([672c069](https://github.com/mightea/MotoManager/commit/672c0696d532f482831c4841a040cb88f9714415))
+* replace home FAB with add-button next to sort selector ([971ba02](https://github.com/mightea/MotoManager/commit/971ba0270bf205d197de87729d7681741bd7fae4))
+* sharpen documents page filter chips to match the system ([75bdf06](https://github.com/mightea/MotoManager/commit/75bdf068053db6e4fc40222abaddff1022a83797))
+* stack expense card edit-button above amount, tighten button height ([ca06ef5](https://github.com/mightea/MotoManager/commit/ca06ef502778ee0675becd5614792605ba1c694a))
+* strip documents page title and add preview-failure fallback ([cd41fa0](https://github.com/mightea/MotoManager/commit/cd41fa00c4be99162dc8afe2fe2348a1795eb93c))
+* swap expense card pencil-icon for labeled Bearbeiten button ([061bf7b](https://github.com/mightea/MotoManager/commit/061bf7b6fb3abbd4e146f9bd411e23c5f8339ef7))
+* tighten documents page header spacing ([6baab27](https://github.com/mightea/MotoManager/commit/6baab270d13c37dae8287c365cb33b309f372275))
+
+
+### 👷 Continuous Integration
+
+* bump Node + pnpm to match the local toolchain ([d7e49d9](https://github.com/mightea/MotoManager/commit/d7e49d9ae9a7a4e9839240b20a93f048ec4cf134))
+* drop pnpm `version:` to match package.json packageManager ([345ac4c](https://github.com/mightea/MotoManager/commit/345ac4cd8c85e83ce764950d88d51d8b1a2ba6da))
+
 ## [2026.5.7](https://github.com/mightea/MotoManager/compare/2026.5.6...2026.5.7) (2026-05-24)
 
 
