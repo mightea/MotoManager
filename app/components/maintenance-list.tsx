@@ -36,6 +36,7 @@ import {
   summarizeMaintenanceRecord
   } from "~/utils/maintenance";
 import { EmptyState } from "./empty-state";
+import { CardAction } from "./card";
 
 import { MapView } from "./map-view";
 
@@ -330,6 +331,13 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
 
                 const metric = getCollapsedMetric(group, currencyCode);
 
+                // Hide the trailing type tag when the left summary already
+                // names the type (the fallback path) — avoids the "MFK / MFK"
+                // visual stutter. Also drop the metric when it's "Tanken"
+                // and the summary already starts with the litres figure.
+                const summaryRepeatsType = group.summaries.length === 0;
+                const showTypeTag = !summaryRepeatsType;
+
                 return (
                   <li key={group.id} className="rounded-sm transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30">
                     <button
@@ -349,35 +357,49 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
 
                       <div className="flex-1 min-w-0 pt-0.5">
                         {/* Row 1: date left, odo + chevron right */}
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-3">
                           <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
                             {dateFormatter.format(new Date(group.date))}
                           </h3>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-baseline gap-1.5 shrink-0">
                             <span className="font-numeric text-sm font-semibold text-foreground dark:text-white">
-                              {formatNumber(group.odo)} <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">km</span>
+                              {formatNumber(group.odo)}
                             </span>
-                            <ChevronDown className={clsx("h-4 w-4 text-base-content/45 transition-transform dark:text-navy-400", isExpanded && "rotate-180")} />
+                            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">km</span>
+                            <ChevronDown className={clsx("h-4 w-4 self-center text-base-content/45 transition-transform dark:text-navy-400", isExpanded && "rotate-180")} aria-hidden="true" />
                           </div>
                         </div>
 
-                        {/* Row 2: Context — summary left (category-coloured), metric · type right */}
-                        <div className="flex items-center justify-between gap-3 mt-0.5">
-                          <p className="min-w-0 text-xs line-clamp-1">
+                        {/* Row 2: Summary (category color, medium weight) left,
+                            metric/cost · type tag right. The right column is
+                            stacked tightly so the metric line and the type
+                            tag share one mono-uppercase voice. */}
+                        <div className="flex items-baseline justify-between gap-3 mt-0.5">
+                          <p className={clsx("min-w-0 text-[13px] font-medium line-clamp-1 leading-tight", tone.fg)}>
                             {group.count > 1 && (
-                              <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-secondary/10 px-1.5 py-[1px] font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-secondary dark:bg-navy-600 dark:text-navy-200 align-middle">
+                              <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-base-content/8 px-1.5 py-[1px] font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-base-content/60 dark:bg-navy-700 dark:text-navy-300 align-middle">
                                 {group.count}×
                               </span>
                             )}
-                            <span className={clsx("font-semibold", tone.fg)}>
-                              {summary}
-                            </span>
+                            {summary}
                           </p>
-                          <span className="shrink-0 inline-flex items-center gap-1.5 text-xs text-base-content/60 dark:text-navy-500">
-                            {metric && <span className="font-numeric tabular-nums">{metric}</span>}
-                            {metric && <span aria-hidden="true" className="h-2.5 w-px bg-base-content/20" />}
-                            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">{typeLabel}</span>
-                          </span>
+                          {(metric || showTypeTag) && (
+                            <span className="shrink-0 inline-flex items-baseline gap-1.5">
+                              {metric && (
+                                <span className="font-numeric tabular-nums text-xs text-base-content/65 dark:text-navy-400">
+                                  {metric}
+                                </span>
+                              )}
+                              {metric && showTypeTag && (
+                                <span aria-hidden="true" className="h-2.5 w-px self-center bg-base-content/20" />
+                              )}
+                              {showTypeTag && (
+                                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                                  {typeLabel}
+                                </span>
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -462,17 +484,13 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                                   <h4 className="font-subdisplay text-sm text-foreground dark:text-white">
                                     {maintenanceTypeLabels[record.type] || record.type}
                                   </h4>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onEdit(record);
-                                    }}
-                                    className="rounded-sm p-1.5 text-base-content/55 transition-colors hover:bg-base-300 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-300 dark:hover:bg-navy-700 dark:hover:text-primary-light"
-                                    title="Bearbeiten"
+                                  <CardAction
+                                    onClick={() => onEdit(record)}
                                     aria-label="Eintrag bearbeiten"
                                   >
-                                    <Edit2 className="h-3.5 w-3.5" />
-                                  </button>
+                                    <Edit2 className="h-3 w-3" aria-hidden="true" />
+                                    Bearbeiten
+                                  </CardAction>
                                 </div>
 
                                 <div className="space-y-4">
@@ -577,14 +595,17 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        "group relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border pl-2.5 pr-3 py-1.5 text-xs font-semibold motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         active
           ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
-          : "border-base-300 bg-base-100 text-base-content/70 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800"
+          : "border-base-300 bg-base-100 text-base-content/70 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800",
       )}
     >
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      <Icon className={clsx("h-3.5 w-3.5 shrink-0", active ? "text-primary" : "text-base-content/45")} aria-hidden="true" />
       {label}
+      {active && (
+        <span aria-hidden="true" className="absolute inset-y-1 left-0 w-[3px] rounded-r-sm bg-primary" />
+      )}
     </button>
   );
 }
