@@ -29,9 +29,9 @@ jobs:
         uses: GitTools/actions/gitversion/execute@v4
 
       - name: Set up pnpm
+        # Version comes from package.json `packageManager` — do not
+        # also set `version:` here, pnpm/action-setup@v4 refuses both.
         uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
