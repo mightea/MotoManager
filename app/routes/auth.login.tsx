@@ -456,7 +456,7 @@ export default function Login() {
                     type="submit"
                     onClick={() => trackEvent("register_submit")}
                     disabled={isRegisterSubmitting}
-                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
+                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(47,91,232,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(47,91,232,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                   >
                     <span className="relative z-10">
                       {isRegisterSubmitting ? "Wird erstellt..." : "System initialisieren"}
@@ -556,7 +556,7 @@ export default function Login() {
                       type="submit"
                       onClick={() => trackEvent("login_submit")}
                       disabled={isLoginSubmitting}
-                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
+                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(47,91,232,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(47,91,232,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                     >
                       <span className="relative z-10">
                         {isLoginSubmitting ? "Authentifizierung..." : "Login"}
