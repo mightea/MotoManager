@@ -186,18 +186,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
       />
 
       <div className="space-y-6">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <span className="label-tag mb-2">
-              <span>Dokumentenarchiv</span>
-            </span>
-            <h2 className="font-display text-3xl uppercase tracking-wide leading-none text-base-content dark:text-white">
-              Dokumente
-            </h2>
-            <p className="mt-2 text-sm text-base-content/65 dark:text-navy-400">
-              Zugeordnete Dokumente für {motorcycle.make} {motorcycle.model}.
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             to="/documents"
             className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
