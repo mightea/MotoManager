@@ -405,13 +405,18 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <span>Flotte · {cards.length} {cards.length === 1 ? "Eintrag" : "Einträge"}</span>
           </span>
 
-          <Button
-            onClick={() => setIsAddOpen(true)}
-            className="relative hidden sm:inline-flex"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Neues Motorrad</span>
-          </Button>
+          {/* Wrap in a hidden div, not Button's own className.
+              The Button component's baseStyles include `inline-flex`,
+              which competes with `hidden` in the same display category
+              and wins (Tailwind generates inline-flex after hidden in
+              alphabetical order). A wrapper div with `hidden sm:block`
+              actually hides the button on mobile. */}
+          <div className="hidden sm:block">
+            <Button onClick={() => setIsAddOpen(true)}>
+              <Plus className="h-5 w-5" />
+              <span>Neues Motorrad</span>
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-3">

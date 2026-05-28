@@ -188,9 +188,9 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
             </span>
           )}
           {hasLocation && (
-            <span className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55">
+            <span className="ml-auto inline-flex min-w-0 max-w-full items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
-              {moto.currentLocationName}
+              <span className="truncate">{moto.currentLocationName}</span>
             </span>
           )}
         </div>
