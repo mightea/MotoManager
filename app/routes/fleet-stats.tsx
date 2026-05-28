@@ -22,6 +22,14 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   return data({ stats: response.stats });
 }
 
+type ChartTone = "primary" | "secondary" | "workshop";
+
+const TONE_TEXT: Record<ChartTone, string> = {
+  primary: "text-primary",
+  secondary: "text-secondary",
+  workshop: "text-[var(--color-workshop)]",
+};
+
 function ChartSection({
   title,
   icon: Icon,
@@ -31,7 +39,7 @@ function ChartSection({
   unit,
   isCurrency = false,
   colorClass,
-  iconBgClass
+  tone,
 }: {
   title: string;
   icon: any;
@@ -41,7 +49,7 @@ function ChartSection({
   unit: string;
   isCurrency?: boolean;
   colorClass: string;
-  iconBgClass: string;
+  tone: ChartTone;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const reversedData = [...data].reverse();
@@ -54,23 +62,21 @@ function ChartSection({
   }, []);
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className={clsx("rounded-lg p-2", iconBgClass)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <h2 className="text-lg font-bold text-foreground dark:text-white">{title}</h2>
+    <section className="space-y-3">
+      <div className="flex items-center gap-2.5">
+        <Icon className={clsx("h-4 w-4 shrink-0", TONE_TEXT[tone])} aria-hidden="true" />
+        <h2 className="font-subdisplay text-sm text-base-content dark:text-white">{title}</h2>
       </div>
 
-      <div className="relative relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+      <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         {/* Grid Lines */}
         <div className="absolute inset-x-6 bottom-14 top-6 flex flex-col justify-between pointer-events-none">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="w-full border-t border-gray-100 dark:border-navy-700/50" />
+            <div key={i} className="w-full border-t border-base-200 dark:border-navy-700/50" />
           ))}
         </div>
 
-        <div 
+        <div
           ref={scrollRef}
           className="overflow-x-auto pb-2 -mx-2 px-2"
         >
@@ -86,14 +92,14 @@ function ChartSection({
                     className={clsx("w-full rounded-t-sm transition-all relative z-10", colorClass)}
                     style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
                   >
-                    {/* Tooltip-like Label */}
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform bg-gray-900 dark:bg-navy-600 text-white text-[10px] py-1 px-2 rounded font-bold whitespace-nowrap z-20 shadow-xl">
+                    {/* Tooltip — workshop tag style */}
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform rounded-sm bg-base-content px-2 py-1 font-numeric text-[10px] font-semibold tabular-nums text-base-100 whitespace-nowrap z-20 shadow-[0_8px_18px_-10px_rgba(15,23,42,0.5)]">
                       {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
                     </div>
                   </div>
                   <div className={clsx(
-                    "mt-3 text-[10px] font-bold transition-colors",
-                    showLabel ? "text-secondary dark:text-navy-400" : "text-transparent"
+                    "mt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums transition-colors",
+                    showLabel ? "text-base-content/55 dark:text-navy-400" : "text-transparent",
                   )}>
                     {year.year}
                   </div>
@@ -107,29 +113,71 @@ function ChartSection({
   );
 }
 
+function SummaryCard({
+  icon: Icon,
+  tone,
+  label,
+  value,
+  subline,
+}: {
+  icon: any;
+  tone: ChartTone;
+  label: string;
+  value: string;
+  subline?: string;
+}) {
+  return (
+    <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-5 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+      <div className={clsx("flex items-center gap-2 mb-2", TONE_TEXT[tone])}>
+        <Icon className="h-4 w-4" aria-hidden="true" />
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
+          {label}
+        </span>
+      </div>
+      <div className="font-numeric text-3xl font-semibold tabular-nums leading-none text-base-content dark:text-white">
+        {value}
+      </div>
+      {subline && (
+        <p className="mt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+          {subline}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function YearlyDetails({ yearStats }: { yearStats: any }) {
   return (
-    <div className="p-6 bg-gray-50/50 dark:bg-navy-900/30 border-t border-gray-100 dark:border-navy-700 space-y-8 animate-fade-in">
-      {/* Motorcycles Summary */}
-      <div className="space-y-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-secondary dark:text-navy-500">Fahrzeuge in {yearStats.year}</h4>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {yearStats.motorcycles.map((m: any) => (
-            <div key={m.id} className="relative rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] dark:border-navy-700 dark:bg-navy-800">
-              <div className="font-bold text-foreground dark:text-white mb-2">{m.make} {m.model}</div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-secondary dark:text-navy-500">Distanz</div>
-                  <div className="font-medium">{formatNumber(m.distance)} km</div>
+    <div className="space-y-3 border-t border-base-200 bg-base-200/40 p-5 animate-fade-in dark:border-navy-700 dark:bg-navy-900/30">
+      <h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+        Fahrzeuge in {yearStats.year}
+      </h4>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {yearStats.motorcycles.map((m: any) => (
+          <div key={m.id} className="rounded-sm border border-base-300/70 bg-base-100 p-3 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] dark:border-navy-700 dark:bg-navy-800">
+            <div className="font-subdisplay text-sm text-base-content dark:text-white mb-2 truncate">
+              {m.make} {m.model}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-500">
+                  Distanz
                 </div>
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-secondary dark:text-navy-500">Kosten</div>
-                  <div className="font-medium">{formatCurrency(m.cost)}</div>
+                <div className="font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-gray-100">
+                  {formatNumber(m.distance)} km
+                </div>
+              </div>
+              <div>
+                <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-500">
+                  Kosten
+                </div>
+                <div className="font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-gray-100">
+                  {formatCurrency(m.cost)}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -147,7 +195,7 @@ export default function FleetStatsPage() {
 
   if (activeYearlyStats.length === 0) {
     return (
-      <div className="container mx-auto p-4 max-w-2xl">
+      <div className="container mx-auto px-4 pt-3 pb-24 max-w-2xl">
         <EmptyState
           icon={BarChart3}
           title="Noch keine Statistiken"
@@ -155,9 +203,10 @@ export default function FleetStatsPage() {
           action={
             <Link
               to="/"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-dark active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
             >
               Zur Übersicht
+              <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
             </Link>
           }
         />
@@ -166,58 +215,42 @@ export default function FleetStatsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-10 pt-4 pb-24 animate-fade-in max-w-6xl">
-      <div className="flex items-center gap-4">
+    <div className="container mx-auto max-w-6xl space-y-6 px-4 pt-3 pb-24 animate-fade-in md:p-6 md:space-y-8">
+      <div className="flex flex-wrap items-center justify-start gap-2 border-b border-base-300 pb-3 dark:border-navy-700">
         <Link
           to="/"
           aria-label="Zurück zur Übersicht"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/70 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-all hover:border-base-content/35 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </Link>
-        <div>
-          <span className="label-tag mb-1">
-            <span>Telemetrie · Multi-Jahr</span>
-          </span>
-          <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">Statistiken</h1>
-          <p className="mt-1 text-base-content/65 dark:text-navy-400">Entwicklung deiner Garage über die Jahre.</p>
-        </div>
       </div>
 
       {/* Overall Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-          <div className="flex items-center gap-3 text-primary dark:text-primary-light mb-2">
-            <TrendingUp className="h-5 w-5" />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">Gesamtdistanz</span>
-          </div>
-          <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
-            {formatNumber(stats.overall.totalDistance)} km
-          </div>
-        </div>
-        <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-          <div className="flex items-center gap-3 text-emerald-500 mb-2">
-            <Wallet className="h-5 w-5" />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">Gesamtkosten</span>
-          </div>
-          <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
-            {formatCurrency(stats.overall.totalCost)}
-          </div>
-          {stats.yearly[0]?.motorcycleCount > 0 && (
-            <div className="mt-1 text-xs text-secondary dark:text-navy-400 font-medium">
-              Ø {formatCurrency(stats.overall.totalCost / stats.yearly[0].motorcycleCount)} pro Motorrad
-            </div>
-          )}
-        </div>
-        <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-          <div className="flex items-center gap-3 text-amber-500 mb-2">
-            <Bike className="h-5 w-5" />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">Aktueller Fuhrpark</span>
-          </div>
-          <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
-            {stats.yearly[0]?.motorcycleCount || 0} Bikes
-          </div>
-        </div>
+        <SummaryCard
+          icon={TrendingUp}
+          tone="primary"
+          label="Gesamtdistanz"
+          value={`${formatNumber(stats.overall.totalDistance)} km`}
+        />
+        <SummaryCard
+          icon={Wallet}
+          tone="secondary"
+          label="Gesamtkosten"
+          value={formatCurrency(stats.overall.totalCost)}
+          subline={
+            stats.yearly[0]?.motorcycleCount > 0
+              ? `Ø ${formatCurrency(stats.overall.totalCost / stats.yearly[0].motorcycleCount)} pro Motorrad`
+              : undefined
+          }
+        />
+        <SummaryCard
+          icon={Bike}
+          tone="workshop"
+          label="Aktueller Fuhrpark"
+          value={`${stats.yearly[0]?.motorcycleCount || 0} Bikes`}
+        />
       </div>
 
       {/* Detailed Stats Table & Charts */}
@@ -229,8 +262,8 @@ export default function FleetStatsPage() {
           maxValue={stats.overall.maxYearlyCount}
           valueKey="motorcycleCount"
           unit=""
-          colorClass="bg-amber-500 hover:bg-amber-400"
-          iconBgClass="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+          colorClass="bg-[var(--color-workshop)] hover:bg-[var(--color-workshop)]/85"
+          tone="workshop"
         />
 
         <ChartSection
@@ -240,8 +273,8 @@ export default function FleetStatsPage() {
           maxValue={stats.overall.maxYearlyDistance}
           valueKey="distance"
           unit=" km"
-          colorClass="bg-indigo-500 hover:bg-indigo-400"
-          iconBgClass="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+          colorClass="bg-primary hover:bg-primary/85"
+          tone="primary"
         />
 
         <ChartSection
@@ -252,59 +285,59 @@ export default function FleetStatsPage() {
           valueKey="cost"
           unit=""
           isCurrency
-          colorClass="bg-emerald-500 hover:bg-emerald-400"
-          iconBgClass="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+          colorClass="bg-secondary hover:bg-secondary/85"
+          tone="secondary"
         />
 
         {/* Yearly Data Table */}
-        <section className="space-y-6 pb-10">
-          <h2 className="text-xl font-bold text-foreground dark:text-white px-1">Jahresübersicht</h2>
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <section className="space-y-3 pb-6">
+          <h2 className="font-subdisplay text-sm text-base-content dark:text-white">Jahresübersicht</h2>
+          <div className="overflow-hidden rounded-sm border border-base-300/70 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase text-secondary dark:bg-navy-900 dark:text-navy-300">
+                <thead className="border-b border-base-200 bg-base-200/50 dark:border-navy-700 dark:bg-navy-900/50">
                   <tr>
-                    <th className="px-6 py-4 font-bold tracking-wider">Jahr</th>
-                    <th className="hidden sm:table-cell px-6 py-4 font-bold tracking-wider text-right">Motorräder</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-right">Distanz</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-right">Kosten</th>
-                    <th className="hidden sm:table-cell px-6 py-4 font-bold tracking-wider text-right">Ø Kosten/km</th>
-                    <th className="px-6 py-4 w-10"></th>
+                    <th className="px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300">Jahr</th>
+                    <th className="hidden sm:table-cell px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Motorräder</th>
+                    <th className="px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Distanz</th>
+                    <th className="px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Kosten</th>
+                    <th className="hidden sm:table-cell px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Ø Kosten/km</th>
+                    <th className="px-2 py-3 w-10"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-navy-700">
+                <tbody className="divide-y divide-base-200 dark:divide-navy-700">
                   {activeYearlyStats.map((year: any) => {
                     const avgCostPerKm = year.distance > 0 ? year.cost / year.distance : 0;
                     const isExpanded = expandedYear === year.year;
                     return (
                       <Fragment key={year.year}>
-                        <tr 
+                        <tr
                           className={clsx(
-                            "group cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-navy-700/50",
-                            isExpanded && "bg-gray-50/80 dark:bg-navy-700/30"
+                            "group cursor-pointer transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/40",
+                            isExpanded && "bg-base-200/40 dark:bg-navy-700/30",
                           )}
                           onClick={() => toggleYear(year.year)}
                         >
-                          <td className="px-6 py-4 font-bold text-foreground dark:text-white">
+                          <td className="px-4 py-3 font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">
                             {year.year}
                           </td>
-                          <td className="hidden sm:table-cell px-6 py-4 text-right text-secondary dark:text-navy-300 tabular-nums">
+                          <td className="hidden sm:table-cell px-4 py-3 text-right font-numeric text-sm tabular-nums text-base-content/70 dark:text-navy-300">
                             {year.motorcycleCount}
                           </td>
-                          <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
+                          <td className="px-4 py-3 text-right font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">
                             {formatNumber(year.distance)} km
                           </td>
-                          <td className="px-6 py-4 text-right text-foreground dark:text-white font-medium tabular-nums">
+                          <td className="px-4 py-3 text-right font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">
                             {formatCurrency(year.cost)}
                           </td>
-                          <td className="hidden sm:table-cell px-6 py-4 text-right text-secondary dark:text-navy-400 tabular-nums">
-                            {year.distance > 0 ? formatCurrency(avgCostPerKm) : '-'}
+                          <td className="hidden sm:table-cell px-4 py-3 text-right font-numeric text-sm tabular-nums text-base-content/65 dark:text-navy-400">
+                            {year.distance > 0 ? formatCurrency(avgCostPerKm) : '–'}
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-2 py-3 text-right">
                             <ChevronDown className={clsx(
-                              "h-4 w-4 text-secondary transition-transform",
-                              isExpanded && "rotate-180"
-                            )} />
+                              "h-4 w-4 text-base-content/45 transition-transform",
+                              isExpanded && "rotate-180",
+                            )} aria-hidden="true" />
                           </td>
                         </tr>
                         {isExpanded && (
