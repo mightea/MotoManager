@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import clsx from "clsx";
 import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucide-react";
 import { getBackendAssetUrl } from "~/utils/backend";
@@ -40,6 +40,8 @@ export function DocumentCard({
 }: DocumentCardProps) {
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
   const previewUrl = getBackendAssetUrl(document.previewPath);
+  const [previewFailed, setPreviewFailed] = useState(false);
+  const hasPreview = Boolean(previewUrl) && !previewFailed;
 
   const handleOpen = useCallback(() => {
     const token = getSessionToken();
@@ -89,16 +91,24 @@ export function DocumentCard({
         className="relative block aspect-[4/3] w-full overflow-hidden bg-base-200 dark:bg-navy-900"
         aria-label={`Dokument ${document.title} öffnen`}
       >
-        {previewUrl ? (
+        {hasPreview ? (
           <img
-            src={previewUrl}
+            src={previewUrl!}
             alt={document.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
             loading="lazy"
+            onError={() => setPreviewFailed(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <FileText className="h-16 w-16 text-base-content/15" strokeWidth={1.25} aria-hidden="true" />
+          // Fallback: previewPath missing, asset URL unresolved, or the
+          // image failed to load — surface a workshop-paper placeholder
+          // with a centered file glyph and the document title so the card
+          // still communicates its identity at a glance.
+          <div className="paper flex h-full w-full flex-col items-center justify-center gap-2 px-3 text-center">
+            <FileText className="h-10 w-10 text-base-content/35" strokeWidth={1.25} aria-hidden="true" />
+            <span className="line-clamp-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+              {document.title}
+            </span>
           </div>
         )}
 

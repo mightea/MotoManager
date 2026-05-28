@@ -247,24 +247,13 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="container mx-auto space-y-6 p-4 pb-24">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <span className="label-tag mb-2">
-            <span>Dokumentenarchiv</span>
-          </span>
-          <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">
-            Dokumente
-          </h1>
-          <p className="mt-2 text-base-content/65 dark:text-navy-400">
-            Eigene Dokumente verwalten · öffentliche Dokumente einsehen.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <button
           onClick={openCreateDialog}
           className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Hochladen</span>
+          <span>Hochladen</span>
           <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
         </button>
       </div>
