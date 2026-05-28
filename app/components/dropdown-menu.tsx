@@ -244,7 +244,12 @@ function DropdownMenuRoot({
             // Note: do NOT add `relative` — daisyUI's .dropdown-content sets
             // position: absolute, which is what keeps the menu floating over
             // siblings instead of pushing them around.
-            "menu dropdown-content z-50 mt-2 w-56 overflow-hidden rounded-sm border border-base-300 bg-base-100 p-1.5 shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] dark:border-navy-700 dark:bg-navy-800",
+            // Note: do NOT add `.menu` — daisyUI's `.menu > li > *` selector
+            // styles every direct child of every <li> (including decorative
+            // <span>s in the Label and the <hr> in the Separator) with
+            // padding + border-radius, painting them as fat gray pills. We
+            // render items ourselves and don't need the .menu styling.
+            "dropdown-content z-50 mt-2 w-56 list-none overflow-hidden rounded-sm border border-base-300 bg-base-100 p-1.5 shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] dark:border-navy-700 dark:bg-navy-800",
             contentClassName,
           )}
         >
