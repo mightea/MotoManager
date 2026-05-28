@@ -25,6 +25,7 @@ import {
   deleteTorqueSpecification
 } from "~/services/motorcycles";
 import { fetchFromBackend } from "~/utils/backend";
+import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -38,7 +39,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export async function clientLoader({ request, params }: Route.ClientLoaderArgs) {
-  const { user: _user, token } = await requireUser(request);
+  const { user, token } = await requireUser(request);
 
   if (!params.id) {
     throw new Response("Motorcycle ID is missing", { status: 400 });
@@ -73,8 +74,11 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   );
   const otherSpecs = otherSpecsResponses.flatMap((r) => r.torqueSpecs ?? []);
 
+  const headerStats = await computeMotorcycleHeaderStats(response, token, user.id);
+
   return data({
     ...response,
+    ...headerStats,
     allMotorcycles: otherMotorcycles,
     otherSpecs,
     printDate: new Date().toLocaleDateString("de-CH"),

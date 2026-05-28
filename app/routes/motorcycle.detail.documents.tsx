@@ -19,6 +19,7 @@ import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { fetchFromBackend } from "~/utils/backend";
+import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
 
 export type DocumentWithAssignment = DocumentSummary & {
   assignedMotorcycleNames: string[];
@@ -98,8 +99,11 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
 
   const assignedDocs = allDocs.filter((d) => assignedIds.has(d.id)).map(decorate);
 
+  const headerStats = await computeMotorcycleHeaderStats(motoResponse, token, user.id);
+
   return data({
     ...motoResponse,
+    ...headerStats,
     assignedDocs,
     docAssignments: assignments,
     allMotorcycles,
