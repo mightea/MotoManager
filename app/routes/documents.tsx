@@ -259,7 +259,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={clsx(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
                   isActive
                     ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
                     : "border-base-300 bg-base-100 text-base-content/65 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800",
