@@ -1,6 +1,24 @@
 packages:
   - '.'
 
+# Allow specific dependencies to execute their install scripts. pnpm 11
+# blocks all build scripts by default; only the entries listed here will run.
+allowBuilds:
+  esbuild: true
+  sharp: true
+  '@tailwindcss/oxide': true
+
+# Packages that are newly published and would otherwise be blocked by
+# pnpm 11's minimum-release-age supply-chain gate. Auto-managed by pnpm.
+minimumReleaseAgeExclude:
+  - '@react-router/dev@7.16.0'
+  - '@react-router/node@7.16.0'
+  - lucide-react@1.17.0
+  - react-router@7.16.0
+
+# Legacy key kept in sync with allowBuilds above for tools that still
+# read it. pnpm 11 reads `allowBuilds` instead.
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - esbuild
+  - sharp
