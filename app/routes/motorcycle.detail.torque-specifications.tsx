@@ -390,7 +390,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5 sm:py-4 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-4 print:py-3 print:!bg-white print:!text-black print:border-0">
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground dark:text-white leading-tight truncate print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
+                          <h3 className="text-sm font-semibold leading-tight truncate text-foreground dark:text-white print:text-[14px] print:font-bold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
                             {spec.name}
                           </h3>
                           <button
@@ -403,7 +403,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           </button>
                         </div>
                         {spec.description && (
-                          <p className="text-[10px] sm:text-xs text-base-content/60 dark:text-navy-400 max-w-xl italic truncate sm:whitespace-normal print:text-[11px] print:!text-gray-700 print:italic print:mt-0.5 print:block print:overflow-visible print:whitespace-normal">
+                          <p className="mt-0.5 text-xs leading-snug text-base-content/65 dark:text-navy-400 max-w-xl truncate sm:whitespace-normal print:text-[11px] print:!text-gray-700 print:italic print:mt-0.5 print:block print:overflow-visible print:whitespace-normal">
                             {spec.description}
                           </p>
                         )}
