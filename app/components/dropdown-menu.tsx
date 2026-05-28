@@ -227,7 +227,7 @@ function DropdownMenuRoot({
         "dropdown",
         align === "end" && "dropdown-end",
         isOpen && "dropdown-open",
-        className
+        className,
       )}
     >
       {injectedTrigger}
@@ -239,10 +239,13 @@ function DropdownMenuRoot({
           tabIndex={-1}
           onKeyDown={onKeyDown}
           className={clsx(
-            "menu dropdown-content z-50 mt-2 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-2xl ring-1 ring-base-content/5",
-            contentClassName
+            // Service-manual surface: sharp corners, paper-style shadow,
+            // motorsport-stripe signature ribbon at the top.
+            "menu dropdown-content relative z-50 mt-2 w-56 overflow-hidden rounded-sm border border-base-300 bg-base-100 p-1.5 shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] dark:border-navy-700 dark:bg-navy-800",
+            contentClassName,
           )}
         >
+          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-0 top-0 h-[2px]" />
           <DropdownMenuContext.Provider
             value={{ close, registerItem, setActiveKey, activeKey }}
           >
@@ -298,16 +301,16 @@ function Item({
         onFocus={() => ctx.setActiveKey(key)}
         onClick={onClick}
         className={clsx(
-          "flex w-full items-center gap-3 rounded-field px-3 py-2 text-left text-sm font-medium",
+          "flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-sm font-medium transition-colors",
           variant === "destructive"
             ? "text-error hover:bg-error/10 focus:bg-error/10"
-            : "text-base-content/80 hover:bg-base-200 focus:bg-base-200",
+            : "text-base-content/85 hover:bg-base-200 focus:bg-base-200 dark:text-navy-200 dark:hover:bg-navy-700/70 dark:focus:bg-navy-700/70",
           disabled && "opacity-50",
-          className
+          className,
         )}
         {...rest}
       >
-        {icon ? <span className="shrink-0">{icon}</span> : null}
+        {icon ? <span className="shrink-0 text-base-content/55 dark:text-navy-300">{icon}</span> : null}
         <span className="flex-1">{children}</span>
       </button>
     </li>
@@ -318,8 +321,8 @@ function Separator({ className }: { className?: string }) {
   // The <li> is presentational so the parent <ul role="menu"> structure stays
   // valid HTML; the inner <hr> carries the actual separator semantics.
   return (
-    <li role="none" className={clsx("my-1", className)}>
-      <hr aria-orientation="horizontal" className="h-px border-0 bg-base-300" />
+    <li role="none" className={clsx("my-1 px-1", className)}>
+      <hr aria-orientation="horizontal" className="h-px border-0 bg-base-300 dark:bg-navy-700" />
     </li>
   );
 }
@@ -329,11 +332,12 @@ function Label({ children, className }: { children: ReactNode; className?: strin
     <li
       role="presentation"
       className={clsx(
-        "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-base-content/60",
-        className
+        "mt-1 mb-1 flex items-center gap-2 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400",
+        className,
       )}
     >
-      {children}
+      <span aria-hidden="true" className="h-px w-3 bg-base-content/30 dark:bg-navy-500" />
+      <span className="truncate">{children}</span>
     </li>
   );
 }
