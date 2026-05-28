@@ -6,7 +6,7 @@ import { requireUser } from "~/services/auth";
 import { listExpenses, createExpense, updateExpense, deleteExpense } from "~/services/expenses";
 import { getCurrencies } from "~/services/settings";
 import { fetchFromBackend } from "~/utils/backend";
-import { Plus, Receipt, Calendar, Info, Pencil, Car } from "lucide-react";
+import { Plus, Receipt, Calendar, Pencil, Car } from "lucide-react";
 import { ExpenseDialog } from "~/components/expense-dialog";
 import { EmptyState } from "~/components/empty-state";
 import { formatCurrency } from "~/utils/numberUtils";
@@ -130,36 +130,30 @@ export default function FleetExpenses() {
             }
           />
         ) : (
-          expenses.map(expense => (
-            <div
-              key={expense.id}
-              className="group relative flex items-start justify-between gap-4 rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-800"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 dark:bg-navy-900 dark:text-navy-300">
-                    {expense.category}
-                  </span>
-                  <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
-                    <Calendar className="h-3 w-3" aria-hidden="true" />
-                    {new Date(expense.date).toLocaleDateString("de-CH")}
-                  </span>
-                </div>
+          expenses.map(expense => {
+            const heading = expense.description || expense.category;
+            const showCategoryBadge = Boolean(expense.description);
+            return (
+              <div
+                key={expense.id}
+                className="group relative flex items-start justify-between gap-4 rounded-sm border border-base-300/70 bg-base-100 px-4 py-3 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-800"
+              >
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold leading-snug text-foreground dark:text-white truncate">
+                    {heading}
+                  </h3>
 
-                <h3 className="mt-1.5 font-numeric text-lg font-semibold tabular-nums truncate text-foreground dark:text-white">
-                  {formatCurrency(expense.amount, expense.currency)}
-                </h3>
-
-                {expense.description && (
-                  <p className="mt-1 flex items-center gap-1.5 text-xs leading-snug text-base-content/65 dark:text-navy-400 line-clamp-1">
-                    <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
-                    {expense.description}
-                  </p>
-                )}
-
-                {expense.motorcycleIds && expense.motorcycleIds.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {expense.motorcycleIds.map(mid => {
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+                      <Calendar className="h-3 w-3" aria-hidden="true" />
+                      {new Date(expense.date).toLocaleDateString("de-CH")}
+                    </span>
+                    {showCategoryBadge && (
+                      <span className="inline-flex items-center rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 dark:bg-navy-900 dark:text-navy-300">
+                        {expense.category}
+                      </span>
+                    )}
+                    {expense.motorcycleIds?.map(mid => {
                       const m = motorcycles.find(bike => bike.id === mid);
                       return m ? (
                         <span
@@ -172,18 +166,23 @@ export default function FleetExpenses() {
                       ) : null;
                     })}
                   </div>
-                )}
-              </div>
+                </div>
 
-              <button
-                onClick={() => openEditDialog(expense)}
-                aria-label="Ausgabe bearbeiten"
-                className="rounded-sm p-1.5 text-base-content/55 transition-colors hover:bg-base-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="font-numeric text-base sm:text-lg font-semibold tabular-nums text-foreground dark:text-white whitespace-nowrap">
+                    {formatCurrency(expense.amount, expense.currency)}
+                  </span>
+                  <button
+                    onClick={() => openEditDialog(expense)}
+                    aria-label="Ausgabe bearbeiten"
+                    className="rounded-sm p-1.5 text-base-content/55 transition-colors hover:bg-base-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-primary-light"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
