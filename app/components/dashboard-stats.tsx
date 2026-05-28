@@ -123,7 +123,7 @@ function Gauge({
     <div className="group relative flex gap-2.5 rounded-sm border border-base-300/70 bg-base-100 px-2.5 py-2 shadow-[0_1px_0_0_rgba(0,0,0,0.02)] transition-colors hover:border-base-content/20 dark:bg-navy-800">
       <div className={clsx("w-[3px] shrink-0 rounded-full", railClass)} aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <dt className="flex items-center gap-1.5 font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-base-content/55">
+        <dt className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
           <span className="text-base-content/30 tabular-nums">{code}</span>
           <span className="h-px w-1.5 bg-base-content/30" aria-hidden="true" />
           <span className="truncate">{label}</span>
@@ -138,14 +138,14 @@ function Gauge({
           <span
             className={clsx(
               "font-semibold",
-              variant === "number" ? "font-numeric" : "font-display uppercase tracking-wide",
+              variant === "number" ? "font-numeric" : "font-subdisplay",
               valueClass,
             )}
           >
             {value}
           </span>
           {unit && (
-            <span className="ml-1 font-mono text-[10px] font-medium tracking-wider uppercase text-base-content/50">
+            <span className="ml-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
               {unit}
             </span>
           )}

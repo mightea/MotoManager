@@ -128,16 +128,16 @@ export function CardHeading({
     >
       <div className="flex items-center gap-2.5 min-w-0">
         {code && (
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-base-content/45 tabular-nums shrink-0">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 tabular-nums shrink-0">
             {code}
           </span>
         )}
         {code && <span aria-hidden="true" className="h-px w-3 bg-base-content/25 shrink-0" />}
-        <Tag className="font-display text-[0.95rem] uppercase tracking-wide leading-none text-base-content truncate">
+        <Tag className="font-subdisplay text-[0.95rem] leading-none text-base-content truncate">
           {title}
         </Tag>
         {meta && (
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/50 truncate">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 truncate">
             · {meta}
           </span>
         )}
@@ -180,7 +180,7 @@ export function CardAction({
   className?: string;
 }) {
   const cls = clsx(
-    "inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25",
+    "inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25",
     className,
   );
 

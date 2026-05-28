@@ -133,7 +133,7 @@ export function MaintenanceForm({
     const LocationFields = () => (
         <>
             <div className="space-y-1.5 sm:col-span-2">
-                <label htmlFor="locationName" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+                <label htmlFor="locationName" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
                     {type === "service" ? "Werkstatt / Ort" : "Standort"}
                 </label>
                 <div className="flex gap-2">
@@ -182,7 +182,7 @@ export function MaintenanceForm({
              
                          {/* Type Selection */}
                          <div className="space-y-1.5">
-                             <label htmlFor="type" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Typ</label>
+                             <label htmlFor="type" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Typ</label>
                              <select
                                  name="type"
                                  id="type"                    value={type}
@@ -200,7 +200,7 @@ export function MaintenanceForm({
             <div className="grid gap-5 sm:grid-cols-2">
                 {/* Common Fields */}
                 <div className="space-y-1.5">
-                    <label htmlFor="date" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Datum</label>
+                    <label htmlFor="date" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Datum</label>
                     <input
                         suppressHydrationWarning
                         type="date"
@@ -212,7 +212,7 @@ export function MaintenanceForm({
                     />
                 </div>
                 <div className="space-y-1.5">
-                    <label htmlFor="odo" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Kilometerstand</label>
+                    <label htmlFor="odo" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Kilometerstand</label>
                     <input
                         type="number"
                         name="odo"
@@ -225,7 +225,7 @@ export function MaintenanceForm({
 
                 {type !== "location" && type !== "fuel" && (
                     <div className="space-y-1.5">
-                        <label htmlFor="cost" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Kosten</label>
+                        <label htmlFor="cost" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Kosten</label>
                         <div className="flex rounded-xl shadow-sm">
                             <input
                                 type="number"
@@ -253,7 +253,7 @@ export function MaintenanceForm({
 
                 {type === "fuel" && (
                     <div className="space-y-1.5">
-                        <label htmlFor="cost" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Gesamtkosten</label>
+                        <label htmlFor="cost" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Gesamtkosten</label>
                         <div className="flex rounded-xl shadow-sm">
                             <input
                                 type="number"
@@ -284,7 +284,7 @@ export function MaintenanceForm({
                 {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="brand" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Marke / Hersteller</label>
+                            <label htmlFor="brand" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Marke / Hersteller</label>
                             <input
                                 type="text"
                                 name="brand"
@@ -295,7 +295,7 @@ export function MaintenanceForm({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="model" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Modell / Typ</label>
+                            <label htmlFor="model" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Modell / Typ</label>
                             <input
                                 type="text"
                                 name="model"
@@ -312,7 +312,7 @@ export function MaintenanceForm({
                     <>
                         <LocationFields />
                         <div className="space-y-3 sm:col-span-2">
-                            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400 block">
+                            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400 block">
                                 Ausgeführte Arbeiten (werden als separate Einträge erfasst)
                             </span>
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -364,7 +364,7 @@ export function MaintenanceForm({
                 {/* Location Specifics */}
                 {type === "location" && (
                     <div className="space-y-1.5 sm:col-span-2">
-                        <label htmlFor="locationId" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+                        <label htmlFor="locationId" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
                             Standort
                         </label>
                         <div className="space-y-2">
@@ -417,7 +417,7 @@ export function MaintenanceForm({
                 {type === "tire" && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="tirePosition" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Position</label>
+                            <label htmlFor="tirePosition" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Position</label>
                             <select
                                 name="tirePosition"
                                 id="tirePosition"
@@ -430,7 +430,7 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="tireSize" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Grösse</label>
+                            <label htmlFor="tireSize" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Grösse</label>
                             <input
                                 type="text"
                                 name="tireSize"
@@ -441,7 +441,7 @@ export function MaintenanceForm({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="dotCode" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">DOT Code</label>
+                            <label htmlFor="dotCode" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">DOT Code</label>
                             <input
                                 type="text"
                                 name="dotCode"
@@ -458,7 +458,7 @@ export function MaintenanceForm({
                 {type === "fluid" && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="fluidType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Art</label>
+                            <label htmlFor="fluidType" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Art</label>
                             <select
                                 name="fluidType"
                                 id="fluidType"
@@ -474,7 +474,7 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="oilType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Öl-Typ</label>
+                            <label htmlFor="oilType" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Öl-Typ</label>
                             <select
                                 name="oilType"
                                 id="oilType"
@@ -488,7 +488,7 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="viscosity" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Viskosität</label>
+                            <label htmlFor="viscosity" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Viskosität</label>
                             <input
                                 type="text"
                                 name="viscosity"
@@ -504,7 +504,7 @@ export function MaintenanceForm({
                 {/* Battery Specifics */}
                 {type === "battery" && (
                     <div className="space-y-1.5">
-                        <label htmlFor="batteryType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Batterietyp</label>
+                        <label htmlFor="batteryType" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Batterietyp</label>
                         <select
                             name="batteryType"
                             id="batteryType"
@@ -523,7 +523,7 @@ export function MaintenanceForm({
                 {/* Inspection Specifics */}
                 {type === "inspection" && (
                     <div className="space-y-1.5 sm:col-span-2">
-                        <label htmlFor="inspectionLocation" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Prüfstelle</label>
+                        <label htmlFor="inspectionLocation" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Prüfstelle</label>
                         <input
                             type="text"
                             name="inspectionLocation"
@@ -539,7 +539,7 @@ export function MaintenanceForm({
                 {type === "fuel" && (
                     <>
                         <div className="space-y-1.5">
-                            <label htmlFor="fuelType" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Kraftstoffart</label>
+                            <label htmlFor="fuelType" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Kraftstoffart</label>
                             <select
                                 name="fuelType"
                                 id="fuelType"
@@ -552,7 +552,7 @@ export function MaintenanceForm({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="fuelAmount" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Menge (Liter)</label>
+                            <label htmlFor="fuelAmount" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Menge (Liter)</label>
                             <input
                                 type="number"
                                 name="fuelAmount"
@@ -565,7 +565,7 @@ export function MaintenanceForm({
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <label htmlFor="pricePerUnit" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Preis pro Liter</label>
+                            <label htmlFor="pricePerUnit" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Preis pro Liter</label>
                             <input
                                 type="number"
                                 name="pricePerUnit"
@@ -583,7 +583,7 @@ export function MaintenanceForm({
             </div>
 
             <div className="space-y-1.5">
-                <label htmlFor="description" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Beschreibung</label>
+                <label htmlFor="description" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Beschreibung</label>
                 <textarea
                     name="description"
                     id="description"

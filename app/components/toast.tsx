@@ -72,11 +72,11 @@ function ToastItem({ toast }: { toast: Toast }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className={clsx("font-mono text-[10px] font-semibold uppercase tracking-[0.22em] tabular-nums", config.iconColor)}>
+          <span className={clsx("font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums", config.iconColor)}>
             {variantCode[toast.variant]}
           </span>
           <span aria-hidden="true" className="h-px w-3 bg-base-content/20" />
-          <p className="font-display text-sm uppercase tracking-wide leading-none truncate">{toast.title}</p>
+          <p className="font-subdisplay text-sm leading-none truncate">{toast.title}</p>
         </div>
         {toast.description && (
           <p className="mt-1.5 text-xs leading-snug text-base-content/70">{toast.description}</p>

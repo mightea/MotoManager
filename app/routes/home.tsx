@@ -423,7 +423,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-sm border border-base-300 bg-base-100 px-3 py-2 text-sm font-medium text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-800"
               >
-                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-base-content/50">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
                   Sort
                 </span>
                 <span className="h-3 w-px bg-base-300 dark:bg-navy-600" aria-hidden="true" />
@@ -462,7 +462,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {!isAddOpen && (
         <button
           onClick={() => setIsAddOpen(true)}
-          className="group fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary px-4 py-3 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] motion-safe:transition-all motion-safe:active:scale-95 hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:focus-visible:ring-offset-navy-950 sm:hidden"
+          className="group fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] motion-safe:transition-all motion-safe:active:scale-95 hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:focus-visible:ring-offset-navy-950 sm:hidden"
           aria-label="Neues Motorrad hinzufügen"
         >
           <Plus className="h-4 w-4" />

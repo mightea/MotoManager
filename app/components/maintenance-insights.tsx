@@ -122,7 +122,7 @@ export function MaintenanceInsightsCard({
 
               return (
                 <div key={category}>
-                  <h3 className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-base-content/50">
+                  <h3 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
                     {category}
                   </h3>
                   <ul className="space-y-2">
@@ -162,7 +162,7 @@ export function MaintenanceInsightsCard({
                             </p>
                             <p
                               suppressHydrationWarning
-                              className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] leading-snug text-base-content/55 dark:text-navy-400"
+                              className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] leading-snug text-base-content/55 dark:text-navy-400"
                             >
                               {meta || "Keine Daten"}
                             </p>

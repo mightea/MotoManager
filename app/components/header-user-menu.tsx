@@ -19,7 +19,7 @@ export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
     return (
       <Link
         to="/auth/login"
-        className="relative hidden h-10 items-center rounded-sm bg-primary px-4 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_8px_18px_-10px_rgba(0,138,201,0.7)] transition-all hover:brightness-105 md:inline-flex"
+        className="relative hidden h-10 items-center rounded-sm bg-primary px-4 font-subdisplay text-sm text-primary-content shadow-[0_8px_18px_-10px_rgba(0,138,201,0.7)] transition-all hover:brightness-105 md:inline-flex"
       >
         Login
         <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
@@ -40,7 +40,7 @@ export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
             <span className="grid h-7 w-7 place-items-center rounded-sm bg-primary/15 font-mono text-xs font-semibold uppercase tracking-wider text-primary dark:bg-primary/25 dark:text-primary-light">
               {user.username.charAt(0).toUpperCase()}
             </span>
-            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-base-content/80">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-base-content/80">
               {user.username}
             </span>
             <ChevronDown className="h-3.5 w-3.5 text-base-content/50" />

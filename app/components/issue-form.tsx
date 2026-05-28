@@ -71,7 +71,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
         <div className="space-y-1.5">
           <label
             htmlFor="date"
-            className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+            className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
           >
             Datum
           </label>
@@ -87,7 +87,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
         <div className="space-y-1.5">
           <label
             htmlFor="odo"
-            className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+            className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
           >
             Kilometerstand
           </label>
@@ -105,7 +105,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="status"
-          className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
         >
           Status
         </label>
@@ -126,7 +126,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="priority"
-          className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
         >
           Priorität
         </label>
@@ -147,7 +147,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="description"
-          className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
         >
           Beschreibung
         </label>

@@ -80,7 +80,7 @@ export function MotorcycleInfoCard({
               <button
                 type="button"
                 onClick={onEdit}
-                className="inline-flex items-center rounded-sm border border-base-content/15 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-200"
+                className="inline-flex items-center rounded-sm border border-base-content/15 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-200"
               >
                 Bearbeiten
               </button>
@@ -250,10 +250,10 @@ export function MotorcycleInfoCard({
                     className="group relative flex items-center justify-between gap-3 rounded-sm border border-base-300 bg-base-100 px-3 py-2.5 transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-900/50"
                   >
                     <div className="min-w-0">
-                      <p className="font-display text-sm uppercase tracking-wide text-base-content dark:text-white truncate">
+                      <p className="font-subdisplay text-sm text-base-content dark:text-white truncate">
                         {owner.name} {owner.surname}
                       </p>
-                      <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-base-content/55">
+                      <p className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
                         Kauf · {owner.purchaseDate}
                       </p>
                     </div>
@@ -269,7 +269,7 @@ export function MotorcycleInfoCard({
                 ))}
               </ul>
             ) : (
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-base-content/55">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
                 Keine Vorbesitzer · 1. Hand
               </p>
             )}

@@ -56,7 +56,7 @@ export function Modal({
 
           <div className="flex items-start justify-between px-6 py-4">
             <div className="min-w-0 pr-4">
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-base-content/50 tabular-nums">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 tabular-nums">
                 {code}
               </p>
               <h3

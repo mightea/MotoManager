@@ -781,10 +781,10 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-display text-sm uppercase tracking-wide text-base-content dark:text-white">
+                            <span className="font-subdisplay text-sm text-base-content dark:text-white">
                               {expense.category}
                             </span>
-                            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-base-content/45">
+                            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/45">
                               {new Date(expense.date).toLocaleDateString("de-CH")}
                             </span>
                           </div>
@@ -799,7 +799,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                             {formatCurrency(proratedAmount, expense.currency)}
                           </div>
                           {factor > 1 && (
-                            <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-base-content/45">
+                            <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/45">
                               1/{factor} von {formatCurrency(expense.amount, expense.currency)}
                             </div>
                           )}

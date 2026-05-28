@@ -72,14 +72,14 @@ export function HeaderMobilePanel({
                     )}
                     <span
                       className={clsx(
-                        "font-mono text-[10px] font-medium uppercase tracking-[0.18em] tabular-nums",
+                        "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums",
                         isActive ? "text-primary" : "text-base-content/40",
                       )}
                     >
                       {code}
                     </span>
                     <span className="h-3 w-px bg-base-content/15" aria-hidden="true" />
-                    <span className="font-display text-base uppercase tracking-wider">{item.label}</span>
+                    <span className="font-subdisplay text-base">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -94,10 +94,10 @@ export function HeaderMobilePanel({
                 {user.username.charAt(0).toUpperCase()}
               </span>
               <div className="flex flex-col leading-tight">
-                <span className="font-display text-sm uppercase tracking-wide text-base-content">
+                <span className="font-subdisplay text-sm text-base-content">
                   {user.username}
                 </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-base-content/55">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
                   {user.role}
                 </span>
               </div>
@@ -106,7 +106,7 @@ export function HeaderMobilePanel({
             <Link
               to="/settings"
               onClick={onClose}
-              className="flex items-center gap-3 rounded-sm px-4 py-3 font-display text-sm uppercase tracking-wider text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-800"
+              className="flex items-center gap-3 rounded-sm px-4 py-3 font-subdisplay text-sm text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-800"
             >
               <Settings className="h-4 w-4" />
               Einstellungen
@@ -116,7 +116,7 @@ export function HeaderMobilePanel({
               <Link
                 to="/settings/admin"
                 onClick={onClose}
-                className="flex items-center gap-3 rounded-sm px-4 py-3 font-display text-sm uppercase tracking-wider text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-800"
+                className="flex items-center gap-3 rounded-sm px-4 py-3 font-subdisplay text-sm text-base-content/70 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-800"
               >
                 <Shield className="h-4 w-4" />
                 Admin-Bereich
@@ -126,7 +126,7 @@ export function HeaderMobilePanel({
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-2 flex w-full items-center gap-3 rounded-sm px-4 py-3 font-display text-sm uppercase tracking-wider text-error transition-colors hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40"
+              className="mt-2 flex w-full items-center gap-3 rounded-sm px-4 py-3 font-subdisplay text-sm text-error transition-colors hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -138,7 +138,7 @@ export function HeaderMobilePanel({
           <Link
             to="/auth/login"
             onClick={onClose}
-            className="relative mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-4 py-3 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)]"
+            className="relative mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)]"
           >
             Login
             <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />

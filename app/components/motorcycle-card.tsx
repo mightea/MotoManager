@@ -82,7 +82,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
       <div className="relative flex items-center justify-between gap-2 border-b border-base-200 px-3 pb-1.5 pt-2 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <span className="motorsport-stripe block h-2 w-7" aria-hidden="true" />
-          <span className="font-mono text-[9px] font-medium uppercase tracking-[0.2em] text-base-content/50 tabular-nums">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 tabular-nums">
             ID · {String(moto.id).padStart(4, "0")}
           </span>
         </div>
@@ -115,7 +115,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
           <h3 className="font-display text-[1.35rem] uppercase leading-none tracking-wide text-white drop-shadow-sm line-clamp-1">
             {moto.make} <span className="text-white/85">{moto.model}</span>
           </h3>
-          <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-white/65">
+          <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white/65">
             {moto.fabricationDate ?? "Fabrikation —"}
           </p>
         </div>
@@ -175,19 +175,19 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
       {showMetaRow && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-base-200 px-3 py-2 dark:border-navy-700">
           {hasMaintenance && (
-            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-error">
+            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
               <Wrench className="h-3 w-3 shrink-0" aria-hidden="true" />
               Wartung fällig
             </span>
           )}
           {hasIssues && (
-            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
+            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
               <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
               {moto.numberOfIssues} {moto.numberOfIssues === 1 ? "Mangel" : "Mängel"}
             </span>
           )}
           {hasLocation && (
-            <span className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-base-content/55">
+            <span className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
               {moto.currentLocationName}
             </span>
@@ -231,7 +231,7 @@ function TelemetrySlot({
           {value}
         </span>
       </div>
-      <span className="font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-base-content/50">
+      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
         {caption}
       </span>
     </div>

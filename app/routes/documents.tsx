@@ -262,7 +262,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
         </div>
         <button
           onClick={openCreateDialog}
-          className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Hochladen</span>
@@ -280,7 +280,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={clsx(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors",
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
                 isActive
                   ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
                   : "border-base-300 bg-base-100 text-base-content/65 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800"

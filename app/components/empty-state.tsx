@@ -39,7 +39,7 @@ export function EmptyState({
     >
       <span
         aria-hidden="true"
-        className="absolute left-3 top-3 font-mono text-[9px] font-medium uppercase tracking-[0.25em] text-base-content/35 tabular-nums"
+        className="absolute left-3 top-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/35 tabular-nums"
       >
         § {code}
       </span>
@@ -57,7 +57,7 @@ export function EmptyState({
 
       <h3
         className={clsx(
-          "font-display uppercase tracking-wide text-base-content",
+          "font-subdisplay text-base-content",
           size === "md" ? "text-lg" : "text-base",
         )}
       >

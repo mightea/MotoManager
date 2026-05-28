@@ -189,7 +189,7 @@ export default function Settings() {
       {actionData && "error" in actionData && (
         <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] pt-0.5 opacity-70">ERR</span>
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] pt-0.5 opacity-70">ERR</span>
           <span>{actionData.error}</span>
         </div>
       )}
@@ -197,7 +197,7 @@ export default function Settings() {
       {actionData && "success" in actionData && (
         <div className="relative flex items-start gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3 text-sm text-success dark:border-success/40 dark:bg-success/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-success" />
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] pt-0.5 opacity-70">OK</span>
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] pt-0.5 opacity-70">OK</span>
           <span>{(actionData as any).success}</span>
         </div>
       )}
@@ -222,7 +222,7 @@ export default function Settings() {
           <div className="space-y-1.5">
             <label
               htmlFor="currentPassword"
-              className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+              className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
             >
               Aktuelles Passwort
             </label>
@@ -238,7 +238,7 @@ export default function Settings() {
             <div className="space-y-1.5">
               <label
                 htmlFor="newPassword"
-                className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
               >
                 Neues Passwort
               </label>
@@ -253,7 +253,7 @@ export default function Settings() {
             <div className="space-y-1.5">
               <label
                 htmlFor="confirmPassword"
-                className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
               >
                 Passwort bestätigen
               </label>

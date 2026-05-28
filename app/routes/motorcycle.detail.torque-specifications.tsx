@@ -320,7 +320,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             {otherMotorcycles.length > 0 && (
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
               >
                 <Import className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Importieren</span>
@@ -328,7 +328,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             )}
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98]"
+              className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98]"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               <span>Hinzufügen</span>
@@ -348,7 +348,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
         {actionData && "error" in actionData && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10 print:hidden">
             <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] pt-0.5 opacity-70">ERR</span>
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] pt-0.5 opacity-70">ERR</span>
             <span>{actionData.error}</span>
           </div>
         )}
@@ -417,7 +417,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                       <div className="flex items-center justify-end gap-3 sm:gap-8 shrink-0 print:flex print:gap-8 print:items-start print:text-right print:border-0 print:pt-0">
                         {spec.toolSize && (
                           <div className="flex flex-col items-end sm:gap-0.5">
-                            <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 print:block print:text-[10px] print:!text-gray-600 print:mb-0.5">Werkzeug</span>
+                            <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-secondary/40 dark:text-navy-500 print:block print:text-[10px] print:!text-gray-600 print:mb-0.5">Werkzeug</span>
                             <div className="flex items-center gap-1.5 rounded-lg bg-gray-50/50 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-foreground dark:bg-navy-900 dark:text-navy-100 border border-gray-200/40 dark:border-navy-700 shadow-sm print:!bg-white print:border-none print:shadow-none print:p-0 print:text-[14px] print:font-bold print:!text-black">
                               <Wrench className="h-3 w-3 text-secondary/70 dark:text-navy-400 print:hidden" />
                               <span>{spec.toolSize}</span>
@@ -426,7 +426,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                         )}
 
                         <div className="flex flex-col items-end min-w-[65px] sm:min-w-[80px]">
-                          <span className="hidden sm:block text-[9px] font-bold uppercase tracking-wider text-secondary/40 dark:text-navy-500 mb-0.5 print:block print:text-[10px] print:!text-gray-600">Drehmoment</span>
+                          <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-secondary/40 dark:text-navy-500 mb-0.5 print:block print:text-[10px] print:!text-gray-600">Drehmoment</span>
                           <div className="flex items-center gap-1.5 sm:gap-2">
                             <div className="flex items-baseline gap-0.5 sm:gap-1">
                               <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground dark:text-white tabular-nums leading-none print:text-[14px] print:font-bold print:!text-black">

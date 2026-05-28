@@ -130,7 +130,7 @@ export function AddMotorcycleForm({
           )}
           {/* Image Upload Field */}
           <div className="space-y-1.5 sm:col-span-2">
-            <label htmlFor="image-upload" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Bild</label>
+            <label htmlFor="image-upload" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Bild</label>
             <div className="flex items-start gap-4">
               {initialValues?.image && !croppedImageUrl && (
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-navy-700">
@@ -255,7 +255,7 @@ export function AddMotorcycleForm({
           />
 
           <div className="space-y-1.5">
-            <label htmlFor="purchasePrice" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Kaufpreis</label>
+            <label htmlFor="purchasePrice" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Kaufpreis</label>
             <div className="flex rounded-xl shadow-sm">
               <input
                 type="number"

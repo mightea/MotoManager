@@ -257,7 +257,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
             onClick={() => setFilter("fuel")}
           />
         </div>
-        <div className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-secondary/50 dark:text-navy-500">
+        <div className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500">
           {groupedRecords.length} {groupedRecords.length === 1 ? 'Eintrag' : 'Einträge'}
         </div>
       </div>
@@ -494,7 +494,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
 
                                   {childRecords.length > 0 && (
                                     <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-navy-700">
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-secondary dark:text-navy-500">
+                                      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-500">
                                         Eingeschlossene Arbeiten
                                       </span>
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">

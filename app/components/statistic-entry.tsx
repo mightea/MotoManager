@@ -37,7 +37,7 @@ export function StatisticEntry({
     <div className="flex items-center justify-between gap-4 py-1.5">
       <div className="flex items-center gap-2 text-base-content/65 dark:text-navy-300 min-w-0">
         <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
-        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] truncate">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] truncate">
           {label}
         </span>
       </div>

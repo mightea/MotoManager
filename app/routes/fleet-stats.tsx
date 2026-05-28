@@ -190,7 +190,7 @@ export default function FleetStatsPage() {
         <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
           <div className="flex items-center gap-3 text-primary dark:text-primary-light mb-2">
             <TrendingUp className="h-5 w-5" />
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em]">Gesamtdistanz</span>
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">Gesamtdistanz</span>
           </div>
           <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
             {formatNumber(stats.overall.totalDistance)} km
@@ -199,7 +199,7 @@ export default function FleetStatsPage() {
         <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
           <div className="flex items-center gap-3 text-emerald-500 mb-2">
             <Wallet className="h-5 w-5" />
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em]">Gesamtkosten</span>
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">Gesamtkosten</span>
           </div>
           <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
             {formatCurrency(stats.overall.totalCost)}
@@ -213,7 +213,7 @@ export default function FleetStatsPage() {
         <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
           <div className="flex items-center gap-3 text-amber-500 mb-2">
             <Bike className="h-5 w-5" />
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em]">Aktueller Fuhrpark</span>
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">Aktueller Fuhrpark</span>
           </div>
           <div className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white tabular-nums">
             {stats.yearly[0]?.motorcycleCount || 0} Bikes

@@ -60,7 +60,7 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
         </p>
         <p
           suppressHydrationWarning
-          className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-base-content/55 dark:text-navy-400"
+          className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55 dark:text-navy-400"
         >
           {issue.date ? dateFormatter.format(new Date(issue.date)) : "Datum unbekannt"}
         </p>
@@ -68,7 +68,7 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
 
       <span
         className={clsx(
-          "shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.18em]",
+          "shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]",
           cfg.tone,
         )}
       >

@@ -31,13 +31,13 @@ export function HeaderDesktopNav({ items }: { items: NavItem[] }) {
               >
                 <span
                   className={clsx(
-                    "font-mono text-[9px] tracking-[0.2em] uppercase transition-colors",
-                    isActive ? "text-primary" : "text-base-content/40 group-hover:text-base-content/60"
+                    "font-mono text-[10px] font-semibold tracking-[0.14em] uppercase tabular-nums transition-colors",
+                    isActive ? "text-primary" : "text-base-content/45 group-hover:text-base-content/65"
                   )}
                 >
                   {code}
                 </span>
-                <span className="font-display text-sm uppercase tracking-wider leading-none">
+                <span className="font-subdisplay text-sm leading-none">
                   {item.label}
                 </span>
                 {/* Active marker — the motorsport stripe ribbon */}

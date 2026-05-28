@@ -81,7 +81,7 @@ export function ImportTorqueSpecsDialog({
       <div className="space-y-4">
         {/* Step 1: Select Motorcycle */}
         <div className="space-y-1.5">
-          <label htmlFor="source-motorcycle" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+          <label htmlFor="source-motorcycle" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
             Quelle wählen
           </label>
           <select

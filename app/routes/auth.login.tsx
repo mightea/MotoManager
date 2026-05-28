@@ -262,7 +262,7 @@ export default function Login() {
             <span aria-hidden="true" className="motorsport-stripe absolute inset-x-0 top-0 h-[3px]" />
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-[10px] font-medium uppercase tracking-[0.25em] text-base-content/55">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
                   § 00 / Login · Garage
                 </p>
                 <h1 className="mt-2 font-display text-4xl uppercase leading-[0.95] tracking-wide text-base-content dark:text-white">
@@ -283,10 +283,10 @@ export default function Login() {
             {isFirstUser ? (
               <div className="space-y-6">
                 <div className="relative rounded-sm border border-dashed border-primary/40 bg-primary/5 p-4 dark:border-primary/40 dark:bg-primary/10">
-                  <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-primary">
+                  <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
                     § A · Administrator-Setup
                   </p>
-                  <h2 className="mt-1 font-display text-lg uppercase tracking-wide text-base-content dark:text-gray-100">
+                  <h2 className="mt-1 font-subdisplay text-lg text-base-content dark:text-gray-100">
                     Erstes Konto
                   </h2>
                   <p className="mt-1.5 text-xs leading-relaxed text-base-content/65 dark:text-navy-300">
@@ -302,7 +302,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="name"
-                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
                       >
                         Vollständiger Name
                       </label>
@@ -321,7 +321,7 @@ export default function Login() {
                         />
                       </div>
                       {fieldErrors?.name && (
-                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
+                        <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
                           {fieldErrors.name}
                         </p>
                       )}
@@ -330,7 +330,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="email"
-                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
                       >
                         E-Mail Adresse
                       </label>
@@ -350,7 +350,7 @@ export default function Login() {
                         />
                       </div>
                       {fieldErrors?.email && (
-                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
+                        <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
                           {fieldErrors.email}
                         </p>
                       )}
@@ -359,7 +359,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="username"
-                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
                       >
                         Benutzername
                       </label>
@@ -380,7 +380,7 @@ export default function Login() {
                         />
                       </div>
                       {fieldErrors?.username && (
-                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
+                        <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
                           {fieldErrors.username}
                         </p>
                       )}
@@ -390,7 +390,7 @@ export default function Login() {
                       <div className="group relative">
                         <label
                           htmlFor="new-password"
-                          className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                          className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
                         >
                           Passwort
                         </label>
@@ -409,7 +409,7 @@ export default function Login() {
                           />
                         </div>
                         {fieldErrors?.password && (
-                          <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
+                          <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
                             {fieldErrors.password}
                           </p>
                         )}
@@ -417,7 +417,7 @@ export default function Login() {
                       <div className="group relative">
                         <label
                           htmlFor="confirm-password"
-                          className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                          className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
                         >
                           Bestätigen
                         </label>
@@ -436,7 +436,7 @@ export default function Login() {
                           />
                         </div>
                         {fieldErrors?.confirmPassword && (
-                          <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
+                          <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
                             {fieldErrors.confirmPassword}
                           </p>
                         )}
@@ -447,7 +447,7 @@ export default function Login() {
                   {registerError && (
                     <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
                       <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-                      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-error/70 pt-0.5">ERR</span>
+                      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-error/70 pt-0.5">ERR</span>
                       {registerError}
                     </div>
                   )}
@@ -456,7 +456,7 @@ export default function Login() {
                     type="submit"
                     onClick={() => trackEvent("register_submit")}
                     disabled={isRegisterSubmitting}
-                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
+                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                   >
                     <span className="relative z-10">
                       {isRegisterSubmitting ? "Wird erstellt..." : "System initialisieren"}
@@ -478,7 +478,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="identifier"
-                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
                       >
                         E-Mail oder Benutzername
                       </label>
@@ -499,7 +499,7 @@ export default function Login() {
                         />
                       </div>
                       {fieldErrors?.identifier && (
-                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
+                        <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
                           {fieldErrors.identifier}
                         </p>
                       )}
@@ -508,7 +508,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="password"
-                        className="mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
                       >
                         Passwort
                       </label>
@@ -528,7 +528,7 @@ export default function Login() {
                         />
                       </div>
                       {fieldErrors?.password && (
-                        <p className="mt-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-error">
+                        <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
                           {fieldErrors.password}
                         </p>
                       )}
@@ -538,7 +538,7 @@ export default function Login() {
                   {loginError && (
                     <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
                       <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-                      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-error/70 pt-0.5">ERR</span>
+                      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-error/70 pt-0.5">ERR</span>
                       {loginError}
                     </div>
                   )}
@@ -546,7 +546,7 @@ export default function Login() {
                   {passkeyError && (
                     <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-4 py-3 text-sm text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
                       <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-[var(--color-workshop)]" />
-                      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-workshop)] pt-0.5">WARN</span>
+                      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-workshop)] pt-0.5">WARN</span>
                       {passkeyError}
                     </div>
                   )}
@@ -556,7 +556,7 @@ export default function Login() {
                       type="submit"
                       onClick={() => trackEvent("login_submit")}
                       disabled={isLoginSubmitting}
-                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-display text-sm uppercase tracking-wider text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
+                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(0,138,201,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(0,138,201,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                     >
                       <span className="relative z-10">
                         {isLoginSubmitting ? "Authentifizierung..." : "Login"}
@@ -570,7 +570,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={handlePasskeyLogin}
-                      className="flex w-full items-center justify-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-base-content/75 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800/60 dark:text-navy-300 dark:hover:border-navy-500 dark:hover:text-white"
+                      className="flex w-full items-center justify-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-base-content/75 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800/60 dark:text-navy-300 dark:hover:border-navy-500 dark:hover:text-white"
                     >
                       <Fingerprint className="h-4 w-4" />
                       <span>Passkey-Login</span>
@@ -582,7 +582,7 @@ export default function Login() {
           </div>
 
           <div className="border-t border-base-300 bg-base-200/50 px-6 py-4 text-center dark:border-navy-700 dark:bg-navy-950/40">
-            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-base-content/50 dark:text-navy-400">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 dark:text-navy-400">
               © {new Date().getFullYear()} · MotoManager · v{version}
             </p>
           </div>

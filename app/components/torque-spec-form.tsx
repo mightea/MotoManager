@@ -55,7 +55,7 @@ export function TorqueSpecForm({
       {initialValues && <input type="hidden" name="torqueId" value={initialValues.id} />}
 
       <div className="space-y-1.5">
-        <label htmlFor="category" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+        <label htmlFor="category" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
           Kategorie
         </label>
         <input
@@ -76,7 +76,7 @@ export function TorqueSpecForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="name" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+        <label htmlFor="name" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
           Bezeichnung
         </label>
         <input
@@ -91,7 +91,7 @@ export function TorqueSpecForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="toolSize" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+        <label htmlFor="toolSize" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
           Werkzeuggröße (Optional)
         </label>
         <input
@@ -105,7 +105,7 @@ export function TorqueSpecForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="torque" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+        <label htmlFor="torque" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
           Wert
         </label>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -165,7 +165,7 @@ export function TorqueSpecForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="description" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+        <label htmlFor="description" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
           Beschreibung (Optional)
         </label>
         <textarea

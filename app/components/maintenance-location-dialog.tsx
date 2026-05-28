@@ -57,7 +57,7 @@ export function MaintenanceLocationDialog({ isOpen, onClose, onSave }: Maintenan
         >
             <div className="space-y-6">
                 <div className="space-y-1.5">
-                    <label htmlFor="modalLocationName" className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">
+                    <label htmlFor="modalLocationName" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
                         Name des Standorts
                     </label>
                     <input
@@ -71,7 +71,7 @@ export function MaintenanceLocationDialog({ isOpen, onClose, onSave }: Maintenan
                 </div>
 
                 <div className="space-y-1.5">
-                    <span className="block font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-base-content/60 dark:text-navy-400">Koordinaten (optional)</span>
+                    <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Koordinaten (optional)</span>
                     <div className="flex flex-wrap gap-2">
                         <div className="flex-1 min-w-[200px] rounded-xl border border-gray-200 bg-gray-100 p-3 text-sm text-secondary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-400">
                             {lat && lng ? `${lat.toFixed(6)}, ${lng.toFixed(6)}` : "Kein genauer Standort erfasst"}

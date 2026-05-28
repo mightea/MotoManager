@@ -37,10 +37,10 @@ export default function OpenIssuesCard({
           <div className="flex items-center gap-3 rounded-sm border border-dashed border-base-300 bg-base-100/40 px-4 py-4 dark:border-navy-600 dark:bg-navy-900/30">
             <ShieldCheck className="h-5 w-5 shrink-0 text-success" aria-hidden="true" />
             <div className="min-w-0">
-              <p className="font-display text-sm uppercase tracking-wide text-base-content">
+              <p className="font-subdisplay text-sm text-base-content">
                 Keine Mängel
               </p>
-              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-base-content/55">
+              <p className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55">
                 Fahrzeug ist fahrbereit
               </p>
             </div>
