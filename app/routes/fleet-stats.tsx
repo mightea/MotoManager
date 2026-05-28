@@ -195,7 +195,7 @@ export default function FleetStatsPage() {
 
   if (activeYearlyStats.length === 0) {
     return (
-      <div className="container mx-auto px-4 pt-3 pb-24 max-w-2xl">
+      <div className="container mx-auto px-4 pt-3 pb-24">
         <EmptyState
           icon={BarChart3}
           title="Noch keine Statistiken"
@@ -215,7 +215,7 @@ export default function FleetStatsPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-6 px-4 pt-3 pb-24 animate-fade-in md:p-6 md:space-y-8">
+    <div className="container mx-auto space-y-6 px-4 pt-3 pb-24 animate-fade-in md:p-6 md:space-y-8">
       {/* Overall Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <SummaryCard

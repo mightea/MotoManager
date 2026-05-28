@@ -99,7 +99,7 @@ export default function FleetExpenses() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-4 px-4 pt-3 pb-24">
+    <div className="container mx-auto space-y-4 px-4 pt-3 pb-24">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-3 dark:border-navy-700">
         <p className="min-w-0 flex-1 text-sm text-base-content/65 dark:text-navy-400">
           Versicherungen, Steuern und andere Ausgaben, die mehrere Motorräder gemeinsam betreffen.
