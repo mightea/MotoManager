@@ -62,10 +62,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const [response, allMotorcyclesResponse, tirePressure] = await Promise.all([
     fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
     fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
-    // The tire-pressure endpoint may legitimately 404 (no pressure
-    // recorded yet) or be missing entirely while the backend ships —
-    // swallow either case and treat as "not yet recorded".
-    getTirePressure(token, motorcycleId).catch(() => null),
+    getTirePressure(token, motorcycleId),
   ]);
 
   const otherMotorcycles = (allMotorcyclesResponse.motorcycles ?? [])
@@ -121,24 +118,13 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       return data({ error: "Beiwagen-Druck ist ungültig." }, { status: 400 });
     }
 
-    try {
-      await upsertTirePressure(token, motorcycleId, {
-        frontBar,
-        rearBar,
-        sidecarBar,
-        preferredUnit,
-      });
-      return data({ success: true });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg === "Not Found") {
-        return data(
-          { error: "Backend-Endpunkt /motorcycles/:id/tire-pressure existiert noch nicht. Bitte im Backend ausrollen." },
-          { status: 501 },
-        );
-      }
-      return data({ error: `Reifendruck konnte nicht gespeichert werden: ${msg}` }, { status: 500 });
-    }
+    await upsertTirePressure(token, motorcycleId, {
+      frontBar,
+      rearBar,
+      sidecarBar,
+      preferredUnit,
+    });
+    return data({ success: true });
   }
 
   if (intent === "deleteTirePressure") {
@@ -146,16 +132,11 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     if (!motorcycleId) {
       return data({ error: "Motorrad-ID fehlt." }, { status: 400 });
     }
-    try {
-      const deleted = await deleteTirePressure(token, motorcycleId);
-      if (!deleted) {
-        return data({ error: "Reifendruck konnte nicht gelöscht werden." }, { status: 404 });
-      }
-      return data({ success: true });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return data({ error: `Reifendruck konnte nicht gelöscht werden: ${msg}` }, { status: 500 });
+    const deleted = await deleteTirePressure(token, motorcycleId);
+    if (!deleted) {
+      return data({ error: "Reifendruck konnte nicht gelöscht werden." }, { status: 404 });
     }
+    return data({ success: true });
   }
 
   if (intent === "createTorqueSpec" || intent === "updateTorqueSpec" || intent === "importTorqueSpecs" || intent === "deleteTorqueSpec") {
