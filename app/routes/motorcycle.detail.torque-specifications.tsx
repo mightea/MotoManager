@@ -121,13 +121,24 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       return data({ error: "Beiwagen-Druck ist ungültig." }, { status: 400 });
     }
 
-    await upsertTirePressure(token, motorcycleId, {
-      frontBar,
-      rearBar,
-      sidecarBar,
-      preferredUnit,
-    });
-    return data({ success: true });
+    try {
+      await upsertTirePressure(token, motorcycleId, {
+        frontBar,
+        rearBar,
+        sidecarBar,
+        preferredUnit,
+      });
+      return data({ success: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg === "Not Found") {
+        return data(
+          { error: "Backend-Endpunkt /motorcycles/:id/tire-pressure existiert noch nicht. Bitte im Backend ausrollen." },
+          { status: 501 },
+        );
+      }
+      return data({ error: `Reifendruck konnte nicht gespeichert werden: ${msg}` }, { status: 500 });
+    }
   }
 
   if (intent === "deleteTirePressure") {
@@ -135,11 +146,16 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     if (!motorcycleId) {
       return data({ error: "Motorrad-ID fehlt." }, { status: 400 });
     }
-    const deleted = await deleteTirePressure(token, motorcycleId);
-    if (!deleted) {
-      return data({ error: "Reifendruck konnte nicht gelöscht werden." }, { status: 404 });
+    try {
+      const deleted = await deleteTirePressure(token, motorcycleId);
+      if (!deleted) {
+        return data({ error: "Reifendruck konnte nicht gelöscht werden." }, { status: 404 });
+      }
+      return data({ success: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return data({ error: `Reifendruck konnte nicht gelöscht werden: ${msg}` }, { status: 500 });
     }
-    return data({ success: true });
   }
 
   if (intent === "createTorqueSpec" || intent === "updateTorqueSpec" || intent === "importTorqueSpecs" || intent === "deleteTorqueSpec") {
