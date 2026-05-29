@@ -133,7 +133,7 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
   };
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: true },
-    { label: "Anzugsmomente", to: `${basePath}/torque-specs`, isActive: false },
+    { label: "Werkstattdaten", to: `${basePath}/torque-specs`, isActive: false },
   ];
 
   const formatDate = (dateString: string) =>

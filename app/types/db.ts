@@ -172,6 +172,33 @@ export interface CurrentLocation {
 
 export type NewCurrentLocationRecord = Omit<CurrentLocation, "id">;
 
+export type PressureUnit = "bar" | "psi";
+
+/**
+ * Recommended tire pressures for a motorcycle. One row per motorcycle
+ * (1:1) — we deliberately do not model loadouts (Solo / Beifahrer /
+ * Beladen) as separate rows; if the user wants to record those they
+ * keep them in the description fields of maintenance records.
+ *
+ * Canonical storage is in bar; psi entries get converted on save.
+ * `preferredUnit` is remembered so the form re-opens in the unit the
+ * user originally typed, with the converted value rendered as a small
+ * secondary line.
+ */
+export interface TirePressure {
+  id: number;
+  motorcycleId: number;
+  frontBar: number;
+  rearBar: number;
+  /** Only used on motorcycles with a sidecar; null otherwise. */
+  sidecarBar: number | null;
+  preferredUnit: PressureUnit;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type NewTirePressure = Omit<TirePressure, "id" | "createdAt" | "updatedAt">;
+
 export interface TorqueSpecification {
   id: number;
   motorcycleId: number;

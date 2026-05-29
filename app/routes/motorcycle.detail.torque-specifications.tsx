@@ -7,36 +7,44 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.torque-specifications";
 import {
+  type PressureUnit,
+  type TirePressure,
   type TorqueSpecification,
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Wrench, Plus, Pencil, Import, Printer } from "lucide-react";
+import { Gauge, Wrench, Plus, Pencil, Import, Printer } from "lucide-react";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { Modal } from "~/components/modal";
 import { TorqueSpecForm } from "~/components/torque-spec-form";
+import { TirePressureForm } from "~/components/tire-pressure-form";
+import { TirePressureCard } from "~/components/tire-pressure-card";
 import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { Card } from "~/components/card";
 import { EmptyState } from "~/components/empty-state";
 import {
   createTorqueSpecification,
+  deleteTirePressure,
+  deleteTorqueSpecification,
+  getTirePressure,
   updateTorqueSpecification,
-  deleteTorqueSpecification
+  upsertTirePressure,
 } from "~/services/motorcycles";
 import { fetchFromBackend } from "~/utils/backend";
 import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
+import { formatPressure } from "~/utils/pressure";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
-    return [{ title: "Anzugsmomente - Moto Manager" }];
+    return [{ title: "Werkstattdaten - Moto Manager" }];
   }
   const { make, model } = data.motorcycle;
   return [
-    { title: `Anzugsmomente: ${make} ${model} - Moto Manager` },
-    { name: "description", content: `Drehmoment-Spezifikationen für ${make} ${model}.` },
+    { title: `Werkstattdaten: ${make} ${model} - Moto Manager` },
+    { name: "description", content: `Reifendruck & Anzugsmomente für ${make} ${model}.` },
   ];
 }
 
@@ -51,9 +59,13 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid motorcycle ID", { status: 400 });
   }
 
-  const [response, allMotorcyclesResponse] = await Promise.all([
+  const [response, allMotorcyclesResponse, tirePressure] = await Promise.all([
     fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
     fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
+    // The tire-pressure endpoint may legitimately 404 (no pressure
+    // recorded yet) or be missing entirely while the backend ships —
+    // swallow either case and treat as "not yet recorded".
+    getTirePressure(token, motorcycleId).catch(() => null),
   ]);
 
   const otherMotorcycles = (allMotorcyclesResponse.motorcycles ?? [])
@@ -81,6 +93,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   return data({
     ...response,
     ...headerStats,
+    tirePressure,
     allMotorcycles: otherMotorcycles,
     otherSpecs,
     printDate: new Date().toLocaleDateString("de-CH"),
@@ -91,6 +104,43 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   const { user: _user, token } = await requireUser(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
+
+  if (intent === "upsertTirePressure") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const frontBar = Number(formData.get("frontBar"));
+    const rearBar = Number(formData.get("rearBar"));
+    const preferredUnitRaw = String(formData.get("preferredUnit") ?? "bar");
+    const preferredUnit: PressureUnit = preferredUnitRaw === "psi" ? "psi" : "bar";
+    const sidecarRaw = formData.get("sidecarBar");
+    const sidecarBar = sidecarRaw == null || sidecarRaw === "" ? null : Number(sidecarRaw);
+
+    if (!motorcycleId || !Number.isFinite(frontBar) || !Number.isFinite(rearBar)) {
+      return data({ error: "Bitte Vorder- und Hinterreifen-Druck angeben." }, { status: 400 });
+    }
+    if (sidecarBar != null && !Number.isFinite(sidecarBar)) {
+      return data({ error: "Beiwagen-Druck ist ungültig." }, { status: 400 });
+    }
+
+    await upsertTirePressure(token, motorcycleId, {
+      frontBar,
+      rearBar,
+      sidecarBar,
+      preferredUnit,
+    });
+    return data({ success: true });
+  }
+
+  if (intent === "deleteTirePressure") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    if (!motorcycleId) {
+      return data({ error: "Motorrad-ID fehlt." }, { status: 400 });
+    }
+    const deleted = await deleteTirePressure(token, motorcycleId);
+    if (!deleted) {
+      return data({ error: "Reifendruck konnte nicht gelöscht werden." }, { status: 404 });
+    }
+    return data({ success: true });
+  }
 
   if (intent === "createTorqueSpec" || intent === "updateTorqueSpec" || intent === "importTorqueSpecs" || intent === "deleteTorqueSpec") {
     const motorcycleId = Number(formData.get("motorcycleId"));
@@ -180,10 +230,12 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     nextInspection,
     currentLocationName,
     torqueSpecs: specsRaw = [],
+    tirePressure,
     allMotorcycles: otherMotorcycles = [],
     otherSpecs = [],
     printDate,
   } = loaderData;
+  const pressure = (tirePressure ?? null) as TirePressure | null;
 
   const specs = specsRaw as TorqueSpecification[];
   const allCategories = Array.from(new Set(specs.map((s: any) => s.category as string))).sort() as string[];
@@ -201,13 +253,14 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   };
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: false },
-    { label: "Anzugsmomente", to: `${basePath}/torque-specs`, isActive: true },
+    { label: "Werkstattdaten", to: `${basePath}/torque-specs`, isActive: true },
   ];
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingSpec, setEditingSpec] = useState<TorqueSpecification | null>(null);
   const [deletingSpec, setDeletingSpec] = useState<TorqueSpecification | null>(null);
+  const [isPressureModalOpen, setIsPressureModalOpen] = useState(false);
 
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
@@ -216,6 +269,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       setIsImportModalOpen(false);
       setEditingSpec(null);
       setDeletingSpec(null);
+      setIsPressureModalOpen(false);
     }
   }, [actionData]);
 
@@ -344,6 +398,58 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             <span>{actionData.error}</span>
           </div>
         )}
+
+        {/* Reifendruck section */}
+        <section className="space-y-3 print:space-y-2 print:break-inside-avoid">
+          <h2 className="label-tag print:!text-black">
+            <span>Reifendruck</span>
+          </h2>
+          {pressure ? (
+            <div className="print:hidden">
+              <TirePressureCard pressure={pressure} onEdit={() => setIsPressureModalOpen(true)} />
+            </div>
+          ) : (
+            <div className="print:hidden">
+              <EmptyState
+                size="sm"
+                icon={Gauge}
+                title="Noch nicht erfasst"
+                description="Hinterlege die empfohlenen Reifendrücke für vorne, hinten und ggf. Beiwagen."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setIsPressureModalOpen(true)}
+                    className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Reifendruck erfassen
+                    <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+                  </button>
+                }
+              />
+            </div>
+          )}
+          {/* Print-only inline table (the card renders only on-screen). */}
+          {pressure && (
+            <div className="hidden print:block print:rounded-none print:border-[1.5px] print:border-black print:mb-6">
+              <div className="print:bg-gray-100 print:px-4 print:py-2 print:font-bold print:!text-black print:border-b-[1.5px] print:border-black print:text-[12px]">
+                REIFENDRUCK
+              </div>
+              <div className="print:px-4 print:py-3 print:!text-black">
+                <PressurePrintRow label="Vorne" bar={pressure.frontBar} preferred={pressure.preferredUnit} />
+                <PressurePrintRow label="Hinten" bar={pressure.rearBar} preferred={pressure.preferredUnit} />
+                {pressure.sidecarBar != null && (
+                  <PressurePrintRow label="Beiwagen" bar={pressure.sidecarBar} preferred={pressure.preferredUnit} />
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Anzugsmomente section heading */}
+        <h2 className="label-tag print:hidden">
+          <span>Anzugsmomente</span>
+        </h2>
 
         {specs.length === 0 ? (
           <div className="print:hidden">
@@ -495,6 +601,39 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
         otherSpecs={otherSpecs}
         existingSpecs={specs}
       />
+
+      <Modal
+        isOpen={isPressureModalOpen}
+        onClose={() => setIsPressureModalOpen(false)}
+        title={pressure ? "Reifendruck bearbeiten" : "Reifendruck erfassen"}
+        description={`Empfohlene Werte für ${motorcycle.make} ${motorcycle.model}.`}
+      >
+        <TirePressureForm
+          motorcycleId={motorcycle.id}
+          initialValues={pressure}
+          onClose={() => setIsPressureModalOpen(false)}
+          onSubmit={() => setIsPressureModalOpen(false)}
+          onDelete={pressure ? () => setIsPressureModalOpen(false) : undefined}
+        />
+      </Modal>
+    </div>
+  );
+}
+
+function PressurePrintRow({
+  label,
+  bar,
+  preferred,
+}: {
+  label: string;
+  bar: number;
+  preferred: PressureUnit;
+}) {
+  const f = formatPressure(bar, preferred);
+  return (
+    <div className="hidden print:flex print:justify-between print:py-1 print:!text-black print:text-[12px]">
+      <span className="print:font-bold print:!text-black">{label}</span>
+      <span className="print:!text-black">{f.primary} ({f.secondary})</span>
     </div>
   );
 }

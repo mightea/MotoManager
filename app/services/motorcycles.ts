@@ -5,8 +5,10 @@ import {
   type NewIssue,
   type NewLocation,
   type NewMaintenanceRecord,
+  type NewTirePressure,
   type NewTorqueSpecification,
   type NewPreviousOwner,
+  type TirePressure,
 } from "~/types/db";
 
 export async function createMotorcycle(
@@ -199,6 +201,59 @@ export async function deleteTorqueSpecification(
     await fetchFromBackend(`/motorcycles/${motorcycleId}/torque-specs/${torqueId}`, {
       method: "DELETE",
     }, token);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ============================================================
+   Tire pressure — 1:1 with a motorcycle.
+
+   Backend contract:
+   - GET    /motorcycles/:id/tire-pressure  → { tirePressure: TirePressure | null }
+   - PUT    /motorcycles/:id/tire-pressure  → { tirePressure: TirePressure }     (upsert)
+   - DELETE /motorcycles/:id/tire-pressure  → { success: true }
+   ============================================================ */
+
+export async function getTirePressure(
+  token: string,
+  motorcycleId: number,
+): Promise<TirePressure | null> {
+  const response = await fetchFromBackend<{ tirePressure: TirePressure | null }>(
+    `/motorcycles/${motorcycleId}/tire-pressure`,
+    {},
+    token,
+  );
+  return response.tirePressure;
+}
+
+export async function upsertTirePressure(
+  token: string,
+  motorcycleId: number,
+  values: Omit<NewTirePressure, "motorcycleId">,
+): Promise<TirePressure> {
+  const response = await fetchFromBackend<{ tirePressure: TirePressure }>(
+    `/motorcycles/${motorcycleId}/tire-pressure`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ ...values, motorcycleId }),
+    },
+    token,
+  );
+  return response.tirePressure;
+}
+
+export async function deleteTirePressure(
+  token: string,
+  motorcycleId: number,
+): Promise<boolean> {
+  try {
+    await fetchFromBackend(
+      `/motorcycles/${motorcycleId}/tire-pressure`,
+      { method: "DELETE" },
+      token,
+    );
     return true;
   } catch {
     return false;
