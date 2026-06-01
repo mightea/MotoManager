@@ -1,11 +1,9 @@
-import { Pencil } from "lucide-react";
-import { Card, CardAction, CardHeading } from "./card";
+import { Card } from "./card";
 import type { TirePressure } from "~/types/db";
 import { formatPressure } from "~/utils/pressure";
 
 interface TirePressureCardProps {
   pressure: TirePressure;
-  onEdit: () => void;
 }
 
 /**
@@ -14,18 +12,9 @@ interface TirePressureCardProps {
  * preferred unit prominently with the converted unit in a small
  * mono-uppercase secondary line.
  */
-export function TirePressureCard({ pressure, onEdit }: TirePressureCardProps) {
+export function TirePressureCard({ pressure }: TirePressureCardProps) {
   return (
     <Card>
-      <CardHeading
-        title="Reifendruck"
-        trailing={
-          <CardAction onClick={onEdit} aria-label="Reifendruck bearbeiten">
-            <Pencil className="h-3 w-3" aria-hidden="true" />
-            Bearbeiten
-          </CardAction>
-        }
-      />
       <div className="px-4 py-4">
         <dl className="space-y-3">
           <PressureRow
