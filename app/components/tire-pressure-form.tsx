@@ -246,7 +246,7 @@ function PressureField({
           id={id}
           type="number"
           inputMode="decimal"
-          step="0.1"
+          step={unit === "psi" ? "1" : "0.1"}
           min="0"
           required={required}
           value={value}

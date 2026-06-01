@@ -10,10 +10,14 @@ export const psiFromBar = (bar: number) => bar * PSI_PER_BAR;
 export const barFromPsi = (psi: number) => psi / PSI_PER_BAR;
 
 /**
- * Round a pressure value to one decimal place — the standard precision
- * service manuals use for both bar (2.3) and psi (33.4).
+ * Round bar to one decimal (service-manual precision: 2.3) and psi to
+ * a whole number (33). Pump gauges are typically integer-graduated, so
+ * fractional psi is noise.
  */
-export const roundPressure = (value: number) => Math.round(value * 10) / 10;
+export const roundBar = (value: number) => Math.round(value * 10) / 10;
+export const roundPsi = (value: number) => Math.round(value);
+export const roundPressure = (value: number, unit: PressureUnit) =>
+  unit === "psi" ? roundPsi(value) : roundBar(value);
 
 export type FormattedPressure = {
   /** Primary unit string the user entered, e.g. "2.3 bar" */
@@ -34,21 +38,19 @@ export function formatPressure(
   bar: number,
   preferred: PressureUnit,
 ): FormattedPressure {
+  const barStr = `${roundBar(bar).toFixed(1)} bar`;
+  const psiStr = `${roundPsi(psiFromBar(bar))} psi`;
   if (preferred === "psi") {
-    const psi = roundPressure(psiFromBar(bar));
-    const barRounded = roundPressure(bar);
     return {
-      primary: `${psi.toFixed(1)} psi`,
-      secondary: `${barRounded.toFixed(1)} bar`,
+      primary: psiStr,
+      secondary: barStr,
       primaryUnit: "psi",
       secondaryUnit: "bar",
     };
   }
-  const barRounded = roundPressure(bar);
-  const psi = roundPressure(psiFromBar(bar));
   return {
-    primary: `${barRounded.toFixed(1)} bar`,
-    secondary: `${psi.toFixed(1)} psi`,
+    primary: barStr,
+    secondary: psiStr,
     primaryUnit: "bar",
     secondaryUnit: "psi",
   };
@@ -70,11 +72,12 @@ export function toCanonicalBar(
 
 /**
  * Render a canonical bar value as a plain number string in the given
- * display unit, with one decimal. Used to seed form inputs.
+ * display unit — bar to one decimal, psi as a whole number. Used to
+ * seed form inputs.
  */
 export function displayValue(bar: number, unit: PressureUnit): string {
-  const v = unit === "psi" ? psiFromBar(bar) : bar;
-  return roundPressure(v).toFixed(1);
+  if (unit === "psi") return roundPsi(psiFromBar(bar)).toString();
+  return roundBar(bar).toFixed(1);
 }
 
 /**
@@ -84,8 +87,8 @@ export function displayValue(bar: number, unit: PressureUnit): string {
  */
 export const PRESSURE_RANGE_BAR = { min: 1.0, max: 5.0 } as const;
 export const PRESSURE_RANGE_PSI = {
-  min: roundPressure(psiFromBar(PRESSURE_RANGE_BAR.min)),
-  max: roundPressure(psiFromBar(PRESSURE_RANGE_BAR.max)),
+  min: roundPsi(psiFromBar(PRESSURE_RANGE_BAR.min)),
+  max: roundPsi(psiFromBar(PRESSURE_RANGE_BAR.max)),
 } as const;
 
 export function isPressureOutOfRange(bar: number): boolean {
