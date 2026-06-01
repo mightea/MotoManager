@@ -305,15 +305,17 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   if (intent === "createIssue") {
     const motorcycleId = Number(formData.get("motorcycleId"));
     const odo = Number(formData.get("odo"));
+    const title = parseString(formData.get("title"));
     const description = parseString(formData.get("description"));
 
-    if (!Number.isFinite(motorcycleId) || !Number.isFinite(odo) || !description) {
+    if (!Number.isFinite(motorcycleId) || !Number.isFinite(odo) || !title) {
       throw new Response("Ungültige Eingabe für den Mangel", { status: 400 });
     }
 
     const issueData: NewIssue = {
       motorcycleId,
       odo,
+      title,
       description,
       priority: isValidPriority(formData.get("priority")),
       status: isValidStatus(formData.get("status")),
@@ -329,19 +331,21 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const motorcycleId = Number(formData.get("motorcycleId"));
     const issueId = Number(formData.get("issueId"));
     const odo = Number(formData.get("odo"));
+    const title = parseString(formData.get("title"));
     const description = parseString(formData.get("description"));
 
     if (
       !Number.isFinite(motorcycleId) ||
       !Number.isFinite(issueId) ||
       !Number.isFinite(odo) ||
-      !description
+      !title
     ) {
       throw new Response("Ungültige Eingabe für den Mangel", { status: 400 });
     }
 
     await updateIssue(token, issueId, motorcycleId, {
       odo,
+      title,
       description,
       priority: isValidPriority(formData.get("priority")),
       status: isValidStatus(formData.get("status")),

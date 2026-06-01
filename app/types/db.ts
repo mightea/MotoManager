@@ -129,6 +129,7 @@ export interface Issue {
   id: number;
   motorcycleId: number;
   odo: number;
+  title: string;
   description: string | null;
   priority: "low" | "medium" | "high";
   status: "new" | "in_progress" | "done";

@@ -146,19 +146,38 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
 
       <div className="space-y-1.5">
         <label
-          htmlFor="description"
+          htmlFor="title"
           className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
         >
-          Beschreibung
+          Titel
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          required
+          maxLength={200}
+          placeholder="z. B. Ölverlust am Motor"
+          defaultValue={initialIssue?.title ?? ""}
+          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label
+          htmlFor="description"
+          className="flex items-baseline justify-between gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+        >
+          <span>Beschreibung</span>
+          <span className="font-mono text-[9px] font-normal normal-case tracking-normal text-base-content/45 dark:text-navy-500">optional</span>
         </label>
         <textarea
           id="description"
           name="description"
           rows={4}
-          placeholder="Beschreibe den Mangel..."
+          placeholder="Weitere Details (optional)..."
           defaultValue={initialIssue?.description ?? ""}
           className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-          required
         />
       </div>
 

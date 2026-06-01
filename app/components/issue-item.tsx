@@ -56,13 +56,18 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium leading-tight text-base-content dark:text-gray-100">
-          {issue.description || "Beschreibung fehlt"}
+          {issue.title}
         </p>
         <p
           suppressHydrationWarning
-          className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55 dark:text-navy-400"
+          className="mt-0.5 truncate font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55 dark:text-navy-400"
         >
           {issue.date ? dateFormatter.format(new Date(issue.date)) : "Datum unbekannt"}
+          {issue.description && (
+            <span className="ml-1.5 normal-case tracking-normal text-base-content/45 dark:text-navy-500">
+              · {issue.description}
+            </span>
+          )}
         </p>
       </div>
 
