@@ -1,5 +1,30 @@
 # Changelog
 
+## [2026.6.0](https://github.com/mightea/MotoManager/compare/2026.5.8...2026.6.0) (2026-06-01)
+
+
+### ✨ Features
+
+* require a title on issues, make description optional ([c7f272c](https://github.com/mightea/MotoManager/commit/c7f272c2fd967137c459b2386d46ae742508eb06))
+* tire pressures on the Werkstattdaten page (was Anzugsmomente) ([51060f1](https://github.com/mightea/MotoManager/commit/51060f1b6f294241b3f9bd33788946a4928d5a1c))
+
+
+### 🐛 Bug Fixes
+
+* surface tire-pressure backend errors as a banner, not a crash ([edc6797](https://github.com/mightea/MotoManager/commit/edc67976be21bd388f0c33eba5ae7ee3e6928895))
+
+
+### ✏️ Miscellaneous Chores
+
+* roll calver to 2026.6.0 ([6c05a7a](https://github.com/mightea/MotoManager/commit/6c05a7a27ca8d80d3ce20d6c56040b0f6cca355b))
+
+
+### ♻️ Code Refactoring
+
+* drop tire-pressure backend-missing fallback ([f82383d](https://github.com/mightea/MotoManager/commit/f82383d7fec5d1083714b8799db65bee5e07bebb))
+* round psi pressures to whole numbers ([7508e44](https://github.com/mightea/MotoManager/commit/7508e443b5419ff04f54cb61ef6d11fd87b5f781))
+* scope torque page actions per section, fix print background ([82441b7](https://github.com/mightea/MotoManager/commit/82441b7bee40f10573f26b39f8862c55a97dc4e8))
+
 ## [2026.5.8](https://github.com/mightea/MotoManager/compare/2026.5.7...2026.5.8) (2026-05-28)
 
 
