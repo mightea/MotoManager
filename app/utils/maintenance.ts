@@ -88,7 +88,8 @@ export function summarizeMaintenanceRecord(record: MaintenanceRecord, userLocati
     }
 
     case "inspection": {
-      return record.inspectionLocation ? `MFK bei ${record.inspectionLocation}` : "MFK";
+      const loc = userLocations?.find(l => l.id === record.locationId);
+      return loc ? `MFK bei ${loc.name}` : "MFK";
     }
 
     case "location": {
@@ -104,8 +105,9 @@ export function summarizeMaintenanceRecord(record: MaintenanceRecord, userLocati
         const label = fuelTypeLabels[record.fuelType] || record.fuelType;
         parts.push(label);
       }
-      if (record.locationName) {
-        parts.push(`@ ${record.locationName}`);
+      const fuelLoc = userLocations?.find(l => l.id === record.locationId);
+      if (fuelLoc) {
+        parts.push(`@ ${fuelLoc.name}`);
       }
 
       const stats = [];

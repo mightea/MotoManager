@@ -101,23 +101,13 @@ export interface MaintenanceRecord {
   fluidType: FluidType | null;
   viscosity: string | null;
   oilType: OilType | null;
-  inspectionLocation: string | null;
   locationId: number | null;
   fuelType: string | null;
   fuelAmount: number | null;
   pricePerUnit: number | null;
-  latitude: number | null;
-  longitude: number | null;
-  locationName: string | null;
   fuelConsumption: number | null;
   tripDistance: number | null;
   parentId: number | null;
-}
-
-export interface MaintenanceLocation {
-  name: string;
-  latitude: number | null;
-  longitude: number | null;
 }
 
 export type NewMaintenanceRecord = Omit<MaintenanceRecord, "id"> & {
@@ -139,15 +129,32 @@ export interface Issue {
 export type NewIssue = Omit<Issue, "id">;
 export type EditorIssue = Partial<NewIssue>;
 
+export type LocationType =
+  | "storage"
+  | "maintenanceShop"
+  | "fuelStation"
+  | "inspection"
+  | "other";
+
 export interface Location {
   id: number;
   name: string;
+  type: LocationType;
+  latitude: number | null;
+  longitude: number | null;
   countryCode: string;
   userId: number;
+  createdAt: string;
+  updatedAt: string | null;
 }
 
-export type NewLocation = Omit<Location, "id" | "countryCode"> & {
+export type NewLocation = Omit<
+  Location,
+  "id" | "countryCode" | "createdAt" | "updatedAt" | "latitude" | "longitude"
+> & {
   countryCode?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 export interface CurrencySetting {

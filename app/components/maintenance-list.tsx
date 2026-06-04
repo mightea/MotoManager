@@ -452,11 +452,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                               { label: "Batterietyp", value: record.type === "battery" ? (record.batteryType ? batteryTypeLabels[record.batteryType as BatteryType] || record.batteryType : null) : null, icon: Battery },
 
                               // Inspection fields
-                              { label: "Prüfstelle", value: record.type === "inspection" ? record.inspectionLocation : null, icon: MapPin },
+                              { label: "Prüfstelle", value: record.type === "inspection" ? (record.locationId ? userLocations?.find(l => l.id === record.locationId)?.name : null) : null, icon: MapPin },
 
                               // Location fields
                               { label: "Standort", value: record.type === "location" ? (record.locationId ? userLocations?.find(l => l.id === record.locationId)?.name : null) : null, icon: MapPin },
-                              { label: "Betrieb / Ort", value: (record.type === "fuel" || isService) ? record.locationName : null, icon: MapPin },
+                              { label: "Betrieb / Ort", value: (record.type === "fuel" || isService) ? (record.locationId ? userLocations?.find(l => l.id === record.locationId)?.name : null) : null, icon: MapPin },
                               { label: "Menge", value: record.type === "fuel" ? (record.fuelAmount ? `${record.fuelAmount} L` : null) : null, icon: Maximize2 },
                               { label: "Verbrauch", value: record.type === "fuel" ? (record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null) : null, icon: Activity },
                               { label: "Trip", value: record.type === "fuel" ? (record.tripDistance ? `${record.tripDistance} km` : null) : null, icon: Hash },
@@ -545,15 +545,21 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                                     </div>
                                   )}
 
-                                  {isExpanded && record.latitude && record.longitude && (
-                                    <div className="mt-2">
-                                      <MapView
-                                        latitude={record.latitude}
-                                        longitude={record.longitude}
-                                        title={record.locationName || "Tankstelle"}
-                                      />
-                                    </div>
-                                  )}
+                                  {isExpanded && (() => {
+                                    const loc = record.locationId
+                                      ? userLocations?.find(l => l.id === record.locationId)
+                                      : null;
+                                    if (!loc?.latitude || !loc?.longitude) return null;
+                                    return (
+                                      <div className="mt-2">
+                                        <MapView
+                                          latitude={loc.latitude}
+                                          longitude={loc.longitude}
+                                          title={loc.name}
+                                        />
+                                      </div>
+                                    );
+                                  })()}
 
                                   {metadataItems.length === 0 && childRecords.length === 0 && (
                                     <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">

@@ -1,6 +1,6 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm } from "~/components/maintenance-form";
-import type { MaintenanceRecord, Location, CurrencySetting, MaintenanceLocation } from "~/types/db";
+import type { MaintenanceRecord, Location, CurrencySetting } from "~/types/db";
 import { useUmami } from "./umami-provider";
 import { useEffect } from "react";
 
@@ -13,15 +13,13 @@ interface MaintenanceDialogProps {
   currencyCode?: string | null;
   defaultOdo?: number | null;
   userLocations?: Location[];
-  maintenanceLocations?: MaintenanceLocation[];
-  locationNames?: string[];
   currencies?: CurrencySetting[];
   onDelete?: () => void;
 }
 
 const EMPTY_RECORDS: MaintenanceRecord[] = [];
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, maintenanceLocations, locationNames, currencies, onDelete }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, currencies, onDelete }: MaintenanceDialogProps) {
   const { trackEvent } = useUmami();
 
   useEffect(() => {
@@ -54,8 +52,6 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         currencyCode={currencyCode}
         defaultOdo={defaultOdo}
         userLocations={userLocations}
-        maintenanceLocations={maintenanceLocations}
-        _locationNames={locationNames}
         currencies={currencies}
         onSubmit={onClose}
         onCancel={onClose}

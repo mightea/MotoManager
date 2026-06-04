@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   data,
   redirect,
@@ -9,14 +9,15 @@ import {
   useParams,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
-import { 
-  type NewMaintenanceRecord, 
-  type MaintenanceType, 
-  type TirePosition, 
-  type BatteryType, 
-  type FluidType, 
-  type NewIssue, 
-  type Issue, 
+import {
+  type NewMaintenanceRecord,
+  type MaintenanceType,
+  type LocationType,
+  type TirePosition,
+  type BatteryType,
+  type FluidType,
+  type NewIssue,
+  type Issue,
   type NewPreviousOwner
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
@@ -68,7 +69,6 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const motorcycle = response?.motorcycle;
   const issues = Array.isArray(response?.issues) ? response.issues : [];
   const maintenanceRecords = Array.isArray(response?.maintenanceRecords) ? response.maintenanceRecords : [];
-  const maintenanceLocations = Array.isArray(response?.maintenanceLocations) ? response.maintenanceLocations : [];
   const previousOwners = Array.isArray(response?.previousOwners) ? response.previousOwners : [];
 
   if (!motorcycle) {
@@ -116,12 +116,6 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const estimatedRange = avgFuelConsumption && motorcycle.fuelTankSize 
     ? (motorcycle.fuelTankSize / avgFuelConsumption) * 100 
     : null;
-
-  const fuelStationNames = Array.from(new Set(
-    maintenanceRecords
-      .filter((r: any) => r.type === "fuel" && r.locationName)
-      .map((r: any) => r.locationName)
-  )) as string[];
 
   // Ownership stats
   const hasPurchaseDate = !!motorcycle.purchaseDate;
@@ -172,7 +166,6 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     motorcycle,
     openIssues,
     maintenanceHistory,
-    maintenanceLocations,
     motorcycleExpenses,
     totalLifetimeCost,
     previousOwnersList,
@@ -190,7 +183,6 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     avgFuelConsumption,
     avgTripDistance,
     estimatedRange,
-    fuelStationNames,
     formattedPurchaseDate,
     formattedFirstRegistration,
     hasPurchaseDate
@@ -382,10 +374,19 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
     const newLocationName = parseString(formData.get("newLocationName"));
 
-    if (type === "location" && newLocationName) {
+    const maintenanceTypeToLocationType: Partial<Record<MaintenanceType, LocationType>> = {
+      location: "storage",
+      service: "maintenanceShop",
+      fuel: "fuelStation",
+      inspection: "inspection",
+    };
+
+    if (newLocationName) {
+      const locationType = maintenanceTypeToLocationType[type] ?? "other";
       const newLoc = await createLocation(token, {
         name: newLocationName,
-        userId: user.id
+        type: locationType,
+        userId: user.id,
       });
       if (newLoc) {
         locationId = newLoc.id;
@@ -408,14 +409,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       batteryType: parseString(formData.get("batteryType")) as BatteryType | undefined,
       fluidType: parseString(formData.get("fluidType")) as FluidType | undefined,
       viscosity: parseString(formData.get("viscosity")),
-      inspectionLocation: parseString(formData.get("inspectionLocation")),
       locationId: locationId,
       fuelType: parseString(formData.get("fuelType")),
       fuelAmount: parseNumber(formData.get("fuelAmount")),
       pricePerUnit: parseNumber(formData.get("pricePerUnit")),
-      latitude: parseNumber(formData.get("latitude")),
-      longitude: parseNumber(formData.get("longitude")),
-      locationName: parseString(formData.get("locationName")),
       normalizedCost: (parseNumber(formData.get("cost")) || 0) * getCurrencyFactor(parseString(formData.get("currency"))),
       bundledItems: formData.getAll("bundledItems[]") as string[],
     };
@@ -526,9 +523,6 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         fuelType: record.fuelType,
         fuelAmount: record.fuelAmount,
         pricePerUnit: record.pricePerUnit,
-        latitude: record.latitude,
-        longitude: record.longitude,
-        locationName: record.locationName,
         normalizedCost: (record.cost || 0) * rate,
         description: null
       };
@@ -562,7 +556,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     motorcycle,
     openIssues,
     maintenanceHistory,
-    maintenanceLocations,
     motorcycleExpenses,
     totalLifetimeCost,
     previousOwnersList,
@@ -580,7 +573,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     avgFuelConsumption,
     avgTripDistance,
     estimatedRange,
-    fuelStationNames,
     formattedPurchaseDate,
     formattedFirstRegistration,
     hasPurchaseDate
@@ -614,7 +606,11 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     isActive: normalizePath(location.pathname) === normalizePath(basePath),
   };
 
+  const lastHandledActionData = useRef<typeof actionData | null>(null);
+
   useEffect(() => {
+    if (lastHandledActionData.current === actionData) return;
+    lastHandledActionData.current = actionData;
     if (actionData?.success) {
       if (actionData.count !== undefined && actionData.intent === "importFuelData") {
         trackEvent("fuel_import_success", { count: actionData.count });
@@ -900,8 +896,6 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           setDeleteMaintenanceConfirmationOpen(true);
         }}
         userLocations={userLocations}
-        maintenanceLocations={maintenanceLocations}
-        locationNames={fuelStationNames}
         currencies={currencies}
       />
 

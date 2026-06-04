@@ -140,7 +140,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const name = formData.get("name") as string;
     const countryCode = formData.get("countryCode") as string;
     if (!name) return { error: "Name ist erforderlich." };
-    await createLocation(token, { name, countryCode: countryCode || "CH", userId: user.id });
+    await createLocation(token, { name, type: "storage", countryCode: countryCode || "CH", userId: user.id });
     return { success: "Lagerort erstellt." };
   }
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form } from "react-router";
 import clsx from "clsx";
-import type { MaintenanceRecord, MaintenanceType, Location, CurrencySetting, MaintenanceLocation } from "~/types/db";
+import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting } from "~/types/db";
 import {
     Wrench,
     Battery,
@@ -16,7 +16,6 @@ import {
     MapPin,
     Fuel
 } from "lucide-react";
-import { MaintenanceLocationDialog } from "./maintenance-location-dialog";
 import { useUmami } from "./umami-provider";
 
 interface MaintenanceFormProps {
@@ -25,8 +24,6 @@ interface MaintenanceFormProps {
     currencyCode?: string | null;
     defaultOdo?: number | null;
     userLocations?: Location[];
-    maintenanceLocations?: MaintenanceLocation[];
-    _locationNames?: string[];
     currencies?: CurrencySetting[];
     onSubmit: () => void;
     onCancel: () => void;
@@ -34,10 +31,82 @@ interface MaintenanceFormProps {
     existingBundledItems?: string[];
 }
 
-const EMPTY_MAINTENANCE_LOCATIONS: MaintenanceLocation[] = [];
-const EMPTY_LOCATION_NAMES: string[] = [];
 const EMPTY_CURRENCIES: CurrencySetting[] = [];
 const EMPTY_BUNDLED_ITEMS: string[] = [];
+const EMPTY_LOCATIONS: Location[] = [];
+
+interface LocationPickerFieldProps {
+    userLocations: Location[];
+    locationType: LocationType;
+    initialLocationId: number | null;
+    label: string;
+    selectPlaceholder: string;
+    newPlaceholder: string;
+}
+
+function LocationPickerField({
+    userLocations,
+    locationType,
+    initialLocationId,
+    label,
+    selectPlaceholder,
+    newPlaceholder,
+}: LocationPickerFieldProps) {
+    const options = userLocations.filter(l => l.type === locationType);
+    const hasOptions = options.length > 0;
+    const [isNewLocation, setIsNewLocation] = useState(!hasOptions);
+
+    return (
+        <div className="space-y-1.5 sm:col-span-2">
+            <label htmlFor="locationId" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+                {label}
+            </label>
+            <div className="space-y-2">
+                {!isNewLocation && hasOptions ? (
+                    <div className="flex gap-2">
+                        <select
+                            name="locationId"
+                            id="locationId"
+                            defaultValue={initialLocationId ?? ""}
+                            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        >
+                            <option value="" disabled>{selectPlaceholder}</option>
+                            {options.map(loc => (
+                                <option key={loc.id} value={loc.id}>{loc.name}</option>
+                            ))}
+                        </select>
+                        <button
+                            type="button"
+                            onClick={() => setIsNewLocation(true)}
+                            className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
+                        >
+                            Neu
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            name="newLocationName"
+                            id="newLocationName"
+                            placeholder={newPlaceholder}
+                            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
+                        />
+                        {hasOptions && (
+                            <button
+                                type="button"
+                                onClick={() => setIsNewLocation(false)}
+                                className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
+                            >
+                                Abbrechen
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
 const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] = [
     { value: "tire", label: "Reifenwechsel", icon: CircleDashed },
@@ -56,14 +125,12 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
 
 
 
-export function MaintenanceForm({ 
-    motorcycleId, 
-    initialData, 
-    currencyCode, 
-    defaultOdo, 
-    userLocations, 
-    maintenanceLocations = EMPTY_MAINTENANCE_LOCATIONS,
-    _locationNames = EMPTY_LOCATION_NAMES,
+export function MaintenanceForm({
+    motorcycleId,
+    initialData,
+    currencyCode,
+    defaultOdo,
+    userLocations = EMPTY_LOCATIONS,
     currencies = EMPTY_CURRENCIES,
     onSubmit,
     onCancel,
@@ -72,13 +139,6 @@ export function MaintenanceForm({
 }: MaintenanceFormProps) {
     const { trackEvent } = useUmami();
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
-    const [isNewLocation, setIsNewLocation] = useState(false);
-    
-    const [localMaintenanceLocations, setLocalMaintenanceLocations] = useState<MaintenanceLocation[]>(maintenanceLocations);
-    const [selectedLocationName, setSelectedLocationName] = useState(initialData?.locationName || "");
-    const [lat, setLat] = useState<number | null>(initialData?.latitude || null);
-    const [lng, setLng] = useState<number | null>(initialData?.longitude || null);
-    const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
     const [bundledItems, setBundledItems] = useState<string[]>(existingBundledItems);
 
     const [fuelAmount, setFuelAmount] = useState<string>(initialData?.fuelAmount?.toString() || "");
@@ -112,14 +172,6 @@ export function MaintenanceForm({
         }
     };
 
-    const handleAddLocation = (name: string, latitude: number | null, longitude: number | null) => {
-        const newLocation = { name, latitude, longitude };
-        setLocalMaintenanceLocations(prev => [...prev, newLocation]);
-        setSelectedLocationName(name);
-        setLat(latitude);
-        setLng(longitude);
-    };
-
     const today = new Date().toISOString().split('T')[0];
 
     const handleFormSubmit = () => {
@@ -129,49 +181,6 @@ export function MaintenanceForm({
         });
         onSubmit();
     };
-
-    const LocationFields = () => (
-        <>
-            <div className="space-y-1.5 sm:col-span-2">
-                <label htmlFor="locationName" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
-                    {type === "service" ? "Werkstatt / Ort" : "Standort"}
-                </label>
-                <div className="flex gap-2">
-                    <div className="flex-1 flex gap-2">
-                        <select
-                            name="locationName"
-                            id="locationName"
-                            value={selectedLocationName}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setSelectedLocationName(val);
-                                const loc = localMaintenanceLocations.find(l => l.name === val);
-                                if (loc) {
-                                    setLat(loc.latitude);
-                                    setLng(loc.longitude);
-                                }
-                            }}
-                            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                        >
-                            <option value="" disabled>{type === "service" ? "Wähle eine Werkstatt..." : "Wähle einen Standort..."}</option>
-                            {localMaintenanceLocations.map(loc => (
-                                <option key={loc.name} value={loc.name}>{loc.name}</option>
-                            ))}
-                        </select>
-                        <button
-                            type="button"
-                            onClick={() => setIsLocationModalOpen(true)}
-                            className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-secondary hover:bg-gray-50 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-800"
-                        >
-                            Neu
-                        </button>
-                    </div>
-                </div>
-                <input type="hidden" name="latitude" value={lat || ""} />
-                <input type="hidden" name="longitude" value={lng || ""} />
-            </div>
-        </>
-    );
 
     return (
         <>
@@ -310,7 +319,14 @@ export function MaintenanceForm({
 
                 {type === "service" && (
                     <>
-                        <LocationFields />
+                        <LocationPickerField
+                            userLocations={userLocations}
+                            locationType="maintenanceShop"
+                            initialLocationId={initialData?.locationId ?? null}
+                            label="Werkstatt / Ort"
+                            selectPlaceholder="Wähle eine Werkstatt..."
+                            newPlaceholder="Neuer Betrieb (z.B. Werkstatt Müller)"
+                        />
                         <div className="space-y-3 sm:col-span-2">
                             <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400 block">
                                 Ausgeführte Arbeiten (werden als separate Einträge erfasst)
@@ -363,54 +379,14 @@ export function MaintenanceForm({
 
                 {/* Location Specifics */}
                 {type === "location" && (
-                    <div className="space-y-1.5 sm:col-span-2">
-                        <label htmlFor="locationId" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
-                            Standort
-                        </label>
-                        <div className="space-y-2">
-                            {!isNewLocation && userLocations && userLocations.length > 0 ? (
-                                <div className="flex gap-2">
-                                    <select
-                                        name="locationId"
-                                        id="locationId"
-                                        defaultValue={initialData?.locationId || ""}
-                                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                                    >
-                                        <option value="" disabled>Wähle einen Standort...</option>
-                                        {userLocations.map(loc => (
-                                            <option key={loc.id} value={loc.id}>{loc.name}</option>
-                                        ))}
-                                    </select>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsNewLocation(true)}
-                                        className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
-                                    >
-                                        Neu
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        name="newLocationName"
-                                        id="newLocationName"
-                                        placeholder="Neuer Standort Name (z.B. Garage)"
-                                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                                    />
-                                    {(userLocations && userLocations.length > 0) && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsNewLocation(false)}
-                                            className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
-                                        >
-                                            Abbrechen
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <LocationPickerField
+                        userLocations={userLocations}
+                        locationType="storage"
+                        initialLocationId={initialData?.locationId ?? null}
+                        label="Standort"
+                        selectPlaceholder="Wähle einen Standort..."
+                        newPlaceholder="Neuer Standort (z.B. Garage)"
+                    />
                 )}
 
                 {/* Tire Specifics */}
@@ -522,17 +498,14 @@ export function MaintenanceForm({
 
                 {/* Inspection Specifics */}
                 {type === "inspection" && (
-                    <div className="space-y-1.5 sm:col-span-2">
-                        <label htmlFor="inspectionLocation" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Prüfstelle</label>
-                        <input
-                            type="text"
-                            name="inspectionLocation"
-                            id="inspectionLocation"
-                            placeholder="z.B. STVA Zürich"
-                            defaultValue={initialData?.inspectionLocation || ""}
-                            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                        />
-                    </div>
+                    <LocationPickerField
+                        userLocations={userLocations}
+                        locationType="inspection"
+                        initialLocationId={initialData?.locationId ?? null}
+                        label="Prüfstelle"
+                        selectPlaceholder="Wähle eine Prüfstelle..."
+                        newPlaceholder="Neue Prüfstelle (z.B. STVA Zürich)"
+                    />
                 )}
 
                 {/* Fuel Specifics */}
@@ -577,7 +550,14 @@ export function MaintenanceForm({
                                 className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             />
                         </div>
-                        <LocationFields />
+                        <LocationPickerField
+                            userLocations={userLocations}
+                            locationType="fuelStation"
+                            initialLocationId={initialData?.locationId ?? null}
+                            label="Tankstelle"
+                            selectPlaceholder="Wähle eine Tankstelle..."
+                            newPlaceholder="Neue Tankstelle (z.B. Shell Zürich)"
+                        />
                     </>
                 )}
             </div>
@@ -623,12 +603,6 @@ export function MaintenanceForm({
                 </div>
             </div>
         </Form>
-
-        <MaintenanceLocationDialog
-            isOpen={isLocationModalOpen}
-            onClose={() => setIsLocationModalOpen(false)}
-            onSave={handleAddLocation}
-        />
     </>
     );
 }
