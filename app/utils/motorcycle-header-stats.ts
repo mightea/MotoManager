@@ -37,9 +37,17 @@ export async function computeMotorcycleHeaderStats(
   });
 
   const userLocations = await getLocations(token, userId);
-  const currentLocationId = maintenanceRecords
-    .filter((r) => r.type === "location")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ?? null;
+  // "Where the bike lives" → only Storage-typed locations qualify.
+  const storageLocationIds = new Set(
+    userLocations.filter((l: any) => l.type === "storage").map((l: any) => l.id),
+  );
+  const currentLocationId =
+    maintenanceRecords
+      .filter(
+        (r) => r.type === "location" && r.locationId && storageLocationIds.has(r.locationId),
+      )
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ??
+    null;
   const currentLocationName =
     userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
 

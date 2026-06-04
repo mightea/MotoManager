@@ -98,10 +98,21 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   // Other metadata
   const { getLocations } = await import("~/services/settings");
   const userLocations = await getLocations(token, user.id);
-  const currentLocationId = maintenanceRecords
-    .filter((r: any) => r.type === "location")
-    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ?? null;
-  const currentLocationName = userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
+  // "Where the bike lives" → only Storage-typed locations qualify. Workshop / fuel /
+  // inspection visits do not change the current location.
+  const storageLocationIds = new Set(
+    userLocations.filter((l: any) => l.type === "storage").map((l: any) => l.id),
+  );
+  const currentLocationId =
+    maintenanceRecords
+      .filter(
+        (r: any) =>
+          r.type === "location" && r.locationId && storageLocationIds.has(r.locationId),
+      )
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+      ?.locationId ?? null;
+  const currentLocationName =
+    userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
 
   const currencies = await getCurrencies();
 
