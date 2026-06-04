@@ -154,12 +154,6 @@ function compareCards(sort: SortKey) {
   return (a: MotorcycleDashboardItem, b: MotorcycleDashboardItem) => {
     switch (sort) {
       case "location": {
-        const codeA = a.currentLocationCountryCode || "ZZ";
-        const codeB = b.currentLocationCountryCode || "ZZ";
-        if (codeA === "CH" && codeB !== "CH") return -1;
-        if (codeA !== "CH" && codeB === "CH") return 1;
-        const codeCompare = codeA.localeCompare(codeB);
-        if (codeCompare !== 0) return codeCompare;
         const locA = a.currentLocationName || "Unknown";
         const locB = b.currentLocationName || "Unknown";
         const locCompare = locA.localeCompare(locB);

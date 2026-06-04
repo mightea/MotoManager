@@ -142,7 +142,6 @@ export interface Location {
   type: LocationType;
   latitude: number | null;
   longitude: number | null;
-  countryCode: string;
   userId: number;
   createdAt: string;
   updatedAt: string | null;
@@ -150,9 +149,8 @@ export interface Location {
 
 export type NewLocation = Omit<
   Location,
-  "id" | "countryCode" | "createdAt" | "updatedAt" | "latitude" | "longitude"
+  "id" | "createdAt" | "updatedAt" | "latitude" | "longitude"
 > & {
-  countryCode?: string;
   latitude?: number | null;
   longitude?: number | null;
 };

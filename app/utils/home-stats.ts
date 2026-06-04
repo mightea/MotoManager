@@ -15,7 +15,6 @@ export type MotorcycleDashboardItem = Motorcycle & {
   overdueMaintenanceItems: string[];
   currentLocationId: number | null;
   currentLocationName: string | null;
-  currentLocationCountryCode: string | null;
 };
 
 export type BusiestBike =

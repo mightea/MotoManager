@@ -382,7 +382,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     };
 
     if (newLocationName) {
-      const locationType = maintenanceTypeToLocationType[type] ?? "other";
+      const locationType = maintenanceTypeToLocationType[type] ?? "fuelStation";
       const newLoc = await createLocation(token, {
         name: newLocationName,
         type: locationType,

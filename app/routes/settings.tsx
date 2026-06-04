@@ -18,9 +18,9 @@ import {
 import { fetchFromBackend } from "~/utils/backend";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
-import { useState } from "react";
+import { LocationEditDialog } from "~/components/location-edit-dialog";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Pencil,
   Trash2,
   Plus,
   Fingerprint,
@@ -28,8 +28,14 @@ import {
   Activity,
   Lock,
   MapPin,
+  Warehouse,
+  Wrench,
+  Fuel,
+  ClipboardCheck,
+  CheckSquare,
 } from "lucide-react";
 import { registerPasskey } from "~/utils/webauthn";
+import type { Location, LocationType } from "~/types/db";
 
 export function meta() {
   return [
@@ -136,40 +142,189 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
   }
 
+  const VALID_LOCATION_TYPES: LocationType[] = [
+    "storage",
+    "maintenanceShop",
+    "fuelStation",
+    "inspection",
+    "other",
+  ];
+  const parseLocationType = (raw: FormDataEntryValue | null, fallback: LocationType): LocationType => {
+    return VALID_LOCATION_TYPES.includes(raw as LocationType) ? (raw as LocationType) : fallback;
+  };
+  const parseCoord = (raw: FormDataEntryValue | null): number | null => {
+    if (typeof raw !== "string" || raw.trim() === "") return null;
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : null;
+  };
+
   if (intent === "createLocation") {
     const name = formData.get("name") as string;
-    const countryCode = formData.get("countryCode") as string;
+    const type = parseLocationType(formData.get("type"), "fuelStation");
     if (!name) return { error: "Name ist erforderlich." };
-    await createLocation(token, { name, type: "storage", countryCode: countryCode || "CH", userId: user.id });
-    return { success: "Lagerort erstellt." };
+    const latitude = parseCoord(formData.get("latitude"));
+    const longitude = parseCoord(formData.get("longitude"));
+    await createLocation(token, { name, type, userId: user.id, latitude, longitude });
+    return { success: "Standort erstellt." };
   }
 
   if (intent === "updateLocation") {
     const id = Number(formData.get("id"));
     const name = formData.get("name") as string;
-    const countryCode = formData.get("countryCode") as string;
     if (!id || !name) return { error: "Ungültige Daten." };
-    await updateLocation(token, id, user.id, { name, countryCode: countryCode || "CH" });
-    return { success: "Lagerort aktualisiert." };
+    const type = parseLocationType(formData.get("type"), "fuelStation");
+    const latitude = parseCoord(formData.get("latitude"));
+    const longitude = parseCoord(formData.get("longitude"));
+    await updateLocation(token, id, user.id, {
+      name,
+      type,
+      latitude,
+      longitude,
+    });
+    return { success: "Standort aktualisiert." };
+  }
+
+  if (intent === "bulkUpdateLocationType") {
+    const ids = formData
+      .getAll("ids")
+      .map((v) => Number(v))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    const type = parseLocationType(formData.get("type"), "fuelStation");
+    if (ids.length === 0) return { error: "Keine Auswahl." };
+    await Promise.all(ids.map((id) => updateLocation(token, id, user.id, { type })));
+    return { success: `${ids.length} Standort${ids.length === 1 ? "" : "e"} aktualisiert.` };
   }
 
   if (intent === "deleteLocation") {
     const id = Number(formData.get("id"));
     if (!id) return { error: "Ungültige ID." };
     await deleteLocation(token, id, user.id);
-    return { success: "Lagerort gelöscht." };
+    return { success: "Standort gelöscht." };
   }
 
   return null;
 }
 
+type LocationSection = {
+  type: LocationType;
+  label: string;
+  description: string;
+  placeholder: string;
+  icon: typeof MapPin;
+  iconBg: string;
+  iconFg: string;
+};
+
+const LOCATION_SECTIONS: LocationSection[] = [
+  {
+    type: "storage",
+    label: "Garagen & Lager",
+    description: "Wo deine Fahrzeuge untergebracht sind.",
+    placeholder: "Neuer Lagerort (z.B. Garage)",
+    icon: Warehouse,
+    iconBg: "bg-rose-100 dark:bg-rose-900/30",
+    iconFg: "text-rose-600 dark:text-rose-400",
+  },
+  {
+    type: "maintenanceShop",
+    label: "Werkstätten",
+    description: "Betriebe, bei denen du Wartung durchführen lässt.",
+    placeholder: "Neue Werkstatt (z.B. Werkstatt Müller)",
+    icon: Wrench,
+    iconBg: "bg-amber-100 dark:bg-amber-900/30",
+    iconFg: "text-amber-600 dark:text-amber-400",
+  },
+  {
+    type: "fuelStation",
+    label: "Tankstellen",
+    description: "Tankstellen, die du regelmässig anfährst.",
+    placeholder: "Neue Tankstelle (z.B. Shell Zürich)",
+    icon: Fuel,
+    iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
+    iconFg: "text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    type: "inspection",
+    label: "Prüfstellen",
+    description: "MFK- und Inspektionsstellen.",
+    placeholder: "Neue Prüfstelle (z.B. STVA Zürich)",
+    icon: ClipboardCheck,
+    iconBg: "bg-sky-100 dark:bg-sky-900/30",
+    iconFg: "text-sky-600 dark:text-sky-400",
+  },
+  {
+    type: "other",
+    label: "Sonstige",
+    description: "Alles, was sonst nicht passt.",
+    placeholder: "Neuer Standort",
+    icon: MapPin,
+    iconBg: "bg-slate-100 dark:bg-slate-800",
+    iconFg: "text-slate-600 dark:text-slate-300",
+  },
+];
+
 export default function Settings() {
   const { locations, userAuthenticators, settings } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
-  const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
+  type DialogState =
+    | { mode: "edit"; location: Location }
+    | { mode: "create"; type: LocationType }
+    | null;
+  const [dialogState, setDialogState] = useState<DialogState>(null);
+  const [selectionSection, setSelectionSection] = useState<LocationType | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkType, setBulkType] = useState<LocationType>("fuelStation");
 
   const isSubmitting = navigation.state === "submitting";
+
+  const groupedLocations = useMemo(() => {
+    const groups: Record<LocationType, Location[]> = {
+      storage: [],
+      maintenanceShop: [],
+      fuelStation: [],
+      inspection: [],
+      other: [],
+    };
+    for (const loc of locations as Location[]) {
+      (groups[loc.type] ?? groups.other).push(loc);
+    }
+    return groups;
+  }, [locations]);
+
+  const exitSelectionMode = () => {
+    setSelectionSection(null);
+    setSelectedIds(new Set());
+  };
+
+  const enterSelectionMode = (type: LocationType) => {
+    setSelectionSection(type);
+    setSelectedIds(new Set());
+    // Default bulk-target to a different type so the action isn't a no-op.
+    setBulkType(type === "fuelStation" ? "maintenanceShop" : "fuelStation");
+  };
+
+  const toggleSelected = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // Exit selection mode and close the create/edit dialog on a successful action.
+  useEffect(() => {
+    if (actionData && "success" in actionData) {
+      setDialogState(null);
+      exitSelectionMode();
+    }
+    // exitSelectionMode is stable enough for this case; intentionally not in deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionData]);
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4 pt-4 sm:pt-10 pb-20">
@@ -342,139 +497,196 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* Storage Locations Section */}
+      {/* Locations Section */}
       <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-start gap-3 mb-6">
           <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
             <MapPin className="h-5 w-5" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
-              Lagerorte verwalten
+              Standorte verwalten
             </h2>
             <p className="text-sm text-secondary dark:text-navy-300">
-              Definiere Orte, an denen deine Fahrzeuge untergebracht sind.
+              Garagen, Werkstätten, Tankstellen und Prüfstellen — gruppiert nach Typ.
             </p>
           </div>
         </div>
 
-        {/* Add Location Form */}
-        <Form method="post" className="mb-6 flex gap-3">
-          <input type="hidden" name="intent" value="createLocation" />
-          <input
-            type="text"
-            name="name"
-            placeholder="Neuer Lagerort..."
-            required
-            className="block w-full flex-[3] rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-          />
-          <input
-            type="text"
-            name="countryCode"
-            placeholder="CH"
-            defaultValue="CH"
-            maxLength={2}
-            className="block w-20 rounded-xl border-gray-200 bg-gray-50 p-3 text-sm text-center font-bold text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 uppercase"
-          />
-          <Button type="submit" disabled={isSubmitting} variant="secondary">
-            <Plus className="h-5 w-5" />
-            <span className="hidden sm:inline">Hinzufügen</span>
-          </Button>
-        </Form>
-
-        <div className="space-y-3">
-          {locations.map((location) => (
-            <div
-              key={location.id}
-              className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-gray-200 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-navy-600"
-            >
-              {editingLocationId === location.id ? (
-                <Form
-                  method="post"
-                  className="flex flex-1 items-center gap-3"
-                  onSubmit={() => setEditingLocationId(null)}
-                >
-                  <input type="hidden" name="intent" value="updateLocation" />
-                  <input type="hidden" name="id" value={location.id} />
-                  <input
-                    type="text"
-                    name="name"
-                    defaultValue={location.name}
-                    required
-                    className="block w-full flex-[3] rounded-lg border-gray-200 bg-white p-2 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
-                  />
-                  <input
-                    type="text"
-                    name="countryCode"
-                    defaultValue={location.countryCode}
-                    maxLength={2}
-                    className="block w-16 rounded-lg border-gray-200 bg-white p-2 text-sm text-center font-bold text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white uppercase"
-                  />
-                  <Button type="submit" size="sm" disabled={isSubmitting}>
-                    Speichern
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingLocationId(null)}
-                  >
-                    Abbrechen
-                  </Button>
-                </Form>
-              ) : (
-                <>
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-6 w-8 items-center justify-center rounded bg-gray-200 text-[10px] font-bold text-secondary dark:bg-navy-700 dark:text-navy-300 uppercase">
-                      {location.countryCode}
-                    </span>
-                    <span className="font-medium text-foreground dark:text-white">
-                      {location.name}
-                    </span>
+        <div className="space-y-8">
+          {LOCATION_SECTIONS.map((section) => {
+            const SectionIcon = section.icon;
+            const items = groupedLocations[section.type];
+            const isSelecting = selectionSection === section.type;
+            const allSelectedInSection = items.length > 0 && selectedIds.size === items.length;
+            return (
+              <div key={section.type} className="space-y-3">
+                <div className="flex items-center gap-3 border-b border-gray-100 pb-2 dark:border-navy-700">
+                  <div className={`rounded-md ${section.iconBg} p-1.5 ${section.iconFg}`}>
+                    <SectionIcon className="h-4 w-4" />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <h3 className="font-display text-sm uppercase tracking-wider text-base-content dark:text-white">
+                      {section.label}
+                    </h3>
+                    <p className="text-xs text-secondary dark:text-navy-400">
+                      {section.description}
+                    </p>
+                  </div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums text-base-content/50">
+                    {items.length}
+                  </span>
+                  {!isSelecting && items.length > 0 && (
                     <Button
+                      type="button"
                       variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingLocationId(location.id)}
-                      title="Bearbeiten"
-                      className="h-8 w-8"
+                      size="sm"
+                      onClick={() => enterSelectionMode(section.type)}
+                      title="Mehrfachauswahl"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <CheckSquare className="h-4 w-4" />
                     </Button>
-                    <Form
-                      method="post"
-                      onSubmit={(e) => {
-                        if (!confirm("Lagerort wirklich löschen?")) {
-                          e.preventDefault();
-                        }
-                      }}
+                  )}
+                  {!isSelecting && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setDialogState({ mode: "create", type: section.type })}
+                      title={`${section.label}: Eintrag hinzufügen`}
                     >
-                      <input type="hidden" name="intent" value="deleteLocation" />
-                      <input type="hidden" name="id" value={location.id} />
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
-                        title="Löschen"
-                        disabled={isSubmitting}
-                      >
-                        <Trash2 className="h-4 w-4" />
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                {isSelecting && (
+                  <Form
+                    method="post"
+                    className="flex flex-wrap items-center gap-3 rounded-sm border border-primary/40 bg-primary/5 p-3"
+                    onSubmit={(e) => {
+                      if (selectedIds.size === 0) {
+                        e.preventDefault();
+                        return;
+                      }
+                    }}
+                  >
+                    <input type="hidden" name="intent" value="bulkUpdateLocationType" />
+                    <input type="hidden" name="type" value={bulkType} />
+                    {[...selectedIds].map((id) => (
+                      <input key={id} type="hidden" name="ids" value={id} />
+                    ))}
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] tabular-nums text-base-content">
+                      {selectedIds.size} / {items.length} ausgewählt
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setSelectedIds(
+                          allSelectedInSection ? new Set() : new Set(items.map((l) => l.id)),
+                        )
+                      }
+                      disabled={items.length === 0}
+                    >
+                      {allSelectedInSection ? "Auswahl aufheben" : "Alle auswählen"}
+                    </Button>
+                    <span className="text-sm text-secondary dark:text-navy-300">→ neuer Typ:</span>
+                    <select
+                      value={bulkType}
+                      onChange={(e) => setBulkType(e.target.value as LocationType)}
+                      className="rounded-sm border border-base-300 bg-base-100 p-2 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                    >
+                      {LOCATION_SECTIONS.filter((s) => s.type !== section.type).map((s) => (
+                        <option key={s.type} value={s.type}>{s.label}</option>
+                      ))}
+                    </select>
+                    <div className="ml-auto flex gap-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={exitSelectionMode}>
+                        Abbrechen
                       </Button>
-                    </Form>
+                      <Button type="submit" size="sm" disabled={selectedIds.size === 0 || isSubmitting}>
+                        Typ zuweisen
+                      </Button>
+                    </div>
+                  </Form>
+                )}
+
+                {items.length === 0 ? (
+                  <p className="py-3 text-center text-xs text-secondary/70 dark:text-navy-500">
+                    Noch keine Einträge.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {items.map((location) => {
+                      const isSelected = selectedIds.has(location.id);
+                      const cardClass = `flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors text-left w-full ${
+                        isSelected
+                          ? "border-primary/60 bg-primary/5"
+                          : "border-gray-100 bg-gray-50 hover:border-gray-200 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-navy-600"
+                      }`;
+                      const body = (
+                        <>
+                          {isSelecting && (
+                            <span
+                              aria-hidden="true"
+                              className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${
+                                isSelected ? "border-primary bg-primary" : "border-gray-400 bg-base-100"
+                              }`}
+                            >
+                              {isSelected && (
+                                <span className="block h-2 w-2 rounded-[1px] bg-white" />
+                              )}
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium text-foreground dark:text-white">
+                              {location.name}
+                            </p>
+                            {location.latitude !== null && location.longitude !== null && (
+                              <p className="font-mono text-[10px] tabular-nums text-secondary/70 dark:text-navy-500">
+                                {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      );
+                      return (
+                        <button
+                          key={location.id}
+                          type="button"
+                          onClick={
+                            isSelecting
+                              ? () => toggleSelected(location.id)
+                              : () => setDialogState({ mode: "edit", location })
+                          }
+                          aria-pressed={isSelecting ? isSelected : undefined}
+                          aria-label={
+                            isSelecting
+                              ? `${location.name} auswählen`
+                              : `${location.name} bearbeiten`
+                          }
+                          className={cardClass}
+                        >
+                          {body}
+                        </button>
+                      );
+                    })}
                   </div>
-                </>
-              )}
-            </div>
-          ))}
-          {locations.length === 0 && (
-            <p className="py-4 text-center text-sm text-secondary dark:text-navy-400">
-              Keine Lagerorte vorhanden.
-            </p>
-          )}
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
+
+      <LocationEditDialog
+        isOpen={dialogState !== null}
+        onClose={() => setDialogState(null)}
+        location={dialogState?.mode === "edit" ? dialogState.location : null}
+        defaultType={dialogState?.mode === "create" ? dialogState.type : undefined}
+      />
 
       {/* Maintenance Intervals Section */}
       <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
