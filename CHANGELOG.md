@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026.6.1](https://github.com/mightea/MotoManager/compare/2026.6.0...2026.6.1) (2026-06-04)
+
+
+### ✨ Features
+
+* derive a motorcycle's current location only from storage locations ([042b16d](https://github.com/mightea/MotoManager/commit/042b16d1cfdde99621975ca3706fc1b7ab140db1))
+* typed location manager with map picker and bulk type assignment ([9c60823](https://github.com/mightea/MotoManager/commit/9c6082377935c610c2005fb1913192112318035f))
+
+
+### 🐛 Bug Fixes
+
+* persist maintenance location via locationId and stop toast loop ([92b4371](https://github.com/mightea/MotoManager/commit/92b43718671669d732db90aa924db6686a7e2a39))
+
+
+### ✏️ Miscellaneous Chores
+
+* bump frontend dependencies to latest versions ([5a456bf](https://github.com/mightea/MotoManager/commit/5a456bff5b1c6c87e6d15ea3d797f9071bc1eb19))
+
 ## [2026.6.0](https://github.com/mightea/MotoManager/compare/2026.5.8...2026.6.0) (2026-06-01)
 
 
