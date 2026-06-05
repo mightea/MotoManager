@@ -466,11 +466,20 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       return data({ success: false, intent: "deleteMaintenanceBulk", error: "Keine Einträge ausgewählt" }, { status: 400 });
     }
 
-    const results = await Promise.all(
-      ids.map((id) => deleteMaintenanceRecord(token, id, motorcycleId)),
-    );
-    const succeeded = results.filter(Boolean).length;
-    const failed = results.length - succeeded;
+    // Sequential, not parallel: SQLite has a single writer, so firing N
+    // concurrent DELETEs makes most of them lose the lock with SQLITE_BUSY.
+    let succeeded = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const ok = await deleteMaintenanceRecord(token, id, motorcycleId);
+        if (ok) succeeded += 1;
+        else failed += 1;
+      } catch {
+        failed += 1;
+      }
+    }
 
     if (failed > 0 && succeeded === 0) {
       return data({ success: false, intent: "deleteMaintenanceBulk", error: `${failed} Einträge konnten nicht gelöscht werden` }, { status: 500 });

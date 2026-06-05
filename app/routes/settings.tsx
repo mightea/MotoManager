@@ -210,8 +210,29 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       .map((v) => Number(v))
       .filter((n) => Number.isFinite(n) && n > 0);
     if (ids.length === 0) return { error: "Keine Auswahl." };
-    await Promise.all(ids.map((id) => deleteLocation(token, id, user.id)));
-    return { success: `${ids.length} Standort${ids.length === 1 ? "" : "e"} gelöscht.` };
+    // Sequential, not parallel: each delete now opens a write transaction on
+    // the backend (to detach references), and SQLite has a single writer.
+    // Firing N in parallel makes most of them lose the lock with SQLITE_BUSY.
+    let succeeded = 0;
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await deleteLocation(token, id, user.id);
+        succeeded += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    if (succeeded === 0) {
+      return { error: `Keiner der ${failed} Standorte konnte gelöscht werden.` };
+    }
+    if (failed > 0) {
+      return {
+        success: `${succeeded} Standort${succeeded === 1 ? "" : "e"} gelöscht, ${failed} fehlgeschlagen.`,
+      };
+    }
+    return { success: `${succeeded} Standort${succeeded === 1 ? "" : "e"} gelöscht.` };
   }
 
   return null;
