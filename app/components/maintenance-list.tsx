@@ -22,6 +22,9 @@ import {
   Activity,
   Plus,
   X,
+  Check,
+  CheckSquare,
+  Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location, FluidType, BatteryType } from "~/types/db";
@@ -46,6 +49,12 @@ interface MaintenanceListProps {
   userLocations?: Location[];
   onEdit: (record: MaintenanceRecord) => void;
   onAdd?: () => void;
+  /**
+   * When provided, enables the bulk-select UI. The parent receives every
+   * underlying record id (parent + bundled children) for the selected groups
+   * and is responsible for confirming and performing the deletion.
+   */
+  onBulkDelete?: (recordIds: number[]) => void;
 }
 
 interface GroupedMaintenanceRecord {
@@ -199,9 +208,13 @@ function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: stri
   return null;
 }
 
-export function MaintenanceList({ records, currencyCode, userLocations, onEdit, onAdd }: MaintenanceListProps) {
+export function MaintenanceList({ records, currencyCode, userLocations, onEdit, onAdd, onBulkDelete }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "maintenance" | "fuel">("all");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
+
+  const bulkSelectEnabled = typeof onBulkDelete === "function";
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
     dateStyle: "medium",
@@ -232,35 +245,123 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
     setExpandedGroupId(expandedGroupId === id ? null : id);
   };
 
+  const toggleSelectGroup = (id: string) => {
+    setSelectedGroupIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedGroupIds(new Set());
+  };
+
+  const enterSelectionMode = () => {
+    setSelectionMode(true);
+    setExpandedGroupId(null);
+  };
+
+  const handleBulkDelete = () => {
+    if (!onBulkDelete) return;
+    const ids: number[] = [];
+    for (const group of groupedRecords) {
+      if (!selectedGroupIds.has(group.id)) continue;
+      for (const record of group.originalRecords) {
+        ids.push(record.id);
+      }
+    }
+    if (ids.length === 0) return;
+    onBulkDelete(ids);
+    exitSelectionMode();
+  };
+
+  const selectedCount = selectedGroupIds.size;
+
   return (
     <div className="space-y-6">
       <div
-        className="sticky z-20 -mx-4 flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-4 pb-3 pt-3 dark:border-navy-700 dark:bg-navy-800"
+        className={clsx(
+          "sticky z-20 -mx-4 flex items-center justify-between gap-3 border-b px-4 pb-3 pt-3",
+          selectionMode
+            ? "border-primary/30 bg-primary/10 dark:bg-primary/15"
+            : "border-gray-100 bg-white dark:border-navy-700 dark:bg-navy-800",
+        )}
         style={{ top: "var(--app-header-h, 4rem)" }}
       >
-        <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <FilterChip
-            label="Alle"
-            icon={Layers}
-            active={filter === "all"}
-            onClick={() => setFilter("all")}
-          />
-          <FilterChip
-            label="Wartung"
-            icon={Wrench}
-            active={filter === "maintenance"}
-            onClick={() => setFilter("maintenance")}
-          />
-          <FilterChip
-            label="Tanken"
-            icon={Fuel}
-            active={filter === "fuel"}
-            onClick={() => setFilter("fuel")}
-          />
-        </div>
-        <div className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500">
-          {groupedRecords.length} {groupedRecords.length === 1 ? 'Eintrag' : 'Einträge'}
-        </div>
+        {selectionMode ? (
+          <>
+            <div className="flex items-center gap-2 text-sm font-semibold text-primary dark:text-primary-light">
+              <CheckSquare className="h-4 w-4" aria-hidden="true" />
+              <span aria-live="polite">
+                {selectedCount} {selectedCount === 1 ? "ausgewählt" : "ausgewählt"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={exitSelectionMode}
+                className="inline-flex items-center gap-1 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-base-content/70 transition-colors hover:bg-base-200 dark:text-navy-300 dark:hover:bg-navy-700"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                Abbrechen
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={selectedCount === 0}
+                className="inline-flex items-center gap-1 rounded-sm bg-error px-2.5 py-1.5 text-xs font-semibold text-error-content shadow-sm transition-colors hover:bg-error/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                Löschen
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <FilterChip
+                label="Alle"
+                icon={Layers}
+                active={filter === "all"}
+                onClick={() => setFilter("all")}
+              />
+              <FilterChip
+                label="Wartung"
+                icon={Wrench}
+                active={filter === "maintenance"}
+                onClick={() => setFilter("maintenance")}
+              />
+              <FilterChip
+                label="Tanken"
+                icon={Fuel}
+                active={filter === "fuel"}
+                onClick={() => setFilter("fuel")}
+              />
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500">
+                {groupedRecords.length} {groupedRecords.length === 1 ? 'Eintrag' : 'Einträge'}
+              </span>
+              {bulkSelectEnabled && groupedRecords.length > 0 && (
+                <button
+                  type="button"
+                  onClick={enterSelectionMode}
+                  className="inline-flex items-center gap-1 rounded-sm border border-base-300 px-2 py-1 text-[11px] font-semibold text-base-content/70 transition-colors hover:bg-base-200 dark:border-navy-700 dark:text-navy-300 dark:hover:bg-navy-700"
+                  aria-label="Mehrere Einträge auswählen"
+                >
+                  <CheckSquare className="h-3.5 w-3.5" aria-hidden="true" />
+                  Auswählen
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {groupedRecords.length === 0 ? (
@@ -316,7 +417,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
             <ul className="space-y-2">
               {recordsByYear.get(year)!.map((group) => {
                 const Icon = getIconForType(group.type);
-                const isExpanded = expandedGroupId === group.id;
+                const isExpanded = !selectionMode && expandedGroupId === group.id;
+                const isSelected = selectedGroupIds.has(group.id);
                 const tone = TYPE_TONE[group.type] ?? TYPE_TONE.general;
                 const typeLabel = maintenanceTypeLabels[group.type] || group.type;
 
@@ -339,14 +441,36 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                 const showTypeTag = !summaryRepeatsType;
 
                 return (
-                  <li key={group.id} className="rounded-sm transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30">
+                  <li
+                    key={group.id}
+                    className={clsx(
+                      "rounded-sm transition-colors",
+                      isSelected
+                        ? "bg-primary/10 dark:bg-primary/15"
+                        : "hover:bg-base-200/50 dark:hover:bg-navy-700/30",
+                    )}
+                  >
                     <button
                       type="button"
-                      onClick={() => toggleExpand(group.id)}
-                      aria-expanded={isExpanded}
-                      aria-controls={`maintenance-details-${group.id}`}
+                      onClick={() => (selectionMode ? toggleSelectGroup(group.id) : toggleExpand(group.id))}
+                      aria-expanded={selectionMode ? undefined : isExpanded}
+                      aria-pressed={selectionMode ? isSelected : undefined}
+                      aria-controls={selectionMode ? undefined : `maintenance-details-${group.id}`}
                       className="group flex w-full cursor-pointer items-start gap-3 py-2.5 pl-0 text-left"
                     >
+                      {selectionMode && (
+                        <div
+                          className={clsx(
+                            "mt-1.5 grid h-5 w-5 shrink-0 place-items-center rounded-sm border transition-colors",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-content"
+                              : "border-base-300 bg-base-100 dark:border-navy-600 dark:bg-navy-900",
+                          )}
+                          aria-hidden="true"
+                        >
+                          {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                        </div>
+                      )}
                       <div className={clsx(
                         "mt-0.5 grid h-10 w-10 place-items-center rounded-sm shrink-0 transition-transform group-hover:scale-105",
                         tone.bg,
@@ -366,7 +490,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                               {formatNumber(group.odo)}
                             </span>
                             <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">km</span>
-                            <ChevronDown className={clsx("h-4 w-4 self-center text-base-content/45 transition-transform dark:text-navy-400", isExpanded && "rotate-180")} aria-hidden="true" />
+                            {!selectionMode && (
+                              <ChevronDown className={clsx("h-4 w-4 self-center text-base-content/45 transition-transform dark:text-navy-400", isExpanded && "rotate-180")} aria-hidden="true" />
+                            )}
                           </div>
                         </div>
 

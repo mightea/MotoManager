@@ -451,6 +451,34 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return data({ success: true, intent: "deleteMaintenance" });
   }
 
+  if (intent === "deleteMaintenanceBulk") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    if (!Number.isFinite(motorcycleId)) {
+      throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
+    }
+
+    const rawIds = formData.getAll("maintenanceIds[]");
+    const ids = rawIds
+      .map((v) => Number(v))
+      .filter((n) => Number.isFinite(n));
+
+    if (ids.length === 0) {
+      return data({ success: false, intent: "deleteMaintenanceBulk", error: "Keine Einträge ausgewählt" }, { status: 400 });
+    }
+
+    const results = await Promise.all(
+      ids.map((id) => deleteMaintenanceRecord(token, id, motorcycleId)),
+    );
+    const succeeded = results.filter(Boolean).length;
+    const failed = results.length - succeeded;
+
+    if (failed > 0 && succeeded === 0) {
+      return data({ success: false, intent: "deleteMaintenanceBulk", error: `${failed} Einträge konnten nicht gelöscht werden` }, { status: 500 });
+    }
+
+    return data({ success: true, intent: "deleteMaintenanceBulk", count: succeeded, failed });
+  }
+
   if (intent === "createPreviousOwner" || intent === "updatePreviousOwner") {
     const motorcycleId = Number(formData.get("motorcycleId"));
     if (!Number.isFinite(motorcycleId)) {
@@ -592,6 +620,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [deleteMaintenanceConfirmationOpen, setDeleteMaintenanceConfirmationOpen] = useState(false);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<number[]>([]);
+  const [bulkDeleteConfirmationOpen, setBulkDeleteConfirmationOpen] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
@@ -600,7 +630,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [selectedPreviousOwner, setSelectedPreviousOwner] = useState<(typeof previousOwnersList)[number] | null>(null);
   const [deletePreviousOwnerConfirmationOpen, setDeletePreviousOwnerConfirmationOpen] = useState(false);
   const revalidator = useRevalidator();
-  const actionData = useActionData<{ success?: boolean; error?: string; errors?: Record<string, string>; intent?: string; count?: number }>();
+  const actionData = useActionData<{ success?: boolean; error?: string; errors?: Record<string, string>; intent?: string; count?: number; failed?: number }>();
   const submit = useSubmit();
   const location = useLocation();
   const params = useParams<{ slug?: string; id?: string }>();
@@ -648,6 +678,18 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             break;
           case "deleteMaintenance":
             toast.success("Eintrag gelöscht");
+            break;
+          case "deleteMaintenanceBulk":
+            if (actionData.failed && actionData.failed > 0) {
+              toast.success(
+                `${actionData.count} Einträge gelöscht`,
+                `${actionData.failed} konnten nicht gelöscht werden.`,
+              );
+            } else {
+              toast.success(
+                `${actionData.count} ${actionData.count === 1 ? "Eintrag" : "Einträge"} gelöscht`,
+              );
+            }
             break;
           case "createPreviousOwner":
             toast.success("Vorbesitzer erstellt");
@@ -765,6 +807,11 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                 onAdd={() => {
                   setSelectedMaintenance(null);
                   setMaintenanceDialogOpen(true);
+                }}
+                onBulkDelete={(ids) => {
+                  if (ids.length === 0) return;
+                  setBulkDeleteIds(ids);
+                  setBulkDeleteConfirmationOpen(true);
                 }}
               />
             </div>
@@ -935,6 +982,32 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         description="Möchtest du diesen Eintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
         confirmLabel="Löschen"
         confirmDisabled={!selectedMaintenance}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={bulkDeleteConfirmationOpen}
+        onCancel={() => {
+          setBulkDeleteConfirmationOpen(false);
+          setBulkDeleteIds([]);
+        }}
+        onConfirm={() => {
+          if (bulkDeleteIds.length > 0) {
+            trackEvent("maintenance_delete_bulk", { count: bulkDeleteIds.length });
+            const formData = new FormData();
+            formData.append("intent", "deleteMaintenanceBulk");
+            formData.append("motorcycleId", motorcycle.id.toString());
+            for (const id of bulkDeleteIds) {
+              formData.append("maintenanceIds[]", id.toString());
+            }
+            submit(formData, { method: "post" });
+          }
+          setBulkDeleteConfirmationOpen(false);
+          setBulkDeleteIds([]);
+        }}
+        title={`${bulkDeleteIds.length} ${bulkDeleteIds.length === 1 ? "Eintrag" : "Einträge"} löschen`}
+        description="Möchtest du die ausgewählten Einträge wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Löschen"
+        confirmDisabled={bulkDeleteIds.length === 0}
       />
       <IssueDialog
         isOpen={issueDialogOpen}
