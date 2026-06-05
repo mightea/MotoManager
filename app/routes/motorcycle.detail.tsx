@@ -548,36 +548,93 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const recordsJson = formData.get("records") as string;
     const records = JSON.parse(recordsJson) as any[];
 
-    const values = records.map(record => {
-      const currency = record.currency || "CHF";
-      const rate = record.currencyRate || getCurrencyFactor(currency);
+    const { getLocations } = await import("~/services/settings");
+    const { findNearestWithinRadius, normalizeLocationName } = await import("~/utils/geo");
+    const userLocations = await getLocations(token, user.id);
 
-      return {
-        motorcycleId,
-        type: "fuel" as const,
-        date: record.date.split("T")[0],
-        odo: record.odo,
-        cost: record.cost,
-        currency: currency,
-        fuelType: record.fuelType,
-        fuelAmount: record.fuelAmount,
-        pricePerUnit: record.pricePerUnit,
-        normalizedCost: (record.cost || 0) * rate,
-        description: null
-      };
-    });
+    type KnownStation = { id: number; name: string; latitude: number | null; longitude: number | null };
+    const knownFuelStations: KnownStation[] = userLocations
+      .filter((l: any) => l.type === "fuelStation")
+      .map((l: any) => ({
+        id: l.id,
+        name: l.name,
+        latitude: l.latitude ?? null,
+        longitude: l.longitude ?? null,
+      }));
 
-    if (values.length > 0) {
+    const resolveLocationId = async (record: any): Promise<number | null> => {
+      const hasCoords =
+        typeof record.latitude === "number" && typeof record.longitude === "number";
+      const rawName = typeof record.locationName === "string" ? record.locationName.trim() : "";
+      const hasName = rawName.length > 0;
+
+      if (hasCoords) {
+        const match = findNearestWithinRadius(
+          { latitude: record.latitude, longitude: record.longitude },
+          knownFuelStations,
+          100,
+        );
+        if (match) return match.id;
+      }
+
+      if (hasName) {
+        const target = normalizeLocationName(rawName);
+        const match = knownFuelStations.find((l) => normalizeLocationName(l.name) === target);
+        if (match) return match.id;
+      }
+
+      if (hasName) {
+        const created = await createLocation(token, {
+          name: rawName,
+          type: "fuelStation",
+          userId: user.id,
+          latitude: hasCoords ? record.latitude : null,
+          longitude: hasCoords ? record.longitude : null,
+        });
+        if (created && typeof created.id === "number") {
+          knownFuelStations.push({
+            id: created.id,
+            name: created.name,
+            latitude: created.latitude ?? null,
+            longitude: created.longitude ?? null,
+          });
+          return created.id;
+        }
+      }
+
+      return null;
+    };
+
+    if (records.length > 0) {
       try {
         // Send requests sequentially to avoid overwhelming the backend/proxy
-        for (const record of values) {
+        // and to let later records reuse locations created during this import.
+        for (const record of records) {
+          const currency = record.currency || "CHF";
+          const rate = record.currencyRate || getCurrencyFactor(currency);
+          // eslint-disable-next-line no-await-in-loop
+          const locationId = await resolveLocationId(record);
+          const payload = {
+            motorcycleId,
+            type: "fuel" as const,
+            date: record.date.split("T")[0],
+            odo: record.odo,
+            cost: record.cost,
+            currency,
+            fuelType: record.fuelType,
+            fuelAmount: record.fuelAmount,
+            pricePerUnit: record.pricePerUnit,
+            normalizedCost: (record.cost || 0) * rate,
+            locationId,
+            description: null,
+          };
           // eslint-disable-next-line no-await-in-loop
           await fetchFromBackend(`/motorcycles/${motorcycleId}/maintenance`, {
             method: "POST",
-            body: JSON.stringify(record),
+            body: JSON.stringify(payload),
           }, token);
         }
-        return data({ success: true, intent: "importFuelData", count: values.length });
+        return data({ success: true, intent: "importFuelData", count: records.length });
       } catch (e: any) {
         return data({ success: false, intent: "importFuelData", error: e.message || "Import fehlgeschlagen" }, { status: 500 });
       }
