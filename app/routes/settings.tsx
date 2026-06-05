@@ -3,6 +3,7 @@ import {
   useActionData,
   useLoaderData,
   useNavigation,
+  useSubmit,
 } from "react-router";
 import {
   createLocation,
@@ -18,6 +19,7 @@ import {
 import { fetchFromBackend } from "~/utils/backend";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
+import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { LocationEditDialog } from "~/components/location-edit-dialog";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -202,6 +204,16 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return { success: "Standort gelöscht." };
   }
 
+  if (intent === "deleteLocationsBulk") {
+    const ids = formData
+      .getAll("ids")
+      .map((v) => Number(v))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    if (ids.length === 0) return { error: "Keine Auswahl." };
+    await Promise.all(ids.map((id) => deleteLocation(token, id, user.id)));
+    return { success: `${ids.length} Standort${ids.length === 1 ? "" : "e"} gelöscht.` };
+  }
+
   return null;
 }
 
@@ -275,6 +287,8 @@ export default function Settings() {
   const [selectionSection, setSelectionSection] = useState<LocationType | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkType, setBulkType] = useState<LocationType>("fuelStation");
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const submit = useSubmit();
 
   const isSubmitting = navigation.state === "submitting";
 
@@ -606,6 +620,16 @@ export default function Settings() {
                       <Button type="button" variant="ghost" size="sm" onClick={exitSelectionMode}>
                         Abbrechen
                       </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        disabled={selectedIds.size === 0 || isSubmitting}
+                        onClick={() => setBulkDeleteConfirmOpen(true)}
+                      >
+                        <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                        Löschen
+                      </Button>
                       <Button type="submit" size="sm" disabled={selectedIds.size === 0 || isSubmitting}>
                         Typ zuweisen
                       </Button>
@@ -686,6 +710,28 @@ export default function Settings() {
         onClose={() => setDialogState(null)}
         location={dialogState?.mode === "edit" ? dialogState.location : null}
         defaultType={dialogState?.mode === "create" ? dialogState.type : undefined}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={bulkDeleteConfirmOpen}
+        onCancel={() => setBulkDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          if (selectedIds.size === 0) {
+            setBulkDeleteConfirmOpen(false);
+            return;
+          }
+          const fd = new FormData();
+          fd.set("intent", "deleteLocationsBulk");
+          for (const id of selectedIds) {
+            fd.append("ids", String(id));
+          }
+          submit(fd, { method: "post" });
+          setBulkDeleteConfirmOpen(false);
+        }}
+        title={`${selectedIds.size} ${selectedIds.size === 1 ? "Standort" : "Standorte"} löschen`}
+        description="Möchtest du die ausgewählten Standorte wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Löschen"
+        confirmDisabled={selectedIds.size === 0}
       />
 
       {/* Maintenance Intervals Section */}
