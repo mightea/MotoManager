@@ -1,5 +1,24 @@
 # Changelog
 
+## [2026.6.2](https://github.com/mightea/MotoManager/compare/2026.6.1...2026.6.2) (2026-06-05)
+
+
+### ✨ Features
+
+* auto-link fuel imports to existing or new locations ([dc01473](https://github.com/mightea/MotoManager/commit/dc01473d190472a2c7a4d3c36064f63455783df3))
+* bulk-delete locations from the selection bar ([3bd6ff2](https://github.com/mightea/MotoManager/commit/3bd6ff2b52bd11bdf02c7d4ab7e821de018a8e09))
+* bulk-select and delete multiple maintenance entries ([4c16ff7](https://github.com/mightea/MotoManager/commit/4c16ff7867be6bafc72f0ab74f220f3b02299567))
+
+
+### 🐛 Bug Fixes
+
+* run bulk deletes sequentially to avoid SQLITE_BUSY ([317c0d2](https://github.com/mightea/MotoManager/commit/317c0d22aee36dfef83fa0011a80056da7f51949))
+
+
+### ✏️ Miscellaneous Chores
+
+* bump frontend dependencies to latest versions ([dc01bdc](https://github.com/mightea/MotoManager/commit/dc01bdcf54d03598780a3435411575d87b5f9f0f))
+
 ## [2026.6.1](https://github.com/mightea/MotoManager/compare/2026.6.0...2026.6.1) (2026-06-04)
 
 
