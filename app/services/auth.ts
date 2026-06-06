@@ -154,8 +154,12 @@ export async function requireUser(request: Request) {
 
   if (!user || !token) {
     const url = new URL(request.url);
-    const redirectTo = encodeURIComponent(url.pathname + url.search + url.hash);
-    
+    // Under React Router 7's v8_passThroughRequests flag the loader request can
+    // carry a trailing `.data` (or `/_.data`) suffix that we don't want to feed
+    // back into the redirectTo — the user expects to land on the visual route.
+    const pathname = url.pathname.replace(/(?:\.data|\/_\.data)$/, "") || "/";
+    const redirectTo = encodeURIComponent(pathname + url.search + url.hash);
+
     // In SPA mode, we can't easily set Location header on a response thrown from a client side function
     // and expect the browser to follow it. Instead, we can throw a redirect response which React Router handles.
     const { redirect } = await import("react-router");
