@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.6.3](https://github.com/mightea/MotoManager/compare/2026.6.2...2026.6.3) (2026-06-06)
+
+
+### ✨ Features
+
+* reverse-geocode coords-only fuel imports via Nominatim ([0eb0fe5](https://github.com/mightea/MotoManager/commit/0eb0fe519064a89524bd11cd099b18b7de6e436f))
+
+
+### ✏️ Miscellaneous Chores
+
+* opt in to React Router v8 future flags ([52b1c83](https://github.com/mightea/MotoManager/commit/52b1c835ebb6cca89a95ab92330a457020ced423))
+
 ## [2026.6.2](https://github.com/mightea/MotoManager/compare/2026.6.1...2026.6.2) (2026-06-05)
 
 
