@@ -559,7 +559,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     const { getLocations } = await import("~/services/settings");
     const { findNearestWithinRadius, normalizeLocationName } = await import("~/utils/geo");
+    const { createReverseGeocoder } = await import("~/utils/reverse-geocode");
     const userLocations = await getLocations(token, user.id);
+    const reverseGeocode = createReverseGeocoder();
 
     type KnownStation = { id: number; name: string; latitude: number | null; longitude: number | null };
     const knownFuelStations: KnownStation[] = userLocations
@@ -574,8 +576,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const resolveLocationId = async (record: any): Promise<number | null> => {
       const hasCoords =
         typeof record.latitude === "number" && typeof record.longitude === "number";
-      const rawName = typeof record.locationName === "string" ? record.locationName.trim() : "";
-      const hasName = rawName.length > 0;
+      let rawName = typeof record.locationName === "string" ? record.locationName.trim() : "";
+      let hasName = rawName.length > 0;
 
       if (hasCoords) {
         const match = findNearestWithinRadius(
@@ -584,6 +586,17 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           100,
         );
         if (match) return match.id;
+      }
+
+      // No usable name, but we do have coords — ask Nominatim for one so we
+      // can still attach (or create) a fuel station instead of dropping the
+      // location entirely.
+      if (!hasName && hasCoords) {
+        const reversed = await reverseGeocode(record.latitude, record.longitude);
+        if (reversed) {
+          rawName = reversed;
+          hasName = true;
+        }
       }
 
       if (hasName) {
