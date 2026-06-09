@@ -15,7 +15,7 @@ export function HeaderBrand({ onNavigate }: HeaderBrandProps) {
     <Link
       to="/"
       onClick={onNavigate}
-      className="group relative flex items-center gap-3 pl-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+      className="group relative flex min-w-0 items-center gap-3 pl-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
       aria-label="MotoManager — Startseite"
     >
       <div className="relative grid h-10 w-10 place-items-center rounded-sm border border-base-content/15 bg-base-100 transition-colors group-hover:border-primary/40 dark:bg-navy-900">
@@ -26,11 +26,11 @@ export function HeaderBrand({ onNavigate }: HeaderBrandProps) {
         <span className="absolute -bottom-px -right-px h-1.5 w-1.5 bg-primary" aria-hidden="true" />
       </div>
 
-      <div className="flex flex-col items-start leading-none">
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+      <div className="flex min-w-0 flex-col items-start leading-none">
+        <span className="max-w-full truncate font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
           MM · 01 / Garage
         </span>
-        <span className="mt-1 font-display text-[1.35rem] uppercase leading-none tracking-wide text-base-content transition-colors group-hover:text-primary">
+        <span className="mt-1 max-w-full truncate font-display text-lg uppercase leading-none tracking-wide text-base-content transition-colors group-hover:text-primary sm:text-[1.35rem]">
           MotoManager
         </span>
       </div>

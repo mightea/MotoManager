@@ -324,7 +324,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
           </>
         ) : (
           <>
-            <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <FilterChip
                 label="Alle"
                 icon={Layers}
@@ -352,11 +352,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                 <button
                   type="button"
                   onClick={enterSelectionMode}
-                  className="inline-flex items-center gap-1 rounded-sm border border-base-300 px-2 py-1 text-[11px] font-semibold text-base-content/70 transition-colors hover:bg-base-200 dark:border-navy-700 dark:text-navy-300 dark:hover:bg-navy-700"
+                  className="inline-flex items-center gap-1 rounded-sm border border-base-300 p-1 sm:px-2 sm:py-1 text-[11px] font-semibold text-base-content/70 transition-colors hover:bg-base-200 dark:border-navy-700 dark:text-navy-300 dark:hover:bg-navy-700"
                   aria-label="Mehrere Einträge auswählen"
                 >
                   <CheckSquare className="h-3.5 w-3.5" aria-hidden="true" />
-                  Auswählen
+                  <span className="hidden sm:inline">Auswählen</span>
                 </button>
               )}
             </div>

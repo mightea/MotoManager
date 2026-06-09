@@ -91,11 +91,11 @@ export function MotorcycleInfoCard({
           {summaryItems.length > 0 ? (
             <ul className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/70 dark:text-navy-300">
               {summaryItems.map((item, index) => (
-                <li key={item} className="flex items-center gap-3">
+                <li key={item} className="flex min-w-0 items-center gap-3">
                   {index > 0 && (
-                    <span aria-hidden="true" className="h-3 w-px bg-base-content/20" />
+                    <span aria-hidden="true" className="h-3 w-px shrink-0 bg-base-content/20" />
                   )}
-                  <span>{item}</span>
+                  <span className="truncate">{item}</span>
                 </li>
               ))}
             </ul>

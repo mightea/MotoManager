@@ -25,7 +25,7 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
   return (
     <div className="min-h-screen bg-background font-sans antialiased dark:bg-navy-950 flex flex-col">
       <Header user={user} />
-      <main className="flex-1 relative z-0 pt-6">
+      <main className="app-shell-safe flex-1 relative z-0 pt-6">
         {/* Re-keying on pathname triggers the fade-in on every route transition. */}
         <div key={location.pathname} className="motion-safe:animate-fade-in">
           <Outlet />

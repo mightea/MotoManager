@@ -631,6 +631,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       try {
         // Send requests sequentially to avoid overwhelming the backend/proxy
         // and to let later records reuse locations created during this import.
+        const { startPerfMark } = await import("~/components/umami-provider");
+        const stopPerf = startPerfMark("fuel_import");
         for (const record of records) {
           const currency = record.currency || "CHF";
           const rate = record.currencyRate || getCurrencyFactor(currency);
@@ -656,6 +658,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
             body: JSON.stringify(payload),
           }, token);
         }
+        stopPerf({ count: records.length, locations_known: knownFuelStations.length });
         return data({ success: true, intent: "importFuelData", count: records.length });
       } catch (e: any) {
         return data({ success: false, intent: "importFuelData", error: e.message || "Import fehlgeschlagen" }, { status: 500 });
@@ -817,8 +820,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         ownerCount={ownerCount}
       />
 
-      <div className="grid gap-5 md:grid-cols-3 items-start">
-        <div className="space-y-5 sticky-tall">
+      <div className="grid gap-5 grid-cols-1 md:grid-cols-3 items-start">
+        <div className="min-w-0 space-y-5 sticky-tall">
           <MotorcycleInfoCard
             motorcycle={motorcycle}
             formattedFirstRegistration={formattedFirstRegistration}
@@ -848,7 +851,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           <MaintenanceInsightsCard insights={insights} />
         </div>
 
-        <div className="space-y-5 md:col-span-2">
+        <div className="min-w-0 space-y-5 md:col-span-2">
           <OpenIssuesCard
             issues={openIssues}
             dateFormatter={dateFormatter}

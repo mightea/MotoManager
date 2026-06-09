@@ -58,7 +58,7 @@ export function Card({
   return (
     <div
       className={clsx(
-        "relative rounded-sm border border-base-300/70 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700",
+        "relative overflow-hidden rounded-sm border border-base-300/70 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700",
         surface,
         className,
       )}
@@ -122,11 +122,11 @@ export function CardHeading({
   return (
     <div
       className={clsx(
-        "flex items-center justify-between gap-3 border-b border-base-200 px-4 py-3 dark:border-navy-700",
+        "flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-base-200 px-4 py-3 dark:border-navy-700",
         className,
       )}
     >
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
         {code && (
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 tabular-nums shrink-0">
             {code}
@@ -142,7 +142,7 @@ export function CardHeading({
           </span>
         )}
       </div>
-      {trailing && <div className="shrink-0">{trailing}</div>}
+      {trailing && <div className="flex shrink-0 items-center">{trailing}</div>}
     </div>
   );
 }

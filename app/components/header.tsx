@@ -38,18 +38,18 @@ export function Header({ user }: { user: PublicUser | null }) {
 
   return (
     <div
-      className="sticky top-0 z-40 w-full print:hidden transition-all duration-300 border-b border-base-300 bg-base-100/90 backdrop-blur-md"
+      className="app-shell-safe sticky top-0 z-40 w-full print:hidden transition-all duration-300 border-b border-base-300 bg-base-100/90 backdrop-blur-md"
     >
       <header className="mx-auto w-full max-w-7xl relative">
         {/* Structural motorsport flag — 3-band stripe, distinct from a
             soft gradient. Acts as the global visual signature. */}
         <div className="motorsport-stripe absolute left-0 right-0 top-0 h-[3px]" aria-hidden="true" />
 
-        <div className="flex items-center justify-between p-3 pt-4">
+        <div className="flex min-w-0 items-center justify-between gap-2 p-3 pt-4">
           <HeaderBrand onNavigate={closeMobileMenu} />
           <HeaderDesktopNav items={NAV_ITEMS} />
 
-          <div className="flex items-center gap-3 pr-2">
+          <div className="flex shrink-0 items-center gap-3 pr-2">
             <ThemeToggle />
             <HeaderUserMenu user={user} />
 

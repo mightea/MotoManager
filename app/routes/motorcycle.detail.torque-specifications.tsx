@@ -546,7 +546,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           )}
                         </div>
 
-                        <div className="flex items-center justify-end gap-3 sm:gap-6 shrink-0 print:flex print:gap-4 print:items-baseline print:text-right print:border-0 print:pt-0">
+                        <div className="flex items-center justify-end gap-2 sm:gap-6 shrink-0 print:flex print:gap-4 print:items-baseline print:text-right print:border-0 print:pt-0">
                           {spec.toolSize && (
                             <div className="flex flex-col items-end sm:gap-0.5">
                               <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500 print:hidden">Werkzeug</span>
@@ -557,7 +557,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                             </div>
                           )}
 
-                          <div className="flex flex-col items-end min-w-[65px] sm:min-w-[80px]">
+                          <div className="flex flex-col items-end sm:min-w-[80px]">
                             <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500 mb-0.5 print:hidden">Drehmoment</span>
                             <div className="flex items-center gap-1.5 sm:gap-2">
                               <div className="flex items-baseline gap-1">
@@ -580,11 +580,11 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           <button
                             type="button"
                             onClick={() => setEditingSpec(spec)}
-                            className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
+                            className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 sm:px-2.5 sm:py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
                             aria-label={`${spec.name} bearbeiten`}
                           >
                             <Pencil className="h-3 w-3" aria-hidden="true" />
-                            <span>Bearbeiten</span>
+                            <span className="hidden sm:inline">Bearbeiten</span>
                           </button>
                         </div>
                       </div>

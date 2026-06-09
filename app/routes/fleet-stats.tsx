@@ -68,9 +68,9 @@ function ChartSection({
         <h2 className="font-subdisplay text-sm text-base-content dark:text-white">{title}</h2>
       </div>
 
-      <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+      <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-3 sm:p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         {/* Grid Lines */}
-        <div className="absolute inset-x-6 bottom-14 top-6 flex flex-col justify-between pointer-events-none">
+        <div className="absolute inset-x-3 sm:inset-x-6 bottom-14 top-6 flex flex-col justify-between pointer-events-none">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="w-full border-t border-base-200 dark:border-navy-700/50" />
           ))}
@@ -87,7 +87,7 @@ function ChartSection({
               const showLabel = (year.year % showEveryNthYear === 0) || idx === 0 || idx === reversedData.length - 1;
 
               return (
-                <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end min-w-[2.5rem] sm:min-w-[3.5rem]">
+                <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end min-w-[2rem] sm:min-w-[3.5rem]">
                   <div
                     className={clsx("w-full rounded-t-sm transition-all relative z-10", colorClass)}
                     style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}

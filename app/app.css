@@ -158,12 +158,29 @@
 html {
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
+  /* Belt-and-braces guard against rogue horizontal overflow on narrow
+     viewports. `clip` (not `hidden`) does not create a new scroll
+     context, so it leaves `position: sticky` on the header intact. */
+  overflow-x: clip;
   /* Height of the global app header — referenced by sticky offsets
      downstream (maintenance filter, year separators) so they stay
      coherent if the header is ever resized. Keep in sync with the
      padding/content in app/components/header.tsx (currently 16 px
      top pad + 40 px brand row + 12 px bottom pad + 1 px border-b = 69). */
   --app-header-h: 69px;
+}
+
+body {
+  overflow-x: clip;
+}
+
+/* Outer shell containers opt into iOS safe-area side padding so
+   content on notched/Dynamic-Island devices doesn't slip under the
+   rounded corners. `max(...)` keeps the existing baseline padding
+   when no safe area is reported. */
+.app-shell-safe {
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
 }
 
 /* Prevent iOS Safari from zooming in on form fields */
