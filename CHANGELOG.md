@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026.6.4](https://github.com/mightea/MotoManager/compare/2026.6.3...2026.6.4) (2026-06-10)
+
+
+### ✨ Features
+
+* track SPA route navigations and custom perf marks in Umami ([fd8e82e](https://github.com/mightea/MotoManager/commit/fd8e82ea7e4721478c9933c61b95e53aa91d79d4))
+
+
+### 🐛 Bug Fixes
+
+* prevent horizontal overflow on small iPhone viewports ([91e8697](https://github.com/mightea/MotoManager/commit/91e86979e0e5dbc6d47d28a6ad8c0e51ab4a178e))
+
+
+### ✏️ Miscellaneous Chores
+
+* update dependencies to latest ([0a68a6c](https://github.com/mightea/MotoManager/commit/0a68a6cb25e301d98fa81a9257b1685890b18399))
+
 ## [2026.6.3](https://github.com/mightea/MotoManager/compare/2026.6.2...2026.6.3) (2026-06-06)
 
 
