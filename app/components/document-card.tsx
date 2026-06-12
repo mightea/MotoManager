@@ -88,7 +88,7 @@ export function DocumentCard({
       <button
         type="button"
         onClick={handleOpen}
-        className="relative block aspect-[4/3] w-full overflow-hidden bg-base-200 dark:bg-navy-900"
+        className="relative block aspect-[4/3] w-full overflow-hidden bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 dark:bg-navy-900"
         aria-label={`Dokument ${document.title} öffnen`}
       >
         {hasPreview ? (
@@ -129,14 +129,14 @@ export function DocumentCard({
           <div className="flex items-center justify-between gap-2">
             <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45">Besitzer</dt>
             <dd className="inline-flex items-center gap-1 text-base-content dark:text-gray-200 truncate">
-              <UserIcon className="h-3 w-3 opacity-60" aria-hidden="true" />
+              <UserIcon className="icon-muted h-3 w-3" aria-hidden="true" />
               <span className="truncate">{ownerLabel}</span>
             </dd>
           </div>
           <div className="flex items-center justify-between gap-2">
             <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45">Datum</dt>
             <dd className="inline-flex items-center gap-1 font-numeric text-[11px] text-base-content dark:text-gray-200" suppressHydrationWarning>
-              <Calendar className="h-3 w-3 opacity-60" aria-hidden="true" />
+              <Calendar className="icon-muted h-3 w-3" aria-hidden="true" />
               {formatDate(document.createdAt)}
             </dd>
           </div>

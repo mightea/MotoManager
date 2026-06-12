@@ -151,6 +151,10 @@ export function CardHeading({
  * CardBody — the standard padding wrapper used inside Card. Optional;
  * callers may render their own padding when they need to bleed content
  * (e.g., MaintenanceList sticky filter).
+ *
+ * Canonical card body padding is `px-4 py-4`; modal sheets use the larger
+ * `px-6 py-5` — that is a deliberate, separate standard. Don't re-declare
+ * either inline in route code.
  */
 export function CardBody({
   children,

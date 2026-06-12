@@ -9,6 +9,7 @@ import { fetchFromBackend } from "~/utils/backend";
 import { Plus, Receipt, Calendar, Pencil, Car } from "lucide-react";
 import { ExpenseDialog } from "~/components/expense-dialog";
 import { EmptyState } from "~/components/empty-state";
+import { Button } from "~/components/button";
 import { formatCurrency } from "~/utils/numberUtils";
 import type { Expense, Motorcycle } from "~/types/db";
 
@@ -104,14 +105,14 @@ export default function FleetExpenses() {
         <p className="min-w-0 flex-1 text-sm text-base-content/65 dark:text-navy-400">
           Versicherungen, Steuern und andere Ausgaben, die mehrere Motorräder gemeinsam betreffen.
         </p>
-        <button
+        <Button
           onClick={openAddDialog}
-          className="relative inline-flex shrink-0 items-center gap-2 rounded-sm bg-primary px-4 py-2 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+          stripe
+          leftIcon={<Plus className="h-4 w-4" />}
+          className="shrink-0"
         >
-          <Plus className="h-4 w-4" />
           Neue Ausgabe
-          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -121,15 +122,14 @@ export default function FleetExpenses() {
             title="Noch keine Ausgaben"
             description="Erfasse Versicherungen, Steuern und andere Ausgaben, die mehrere Fahrzeuge betreffen."
             action={
-              <button
+              <Button
                 type="button"
                 onClick={openAddDialog}
-                className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+                stripe
+                leftIcon={<Plus className="h-4 w-4" />}
               >
-                <Plus className="h-4 w-4" />
                 Ausgabe hinzufügen
-                <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
-              </button>
+              </Button>
             }
           />
         ) : (

@@ -441,15 +441,15 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             })}
           </DropdownMenu>
 
-          <button
+          <Button
             type="button"
             onClick={() => setIsAddOpen(true)}
-            className="relative inline-flex shrink-0 items-center gap-2 rounded-sm bg-primary px-4 font-subdisplay text-sm text-primary-content shadow-[0_8px_18px_-10px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_12px_28px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            stripe
+            leftIcon={<Plus className="h-4 w-4" />}
+            className="h-auto shrink-0"
           >
-            <Plus className="h-4 w-4" />
             <span>Neu<span className="hidden sm:inline">es Motorrad</span></span>
-            <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
-          </button>
+          </Button>
         </div>
       </div>
 
