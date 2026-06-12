@@ -1,6 +1,7 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv, type Plugin } from "vite";
+import babel from "vite-plugin-babel";
 import pkg from "./package.json";
 
 function devConfigJsPlugin(env: Record<string, string>): Plugin {
@@ -37,6 +38,15 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       devConfigJsPlugin(env),
       reactRouter(),
+      // React Compiler — auto-memoizes app components (React 19 target).
+      babel({
+        include: /app\/.+\.[jt]sx?$/,
+        babelConfig: {
+          sourceMaps: true,
+          presets: ["@babel/preset-typescript"],
+          plugins: [["babel-plugin-react-compiler", {}]],
+        },
+      }),
     ],
   };
 });
