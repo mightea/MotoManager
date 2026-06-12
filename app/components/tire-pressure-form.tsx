@@ -1,4 +1,4 @@
-import { Form, useSubmit } from "react-router";
+import { Form, useNavigation, useSubmit } from "react-router";
 import { useMemo, useState } from "react";
 import clsx from "clsx";
 import { Trash2 } from "lucide-react";
@@ -34,6 +34,10 @@ export function TirePressureForm({
   onDelete,
 }: TirePressureFormProps) {
   const submit = useSubmit();
+  const navigation = useNavigation();
+  const isSubmitting =
+    navigation.state === "submitting" &&
+    navigation.formData?.get("intent") === "upsertTirePressure";
 
   const [unit, setUnit] = useState<PressureUnit>(
     initialValues?.preferredUnit ?? "bar",
@@ -199,10 +203,10 @@ export function TirePressureForm({
           <span />
         )}
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" type="button" onClick={onClose}>
+          <Button variant="ghost" type="button" onClick={onClose} disabled={isSubmitting}>
             Abbrechen
           </Button>
-          <Button type="submit" disabled={!formValid}>
+          <Button type="submit" disabled={!formValid} isLoading={isSubmitting}>
             Speichern
           </Button>
         </div>

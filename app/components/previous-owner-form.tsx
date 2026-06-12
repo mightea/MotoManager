@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Form } from "react-router";
 import clsx from "clsx";
+import { Button } from "./button";
 import type { PreviousOwner } from "~/types/db";
 import { previousOwnerSchema } from "~/validations";
 
@@ -219,28 +220,28 @@ export function PreviousOwnerForm({
 
       <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
         {onDelete && initialValues && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onDelete}
-            className="w-full rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20 sm:w-auto"
+            disabled={isSubmitting}
+            className="w-full text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20 sm:mr-auto sm:w-auto"
           >
             Löschen
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={onCancel}
-          className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-secondary transition-colors hover:bg-gray-50 dark:border-navy-600 dark:text-navy-200 dark:hover:bg-navy-700 sm:w-auto"
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
         >
           Abbrechen
-        </button>
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto"
-        >
-          {isSubmitting ? "Speichern..." : "Speichern"}
-        </button>
+        </Button>
+        <Button type="submit" isLoading={isSubmitting} className="w-full sm:w-auto">
+          Speichern
+        </Button>
       </div>
     </Form>
   );

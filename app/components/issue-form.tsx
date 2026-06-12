@@ -196,8 +196,8 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
           <Button type="button" variant="ghost" onClick={onCancel}>
             Abbrechen
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Speichern..." : "Speichern"}
+          <Button type="submit" isLoading={isSubmitting}>
+            Speichern
           </Button>
         </div>
       </div>

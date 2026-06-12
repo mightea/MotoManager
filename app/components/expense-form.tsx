@@ -168,8 +168,8 @@ export function ExpenseForm({ initialData, motorcycles, currencies, defaultCurre
             Abbrechen
           </Button>
         )}
-        <Button type="submit" className="sm:w-32" disabled={isSubmitting}>
-          {isSubmitting ? "Wird gespeichert..." : initialData ? "Aktualisieren" : "Erstellen"}
+        <Button type="submit" className="sm:w-32" isLoading={isSubmitting}>
+          {initialData ? "Aktualisieren" : "Erstellen"}
         </Button>
       </div>
     </Form>

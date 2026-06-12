@@ -53,7 +53,6 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         defaultOdo={defaultOdo}
         userLocations={userLocations}
         currencies={currencies}
-        onSubmit={onClose}
         onCancel={onClose}
         onDelete={onDelete}
         existingBundledItems={existingBundledItems}

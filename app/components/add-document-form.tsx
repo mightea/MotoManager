@@ -323,10 +323,11 @@ export function AddDocumentForm({
         
         <Button
             type="submit"
-            disabled={isSubmitting || (!isEditMode && !file)}
+            disabled={!isEditMode && !file}
+            isLoading={isSubmitting}
             className="w-full sm:w-auto"
         >
-            {isSubmitting ? "Speichern..." : (isEditMode ? (isOwner ? "Speichern" : "Zuordnungen speichern") : "Hochladen")}
+            {isEditMode ? (isOwner ? "Speichern" : "Zuordnungen speichern") : "Hochladen"}
         </Button>
       </div>
     </form>

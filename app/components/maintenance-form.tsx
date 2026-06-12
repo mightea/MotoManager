@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Form } from "react-router";
+import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
+import { Button } from "./button";
 import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting } from "~/types/db";
 import {
     Wrench,
@@ -25,7 +26,6 @@ interface MaintenanceFormProps {
     defaultOdo?: number | null;
     userLocations?: Location[];
     currencies?: CurrencySetting[];
-    onSubmit: () => void;
     onCancel: () => void;
     onDelete?: () => void;
     existingBundledItems?: string[];
@@ -132,12 +132,16 @@ export function MaintenanceForm({
     defaultOdo,
     userLocations = EMPTY_LOCATIONS,
     currencies = EMPTY_CURRENCIES,
-    onSubmit,
     onCancel,
     onDelete,
     existingBundledItems = EMPTY_BUNDLED_ITEMS
 }: MaintenanceFormProps) {
     const { trackEvent } = useUmami();
+    const navigation = useNavigation();
+    const pendingIntent = navigation.formData?.get("intent");
+    const isSubmitting =
+        navigation.state === "submitting" &&
+        (pendingIntent === "createMaintenance" || pendingIntent === "updateMaintenance");
     const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
     const [bundledItems, setBundledItems] = useState<string[]>(existingBundledItems);
 
@@ -174,12 +178,12 @@ export function MaintenanceForm({
 
     const today = new Date().toISOString().split('T')[0];
 
+    // The dialog stays open while the action runs; the route closes it on success.
     const handleFormSubmit = () => {
         trackEvent("maintenance_submit", {
             type,
             action: initialData ? "update" : "create"
         });
-        onSubmit();
     };
 
     return (
@@ -576,30 +580,25 @@ export function MaintenanceForm({
 
             <div className="flex items-center justify-between pt-2">
                 {initialData && onDelete ? (
-                    <button
+                    <Button
                         type="button"
+                        variant="ghost"
                         onClick={onDelete}
-                        className="rounded-xl px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                        disabled={isSubmitting}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
                         Löschen
-                    </button>
+                    </Button>
                 ) : (
                     <div></div>
                 )}
                 <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="rounded-xl px-4 py-2.5 text-sm font-medium text-secondary hover:bg-gray-100 dark:text-navy-300 dark:hover:bg-navy-700"
-                    >
+                    <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
                         Abbrechen
-                    </button>
-                    <button
-                        type="submit"
-                        className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-dark hover:shadow-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/30 active:scale-[0.98]"
-                    >
+                    </Button>
+                    <Button type="submit" isLoading={isSubmitting}>
                         {initialData ? "Aktualisieren" : "Erstellen"}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Form>

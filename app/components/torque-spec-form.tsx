@@ -1,4 +1,4 @@
-import { Form, useSubmit } from "react-router";
+import { Form, useNavigation, useSubmit } from "react-router";
 import { useState } from "react";
 import { Button } from "./button";
 import type { TorqueSpecification } from "~/types/db";
@@ -27,6 +27,11 @@ export function TorqueSpecForm({
   onDelete,
 }: TorqueSpecFormProps) {
   const submit = useSubmit();
+  const navigation = useNavigation();
+  const pendingIntent = navigation.formData?.get("intent");
+  const isSubmitting =
+    navigation.state === "submitting" &&
+    (pendingIntent === "createTorqueSpec" || pendingIntent === "updateTorqueSpec");
 
   const defaultCategories = ["Motor", "Fahrwerk", "Bremsen", "Antrieb", "Elektrik", "Karosserie"];
   const combinedCategories = Array.from(new Set([...defaultCategories, ...existingCategories])).sort();
@@ -192,10 +197,10 @@ export function TorqueSpecForm({
           )}
         </div>
         <div className="flex gap-3 justify-end">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
             Abbrechen
           </Button>
-          <Button type="submit">
+          <Button type="submit" isLoading={isSubmitting}>
             Speichern
           </Button>
         </div>

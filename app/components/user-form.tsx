@@ -176,9 +176,9 @@ export function UserForm({ initialData, onSubmit, onCancel, isSelf }: UserFormPr
         <Button
           type="submit"
           className="sm:w-32"
-          disabled={isSubmitting}
+          isLoading={isSubmitting}
         >
-          {isSubmitting ? "Wird gespeichert..." : initialData ? "Aktualisieren" : "Erstellen"}
+          {initialData ? "Aktualisieren" : "Erstellen"}
         </Button>
       </div>
     </Form>

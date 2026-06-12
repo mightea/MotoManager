@@ -8,6 +8,8 @@ interface DeleteConfirmationDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   confirmDisabled?: boolean;
+  /** Shows a spinner on the confirm button while the deletion is in flight. */
+  confirmLoading?: boolean;
   cancelDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -22,6 +24,7 @@ export function DeleteConfirmationDialog({
   confirmLabel = "Löschen",
   cancelLabel = "Abbrechen",
   confirmDisabled = false,
+  confirmLoading = false,
   cancelDisabled = false,
 }: DeleteConfirmationDialogProps) {
   return (
@@ -43,6 +46,7 @@ export function DeleteConfirmationDialog({
           variant="destructive"
           onClick={onConfirm}
           disabled={confirmDisabled}
+          isLoading={confirmLoading}
         >
           {confirmLabel}
         </Button>
