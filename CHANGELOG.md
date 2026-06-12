@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026.6.5](https://github.com/mightea/MotoManager/compare/2026.6.4...2026.6.5) (2026-06-12)
+
+
+### ✨ Features
+
+* add detail skeleton, incremental history, and live form validation ([4ba71f3](https://github.com/mightea/MotoManager/commit/4ba71f337aa93dd272285c1cf65361f0ab20a116))
+
+
+### 🐛 Bug Fixes
+
+* show submit progress in all forms and dialogs ([df7d7ea](https://github.com/mightea/MotoManager/commit/df7d7ea9189ff76d9a904e869878116f08e070c3))
+
+
+### ⚡ Performance Improvements
+
+* enable react compiler ([f1ec552](https://github.com/mightea/MotoManager/commit/f1ec5520e898c2a81f797063dcba78a2099d18be))
+* parallelize detail loaders and cache reference data ([8fc63a9](https://github.com/mightea/MotoManager/commit/8fc63a974ce59779c3f307ee936eb9f61cfbf70a))
+
 ## [2026.6.4](https://github.com/mightea/MotoManager/compare/2026.6.3...2026.6.4) (2026-06-10)
 
 
