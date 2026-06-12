@@ -58,6 +58,9 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
   ]);
 
+  // Only depends on motoResponse — start the fetch before the sync work below.
+  const headerStatsPromise = computeMotorcycleHeaderStats(motoResponse, token, user.id);
+
   const allDocs: any[] = docsResponse.docs ?? [];
   const userMotoIds = new Set(
     (userMotosResponse.motorcycles ?? []).map((m: any) => m.id),
@@ -99,7 +102,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
 
   const assignedDocs = allDocs.filter((d) => assignedIds.has(d.id)).map(decorate);
 
-  const headerStats = await computeMotorcycleHeaderStats(motoResponse, token, user.id);
+  const headerStats = await headerStatsPromise;
 
   return data({
     ...motoResponse,

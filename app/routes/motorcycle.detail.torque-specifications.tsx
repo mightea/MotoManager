@@ -74,18 +74,20 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
       fabricationDate: m.fabricationDate ?? m.modelYear ?? null,
     }));
 
-  const otherSpecsResponses = await Promise.all(
-    otherMotorcycles.map((m) =>
-      fetchFromBackend<{ torqueSpecs: TorqueSpecification[] }>(
-        `/motorcycles/${m.id}/torque-specs`,
-        {},
-        token,
-      ).catch(() => ({ torqueSpecs: [] as TorqueSpecification[] })),
+  // The per-motorcycle spec fetches and the header stats are independent — run them together.
+  const [otherSpecsResponses, headerStats] = await Promise.all([
+    Promise.all(
+      otherMotorcycles.map((m) =>
+        fetchFromBackend<{ torqueSpecs: TorqueSpecification[] }>(
+          `/motorcycles/${m.id}/torque-specs`,
+          {},
+          token,
+        ).catch(() => ({ torqueSpecs: [] as TorqueSpecification[] })),
+      ),
     ),
-  );
+    computeMotorcycleHeaderStats(response, token, user.id),
+  ]);
   const otherSpecs = otherSpecsResponses.flatMap((r) => r.torqueSpecs ?? []);
-
-  const headerStats = await computeMotorcycleHeaderStats(response, token, user.id);
 
   return data({
     ...response,

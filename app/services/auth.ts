@@ -1,7 +1,9 @@
 import { type PublicUser, type UserRole } from "~/types/auth";
 import { fetchFromBackend } from "~/utils/backend";
+import { cachedFetch, clearRequestCache } from "~/utils/request-cache";
 
 const STORAGE_KEY = "moto_auth_token";
+const SESSION_TTL_MS = 60_000;
 
 export function toPublicUser(user: any): PublicUser {
   return {
@@ -28,11 +30,14 @@ export function getSessionToken(): string | null {
 
 export function setSessionToken(token: string) {
   if (typeof window === "undefined") return;
+  // The user (or their permissions) may have changed — drop all cached responses.
+  clearRequestCache();
   localStorage.setItem(STORAGE_KEY, token);
 }
 
 export function clearSessionToken() {
   if (typeof window === "undefined") return;
+  clearRequestCache();
   localStorage.removeItem(STORAGE_KEY);
 }
 
@@ -44,7 +49,9 @@ export async function getCurrentSession(): Promise<AuthSession> {
   }
 
   try {
-    const response = await fetchFromBackend<any>("/auth/me", {}, token);
+    const response = await cachedFetch(`session:${token}`, SESSION_TTL_MS, () =>
+      fetchFromBackend<any>("/auth/me", {}, token),
+    );
 
     return {
       user: toPublicUser(response.user),

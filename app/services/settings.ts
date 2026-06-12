@@ -1,12 +1,19 @@
 import { fetchFromBackend } from "~/utils/backend";
+import { cachedFetch, invalidate, invalidatePrefix } from "~/utils/request-cache";
 import {
   type NewCurrencySetting,
   type NewLocation,
   type NewUserSettings,
 } from "~/types/db";
 
+const SETTINGS_TTL_MS = 60_000;
+const LOCATIONS_TTL_MS = 60_000;
+const CURRENCIES_TTL_MS = 5 * 60_000;
+
 export async function getUserSettings(token: string, _userId: number) {
-  const response = await fetchFromBackend<{ settings: any }>("/settings", {}, token);
+  const response = await cachedFetch(`settings:${token}`, SETTINGS_TTL_MS, () =>
+    fetchFromBackend<{ settings: any }>("/settings", {}, token),
+  );
   return response.settings;
 }
 
@@ -19,11 +26,14 @@ export async function updateUserSettings(
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
+  invalidatePrefix("settings:");
   return response.settings;
 }
 
 export async function getLocations(token: string, _userId: number) {
-  const response = await fetchFromBackend<{ locations: any[] }>("/locations", {}, token);
+  const response = await cachedFetch(`locations:${token}`, LOCATIONS_TTL_MS, () =>
+    fetchFromBackend<{ locations: any[] }>("/locations", {}, token),
+  );
   return response.locations;
 }
 
@@ -32,11 +42,14 @@ export async function createLocation(token: string, values: NewLocation) {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
+  invalidatePrefix("locations:");
   return response.location;
 }
 
 export async function getCurrencies() {
-  const response = await fetchFromBackend<{ currencies: any[] }>("/currencies");
+  const response = await cachedFetch("currencies", CURRENCIES_TTL_MS, () =>
+    fetchFromBackend<{ currencies: any[] }>("/currencies"),
+  );
   return response.currencies;
 }
 
@@ -48,6 +61,7 @@ export async function createCurrencySetting(
     method: "POST",
     body: JSON.stringify(values),
   }, token);
+  invalidate("currencies");
   return response.currency;
 }
 
@@ -61,6 +75,7 @@ export async function updateLocation(
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
+  invalidatePrefix("locations:");
   return response.location;
 }
 
@@ -69,9 +84,11 @@ export async function deleteLocation(
   locationId: number,
   _userId: number,
 ) {
-  return fetchFromBackend<any>(`/locations/${locationId}`, {
+  const result = await fetchFromBackend<any>(`/locations/${locationId}`, {
     method: "DELETE",
   }, token);
+  invalidatePrefix("locations:");
+  return result;
 }
 
 export async function updateCurrencyByCode(
@@ -91,6 +108,7 @@ export async function updateCurrencySetting(
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
+  invalidate("currencies");
   return response.currency;
 }
 
@@ -98,7 +116,9 @@ export async function deleteCurrencySetting(
   token: string,
   currencyId: number,
 ) {
-  return fetchFromBackend<any>(`/admin/currencies/${currencyId}`, {
+  const result = await fetchFromBackend<any>(`/admin/currencies/${currencyId}`, {
     method: "DELETE",
   }, token);
+  invalidate("currencies");
+  return result;
 }

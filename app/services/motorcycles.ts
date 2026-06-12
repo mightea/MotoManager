@@ -1,4 +1,5 @@
 import { fetchFromBackend } from "~/utils/backend";
+import { invalidatePrefix } from "~/utils/request-cache";
 import {
   type EditorIssue,
   type NewCurrentLocationRecord,
@@ -88,6 +89,7 @@ export async function createLocationRecord(
     method: "POST",
     body: JSON.stringify(values),
   }, token);
+  invalidatePrefix("locations:");
   return response.location;
 }
 
@@ -96,6 +98,7 @@ export async function createLocation(token: string, values: NewLocation) {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
+  invalidatePrefix("locations:");
   return response.location;
 }
 

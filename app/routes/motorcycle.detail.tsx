@@ -31,7 +31,10 @@ import { Modal } from "~/components/modal";
 import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
 import { motorcycleSchema, previousOwnerSchema } from "~/validations";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { getCurrencies } from "~/services/settings";
+import { getCurrencies, getLocations, getUserSettings } from "~/services/settings";
+import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
+import { getNextInspectionInfo } from "~/utils/inspection";
+import { listExpenses } from "~/services/expenses";
 import { formatCurrency } from "~/utils/numberUtils";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
@@ -65,7 +68,14 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid Motorcycle ID", { status: 400 });
   }
 
-  const response = await fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token);
+  // All five requests are independent — fire them in parallel.
+  const [response, settings, userLocations, currencies, allExpenses] = await Promise.all([
+    fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
+    getUserSettings(token, user.id),
+    getLocations(token, user.id),
+    getCurrencies(),
+    listExpenses(token),
+  ]);
   const motorcycle = response?.motorcycle;
   const issues = Array.isArray(response?.issues) ? response.issues : [];
   const maintenanceRecords = Array.isArray(response?.maintenanceRecords) ? response.maintenanceRecords : [];
@@ -90,14 +100,8 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const lastKnownOdo = Math.max(0, ...odometerCandidates);
 
   // Get maintenance insights
-  const settingsResponse = await fetchFromBackend<any>("/settings", {}, token);
-  const settings = settingsResponse?.settings;
-  const { getMaintenanceInsights } = await import("~/utils/maintenance-intervals");
   const insights = getMaintenanceInsights(maintenanceRecords, lastKnownOdo, settings);
 
-  // Other metadata
-  const { getLocations } = await import("~/services/settings");
-  const userLocations = await getLocations(token, user.id);
   // "Where the bike lives" → only Storage-typed locations qualify. Workshop / fuel /
   // inspection visits do not change the current location.
   const storageLocationIds = new Set(
@@ -113,8 +117,6 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
       ?.locationId ?? null;
   const currentLocationName =
     userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
-
-  const currencies = await getCurrencies();
 
   // Fuel stats
   const fuelRecords = maintenanceRecords.filter((r: any) => r.type === "fuel" && r.fuelAmount && r.tripDistance);
@@ -150,16 +152,13 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime())
     .at(0) ?? null;
 
-  const { getNextInspectionInfo } = await import("~/utils/inspection");
   const nextInspection = getNextInspectionInfo({
     firstRegistration: motorcycle.firstRegistration,
     lastInspection,
     isVeteran: motorcycle.isVeteran ?? false,
   });
 
-  // Get shared expenses
-  const { listExpenses } = await import("~/services/expenses");
-  const allExpenses = await listExpenses(token);
+  // Shared expenses for this motorcycle
   const motorcycleExpenses = allExpenses.filter(e => e.motorcycleIds?.includes(motorcycleId));
 
   // Calculate total costs
@@ -788,6 +787,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
       setEditMotorcycleDialogOpen(false);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviousOwnerDialogOpen(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMaintenanceDialogOpen(false);
       setSelectedPreviousOwner(null);
       revalidator.revalidate();
     } else if (actionData && actionData.success === false && actionData.error) {
