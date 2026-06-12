@@ -69,16 +69,41 @@ function ChartSection({
       </div>
 
       <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-3 sm:p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-        {/* Grid Lines */}
-        <div className="absolute inset-x-3 sm:inset-x-6 bottom-14 top-6 flex flex-col justify-between pointer-events-none">
+        {/* Grid Lines (desktop bar chart only) */}
+        <div className="absolute inset-x-3 sm:inset-x-6 bottom-14 top-6 hidden sm:flex flex-col justify-between pointer-events-none">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="w-full border-t border-base-200 dark:border-navy-700/50" />
           ))}
         </div>
 
+        {/* Mobile: horizontal meter rows — readable without scrolling or tooltips */}
+        <div className="space-y-2.5 sm:hidden">
+          {data.map((year) => {
+            const value = (year as any)[valueKey] || 0;
+            const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+            return (
+              <div key={year.year} className="flex items-center gap-3">
+                <span className="w-10 shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums text-base-content/55 dark:text-navy-400">
+                  {year.year}
+                </span>
+                <div className="h-2 flex-1 overflow-hidden rounded-sm bg-base-200 dark:bg-navy-700/50">
+                  <div
+                    className={clsx("h-full rounded-sm", colorClass)}
+                    style={{ width: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
+                  />
+                </div>
+                <span className="w-20 shrink-0 text-right font-numeric text-[11px] font-semibold tabular-nums text-base-content/70 dark:text-navy-300">
+                  {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop: scrollable vertical bar chart */}
         <div
           ref={scrollRef}
-          className="overflow-x-auto pb-2 -mx-2 px-2"
+          className="hidden sm:block overflow-x-auto pb-2 -mx-2 px-2"
         >
           <div className="relative flex h-32 items-end gap-1.5 sm:gap-3 min-w-[max-content]">
             {reversedData.map((year, idx) => {

@@ -9,6 +9,7 @@ import { Fuel } from "lucide-react";
 import { Button } from "./button";
 import { FormField } from "./form-field";
 import { getBackendAssetUrl } from "~/utils/backend";
+import { motorcycleSchema } from "~/validations";
 import clsx from "clsx";
 
 interface AddMotorcycleFormProps {
@@ -62,6 +63,36 @@ export function AddMotorcycleForm({
     errors?: Record<string, string>;
     error?: string;
   }>();
+
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+
+  /** Validates a single field against the zod schema, used on blur. */
+  const validateField = (field: keyof typeof motorcycleSchema.shape, value: string) => {
+    const result = motorcycleSchema.shape[field].safeParse(value);
+    setClientErrors((prev) => {
+      const next = { ...prev };
+      if (result.success) {
+        delete next[field];
+      } else {
+        next[field] = result.error.issues[0]?.message ?? "Ungültiger Wert";
+      }
+      return next;
+    });
+  };
+
+  /** Hides a stale client error as soon as the user edits the field again. */
+  const clearClientError = (field: string) => {
+    setClientErrors((prev) => {
+      if (!(field in prev)) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  /** Live client error wins over the (older) server-side error. */
+  const fieldError = (field: keyof typeof motorcycleSchema.shape) =>
+    clientErrors[field] ?? actionData?.errors?.[field];
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -186,7 +217,9 @@ export function AddMotorcycleForm({
             name="make"
             placeholder="z.B. Yamaha"
             defaultValue={initialValues?.make}
-            error={actionData?.errors?.make}
+            error={fieldError("make")}
+            onBlur={(e) => validateField("make", e.currentTarget.value)}
+            onChange={() => clearClientError("make")}
           />
 
           <FormField
@@ -194,7 +227,9 @@ export function AddMotorcycleForm({
             name="model"
             placeholder="z.B. MT-07"
             defaultValue={initialValues?.model}
-            error={actionData?.errors?.model}
+            error={fieldError("model")}
+            onBlur={(e) => validateField("model", e.currentTarget.value)}
+            onChange={() => clearClientError("model")}
           />
 
           <FormField
@@ -202,7 +237,9 @@ export function AddMotorcycleForm({
             name="fabricationDate"
             placeholder="z.B. 07/1997"
             defaultValue={initialValues?.fabricationDate ?? ""}
-            error={actionData?.errors?.fabricationDate}
+            error={fieldError("fabricationDate")}
+            onBlur={(e) => validateField("fabricationDate", e.currentTarget.value)}
+            onChange={() => clearClientError("fabricationDate")}
           />
 
           <FormField
@@ -244,7 +281,9 @@ export function AddMotorcycleForm({
             name="initialOdo"
             type="number"
             defaultValue={typeof initialValues?.initialOdo === "number" ? initialValues.initialOdo : 0}
-            error={actionData?.errors?.initialOdo}
+            error={fieldError("initialOdo")}
+            onBlur={(e) => validateField("initialOdo", e.currentTarget.value)}
+            onChange={() => clearClientError("initialOdo")}
           />
 
           <FormField
@@ -254,6 +293,8 @@ export function AddMotorcycleForm({
             defaultValue={formatDateInput(initialValues?.purchaseDate)}
           />
 
+          {/* Joined price + currency control — FormField only renders a single
+              input, so this stays bespoke but mirrors its error treatment. */}
           <div className="space-y-1.5">
             <label htmlFor="purchasePrice" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Kaufpreis</label>
             <div className="flex rounded-xl shadow-sm">
@@ -264,9 +305,13 @@ export function AddMotorcycleForm({
                 step="0.05"
                 placeholder="0.00"
                 defaultValue={typeof initialValues?.purchasePrice === "number" ? initialValues.purchasePrice : ""}
+                aria-invalid={fieldError("purchasePrice") ? "true" : undefined}
+                aria-describedby={fieldError("purchasePrice") ? "purchasePrice-error" : undefined}
+                onBlur={(e) => validateField("purchasePrice", e.currentTarget.value)}
+                onChange={() => clearClientError("purchasePrice")}
                 className={clsx(
                   "block w-full rounded-l-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500",
-                  actionData?.errors?.purchasePrice && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                  fieldError("purchasePrice") && "border-red-500 focus:border-red-500 focus:ring-red-500"
                 )}
               />
               <select
@@ -281,8 +326,10 @@ export function AddMotorcycleForm({
                 ))}
               </select>
             </div>
-            {actionData?.errors?.purchasePrice && (
-              <p className="text-xs font-medium text-red-500">{actionData.errors.purchasePrice}</p>
+            {fieldError("purchasePrice") && (
+              <p id="purchasePrice-error" aria-live="polite" className="text-xs font-medium text-error animate-fade-in">
+                {fieldError("purchasePrice")}
+              </p>
             )}
           </div>
 
@@ -293,6 +340,9 @@ export function AddMotorcycleForm({
             step="0.1"
             placeholder="z.B. 18.5"
             defaultValue={initialValues?.fuelTankSize ?? ""}
+            error={fieldError("fuelTankSize")}
+            onBlur={(e) => validateField("fuelTankSize", e.currentTarget.value)}
+            onChange={() => clearClientError("fuelTankSize")}
           />
         </div>
 

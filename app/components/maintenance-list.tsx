@@ -39,6 +39,7 @@ import {
   summarizeMaintenanceRecord
   } from "~/utils/maintenance";
 import { EmptyState } from "./empty-state";
+import { Button } from "./button";
 import { CardAction } from "./card";
 
 import { MapView } from "./map-view";
@@ -208,13 +209,21 @@ function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: stri
   return null;
 }
 
+const VISIBLE_GROUPS_STEP = 30;
+
 export function MaintenanceList({ records, currencyCode, userLocations, onEdit, onAdd, onBulkDelete }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "maintenance" | "fuel">("all");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
+  const [visibleCount, setVisibleCount] = useState(VISIBLE_GROUPS_STEP);
 
   const bulkSelectEnabled = typeof onBulkDelete === "function";
+
+  const changeFilter = (next: "all" | "maintenance" | "fuel") => {
+    setFilter(next);
+    setVisibleCount(VISIBLE_GROUPS_STEP);
+  };
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
     dateStyle: "medium",
@@ -229,9 +238,15 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
 
   const groupedRecords = groupMaintenanceRecords(filteredRecords, userLocations);
 
+  // Render incrementally: long histories mount only the first chunk, the
+  // rest is revealed via "Mehr anzeigen". Selection ("Alle auswählen") and
+  // bulk delete still operate on ALL filtered groups, not just visible ones.
+  const visibleGroups = groupedRecords.slice(0, visibleCount);
+  const hiddenCount = groupedRecords.length - visibleGroups.length;
+
   // Group by year
   const recordsByYear = new Map<number, typeof groupedRecords>();
-  groupedRecords.forEach(group => {
+  visibleGroups.forEach(group => {
     const year = new Date(group.date).getFullYear();
     if (!recordsByYear.has(year)) {
       recordsByYear.set(year, []);
@@ -260,6 +275,14 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
   const exitSelectionMode = () => {
     setSelectionMode(false);
     setSelectedGroupIds(new Set());
+  };
+
+  // Select-all targets every filtered group (including not-yet-rendered ones)
+  // so the count label, the toggle, and handleBulkDelete agree.
+  const allSelected = selectedGroupIds.size === groupedRecords.length && groupedRecords.length > 0;
+
+  const toggleSelectAll = () => {
+    setSelectedGroupIds(allSelected ? new Set() : new Set(groupedRecords.map((g) => g.id)));
   };
 
   const enterSelectionMode = () => {
@@ -296,30 +319,42 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
       >
         {selectionMode ? (
           <>
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary dark:text-primary-light">
-              <CheckSquare className="h-4 w-4" aria-hidden="true" />
-              <span aria-live="polite">
-                {selectedCount} {selectedCount === 1 ? "ausgewählt" : "ausgewählt"}
+            <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-primary dark:text-primary-light">
+              <CheckSquare className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span aria-live="polite" className="truncate">
+                {selectedCount} ausgewählt
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
                 type="button"
-                onClick={exitSelectionMode}
-                className="inline-flex items-center gap-1 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-base-content/70 transition-colors hover:bg-base-200 dark:text-navy-300 dark:hover:bg-navy-700"
+                size="sm"
+                variant="ghost"
+                onClick={toggleSelectAll}
+                leftIcon={<CheckSquare className="h-3.5 w-3.5" aria-hidden="true" />}
               >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
-                Abbrechen
-              </button>
-              <button
+                <span className="hidden sm:inline">{allSelected ? "Auswahl aufheben" : "Alle auswählen"}</span>
+                <span className="sm:hidden">{allSelected ? "Keine" : "Alle"}</span>
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant="ghost"
+                onClick={exitSelectionMode}
+                leftIcon={<X className="h-3.5 w-3.5" aria-hidden="true" />}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
                 onClick={handleBulkDelete}
                 disabled={selectedCount === 0}
-                className="inline-flex items-center gap-1 rounded-sm bg-error px-2.5 py-1.5 text-xs font-semibold text-error-content shadow-sm transition-colors hover:bg-error/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40 disabled:cursor-not-allowed disabled:opacity-50"
+                leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
               >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 Löschen
-              </button>
+              </Button>
             </div>
           </>
         ) : (
@@ -329,19 +364,19 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                 label="Alle"
                 icon={Layers}
                 active={filter === "all"}
-                onClick={() => setFilter("all")}
+                onClick={() => changeFilter("all")}
               />
               <FilterChip
                 label="Wartung"
                 icon={Wrench}
                 active={filter === "maintenance"}
-                onClick={() => setFilter("maintenance")}
+                onClick={() => changeFilter("maintenance")}
               />
               <FilterChip
                 label="Tanken"
                 icon={Fuel}
                 active={filter === "fuel"}
-                onClick={() => setFilter("fuel")}
+                onClick={() => changeFilter("fuel")}
               />
             </div>
             <div className="flex shrink-0 items-center gap-3">
@@ -373,14 +408,14 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
             description="Erfasse die erste Wartung, Inspektion oder Tankfüllung für dieses Motorrad."
             action={
               onAdd ? (
-                <button
+                <Button
                   type="button"
+                  size="sm"
                   onClick={onAdd}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-content shadow-sm transition-all hover:bg-primary/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}
                 >
-                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                   Eintrag erstellen
-                </button>
+                </Button>
               ) : undefined
             }
           />
@@ -389,19 +424,22 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
             size="sm"
             title="Keine Einträge im aktuellen Filter"
             action={
-              <button
+              <Button
                 type="button"
-                onClick={() => setFilter("all")}
-                className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
+                size="sm"
+                variant="ghost"
+                onClick={() => changeFilter("all")}
+                leftIcon={<X className="h-3.5 w-3.5" aria-hidden="true" />}
+                className="text-primary hover:bg-primary/10 hover:text-primary dark:text-primary-light"
               >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
                 Filter aufheben
-              </button>
+              </Button>
             }
           />
         )
       ) : (
-        sortedYears.map((year) => (
+        <>
+        {sortedYears.map((year) => (
           <div key={year} className="space-y-2">
             <div
               className="sticky z-10 -mx-4 flex items-center gap-4 bg-white px-4 py-2 dark:bg-navy-800"
@@ -472,7 +510,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                         </div>
                       )}
                       <div className={clsx(
-                        "mt-0.5 grid h-10 w-10 place-items-center rounded-sm shrink-0 transition-transform group-hover:scale-105",
+                        "mt-0.5 grid h-9 w-9 place-items-center rounded-sm shrink-0 transition-transform group-hover:scale-105 sm:h-10 sm:w-10",
                         tone.bg,
                         tone.fg,
                       )}>
@@ -500,8 +538,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                             metric/cost · type tag right. The right column is
                             stacked tightly so the metric line and the type
                             tag share one mono-uppercase voice. */}
-                        <div className="flex items-baseline justify-between gap-3 mt-0.5">
-                          <p className={clsx("min-w-0 text-[13px] font-medium line-clamp-1 leading-tight", tone.fg)}>
+                        <div className="mt-0.5 flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+                          <p className={clsx("min-w-0 text-[13px] font-medium line-clamp-2 leading-tight sm:line-clamp-1", tone.fg)}>
                             {group.count > 1 && (
                               <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-base-content/8 px-1.5 py-[1px] font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-base-content/60 dark:bg-navy-700 dark:text-navy-300 align-middle">
                                 {group.count}×
@@ -627,7 +665,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
                                         return (
                                           <div key={item.label} className="flex items-center justify-between gap-4 border-b border-base-300/40 py-1.5 dark:border-navy-700/40">
                                             <div className="flex items-center gap-2 min-w-0">
-                                              <ItemIcon className="h-3 w-3 text-base-content/45 dark:text-navy-500 shrink-0" aria-hidden="true" />
+                                              <ItemIcon className="icon-muted h-3 w-3 shrink-0" aria-hidden="true" />
                                               <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 truncate">
                                                 {item.label}
                                               </dt>
@@ -704,7 +742,18 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
               })}
             </ul>
           </div>
-        ))
+        ))}
+        {hiddenCount > 0 && (
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            onClick={() => setVisibleCount((count) => count + VISIBLE_GROUPS_STEP)}
+          >
+            Mehr anzeigen ({hiddenCount} weitere)
+          </Button>
+        )}
+        </>
       )}
     </div>
   );

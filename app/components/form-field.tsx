@@ -70,12 +70,7 @@ export function FormField({
         <input
           id={fieldId}
           type={type}
-          className={clsx(
-            "input input-bordered",
-            baseFieldClass,
-            errorClass,
-            type === "date" && "[color-scheme:light] dark:[color-scheme:dark]"
-          )}
+          className={clsx("input input-bordered", baseFieldClass, errorClass)}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
           aria-required={required || undefined}
@@ -85,7 +80,7 @@ export function FormField({
       )}
 
       {error ? (
-        <p id={errorId} className="text-xs font-medium text-error animate-fade-in">
+        <p id={errorId} aria-live="polite" className="text-xs font-medium text-error animate-fade-in">
           {error}
         </p>
       ) : helperText ? (

@@ -251,6 +251,26 @@ a {
   display: none;
 }
 
+/* Native date-like pickers follow the active theme instead of the OS setting.
+   Centralised here so every raw <input type="date"> gets it, not only the
+   ones rendered through FormField. */
+input[type="date"],
+input[type="month"],
+input[type="datetime-local"] {
+  color-scheme: light;
+}
+
+.dark input[type="date"],
+.dark input[type="month"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+/* Canonical tone for decorative/metadata icons next to labels and dl rows. */
+.icon-muted {
+  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+}
+
 /* Sticky only when there is enough room to actually keep the element pinned —
    avoids the "scroll the whole list before the sticky column starts moving"
    trap on short wide laptops (1366x768 etc.) where the sticky element is

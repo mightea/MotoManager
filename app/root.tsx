@@ -10,6 +10,7 @@ import {
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { UmamiProvider } from "~/components/umami-provider";
 import { Button } from "~/components/button";
+import { MotorcycleDetailSkeleton } from "~/components/skeleton";
 import { getTheme } from "~/utils/theme.client";
 import { Theme } from "~/utils/theme";
 import { getCurrentSession } from "~/services/auth";
@@ -25,6 +26,19 @@ export async function clientLoader() {
 }
 
 export function HydrateFallback() {
+  // SPA mode only allows a HydrateFallback on the root route, so route-aware
+  // skeletons are picked from the URL (client-only, window always exists).
+  const isMotorcycleDetail =
+    typeof window !== "undefined" && /^\/motorcycle\//.test(window.location.pathname);
+
+  if (isMotorcycleDetail) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-navy-950">
+        <MotorcycleDetailSkeleton />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
