@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026.7.0](https://github.com/mightea/MotoManager/compare/2026.6.5...2026.7.0) (2026-07-04)
+
+
+### ✨ Features
+
+* improve webapp UX, performance, security and tooling ([3e5df6b](https://github.com/mightea/MotoManager/commit/3e5df6bb720bcfb08b5ac8d0990515458d80c9bd))
+
+
+### 🐛 Bug Fixes
+
+* focus main with preventScroll so route changes don't clip the header ([a1069b8](https://github.com/mightea/MotoManager/commit/a1069b8ab8463aaa005df362167dbacb2ea63523))
+
+
+### ✏️ Miscellaneous Chores
+
+* roll calver to 2026.7.0 ([1efc6df](https://github.com/mightea/MotoManager/commit/1efc6df01a6d26459660f6cebc39e7cfc31a8c29))
+
 ## [2026.6.5](https://github.com/mightea/MotoManager/compare/2026.6.4...2026.6.5) (2026-06-12)
 
 
