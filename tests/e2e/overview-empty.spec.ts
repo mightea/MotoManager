@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures";
 
+// NOTE: requires the API running with this user seeded (see playwright.config.ts).
 const { identifier, password } = { identifier: "test@example.com", password: "password123" };
 
 test("shows the empty garage state when no motorcycles exist", async ({ page }) => {
@@ -7,18 +8,16 @@ test("shows the empty garage state when no motorcycles exist", async ({ page }) 
 
   await expect(page).toHaveURL(/\/auth\/login/);
 
-  await page.getByLabel("E-Mail / Username").fill(identifier);
-  await page.getByLabel("Password").fill(password);
+  // Labels and button text match the real (German) login form.
+  await page.getByLabel("E-Mail oder Benutzername").fill(identifier);
+  await page.getByLabel("Passwort").fill(password);
   await page.getByRole("button", { name: "Login" }).click();
 
   await expect(page).toHaveURL(/\/$/);
 
+  // The empty garage renders <EmptyState title="Garage leer" …>.
   await expect(
-    page.getByRole("heading", { name: "Keine Motorräder gefunden" }),
-  ).toBeVisible();
-
-  await expect(
-    page.getByText("Deine Garage ist leer", { exact: false }),
+    page.getByRole("heading", { name: "Garage leer" }),
   ).toBeVisible();
 
   await expect(

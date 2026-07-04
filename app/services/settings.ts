@@ -91,14 +91,6 @@ export async function deleteLocation(
   return result;
 }
 
-export async function updateCurrencyByCode(
-  _token: string,
-  _code: string,
-  _conversionFactor: number,
-) {
-  return null;
-}
-
 export async function updateCurrencySetting(
   token: string,
   currencyId: number,

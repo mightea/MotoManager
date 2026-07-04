@@ -1,9 +1,32 @@
+import { z } from "zod";
 import { type PublicUser, type UserRole } from "~/types/auth";
 import { fetchFromBackend } from "~/utils/backend";
 import { cachedFetch, clearRequestCache } from "~/utils/request-cache";
 
 const STORAGE_KEY = "moto_auth_token";
 const SESSION_TTL_MS = 60_000;
+
+// Lenient runtime validation of the auth boundary: require only the essential
+// identity fields (so a valid-but-evolving backend response isn't rejected),
+// tolerate extra fields, and catch gross drift (e.g. an HTML error page decoded
+// as JSON, or a missing token).
+const authUserSchema = z
+  .object({
+    id: z.number(),
+    username: z.string(),
+    email: z.string(),
+    name: z.string().nullish(),
+    role: z.string().nullish(),
+    createdAt: z.string().nullish(),
+    updatedAt: z.string().nullish(),
+    lastLoginAt: z.string().nullish(),
+  })
+  .passthrough();
+
+const meResponseSchema = z.object({ user: authUserSchema }).passthrough();
+const loginResponseSchema = z
+  .object({ user: authUserSchema, token: z.string().min(1) })
+  .passthrough();
 
 export function toPublicUser(user: any): PublicUser {
   return {
@@ -53,8 +76,14 @@ export async function getCurrentSession(): Promise<AuthSession> {
       fetchFromBackend<any>("/auth/me", {}, token),
     );
 
+    const parsed = meResponseSchema.safeParse(response);
+    if (!parsed.success) {
+      console.error("[Auth Service] /auth/me response failed validation", parsed.error);
+      return { user: null, token };
+    }
+
     return {
-      user: toPublicUser(response.user),
+      user: toPublicUser(parsed.data.user),
       token,
     };
   } catch (error) {
@@ -64,11 +93,13 @@ export async function getCurrentSession(): Promise<AuthSession> {
       return { user: null, token: null };
     }
 
-    // If we are offline or have a network error and no cache, don't clear the token
-    // Just return no user for now, but keep the token for later
+    // Offline / network / 5xx (not a 401): the session may still be valid, so
+    // keep the token (it's also left in storage) rather than reporting it gone.
+    // The caller still can't render authed content without a user, but the token
+    // is preserved so the session resumes once the backend is reachable again.
     return {
       user: null,
-      token: null,
+      token,
     };
   }
 }
@@ -146,13 +177,27 @@ export async function verifyLogin(
       body: JSON.stringify({ identifier, password }),
     });
 
+    const parsed = loginResponseSchema.safeParse(response);
+    if (!parsed.success) {
+      // 200 OK but a malformed body — a server problem, not bad credentials.
+      console.error("[Auth Service] /auth/login response failed validation", parsed.error);
+      throw new Error("Malformed login response");
+    }
+
     return {
-      user: toPublicUser(response.user),
-      token: response.token,
+      user: toPublicUser(parsed.data.user),
+      token: parsed.data.token,
     };
   } catch (error) {
+    // A 401 means bad credentials: fetchFromBackend converts 401 into a redirect
+    // Response, so treat that (and only that) as an auth failure. Any other error
+    // (network / 5xx / timeout) is a transport problem and must NOT be reported as
+    // "wrong password" — re-throw so the caller can show a distinct message.
+    if (error instanceof Response) {
+      return null;
+    }
     console.error(`[Auth Service] /auth/login failed for: ${identifier}`, error);
-    return null;
+    throw error;
   }
 }
 

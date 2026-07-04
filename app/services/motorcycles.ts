@@ -1,4 +1,4 @@
-import { fetchFromBackend } from "~/utils/backend";
+import { fetchFromBackend, rethrowRedirect } from "~/utils/backend";
 import { invalidatePrefix } from "~/utils/request-cache";
 import {
   type EditorIssue,
@@ -76,7 +76,8 @@ export async function deletePreviousOwner(
       method: "DELETE",
     }, token);
     return true;
-  } catch {
+  } catch (error) {
+    rethrowRedirect(error);
     return false;
   }
 }
@@ -149,7 +150,8 @@ export async function deleteIssue(
       method: "DELETE",
     }, token);
     return true;
-  } catch {
+  } catch (error) {
+    rethrowRedirect(error);
     return false;
   }
 }
@@ -177,7 +179,8 @@ export async function deleteMaintenanceRecord(
       method: "DELETE",
     }, token);
     return true;
-  } catch {
+  } catch (error) {
+    rethrowRedirect(error);
     return false;
   }
 }
@@ -205,7 +208,8 @@ export async function deleteTorqueSpecification(
       method: "DELETE",
     }, token);
     return true;
-  } catch {
+  } catch (error) {
+    rethrowRedirect(error);
     return false;
   }
 }
@@ -258,7 +262,8 @@ export async function deleteTirePressure(
       token,
     );
     return true;
-  } catch {
+  } catch (error) {
+    rethrowRedirect(error);
     return false;
   }
 }

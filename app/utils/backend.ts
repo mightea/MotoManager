@@ -1,5 +1,25 @@
 import { redirect } from "react-router";
 import { getBackendUrl } from "~/config";
+import { clearSessionToken } from "~/services/auth";
+
+/** Default per-request timeout so a hung backend fails fast instead of blocking a
+ *  loader indefinitely. Callers can override by passing their own `signal`. */
+const DEFAULT_TIMEOUT_MS = 20_000;
+
+/**
+ * Typed error for non-OK backend responses. Carries the HTTP `status` so callers
+ * can distinguish client (4xx) from server (5xx) failures. Network/timeout
+ * failures surface as `status: 0`.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 /**
  * Utility to fetch from the backend with Bearer token authentication.
@@ -20,13 +40,26 @@ export async function fetchFromBackend<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+      // Respect a caller-supplied signal; otherwise apply a default timeout.
+      signal: options.signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+    });
+  } catch (error) {
+    // Network failure or timeout (AbortSignal.timeout → TimeoutError).
+    const isTimeout = error instanceof DOMException && error.name === "TimeoutError";
+    throw new ApiError(
+      isTimeout
+        ? "Zeitüberschreitung – der Server hat nicht geantwortet."
+        : "Netzwerkfehler – der Server ist nicht erreichbar.",
+      0,
+    );
+  }
 
   if (response.status === 401) {
-    const { clearSessionToken } = await import("~/services/auth");
     clearSessionToken();
     throw redirect("/auth/login");
   }
@@ -39,10 +72,21 @@ export async function fetchFromBackend<T>(
       errorData = {};
     }
     const errorMessage = errorData.error || errorData.message || response.statusText || `Request failed with status ${response.status}`;
-    throw new Error(errorMessage);
+    throw new ApiError(errorMessage, response.status);
   }
 
   return await response.json() as T;
+}
+
+/**
+ * Re-throw a thrown `redirect(...)` Response so callers that otherwise swallow
+ * errors (e.g. `catch { return false }`) still honor the session-expiry redirect
+ * to the login page. `fetchFromBackend` signals a 401 by throwing a `Response`.
+ */
+export function rethrowRedirect(error: unknown): void {
+  if (error instanceof Response) {
+    throw error;
+  }
 }
 
 /**

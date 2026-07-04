@@ -57,6 +57,7 @@ export function HeaderMobilePanel({
                 <li key={item.label}>
                   <Link
                     to={item.href}
+                    prefetch="intent"
                     onClick={onClose}
                     aria-current={isActive ? "page" : undefined}
                     className={clsx(

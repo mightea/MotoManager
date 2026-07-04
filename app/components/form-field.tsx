@@ -80,7 +80,7 @@ export function FormField({
       )}
 
       {error ? (
-        <p id={errorId} aria-live="polite" className="text-xs font-medium text-error animate-fade-in">
+        <p id={errorId} aria-live="polite" className="text-xs font-medium text-error motion-safe:animate-fade-in">
           {error}
         </p>
       ) : helperText ? (

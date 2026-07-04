@@ -4,8 +4,10 @@ import { Button } from "./button";
 import clsx from "clsx";
 import type { Document, Motorcycle } from "~/types/db";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, type FileRejection } from "react-dropzone";
 import { getBackendAssetUrl } from "~/utils/backend";
+
+const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024; // 20 MB
 
 interface AddDocumentFormProps {
   document?: Pick<Document, "id" | "title" | "isPrivate" | "previewPath" | "filePath" | "ownerId">;
@@ -66,12 +68,29 @@ export function AddDocumentForm({
     }
   };
 
+  // Surface rejected files (wrong type, too large, too many) instead of silently
+  // ignoring them.
+  const onDropRejected = (rejections: FileRejection[]) => {
+    const code = rejections[0]?.errors[0]?.code;
+    if (code === "file-too-large") {
+      setError("Die Datei ist zu groß (max. 20 MB).");
+    } else if (code === "file-invalid-type") {
+      setError("Ungültiger Dateityp. Erlaubt sind PDF- und Bilddateien.");
+    } else if (code === "too-many-files") {
+      setError("Bitte nur eine Datei auswählen.");
+    } else {
+      setError("Die Datei konnte nicht verwendet werden.");
+    }
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: {
       "application/pdf": [".pdf"],
       "image/*": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".heic", ".heif", ".tif", ".tiff"],
     },
+    maxSize: MAX_DOCUMENT_BYTES,
     maxFiles: 1,
     multiple: false,
   });

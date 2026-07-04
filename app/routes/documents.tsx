@@ -9,6 +9,7 @@ import { AddDocumentForm } from "~/components/add-document-form";
 import { DocumentCard } from "~/components/document-card";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { fetchFromBackend } from "~/utils/backend";
+import { getDocumentsPayload, invalidateDocuments } from "~/services/documents";
 import clsx from "clsx";
 import { toast } from "~/hooks/use-toast";
 import { EmptyState } from "~/components/empty-state";
@@ -25,7 +26,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
 
   const [response, userMotosResponse] = await Promise.all([
-    fetchFromBackend<any>("/documents", {}, token),
+    getDocumentsPayload(token),
     fetchFromBackend<{ motorcycles: any[] }>("/motorcycles", {}, token),
   ]);
 
@@ -52,6 +53,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         method: "POST",
         body: formData,
       }, token);
+      invalidateDocuments();
       return data({ success: true, intent: "create" });
     } catch (e: any) {
       return data({ error: e.message, intent: "create" }, { status: 400 });
@@ -65,6 +67,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         method: "PUT",
         body: formData,
       }, token);
+      invalidateDocuments();
       return data({ success: true, intent: "update" });
     } catch (e: any) {
       return data({ error: e.message, intent: "update" }, { status: 400 });
@@ -77,6 +80,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       await fetchFromBackend(`/documents/${id}`, {
         method: "DELETE",
       }, token);
+      invalidateDocuments();
       return data({ success: true, intent: "delete" });
     } catch (e: any) {
       return data({ error: e.message, intent: "delete" }, { status: 400 });
@@ -362,3 +366,5 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     </div>
   );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

@@ -213,3 +213,5 @@ function StatCard({
         </div>
     );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

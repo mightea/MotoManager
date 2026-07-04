@@ -149,7 +149,21 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return data({ success: false, errors, form: "login" }, { status: 400 });
   }
 
-  const loginResult = await verifyLogin(identifier, password);
+  let loginResult;
+  try {
+    loginResult = await verifyLogin(identifier, password);
+  } catch (error) {
+    // Transport / server error (not bad credentials) — don't mislabel it.
+    console.error(`[Login Page] Login request failed:`, error);
+    return data(
+      {
+        success: false,
+        message: "Anmeldung fehlgeschlagen. Bitte versuche es später erneut.",
+        form: "login",
+      },
+      { status: 503 },
+    );
+  }
 
   if (!loginResult) {
     return data(

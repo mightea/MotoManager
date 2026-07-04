@@ -21,6 +21,7 @@ export function HeaderDesktopNav({ items }: { items: NavItem[] }) {
             <li key={item.label} className="flex">
               <Link
                 to={item.href}
+                prefetch="intent"
                 aria-current={isActive ? "page" : undefined}
                 className={clsx(
                   "group relative flex flex-col items-start justify-end gap-0.5 px-3 pb-2 pt-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm",

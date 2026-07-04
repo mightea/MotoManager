@@ -1,4 +1,21 @@
 import { fetchFromBackend } from "~/utils/backend";
+import { cachedFetch, invalidatePrefix } from "~/utils/request-cache";
+
+// The `/documents` payload ({ docs, allMotorcycles, assignments }) is read by both
+// the documents route and each motorcycle's documents tab — cache it so those
+// navigations share one request. `invalidateDocuments()` is called after every
+// document mutation.
+const DOCUMENTS_TTL_MS = 60_000;
+
+export function getDocumentsPayload(token: string) {
+  return cachedFetch(`documents:${token}`, DOCUMENTS_TTL_MS, () =>
+    fetchFromBackend<any>("/documents", {}, token),
+  );
+}
+
+export function invalidateDocuments() {
+  invalidatePrefix("documents:");
+}
 
 export function isPdfFile(file: File) {
     const mimeType = file.type?.toLowerCase() ?? "";
@@ -44,7 +61,9 @@ export async function deleteDocumentFiles(docId: number, token: string) {
 }
 
 export async function regenerateAllDocumentPreviews(token: string) {
-    return fetchFromBackend<any>("/admin/regenerate-previews", {
+    const result = await fetchFromBackend<any>("/admin/regenerate-previews", {
         method: "POST",
     }, token);
+    invalidateDocuments();
+    return result;
 }

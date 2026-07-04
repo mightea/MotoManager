@@ -1,5 +1,6 @@
-import { Form, useNavigation } from "react-router";
+import { Form, useNavigation, useSubmit } from "react-router";
 import { Button } from "./button";
+import { useConfirm } from "./confirm-provider";
 import type { PublicUser } from "~/types/auth";
 import { USER_ROLES } from "~/types/auth";
 import { useEffect, useRef } from "react";
@@ -14,6 +15,8 @@ interface UserFormProps {
 
 export function UserForm({ initialData, onSubmit, onCancel, isSelf }: UserFormProps) {
   const navigation = useNavigation();
+  const submit = useSubmit();
+  const confirmDialog = useConfirm();
   const isSubmitting = navigation.state === "submitting";
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -146,15 +149,19 @@ export function UserForm({ initialData, onSubmit, onCancel, isSelf }: UserFormPr
       <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
         {initialData && !isSelf && (
           <Button
-            type="submit"
-            name="intent"
-            value="deleteUser"
+            type="button"
             variant="ghost"
             className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20 sm:mr-auto"
-            onClick={(e) => {
-              if (!confirm(`Benutzer "${initialData.username}" wirklich löschen?`)) {
-                e.preventDefault();
-              }
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: "Benutzer löschen?",
+                description: `Benutzer "${initialData.username}" wirklich löschen?`,
+              });
+              if (!ok) return;
+              submit(
+                { intent: "deleteUser", userId: String(initialData.id) },
+                { method: "post" },
+              );
             }}
             disabled={isSubmitting}
           >

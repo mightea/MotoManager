@@ -3,6 +3,7 @@ import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/typ
 import { useState } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
+import { toast } from "~/hooks/use-toast";
 import { Modal } from "./modal";
 import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
 import { Fuel } from "lucide-react";
@@ -101,16 +102,34 @@ export function AddMotorcycleForm({
   const [isCropping, setIsCropping] = useState(false);
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+  const [isCropSaving, setIsCropSaving] = useState(false);
+
+  const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        setSelectedImage(reader.result as string);
-        setIsCropping(true);
-      });
-      reader.readAsDataURL(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Ungültige Datei", "Bitte wähle eine Bilddatei aus.");
+      e.target.value = "";
+      return;
     }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error("Datei zu groß", "Das Bild darf höchstens 15 MB groß sein.");
+      e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      setSelectedImage(reader.result as string);
+      setIsCropping(true);
+    });
+    reader.addEventListener("error", () => {
+      toast.error("Fehler", "Das Bild konnte nicht gelesen werden.");
+    });
+    reader.readAsDataURL(file);
   };
 
   const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
@@ -119,6 +138,7 @@ export function AddMotorcycleForm({
 
   const showCroppedImage = async () => {
     if (!selectedImage || !croppedAreaPixels) return;
+    setIsCropSaving(true);
     try {
       const blob = await getCroppedImg(selectedImage, croppedAreaPixels);
       if (blob) {
@@ -128,6 +148,9 @@ export function AddMotorcycleForm({
       }
     } catch (e) {
       console.error(e);
+      toast.error("Zuschneiden fehlgeschlagen", "Das Bild konnte nicht zugeschnitten werden.");
+    } finally {
+      setIsCropSaving(false);
     }
   };
 
@@ -445,7 +468,7 @@ export function AddMotorcycleForm({
               min={1}
               max={3}
               step={0.1}
-              aria-labelledby="Zoom"
+              aria-label="Zoom"
               onChange={(e) => setZoom(Number(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
             />
@@ -457,12 +480,14 @@ export function AddMotorcycleForm({
             type="button"
             variant="ghost"
             onClick={() => setIsCropping(false)}
+            disabled={isCropSaving}
           >
             Abbrechen
           </Button>
           <Button
             type="button"
             onClick={showCroppedImage}
+            isLoading={isCropSaving}
           >
             Fertig
           </Button>

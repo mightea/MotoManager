@@ -99,6 +99,7 @@ export function MotorcycleDetailHeader({
           <div className="flex items-center justify-between">
             <Link
               to={backTo}
+              prefetch="intent"
               aria-label="Zurück zur Übersicht"
               className="inline-flex items-center gap-2 rounded-sm border border-white/25 bg-white/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-sm transition-colors hover:bg-white/20"
             >
@@ -189,6 +190,7 @@ export function MotorcycleDetailHeader({
                 <li key={link.to} className="flex">
                   <Link
                     to={link.to}
+                    prefetch="intent"
                     aria-current={link.isActive ? "page" : undefined}
                     className={clsx(
                       "group relative flex flex-col items-start gap-0.5 px-3 pb-2 pt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",

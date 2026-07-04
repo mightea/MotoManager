@@ -4,6 +4,7 @@ import {
   useActionData,
   useLoaderData,
   useNavigation,
+  useSubmit,
 } from "react-router";
 import {
   createCurrencySetting,
@@ -22,6 +23,7 @@ import {
 import { USER_ROLES } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
+import { useConfirm } from "~/components/confirm-provider";
 import { useEffect, useState } from "react";
 import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
@@ -168,6 +170,8 @@ export default function AdminSettings() {
   const { users = [], currencies = [], user: currentUser } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
+  const submit = useSubmit();
+  const confirmDialog = useConfirm();
   const [editingCurrencyId, setEditingCurrencyId] = useState<number | null>(null);
 
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
@@ -451,25 +455,26 @@ export default function AdminSettings() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Form
-                        method="post"
-                        onSubmit={(e) => {
-                          if (!confirm(`Währung "${currency.code}" wirklich löschen?`)) {
-                            e.preventDefault();
-                          }
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Währung ${currency.code} löschen`}
+                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
+                        onClick={async () => {
+                          const ok = await confirmDialog({
+                            title: "Währung löschen?",
+                            description: `Währung "${currency.code}" wirklich löschen?`,
+                          });
+                          if (!ok) return;
+                          submit(
+                            { intent: "deleteCurrency", id: String(currency.id) },
+                            { method: "post" },
+                          );
                         }}
                       >
-                        <input type="hidden" name="intent" value="deleteCurrency" />
-                        <input type="hidden" name="id" value={currency.id} />
-                        <Button
-                          type="submit"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </Form>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </>
@@ -505,3 +510,4 @@ export default function AdminSettings() {
     </div>
   );
 }
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

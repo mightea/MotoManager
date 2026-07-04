@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import {
   data,
   redirect,
@@ -28,7 +28,12 @@ import { MaintenanceDialog } from "~/components/maintenance-dialog";
 import { IssueDialog } from "~/components/issue-dialog";
 import { MaintenanceInsightsCard } from "~/components/maintenance-insights";
 import { Modal } from "~/components/modal";
-import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
+// Lazy-loaded: pulls in react-easy-crop, which only appears inside the edit modal.
+const AddMotorcycleForm = lazy(() =>
+  import("~/components/add-motorcycle-form").then((m) => ({
+    default: m.AddMotorcycleForm,
+  })),
+);
 import { motorcycleSchema, previousOwnerSchema } from "~/validations";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { getCurrencies, getLocations, getUserSettings } from "~/services/settings";
@@ -996,15 +1001,21 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         title="Motorrad bearbeiten"
         description="Passe die Fahrzeugdaten an."
       >
-        <AddMotorcycleForm
-          initialValues={motorcycle}
-          intent="updateMotorcycle"
-          submitLabel="Speichern"
-          onSubmit={() => setEditMotorcycleDialogOpen(false)}
-          onDelete={() => setDeleteConfirmationOpen(true)}
-          currencies={currencies}
-          existingMaintenance={maintenanceHistory}
-        />
+        <Suspense
+          fallback={
+            <div className="py-8 text-center text-sm text-base-content/60">Lädt…</div>
+          }
+        >
+          <AddMotorcycleForm
+            initialValues={motorcycle}
+            intent="updateMotorcycle"
+            submitLabel="Speichern"
+            onSubmit={() => setEditMotorcycleDialogOpen(false)}
+            onDelete={() => setDeleteConfirmationOpen(true)}
+            currencies={currencies}
+            existingMaintenance={maintenanceHistory}
+          />
+        </Suspense>
       </Modal>
 
       <DeleteConfirmationDialog
@@ -1142,3 +1153,5 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     </div >
   );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

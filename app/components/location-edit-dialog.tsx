@@ -4,6 +4,7 @@ import { MapPin, Trash2, X } from "lucide-react";
 import { Modal } from "./modal";
 import { MapPicker } from "./map-picker";
 import { Button } from "./button";
+import { useConfirm } from "./confirm-provider";
 import type { Location, LocationType } from "~/types/db";
 
 interface LocationEditDialogProps {
@@ -26,6 +27,7 @@ const TYPE_LABELS: Record<LocationType, string> = {
 export function LocationEditDialog({ isOpen, onClose, location, defaultType }: LocationEditDialogProps) {
   const isEdit = location !== null;
   const submit = useSubmit();
+  const confirmDialog = useConfirm();
   const [name, setName] = useState("");
   const [type, setType] = useState<LocationType>("fuelStation");
   const [lat, setLat] = useState<number | null>(null);
@@ -33,9 +35,13 @@ export function LocationEditDialog({ isOpen, onClose, location, defaultType }: L
   const [isLocating, setIsLocating] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!location) return;
-    if (!confirm(`Standort "${location.name}" wirklich löschen?`)) return;
+    const ok = await confirmDialog({
+      title: "Standort löschen?",
+      description: `Standort "${location.name}" wirklich löschen?`,
+    });
+    if (!ok) return;
     const fd = new FormData();
     fd.set("intent", "deleteLocation");
     fd.set("id", String(location.id));

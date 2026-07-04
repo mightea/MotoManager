@@ -14,6 +14,7 @@ export function HeaderBrand({ onNavigate }: HeaderBrandProps) {
   return (
     <Link
       to="/"
+      prefetch="intent"
       onClick={onNavigate}
       className="group relative flex min-w-0 items-center gap-3 pl-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
       aria-label="MotoManager — Startseite"

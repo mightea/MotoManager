@@ -1,5 +1,6 @@
-import { Form, useNavigation } from "react-router";
+import { Form, useNavigation, useSubmit } from "react-router";
 import { Button } from "./button";
+import { useConfirm } from "./confirm-provider";
 import type { Expense, Motorcycle, CurrencySetting } from "~/types/db";
 import { useState } from "react";
 import { Trash2, CheckSquare, Square } from "lucide-react";
@@ -18,6 +19,8 @@ const CATEGORIES = ["Versicherung", "Steuern", "Vignette", "Parkplatz", "Ausrüs
 
 export function ExpenseForm({ initialData, motorcycles, currencies, defaultCurrency, onCancel }: ExpenseFormProps) {
   const navigation = useNavigation();
+  const submit = useSubmit();
+  const confirmDialog = useConfirm();
   const isSubmitting = navigation.state === "submitting";
   const [selectedMotorcycleIds, setSelectedMotorcycleIds] = useState<number[]>(initialData?.motorcycleIds || []);
 
@@ -147,15 +150,19 @@ export function ExpenseForm({ initialData, motorcycles, currencies, defaultCurre
       <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
         {initialData && (
           <Button
-            type="submit"
-            name="intent"
-            value="deleteExpense"
+            type="button"
             variant="ghost"
             className="text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20 sm:mr-auto"
-            onClick={(e) => {
-              if (!confirm(`Ausgabe wirklich löschen?`)) {
-                e.preventDefault();
-              }
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: "Ausgabe löschen?",
+                description: "Ausgabe wirklich löschen?",
+              });
+              if (!ok) return;
+              submit(
+                { intent: "deleteExpense", expenseId: String(initialData.id) },
+                { method: "post" },
+              );
             }}
             disabled={isSubmitting}
           >

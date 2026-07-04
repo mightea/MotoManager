@@ -20,6 +20,7 @@ import { fetchFromBackend } from "~/utils/backend";
 import type { Route } from "./+types/settings";
 import { Button } from "~/components/button";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
+import { useConfirm } from "~/components/confirm-provider";
 import { LocationEditDialog } from "~/components/location-edit-dialog";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -310,6 +311,7 @@ export default function Settings() {
   const [bulkType, setBulkType] = useState<LocationType>("fuelStation");
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const submit = useSubmit();
+  const confirmDialog = useConfirm();
 
   const isSubmitting = navigation.state === "submitting";
 
@@ -511,17 +513,26 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <Form method="post" onSubmit={(e) => !confirm("Passkey wirklich löschen?") && e.preventDefault()}>
-                <input type="hidden" name="intent" value="deleteAuthenticator" />
-                <input type="hidden" name="id" value={auth.id} />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </Form>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                aria-label="Passkey löschen"
+                onClick={async () => {
+                  const ok = await confirmDialog({
+                    title: "Passkey löschen?",
+                    description: "Passkey wirklich löschen?",
+                  });
+                  if (!ok) return;
+                  submit(
+                    { intent: "deleteAuthenticator", id: auth.id ?? "" },
+                    { method: "post" },
+                  );
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           ))}
           {userAuthenticators.length === 0 && (
@@ -1065,3 +1076,5 @@ export default function Settings() {
     </div>
   );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

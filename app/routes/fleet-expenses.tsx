@@ -201,3 +201,5 @@ export default function FleetExpenses() {
     </div>
   );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

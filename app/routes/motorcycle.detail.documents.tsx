@@ -19,6 +19,7 @@ import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { fetchFromBackend } from "~/utils/backend";
+import { getDocumentsPayload } from "~/services/documents";
 import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
 
 export type DocumentWithAssignment = DocumentSummary & {
@@ -54,7 +55,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
 
   const [motoResponse, docsResponse, userMotosResponse] = await Promise.all([
     fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
-    fetchFromBackend<any>(`/documents`, {}, token),
+    getDocumentsPayload(token),
     fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
   ]);
 
@@ -278,3 +279,5 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
     </div>
   );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

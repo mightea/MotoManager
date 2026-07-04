@@ -9,8 +9,13 @@ import {
 } from "react-router";
 import { ThemeProvider, useTheme } from "~/components/theme-provider";
 import { UmamiProvider } from "~/components/umami-provider";
+import { ConfirmProvider } from "~/components/confirm-provider";
 import { Button } from "~/components/button";
-import { MotorcycleDetailSkeleton } from "~/components/skeleton";
+import {
+  MotorcycleDetailSkeleton,
+  HomeSkeleton,
+  PageSkeleton,
+} from "~/components/skeleton";
 import { getTheme } from "~/utils/theme.client";
 import { Theme } from "~/utils/theme";
 import { getCurrentSession } from "~/services/auth";
@@ -27,24 +32,53 @@ export async function clientLoader() {
 
 export function HydrateFallback() {
   // SPA mode only allows a HydrateFallback on the root route, so route-aware
-  // skeletons are picked from the URL (client-only, window always exists).
-  const isMotorcycleDetail =
-    typeof window !== "undefined" && /^\/motorcycle\//.test(window.location.pathname);
+  // skeletons are picked from the URL (client-only, window always exists) to
+  // avoid a bare-spinner flash + layout shift on hard reloads / deep links.
+  const path = typeof window !== "undefined" ? window.location.pathname : "/";
 
-  if (isMotorcycleDetail) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-navy-950">
-        <MotorcycleDetailSkeleton />
+  let content: React.ReactNode;
+  if (/^\/motorcycle\//.test(path)) {
+    content = <MotorcycleDetailSkeleton />;
+  } else if (path === "/") {
+    content = <HomeSkeleton />;
+  } else if (path === "/auth/login" || path === "/auth/logout") {
+    content = (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
+  } else {
+    content = <PageSkeleton />;
   }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-navy-950">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-    </div>
-  );
+  return <div className="min-h-screen bg-slate-50 dark:bg-navy-950">{content}</div>;
 }
+
+// Baseline Content-Security-Policy (production only — a strict connect-src would
+// block Vite's dev-HMR websocket). This shrinks the XSS surface that makes the
+// localStorage session token risky: `object-src 'none'` and `base-uri 'self'`
+// block plugin/base-tag injection, `form-action 'self'` blocks form exfiltration,
+// and the resource directives scope where styles/fonts/frames may load from.
+//
+// Limits of a *static* meta CSP for this cross-origin SPA (see SECURITY.md):
+//   • the built index.html contains inline hydration scripts, so `script-src`
+//     must keep `'unsafe-inline'` (nonces require a server/edge to set per-request);
+//   • the backend + analytics + geocoder origins are runtime config, so
+//     `script-src`/`connect-src` fall back to `https:` here.
+// The complete, XSS-token-exfil-proof policy (nonces + pinned exact origins)
+// belongs at the hosting/edge layer — SECURITY.md gives a ready-to-use header.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "script-src 'self' 'unsafe-inline' https:",
+  "connect-src 'self' https:",
+  "frame-src 'self' https://www.openstreetmap.org",
+].join("; ");
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useLoaderData<any>();
@@ -58,6 +92,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     >
       <head>
         <meta charSet="utf-8" />
+        {import.meta.env.PROD && (
+          <meta httpEquiv="Content-Security-Policy" content={CONTENT_SECURITY_POLICY} />
+        )}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <Meta />
         <Links />
@@ -104,9 +141,11 @@ export default function App() {
   return (
     <ThemeProvider specifiedTheme={theme}>
       <UmamiProvider>
-        <AppWithTheme>
-          <Outlet />
-        </AppWithTheme>
+        <ConfirmProvider>
+          <AppWithTheme>
+            <Outlet />
+          </AppWithTheme>
+        </ConfirmProvider>
       </UmamiProvider>
     </ThemeProvider>
   );
@@ -150,7 +189,7 @@ export function ErrorBoundary({ error }: { error: unknown }) {
         <Button onClick={() => window.location.reload()}>
           Erneut versuchen
         </Button>
-        {stack && (
+        {import.meta.env.DEV && stack && (
           <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-navy-800 rounded-xl mt-8 text-left">
             <code className="text-xs text-gray-700 dark:text-gray-200">{stack}</code>
           </pre>

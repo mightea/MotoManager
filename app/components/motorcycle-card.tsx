@@ -74,6 +74,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
   return (
     <Link
       to={`/motorcycle/${slug}/${moto.id}`}
+      prefetch="intent"
       aria-label={aria}
       className="group relative flex flex-col overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] motion-safe:transition-[transform,box-shadow,border-color] motion-safe:duration-300 motion-safe:ease-out hover:border-base-content/25 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-base-200 dark:bg-navy-800"
     >

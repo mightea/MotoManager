@@ -1,5 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import type L from "leaflet";
+// Self-hosted marker assets (bundled by Vite) instead of the unpkg CDN, so the
+// picker works offline and under a strict CSP.
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 interface MapPickerProps {
   latitude: number | null;
@@ -39,12 +44,12 @@ export function MapPicker({ latitude, longitude, onSelect, className }: MapPicke
       if (!isMounted || !mapRef.current) return;
       leafletLib.current = Leaflet;
 
-      // @ts-ignore
+      // @ts-ignore — private Leaflet internal; removing it lets mergeOptions win.
       delete Leaflet.Icon.Default.prototype._getIconUrl;
       Leaflet.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconRetinaUrl: markerIcon2x,
+        iconUrl: markerIcon,
+        shadowUrl: markerShadow,
       });
 
       const { lat: curLat, lng: curLng } = coordsRef.current;
@@ -115,11 +120,63 @@ export function MapPicker({ latitude, longitude, onSelect, className }: MapPicke
     map.setView(latLng, Math.max(map.getZoom(), 14));
   }, [latitude, longitude]);
 
+  const instructionsId = useId();
+  const latId = useId();
+  const lngId = useId();
+
+  const commitLat = (value: string) => {
+    const lat = parseFloat(value);
+    if (Number.isFinite(lat) && longitude !== null) onSelect(lat, longitude);
+  };
+  const commitLng = (value: string) => {
+    const lng = parseFloat(value);
+    if (Number.isFinite(lng) && latitude !== null) onSelect(latitude, lng);
+  };
+
   return (
-    <div
-      ref={mapRef}
-      className={className ?? "h-72 w-full overflow-hidden rounded-sm border border-base-300 shadow-inner dark:border-navy-700"}
-      style={{ minHeight: 288 }}
-    />
+    <div className="space-y-2">
+      <p id={instructionsId} className="text-xs text-base-content/65">
+        Klicke auf die Karte, um den Standort zu setzen — oder gib die Koordinaten unten ein.
+      </p>
+      <div
+        ref={mapRef}
+        role="application"
+        aria-label="Standortkarte"
+        aria-describedby={instructionsId}
+        className={className ?? "h-72 w-full overflow-hidden rounded-sm border border-base-300 shadow-inner dark:border-navy-700"}
+        style={{ minHeight: 288 }}
+      />
+      {/* Keyboard-accessible alternative to clicking the map. */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <label htmlFor={latId} className="text-[10px] font-semibold uppercase tracking-wider text-base-content/60">
+            Breitengrad
+          </label>
+          <input
+            id={latId}
+            type="number"
+            step="any"
+            inputMode="decimal"
+            value={latitude ?? ""}
+            onChange={(e) => commitLat(e.target.value)}
+            className="block w-full rounded-sm border border-base-300 bg-base-100 p-2 text-sm dark:border-navy-700 dark:bg-navy-800"
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor={lngId} className="text-[10px] font-semibold uppercase tracking-wider text-base-content/60">
+            Längengrad
+          </label>
+          <input
+            id={lngId}
+            type="number"
+            step="any"
+            inputMode="decimal"
+            value={longitude ?? ""}
+            onChange={(e) => commitLng(e.target.value)}
+            className="block w-full rounded-sm border border-base-300 bg-base-100 p-2 text-sm dark:border-navy-700 dark:bg-navy-800"
+          />
+        </div>
+      </div>
+    </div>
   );
 }

@@ -23,10 +23,15 @@ import {
   X,
 } from "lucide-react";
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { DropdownMenu } from "~/components/dropdown-menu";
 import { Modal } from "~/components/modal";
-import { AddMotorcycleForm } from "~/components/add-motorcycle-form";
+// Lazy-loaded: pulls in react-easy-crop, which only appears inside this modal.
+const AddMotorcycleForm = lazy(() =>
+  import("~/components/add-motorcycle-form").then((m) => ({
+    default: m.AddMotorcycleForm,
+  })),
+);
 import { motorcycleSchema } from "~/validations";
 
 import { DashboardStats } from "~/components/dashboard-stats";
@@ -518,7 +523,13 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         title="Motorrad hinzufügen"
         description="Füge ein neues Fahrzeug zu deiner Garage hinzu."
       >
-        <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} currencies={currencies} />
+        <Suspense
+          fallback={
+            <div className="py-8 text-center text-sm text-base-content/60">Lädt…</div>
+          }
+        >
+          <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} currencies={currencies} />
+        </Suspense>
       </Modal>
     </div>
   );
@@ -661,3 +672,5 @@ function AttentionChip({
     </button>
   );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/components/route-error-boundary";

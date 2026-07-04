@@ -87,6 +87,41 @@ export function MotorcycleDetailSkeleton() {
   );
 }
 
+/**
+ * Full-page placeholder for the garage (home) route: a stats band and a grid of
+ * motorcycle-card skeletons. Shown via HydrateFallback on a hard reload of `/`.
+ */
+export function HomeSkeleton() {
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-6">
+      <Skeleton className="mb-6 h-20 w-full" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <MotorcycleCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Generic page placeholder for content routes (documents, stats, settings, …)
+ * shown via HydrateFallback on hard reload — avoids the bare-spinner flash.
+ */
+export function PageSkeleton() {
+  return (
+    <div className="mx-auto w-full max-w-4xl px-4 py-6">
+      <Skeleton variant="text" className="mb-2 h-7 w-48" />
+      <Skeleton variant="text" className="mb-6 h-4 w-72" />
+      <div className="space-y-3">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function MotorcycleCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] dark:bg-navy-800">
