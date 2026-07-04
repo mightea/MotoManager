@@ -27,12 +27,16 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
   // On client-side navigation, move focus to <main> so screen-reader and keyboard
   // users are informed the route changed (and start from the new content). Skip
   // the initial render so we don't steal focus on first load.
+  //
+  // `preventScroll: true` is essential: <main> sits below the sticky header, so a
+  // plain focus() scrolls it to the viewport top — under the header — clipping the
+  // page's top content (worst on reload).
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
-    mainRef.current?.focus();
+    mainRef.current?.focus({ preventScroll: true });
   }, [location.pathname]);
 
   return (
