@@ -88,8 +88,9 @@ export function Modal({
         {/* Scrollable Content — only mounted while open, so a page with several
             dialogs doesn't mount all their forms (and duplicate their input ids in
             the accessibility tree) up front, and lazy-loaded content defers until
-            first open. */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">{isOpen ? children : null}</div>
+            first open. overflow-x-hidden: an overflowing child (e.g. a wide
+            select) must never give the whole dialog a horizontal scrollbar. */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-5">{isOpen ? children : null}</div>
       </div>
       {/* Backdrop click closes via native <form method="dialog"> submit. */}
       <form method="dialog" className="modal-backdrop">

@@ -230,7 +230,10 @@ export function AddMotorcycleForm({
           <input type="hidden" name="motorcycleId" value={initialValues.id} />
         )}
         
-        <div className="grid gap-5 sm:grid-cols-2">
+        {/* min-w-0 on grid children: a wide control (long Baureihe option)
+            must truncate instead of blowing up the column and forcing the
+            whole modal to scroll horizontally. */}
+        <div className="grid gap-5 sm:grid-cols-2 [&>*]:min-w-0">
           {actionData?.error && (
             <div className="col-span-full rounded-xl bg-red-50 p-4 text-sm text-red-800 dark:bg-red-950/20 dark:text-red-300">
               {actionData.error}
@@ -400,7 +403,12 @@ export function AddMotorcycleForm({
           {/* Joined price + currency control — FormField only renders a single
               input, so this stays bespoke but mirrors its error treatment. */}
           <div className="space-y-1.5">
-            <label htmlFor="purchasePrice" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Kaufpreis</label>
+            <label
+              htmlFor="purchasePrice"
+              className="block text-xs font-semibold uppercase tracking-wider text-base-content/60"
+            >
+              Kaufpreis
+            </label>
             <div className="flex rounded-xl shadow-sm">
               <input
                 type="number"
@@ -420,7 +428,7 @@ export function AddMotorcycleForm({
               />
               <select
                 name="currencyCode"
-                className="rounded-r-xl border-l-0 border-gray-200 bg-gray-100 p-3 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
+                className="shrink-0 rounded-r-xl border-l-0 border-gray-200 bg-gray-100 py-3 pl-3 pr-9 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
                 defaultValue={initialValues?.currencyCode ?? "CHF"}
               >
                 {currencies?.map((c) => (

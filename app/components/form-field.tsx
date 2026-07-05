@@ -47,7 +47,13 @@ export function FormField({
       {Component === "select" ? (
         <select
           id={fieldId}
-          className={clsx("select select-bordered", baseFieldClass, errorClass)}
+          // truncate: a long selected option must ellipsize inside the field
+          // instead of widening it (and its grid column) past the container.
+          className={clsx(
+            "select select-bordered overflow-hidden text-ellipsis whitespace-nowrap",
+            baseFieldClass,
+            errorClass,
+          )}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
           aria-required={required || undefined}
