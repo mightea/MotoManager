@@ -47,6 +47,7 @@ import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
 import { Card, CardAction, CardHeading } from "~/components/card";
 import { fetchFromBackend } from "~/utils/backend";
+import { seriesMatchesBike } from "~/utils/series";
 import {
   createPartConsumption,
   fetchModelSeries,
@@ -759,14 +760,15 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   } = loaderData;
 
   // Parts offered in the "Verwendete Teile" picker: positive on-hand, and —
-  // when the bike has a series — compatible with it (parts without fitment
-  // stay offered so unassigned parts remain usable).
+  // when the bike has a catalog node — hierarchy-compatible with it (a part
+  // linked to the Familie fits a bike on Serie/Modell level and vice versa;
+  // parts without fitment stay offered so unassigned parts remain usable).
   const availableParts = parts.filter(
     (part) =>
       part.onHand > 0 &&
       (motorcycle.seriesId == null ||
         part.seriesIds.length === 0 ||
-        part.seriesIds.includes(motorcycle.seriesId)),
+        seriesMatchesBike(part.seriesIds, motorcycle.seriesId, modelSeries)),
   );
 
   // "2× Ölfilter, 1× Dichtung" per maintenance record for the history list.

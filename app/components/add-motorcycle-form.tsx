@@ -1,6 +1,9 @@
 import { Form, useSubmit, useActionData, useNavigation } from "react-router";
 import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/types/db";
 import { modelSeriesDisplayName, type ModelSeries } from "~/types/parts";
+import { seriesPath, seriesTree } from "~/utils/series";
+import { decodeVin } from "~/services/parts";
+import { getSessionToken } from "~/services/auth";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
@@ -99,6 +102,38 @@ export function AddMotorcycleForm({
   /** Live client error wins over the (older) server-side error. */
   const fieldError = (field: keyof typeof motorcycleSchema.shape) =>
     clientErrors[field] ?? actionData?.errors?.[field];
+
+  // Baureihe select is controlled so a decoded VIN can preselect it.
+  const [seriesIdValue, setSeriesIdValue] = useState<string>(
+    initialValues?.seriesId != null ? String(initialValues.seriesId) : "",
+  );
+  const [vinHint, setVinHint] = useState<string | null>(null);
+
+  /** Decode a complete VIN and suggest the catalog entry + model year. */
+  const handleVinBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
+    const vin = event.currentTarget.value.replace(/\s/g, "");
+    if (vin.length !== 17) return;
+    const token = getSessionToken();
+    if (!token) return;
+    try {
+      const result = await decodeVin(token, vin);
+      if (result.match) {
+        setSeriesIdValue(String(result.match.id));
+        setVinHint(
+          `Aus VIN erkannt: ${seriesPath(result.match, modelSeries)}` +
+            (result.modelYear ? ` · Modelljahr ${result.modelYear}` : ""),
+        );
+      } else if (result.isBmw) {
+        setVinHint(
+          `BMW-VIN erkannt, aber Typcode ${result.typeCode} ist im Modellkatalog nicht hinterlegt.`,
+        );
+      } else {
+        setVinHint(null);
+      }
+    } catch {
+      // Decoding is best-effort; a failed lookup must never block the form.
+    }
+  };
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -272,16 +307,24 @@ export function AddMotorcycleForm({
 
           {modelSeries.length > 0 && (
             <FormField
-              label="Baureihe"
+              label="Baureihe / Modell"
               name="seriesId"
               as="select"
-              defaultValue={initialValues?.seriesId ?? ""}
-              helperText="Verknüpft das Motorrad mit passenden Ersatzteilen."
+              value={seriesIdValue}
+              onChange={(event) => {
+                setSeriesIdValue((event.target as HTMLSelectElement).value);
+                setVinHint(null);
+              }}
+              helperText={
+                vinHint ??
+                "Je genauer die Ebene (Familie › Serie › Modell), desto präziser die Teile-Zuordnung."
+              }
             >
-              <option value="">Keine Baureihe</option>
-              {modelSeries.map((series) => (
-                <option key={series.id} value={series.id}>
-                  {modelSeriesDisplayName(series)}
+              <option value="">Keine Zuordnung</option>
+              {seriesTree(modelSeries).map(({ node, depth }) => (
+                <option key={node.id} value={node.id}>
+                  {"   ".repeat(depth)}
+                  {modelSeriesDisplayName(node)}
                 </option>
               ))}
             </FormField>
@@ -292,6 +335,8 @@ export function AddMotorcycleForm({
             name="vin"
             defaultValue={initialValues?.vin ?? ""}
             error={actionData?.errors?.vin}
+            onBlur={handleVinBlur}
+            helperText="Bei BMW-VINs (WB1…) wird die Baureihe automatisch erkannt."
           />
 
           <FormField

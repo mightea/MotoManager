@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { Button } from "./button";
 import { StorageLocationPickerField } from "./storage-location-picker-field";
 import { AVAILABLE_CURRENCY_PRESETS, DEFAULT_CURRENCY_CODE } from "~/constants";
+import { seriesLevelLabel, seriesPath, seriesTree } from "~/utils/series";
 import {
   modelSeriesDisplayName,
   type ModelSeries,
@@ -64,11 +65,15 @@ export function PartForm({
     });
   };
 
-  const filteredSeries = seriesFilter.trim()
-    ? modelSeries.filter((series) =>
-        modelSeriesDisplayName(series).toLowerCase().includes(seriesFilter.trim().toLowerCase()),
+  // Tree-ordered fitment list; the search matches the full Familie › Serie ›
+  // Modell path so "GS" finds nodes on every level.
+  const treeEntries = seriesTree(modelSeries);
+  const query = seriesFilter.trim().toLowerCase();
+  const filteredSeries = query
+    ? treeEntries.filter(({ node }) =>
+        seriesPath(node, modelSeries).toLowerCase().includes(query),
       )
-    : modelSeries;
+    : treeEntries;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -137,7 +142,7 @@ export function PartForm({
       </div>
 
       <div className="space-y-1.5">
-        <span className={labelClass}>Passende Baureihen</span>
+        <span className={labelClass}>Kompatibilität (Familie / Serie / Modell)</span>
         <input
           type="text"
           value={seriesFilter}
@@ -145,37 +150,45 @@ export function PartForm({
           placeholder="Baureihe suchen …"
           className={inputClass}
         />
-        <div className="max-h-44 space-y-0.5 overflow-y-auto rounded-sm border border-base-300 p-2 dark:border-navy-700">
+        <div className="max-h-52 space-y-0.5 overflow-y-auto rounded-sm border border-base-300 p-2 dark:border-navy-700">
           {filteredSeries.length === 0 ? (
-            <p className="px-1 py-2 text-xs text-base-content/60">Keine Baureihe gefunden.</p>
+            <p className="px-1 py-2 text-xs text-base-content/60">Kein Eintrag gefunden.</p>
           ) : (
-            filteredSeries.map((series) => (
+            filteredSeries.map(({ node, depth }) => (
               <label
-                key={series.id}
+                key={node.id}
                 className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-base-200 dark:hover:bg-navy-800"
+                style={{ paddingLeft: `${8 + (query ? 0 : depth * 20)}px` }}
               >
                 <input
                   type="checkbox"
-                  checked={selectedSeriesIds.has(series.id)}
-                  onChange={() => toggleSeries(series.id)}
+                  checked={selectedSeriesIds.has(node.id)}
+                  onChange={() => toggleSeries(node.id)}
                   className="checkbox checkbox-sm checkbox-primary"
                 />
-                <span className="text-base-content dark:text-white">
-                  {modelSeriesDisplayName(series)}
+                <span
+                  className={clsx(
+                    "min-w-0 truncate",
+                    depth === 0
+                      ? "font-semibold text-base-content dark:text-white"
+                      : "text-base-content dark:text-white",
+                  )}
+                  title={seriesPath(node, modelSeries)}
+                >
+                  {query ? seriesPath(node, modelSeries) : modelSeriesDisplayName(node)}
                 </span>
-                {series.userId != null && (
-                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-base-content/45">
-                    Eigene
-                  </span>
-                )}
+                <span className="ml-auto shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-base-content/40">
+                  {seriesLevelLabel(depth)}
+                  {node.userId != null && " · Eigene"}
+                </span>
               </label>
             ))
           )}
         </div>
         <p className="text-xs text-base-content/60">
           {selectedSeriesIds.size === 0
-            ? "Ohne Baureihe wird das Teil keinem Motorrad zugeordnet."
-            : `${selectedSeriesIds.size} Baureihe${selectedSeriesIds.size === 1 ? "" : "n"} ausgewählt.`}
+            ? "Ohne Zuordnung wird das Teil keinem Motorrad zugeordnet. Ein Eintrag auf Familien- oder Serien-Ebene deckt alles darunter ab."
+            : `${selectedSeriesIds.size} ${selectedSeriesIds.size === 1 ? "Eintrag" : "Einträge"} ausgewählt — gilt jeweils inklusive aller Untereinträge.`}
         </p>
       </div>
 

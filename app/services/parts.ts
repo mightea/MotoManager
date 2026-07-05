@@ -10,6 +10,7 @@ import type {
   PartStock,
   PublicPart,
   StorageLocation,
+  VinDecodeResult,
 } from "~/types/parts";
 
 // Creates carry a client-generated `clientId` so a retried request is
@@ -26,9 +27,20 @@ export async function fetchModelSeries(token: string): Promise<ModelSeries[]> {
   return response.modelSeries;
 }
 
+/** Decode a BMW Motorrad VIN into a catalog match (type code, model year). */
+export async function decodeVin(token: string, vin: string): Promise<VinDecodeResult> {
+  const encoded = encodeURIComponent(vin.trim());
+  return await fetchFromBackend<VinDecodeResult>(`/vin/decode?vin=${encoded}`, {}, token);
+}
+
 export async function createModelSeries(
   token: string,
-  values: { name: string; manufacturer?: string },
+  values: {
+    name: string;
+    manufacturer?: string;
+    parentId?: number | null;
+    typeCodes?: string | null;
+  },
 ): Promise<ModelSeries> {
   const response = await fetchFromBackend<{ modelSeries: ModelSeries }>(
     "/model-series",
@@ -36,6 +48,36 @@ export async function createModelSeries(
     token,
   );
   return response.modelSeries;
+}
+
+export async function updateModelSeries(
+  token: string,
+  id: number,
+  // parentId: undefined = keep, null = move to root, number = re-parent.
+  // typeCodes: undefined = keep, null = clear, string = replace.
+  values: {
+    name?: string;
+    manufacturer?: string;
+    parentId?: number | null;
+    typeCodes?: string | null;
+  },
+): Promise<ModelSeries> {
+  const response = await fetchFromBackend<{ modelSeries: ModelSeries }>(
+    `/model-series/${id}`,
+    { method: "PUT", body: JSON.stringify(values) },
+    token,
+  );
+  return response.modelSeries;
+}
+
+export async function deleteModelSeries(token: string, id: number): Promise<boolean> {
+  try {
+    await fetchFromBackend(`/model-series/${id}`, { method: "DELETE" }, token);
+    return true;
+  } catch (error) {
+    rethrowRedirect(error);
+    return false;
+  }
 }
 
 // MARK: Storage locations

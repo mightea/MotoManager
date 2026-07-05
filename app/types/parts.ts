@@ -1,14 +1,30 @@
 // Types for the parts inventory (backend migration 012). Field names mirror
 // the API's camelCase JSON exactly.
 
-/** Model-series lookup entry. Global seed rows have `userId: null`;
- *  user-created custom series carry the creator's id. */
+/** Model-catalog node, hierarchical (realoem-style): Familie -> Serie ->
+ *  Modell, max depth 3. Global seed rows have `userId: null`; user-created
+ *  custom entries carry the creator's id. Parts and motorcycles may link to
+ *  any level — matching walks the tree. */
 export interface ModelSeries {
   id: number;
   name: string;
   manufacturer: string;
+  parentId: number | null;
+  /** Comma-separated BMW type codes (Baumuster, VIN chars 4-7), e.g.
+   *  "0502,0503,0513" — used for VIN decoding. */
+  typeCodes: string | null;
   userId: number | null;
   createdAt: string;
+}
+
+/** Result of `GET /api/vin/decode`. */
+export interface VinDecodeResult {
+  vin: string;
+  isBmw: boolean;
+  typeCode: string;
+  modelYear: number | null;
+  checkDigitValid: boolean;
+  match: ModelSeries | null;
 }
 
 /** "R 1150 GS" for BMW (the common case), "Yamaha XSR 700" otherwise. */

@@ -5,6 +5,7 @@ import {
   Archive,
   Camera,
   Globe,
+  Layers,
   Lock,
   Minus,
   Package,
@@ -380,6 +381,13 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            to="/model-series"
+            className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+          >
+            <Layers className="h-3.5 w-3.5" aria-hidden="true" />
+            Modellkatalog
+          </Link>
           <Link
             to="/storage-locations"
             className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"

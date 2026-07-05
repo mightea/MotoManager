@@ -15,6 +15,7 @@ export default [
     route("parts", "routes/parts.tsx"),
     route("storage-locations", "routes/storage-locations.tsx"),
     route("storage-locations/:id", "routes/storage-locations.detail.tsx"),
+    route("model-series", "routes/model-series.tsx"),
     route("settings", "routes/settings.tsx"),
     route("settings/admin", "routes/settings.admin.tsx"),
     route("settings/server-stats", "routes/settings.server-stats.tsx"),
