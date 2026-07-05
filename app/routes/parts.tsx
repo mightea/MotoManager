@@ -99,7 +99,50 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         seriesIds: formData.getAll("seriesIds").map(Number).filter(Number.isFinite),
       };
       if (intent === "createPart") {
-        await createPart(token, values);
+        // Creating a part always records its first stock entry — validate the
+        // stock fields BEFORE creating the part so a bad quantity can't leave
+        // an empty part behind.
+        const quantity = Number(formData.get("quantity"));
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          return data({ error: "Bitte eine gültige Menge angeben." }, { status: 400 });
+        }
+        const priceRaw = optionalString("price");
+        const price = priceRaw != null ? Number(priceRaw) : null;
+        if (price != null && !Number.isFinite(price)) {
+          return data({ error: "Preis ist ungültig." }, { status: 400 });
+        }
+        const selectedLocationRaw = optionalString("storageLocationId");
+        let storageLocationId = selectedLocationRaw != null ? Number(selectedLocationRaw) : null;
+        const newLocationName = optionalString("newStorageLocation");
+
+        const created = await createPart(token, values);
+        try {
+          if (newLocationName) {
+            const location = await createStorageLocation(token, {
+              name: newLocationName,
+              parentId: storageLocationId,
+            });
+            storageLocationId = location.id;
+          }
+          await createPartStock(token, {
+            partId: created.id,
+            quantity,
+            price,
+            currency: price != null ? optionalString("currency") : null,
+            purchaseDate: optionalString("purchaseDate"),
+            storageLocationId,
+          });
+        } catch (stockError) {
+          if (stockError instanceof Response) throw stockError;
+          // The part exists at this point; report the partial result instead
+          // of pretending nothing happened.
+          return data({
+            success: true,
+            intent,
+            error:
+              "Teil erstellt, aber der Bestand konnte nicht angelegt werden — bitte im Teil nachtragen.",
+          });
+        }
       } else {
         const partId = Number(formData.get("partId"));
         if (!partId) return data({ error: "Teil-ID fehlt." }, { status: 400 });
@@ -794,9 +837,13 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
         isOpen={isAddPartOpen}
         onClose={() => setIsAddPartOpen(false)}
         title="Teil hinzufügen"
-        description="Neues Ersatzteil im Katalog anlegen."
+        description="Neues Ersatzteil anlegen — inklusive erstem Bestand."
       >
-        <PartForm modelSeries={modelSeries} onClose={() => setIsAddPartOpen(false)} />
+        <PartForm
+          modelSeries={modelSeries}
+          storageLocations={storageLocations}
+          onClose={() => setIsAddPartOpen(false)}
+        />
       </Modal>
 
       <Modal

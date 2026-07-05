@@ -51,7 +51,7 @@ export async function fetchStorageLocations(token: string): Promise<StorageLocat
 
 export async function createStorageLocation(
   token: string,
-  values: { name: string; parentId?: number | null },
+  values: { name: string; parentId?: number | null; locationId?: number | null },
 ): Promise<StorageLocation> {
   const response = await fetchFromBackend<{ storageLocation: StorageLocation }>(
     "/storage-locations",
@@ -64,7 +64,8 @@ export async function createStorageLocation(
 export async function updateStorageLocation(
   token: string,
   id: number,
-  values: { name?: string; parentId?: number | null },
+  // locationId: undefined = keep, null = clear, number = set.
+  values: { name?: string; parentId?: number | null; locationId?: number | null },
 ): Promise<StorageLocation> {
   const response = await fetchFromBackend<{ storageLocation: StorageLocation }>(
     `/storage-locations/${id}`,

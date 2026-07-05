@@ -36,6 +36,8 @@ export function storageLocationUrl(locationId: number): string {
 interface StorageLocationLabelProps {
   location: StorageLocation;
   allLocations: StorageLocation[];
+  /** Physical place (garage/workshop) shown as path prefix on the label. */
+  placeName?: string | null;
 }
 
 /**
@@ -43,9 +45,14 @@ interface StorageLocationLabelProps {
  * name and its full path. Sized for sticking on shelves and bins; the dashed
  * border doubles as a cutting guide.
  */
-export function StorageLocationLabel({ location, allLocations }: StorageLocationLabelProps) {
+export function StorageLocationLabel({
+  location,
+  allLocations,
+  placeName,
+}: StorageLocationLabelProps) {
   const qrUrl = useQrDataUrl(storageLocationUrl(location.id));
-  const path = storageLocationPath(location, allLocations);
+  const rawPath = storageLocationPath(location, allLocations);
+  const path = placeName ? `${placeName} › ${rawPath}` : rawPath;
 
   return (
     <div className="flex items-center gap-3 border border-dashed border-base-content/30 p-3 print:break-inside-avoid print:border-gray-400">

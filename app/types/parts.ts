@@ -21,6 +21,9 @@ export interface StorageLocation {
   userId: number;
   name: string;
   parentId: number | null;
+  /** Physical place (garage/workshop from the locations entity); root-level
+   *  entries only — children inherit it from the tree root. */
+  locationId: number | null;
   createdAt: string;
   clientId: string | null;
   updatedAt: string | null;

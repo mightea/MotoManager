@@ -1,8 +1,8 @@
 import { Form, useNavigation, useSubmit } from "react-router";
 import { Trash2 } from "lucide-react";
 import { Button } from "./button";
+import { StorageLocationPickerField } from "./storage-location-picker-field";
 import { AVAILABLE_CURRENCY_PRESETS, DEFAULT_CURRENCY_CODE } from "~/constants";
-import { storageLocationPath } from "~/utils/parts";
 import type { Part, PartStock, StorageLocation } from "~/types/parts";
 
 interface PartStockFormProps {
@@ -113,41 +113,10 @@ export function PartStockForm({
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor="storageLocationId" className={labelClass}>
-          Lagerort
-        </label>
-        <select
-          name="storageLocationId"
-          id="storageLocationId"
-          defaultValue={initialValues?.storageLocationId ?? ""}
-          className={inputClass}
-        >
-          <option value="">Kein Lagerort</option>
-          {storageLocations.map((location) => (
-            <option key={location.id} value={location.id}>
-              {storageLocationPath(location, storageLocations)}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="space-y-1.5">
-        <label htmlFor="newStorageLocation" className={labelClass}>
-          Neuer Lagerort (Optional)
-        </label>
-        <input
-          type="text"
-          name="newStorageLocation"
-          id="newStorageLocation"
-          placeholder="z.B. Regal A · Kiste 3"
-          className={inputClass}
-        />
-        <p className="text-xs text-base-content/60">
-          Wird angelegt und verwendet; ein oben gewählter Lagerort dient dann als übergeordneter
-          Ort.
-        </p>
-      </div>
+      <StorageLocationPickerField
+        storageLocations={storageLocations}
+        initialLocationId={initialValues?.storageLocationId}
+      />
 
       <div className="space-y-1.5">
         <label htmlFor="notes" className={labelClass}>

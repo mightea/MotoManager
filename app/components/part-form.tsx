@@ -3,14 +3,25 @@ import { useState } from "react";
 import { Trash2, Globe, Lock } from "lucide-react";
 import clsx from "clsx";
 import { Button } from "./button";
-import { modelSeriesDisplayName, type ModelSeries, type Part } from "~/types/parts";
+import { StorageLocationPickerField } from "./storage-location-picker-field";
+import { AVAILABLE_CURRENCY_PRESETS, DEFAULT_CURRENCY_CODE } from "~/constants";
+import {
+  modelSeriesDisplayName,
+  type ModelSeries,
+  type Part,
+  type StorageLocation,
+} from "~/types/parts";
 
 interface PartFormProps {
   initialValues?: Part | null;
   modelSeries: ModelSeries[];
+  /** For the initial-stock Lagerort picker (create mode only). */
+  storageLocations?: StorageLocation[];
   onClose: () => void;
   onDelete?: (part: Part) => void;
 }
+
+const EMPTY_LOCATIONS: StorageLocation[] = [];
 
 const inputClass =
   "block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500";
@@ -19,8 +30,15 @@ const labelClass =
   "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
 
 /** Create/edit a catalog part: part number + name identity, manufacturer,
- *  fitment (series multi-select) and the public-sharing toggle. */
-export function PartForm({ initialValues, modelSeries, onClose, onDelete }: PartFormProps) {
+ *  fitment (series multi-select) and the public-sharing toggle. Creating a
+ *  part also records its first stock entry, so no part starts empty. */
+export function PartForm({
+  initialValues,
+  modelSeries,
+  storageLocations = EMPTY_LOCATIONS,
+  onClose,
+  onDelete,
+}: PartFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
   const pendingIntent = navigation.formData?.get("intent");
@@ -195,6 +213,80 @@ export function PartForm({ initialValues, modelSeries, onClose, onDelete }: Part
           </span>
         </span>
       </label>
+
+      {!initialValues && (
+        <fieldset className="space-y-4 rounded-sm border border-base-300 p-4 dark:border-navy-700">
+          <legend className="px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+            Erster Bestand
+          </legend>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="initial-quantity" className={labelClass}>
+                Menge
+              </label>
+              <input
+                type="number"
+                name="quantity"
+                id="initial-quantity"
+                required
+                min={1}
+                step={1}
+                defaultValue={1}
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="initial-purchaseDate" className={labelClass}>
+                Kaufdatum
+              </label>
+              <input
+                type="date"
+                name="purchaseDate"
+                id="initial-purchaseDate"
+                defaultValue={new Date().toISOString().slice(0, 10)}
+                className={`${inputClass} dark:[color-scheme:dark]`}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="initial-price" className={labelClass}>
+                Preis gesamt (Optional)
+              </label>
+              <input
+                type="number"
+                name="price"
+                id="initial-price"
+                min={0}
+                step="0.01"
+                placeholder="0.00"
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="initial-currency" className={labelClass}>
+                Währung
+              </label>
+              <select
+                name="currency"
+                id="initial-currency"
+                defaultValue={DEFAULT_CURRENCY_CODE}
+                className={inputClass}
+              >
+                {AVAILABLE_CURRENCY_PRESETS.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.code} — {currency.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <StorageLocationPickerField storageLocations={storageLocations} />
+        </fieldset>
+      )}
 
       <div className="flex items-center justify-between pt-4">
         <div>
