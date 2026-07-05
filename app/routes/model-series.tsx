@@ -76,6 +76,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       const parentRaw = String(formData.get("parentId") ?? "");
       const parentId = parentRaw === "" ? null : Number(parentRaw);
       const typeCodesRaw = String(formData.get("typeCodes") ?? "").trim();
+      const frameRangesRaw = String(formData.get("frameRanges") ?? "").trim();
 
       if (intent === "createSeries") {
         await createModelSeries(token, {
@@ -83,6 +84,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           manufacturer,
           parentId,
           typeCodes: typeCodesRaw === "" ? undefined : typeCodesRaw,
+          frameRanges: frameRangesRaw === "" ? undefined : frameRangesRaw,
         });
       } else {
         const seriesId = Number(formData.get("seriesId"));
@@ -91,8 +93,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           name,
           manufacturer,
           parentId,
-          // Empty field clears the codes (explicit null).
+          // Empty fields clear the values (explicit null).
           typeCodes: typeCodesRaw === "" ? null : typeCodesRaw,
+          frameRanges: frameRangesRaw === "" ? null : frameRangesRaw,
         });
       }
       return data({ success: true, intent });
@@ -209,6 +212,23 @@ function SeriesForm({ allSeries, initialValues, defaultParentId, onClose }: Seri
         <p className="text-xs text-base-content/60">
           4-stellige BMW-Baumuster (VIN-Zeichen 4–7), kommagetrennt — ermöglicht die
           automatische Zuordnung über die Fahrgestellnummer.
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <label htmlFor="series-frameRanges" className={labelClass}>
+          Rahmennummern-Bereiche (Optional)
+        </label>
+        <input
+          type="text"
+          name="frameRanges"
+          id="series-frameRanges"
+          placeholder="z.B. 655004-666320,630001-649037"
+          defaultValue={initialValues?.frameRanges ?? ""}
+          className={inputClass}
+        />
+        <p className="text-xs text-base-content/60">
+          Für Vor-1981-Maschinen ohne 17-stellige VIN: "von-bis"-Bereiche, kommagetrennt.
         </p>
       </div>
 
@@ -377,6 +397,14 @@ export default function ModelSeriesPage({ loaderData }: Route.ComponentProps) {
                       {node.typeCodes.split(",").length === 1
                         ? node.typeCodes
                         : `${node.typeCodes.split(",")[0]} +${node.typeCodes.split(",").length - 1}`}
+                    </span>
+                  )}
+                  {node.frameRanges && (
+                    <span
+                      className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] text-base-content/50 dark:bg-navy-800 dark:text-navy-400"
+                      title={`Rahmennummern: ${node.frameRanges}`}
+                    >
+                      RN
                     </span>
                   )}
                   {partCount > 0 && (

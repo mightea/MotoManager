@@ -296,8 +296,14 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       currencyCode,
     } = validationResult.data;
 
-    const normalizedPurchasePrice = (purchasePrice || 0) * getCurrencyFactor(currencyCode);
-    formData.set("normalizedPurchasePrice", normalizedPurchasePrice.toString());
+    // Empty field = clear: propagate the clear to the normalized value too,
+    // otherwise a removed purchase price would leave a stale normalized one.
+    if (purchasePrice == null) {
+      formData.set("normalizedPurchasePrice", "");
+    } else {
+      const normalizedPurchasePrice = purchasePrice * getCurrencyFactor(currencyCode);
+      formData.set("normalizedPurchasePrice", normalizedPurchasePrice.toString());
+    }
 
     const updated = await updateMotorcycle(
       token,

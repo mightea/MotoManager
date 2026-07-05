@@ -35,7 +35,7 @@ export interface Motorcycle {
   userId: number;
   vin: string | null;
   engineNumber: string | null;
-  vehicleIdNr: string | null;
+  vehicleNr: string | null;
   numberPlate: string | null;
   image: string | null;
   isVeteran: boolean;

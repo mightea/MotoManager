@@ -109,19 +109,27 @@ export function AddMotorcycleForm({
   );
   const [vinHint, setVinHint] = useState<string | null>(null);
 
-  /** Decode a complete VIN and suggest the catalog entry + model year. */
+  /** Decode a complete VIN (17 chars) or a classic frame number: 6-8 digits,
+   *  leading zeros allowed, optionally with the stamped model designation
+   *  appended (ECE plates read e.g. "0103596 K75S"). */
   const handleVinBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
     const vin = event.currentTarget.value.replace(/\s/g, "");
-    if (vin.length !== 17) return;
+    const isFrameNumber = /^\d{6,8}[A-Z0-9]{0,6}$/i.test(vin);
+    if (vin.length !== 17 && !isFrameNumber) return;
     const token = getSessionToken();
     if (!token) return;
     try {
       const result = await decodeVin(token, vin);
+      const sourceLabel = result.kind === "frameNumber" ? "Rahmennummer" : "VIN";
       if (result.match) {
         setSeriesIdValue(String(result.match.id));
         setVinHint(
-          `Aus VIN erkannt: ${seriesPath(result.match, modelSeries)}` +
+          `Aus ${sourceLabel} erkannt: ${seriesPath(result.match, modelSeries)}` +
             (result.modelYear ? ` · Modelljahr ${result.modelYear}` : ""),
+        );
+      } else if (result.kind === "frameNumber") {
+        setVinHint(
+          `Rahmennummer ${result.vin} liegt in keinem hinterlegten Bereich des Modellkatalogs.`,
         );
       } else if (result.isBmw) {
         setVinHint(
@@ -197,6 +205,12 @@ export function AddMotorcycleForm({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+
+    // Unchecked checkboxes are simply absent from FormData, which the backend
+    // reads as "keep the current value" — send explicit booleans so
+    // un-archiving and clearing the veteran flag actually save.
+    formData.set("isVeteran", formData.has("isVeteran") ? "true" : "false");
+    formData.set("isArchived", formData.has("isArchived") ? "true" : "false");
 
     if (croppedImageBlob) {
       formData.append("image", croppedImageBlob, "motorcycle.jpg");
@@ -336,7 +350,7 @@ export function AddMotorcycleForm({
             defaultValue={initialValues?.vin ?? ""}
             error={actionData?.errors?.vin}
             onBlur={handleVinBlur}
-            helperText="Bei BMW-VINs (WB1…) wird die Baureihe automatisch erkannt."
+            helperText="BMW-VINs (WB1…) und Rahmennummern von Vor-1981-Maschinen werden automatisch erkannt."
           />
 
           <FormField
@@ -348,8 +362,8 @@ export function AddMotorcycleForm({
 
           <FormField
             label="Stammnummer"
-            name="vehicleIdNr"
-            defaultValue={initialValues?.vehicleIdNr ?? ""}
+            name="vehicleNr"
+            defaultValue={initialValues?.vehicleNr ?? ""}
           />
 
           <FormField

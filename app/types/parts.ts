@@ -13,17 +13,22 @@ export interface ModelSeries {
   /** Comma-separated BMW type codes (Baumuster, VIN chars 4-7), e.g.
    *  "0502,0503,0513" — used for VIN decoding. */
   typeCodes: string | null;
+  /** Comma-separated "start-end" frame-number ranges for pre-1981 bikes,
+   *  e.g. "550001-563515,630001-649037". */
+  frameRanges: string | null;
   userId: number | null;
   createdAt: string;
 }
 
-/** Result of `GET /api/vin/decode`. */
+/** Result of `GET /api/vin/decode` — accepts 17-char VINs and 6-7 digit
+ *  pre-1981 frame numbers. */
 export interface VinDecodeResult {
   vin: string;
+  kind: "vin" | "frameNumber";
   isBmw: boolean;
-  typeCode: string;
+  typeCode: string | null;
   modelYear: number | null;
-  checkDigitValid: boolean;
+  checkDigitValid: boolean | null;
   match: ModelSeries | null;
 }
 

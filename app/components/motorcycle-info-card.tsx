@@ -120,7 +120,7 @@ export function MotorcycleInfoCard({
             <StatisticEntry
               icon={FileText}
               label="Stammnummer"
-              value={motorcycle.vehicleIdNr?.trim()}
+              value={motorcycle.vehicleNr?.trim()}
             />
             <StatisticEntry
               icon={Fingerprint}

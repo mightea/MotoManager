@@ -40,6 +40,7 @@ export async function createModelSeries(
     manufacturer?: string;
     parentId?: number | null;
     typeCodes?: string | null;
+    frameRanges?: string | null;
   },
 ): Promise<ModelSeries> {
   const response = await fetchFromBackend<{ modelSeries: ModelSeries }>(
@@ -60,6 +61,7 @@ export async function updateModelSeries(
     manufacturer?: string;
     parentId?: number | null;
     typeCodes?: string | null;
+    frameRanges?: string | null;
   },
 ): Promise<ModelSeries> {
   const response = await fetchFromBackend<{ modelSeries: ModelSeries }>(

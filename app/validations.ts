@@ -38,7 +38,7 @@ export const motorcycleSchema = z.object({
       .regex(/^(0[1-9]|1[0-2])\/\d{4}$|^\d{4}$/, "Ungültiges Format (z.B. 07/1997 oder 1997)")
       .optional()
   ),
-  vehicleIdNr: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  vehicleNr: z.preprocess(emptyStringToUndefined, z.string().optional()),
   numberPlate: z.preprocess(emptyStringToUndefined, z.string().optional()),
   firstRegistration: z.preprocess(emptyStringToUndefined, z.string().optional()),
   initialOdo: z.preprocess(preprocessInteger, z.number().min(0, "Anfangs-KM muss grösser oder gleich 0 sein.").optional()),

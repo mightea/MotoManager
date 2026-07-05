@@ -367,7 +367,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             { label: "Kennzeichen", value: motorcycle.numberPlate || "-" },
             { label: "VIN", value: motorcycle.vin || "-", mono: true },
             { label: "Motor-Nr.", value: motorcycle.engineNumber || "-", mono: true },
-            { label: "Stammnummer", value: motorcycle.vehicleIdNr || "-", mono: true },
+            { label: "Stammnummer", value: motorcycle.vehicleNr || "-", mono: true },
             { label: "1. Inverkehrssetzung", value: motorcycle.firstRegistration || "-" },
             { label: "Kaufdatum", value: motorcycle.purchaseDate || "-" },
           ].map((item) => (

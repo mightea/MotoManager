@@ -15,6 +15,7 @@ const node = (id: number, name: string, parentId: number | null): ModelSeries =>
   manufacturer: "BMW",
   parentId,
   typeCodes: null,
+  frameRanges: null,
   userId: null,
   createdAt: "2026-01-01",
 });
