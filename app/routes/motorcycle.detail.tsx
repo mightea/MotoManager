@@ -47,6 +47,12 @@ import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
 import { Card, CardAction, CardHeading } from "~/components/card";
 import { fetchFromBackend } from "~/utils/backend";
+import {
+  createPartConsumption,
+  fetchModelSeries,
+  fetchPartConsumptions,
+  fetchParts,
+} from "~/services/parts";
 import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
 
@@ -73,14 +79,20 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid Motorcycle ID", { status: 400 });
   }
 
-  // All five requests are independent — fire them in parallel.
-  const [response, settings, userLocations, currencies, allExpenses] = await Promise.all([
-    fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
-    getUserSettings(token, user.id),
-    getLocations(token, user.id),
-    getCurrencies(),
-    listExpenses(token),
-  ]);
+  // All requests are independent — fire them in parallel. The parts trio backs
+  // the Baureihe select, the "Verwendete Teile" picker, and the per-record
+  // consumption display; failures degrade to empty lists instead of blocking.
+  const [response, settings, userLocations, currencies, allExpenses, modelSeries, parts, partConsumptions] =
+    await Promise.all([
+      fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
+      getUserSettings(token, user.id),
+      getLocations(token, user.id),
+      getCurrencies(),
+      listExpenses(token),
+      fetchModelSeries(token).catch(() => []),
+      fetchParts(token).catch(() => []),
+      fetchPartConsumptions(token).catch(() => []),
+    ]);
   const motorcycle = response?.motorcycle;
   const issues = Array.isArray(response?.issues) ? response.issues : [];
   const maintenanceRecords = Array.isArray(response?.maintenanceRecords) ? response.maintenanceRecords : [];
@@ -191,6 +203,9 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     userLocations,
     currentLocationName,
     currencies,
+    modelSeries,
+    parts,
+    partConsumptions,
     ownershipLabel,
     kmDriven,
     avgKmPerYear,
@@ -433,7 +448,44 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     };
 
     if (intent === "createMaintenance") {
-      await createMaintenanceRecord(token, recordData as NewMaintenanceRecord);
+      const created = await createMaintenanceRecord(token, recordData as NewMaintenanceRecord);
+
+      // Book the selected parts against the new entry. The record is already
+      // saved at this point, so a failed consumption (e.g. a concurrent
+      // overdraw) surfaces as a warning instead of rolling anything back.
+      const usedPartsRaw = formData.get("usedParts");
+      if (typeof usedPartsRaw === "string" && usedPartsRaw.trim() !== "" && created?.id) {
+        let usedParts: { partId: number; quantity: number }[] = [];
+        try {
+          usedParts = JSON.parse(usedPartsRaw);
+        } catch {
+          usedParts = [];
+        }
+        const failures: string[] = [];
+        for (const entry of usedParts) {
+          if (!Number.isFinite(entry.partId) || !Number.isInteger(entry.quantity) || entry.quantity < 1) {
+            continue;
+          }
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            await createPartConsumption(token, {
+              partId: entry.partId,
+              quantity: entry.quantity,
+              maintenanceRecordId: created.id,
+            });
+          } catch (error) {
+            if (error instanceof Response) throw error;
+            failures.push(String(entry.partId));
+          }
+        }
+        if (failures.length > 0) {
+          return data({
+            success: true,
+            intent: "createMaintenance",
+            error: "Eintrag gespeichert, aber nicht alle Teile konnten vom Bestand abgebucht werden (nicht genug Bestand?).",
+          });
+        }
+      }
     } else {
       const maintenanceId = Number(formData.get("maintenanceId"));
       await updateMaintenanceRecord(token, maintenanceId, motorcycleId, recordData);
@@ -691,6 +743,9 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     userLocations,
     currentLocationName,
     currencies,
+    modelSeries,
+    parts,
+    partConsumptions,
     ownershipLabel,
     kmDriven,
     avgKmPerYear,
@@ -702,6 +757,31 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     formattedFirstRegistration,
     hasPurchaseDate
   } = loaderData;
+
+  // Parts offered in the "Verwendete Teile" picker: positive on-hand, and —
+  // when the bike has a series — compatible with it (parts without fitment
+  // stay offered so unassigned parts remain usable).
+  const availableParts = parts.filter(
+    (part) =>
+      part.onHand > 0 &&
+      (motorcycle.seriesId == null ||
+        part.seriesIds.length === 0 ||
+        part.seriesIds.includes(motorcycle.seriesId)),
+  );
+
+  // "2× Ölfilter, 1× Dichtung" per maintenance record for the history list.
+  const usedPartsByRecordId: Record<number, string> = {};
+  for (const consumption of partConsumptions) {
+    if (consumption.maintenanceRecordId == null) continue;
+    const part = parts.find((candidate) => candidate.id === consumption.partId);
+    const label = `${consumption.quantity}× ${part?.name ?? `Teil #${consumption.partId}`}`;
+    usedPartsByRecordId[consumption.maintenanceRecordId] = usedPartsByRecordId[
+      consumption.maintenanceRecordId
+    ]
+      ? `${usedPartsByRecordId[consumption.maintenanceRecordId]}, ${label}`
+      : label;
+  }
+
   const [editMotorcycleDialogOpen, setEditMotorcycleDialogOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -888,6 +968,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                 records={maintenanceHistory}
                 currencyCode={motorcycle.currencyCode}
                 userLocations={userLocations}
+                usedPartsByRecordId={usedPartsByRecordId}
                 onEdit={(record) => {
                   setSelectedMaintenance(record);
                   setMaintenanceDialogOpen(true);
@@ -1013,6 +1094,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             onSubmit={() => setEditMotorcycleDialogOpen(false)}
             onDelete={() => setDeleteConfirmationOpen(true)}
             currencies={currencies}
+            modelSeries={modelSeries}
             existingMaintenance={maintenanceHistory}
           />
         </Suspense>
@@ -1049,6 +1131,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         }}
         userLocations={userLocations}
         currencies={currencies}
+        availableParts={availableParts}
       />
 
       <DeleteConfirmationDialog

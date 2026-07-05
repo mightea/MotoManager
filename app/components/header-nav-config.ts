@@ -5,6 +5,7 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Übersicht", href: "/" },
+  { label: "Teile", href: "/parts" },
   { label: "Dokumente", href: "/documents" },
   { label: "Ausgaben", href: "/fleet-expenses" },
   { label: "Statistiken", href: "/fleet-stats" },

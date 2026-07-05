@@ -48,6 +48,8 @@ interface MaintenanceListProps {
   records: MaintenanceRecord[];
   currencyCode?: string | null;
   userLocations?: Location[];
+  /** Preformatted "2× Ölfilter, 1× Dichtung" per maintenance record id. */
+  usedPartsByRecordId?: Record<number, string>;
   onEdit: (record: MaintenanceRecord) => void;
   onAdd?: () => void;
   /**
@@ -211,7 +213,7 @@ function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: stri
 
 const VISIBLE_GROUPS_STEP = 30;
 
-export function MaintenanceList({ records, currencyCode, userLocations, onEdit, onAdd, onBulkDelete }: MaintenanceListProps) {
+export function MaintenanceList({ records, currencyCode, userLocations, usedPartsByRecordId, onEdit, onAdd, onBulkDelete }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "maintenance" | "fuel">("all");
   const [selectionMode, setSelectionMode] = useState(false);
@@ -585,7 +587,10 @@ export function MaintenanceList({ records, currencyCode, userLocations, onEdit, 
 
                             const metadataItems = [
                               { label: "Beschreibung", value: record.description, icon: Info },
-                              
+
+                              // Parts consumed by this entry (from the parts inventory)
+                              { label: "Verwendete Teile", value: usedPartsByRecordId?.[record.id] ?? null, icon: Wrench },
+
                               // Brand/Model - Show for technical types only
                               { label: "Marke", value: isTechnical ? record.brand : null, icon: Tag },
                               { label: "Modell", value: isTechnical ? record.model : null, icon: Hash },

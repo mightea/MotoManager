@@ -1,5 +1,6 @@
 import { Form, useSubmit, useActionData, useNavigation } from "react-router";
 import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/types/db";
+import { modelSeriesDisplayName, type ModelSeries } from "~/types/parts";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
@@ -19,6 +20,8 @@ interface AddMotorcycleFormProps {
   intent?: string;
   submitLabel?: string;
   currencies?: CurrencySetting[];
+  /** Series lookup for the Baureihe select (drives part compatibility). */
+  modelSeries?: ModelSeries[];
   onDelete?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   existingMaintenance?: MaintenanceRecord[];
 }
@@ -32,6 +35,7 @@ const formatDateInput = (value?: string | null) => {
 
 const EMPTY_CURRENCIES: CurrencySetting[] = [];
 const EMPTY_MAINTENANCE: MaintenanceRecord[] = [];
+const EMPTY_SERIES: ModelSeries[] = [];
 
 export function AddMotorcycleForm({
   onSubmit,
@@ -39,6 +43,7 @@ export function AddMotorcycleForm({
   intent = "createMotorcycle",
   submitLabel = "Speichern",
   currencies = EMPTY_CURRENCIES,
+  modelSeries = EMPTY_SERIES,
   onDelete,
   existingMaintenance = EMPTY_MAINTENANCE,
 }: AddMotorcycleFormProps) {
@@ -264,6 +269,23 @@ export function AddMotorcycleForm({
             onBlur={(e) => validateField("fabricationDate", e.currentTarget.value)}
             onChange={() => clearClientError("fabricationDate")}
           />
+
+          {modelSeries.length > 0 && (
+            <FormField
+              label="Baureihe"
+              name="seriesId"
+              as="select"
+              defaultValue={initialValues?.seriesId ?? ""}
+              helperText="Verknüpft das Motorrad mit passenden Ersatzteilen."
+            >
+              <option value="">Keine Baureihe</option>
+              {modelSeries.map((series) => (
+                <option key={series.id} value={series.id}>
+                  {modelSeriesDisplayName(series)}
+                </option>
+              ))}
+            </FormField>
+          )}
 
           <FormField
             label="Fahrgestellnummer (VIN)"

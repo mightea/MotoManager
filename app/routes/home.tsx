@@ -1,6 +1,7 @@
 import { data, useActionData, useNavigate, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/home";
 import { createMotorcycle } from "~/services/motorcycles";
+import { fetchModelSeries } from "~/services/parts";
 import { getCurrencies } from "~/services/settings";
 import { requireUser } from "~/services/auth";
 import { getUserPrefs, setUserPrefs } from "~/services/preferences";
@@ -73,15 +74,16 @@ export function meta() {
 export async function clientLoader({ request: _request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(_request);
 
-  const [dashboardData, currencies] = await Promise.all([
+  const [dashboardData, currencies, modelSeries] = await Promise.all([
     fetchFromBackend<any>("/home", {}, token),
     getCurrencies(),
+    fetchModelSeries(token).catch(() => []),
   ]);
 
   const cards: MotorcycleDashboardItem[] = dashboardData?.motorcycles ?? [];
   const stats = normalizeDashboardStats(dashboardData?.stats);
 
-  return data({ cards, stats, user, currencies });
+  return data({ cards, stats, user, currencies, modelSeries });
 }
 
 export function shouldRevalidate({
@@ -201,7 +203,7 @@ function matchesFilter(card: MotorcycleDashboardItem, filter: FilterKey): boolea
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { cards, stats, currencies } = loaderData;
+  const { cards, stats, currencies, modelSeries } = loaderData;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -528,7 +530,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <div className="py-8 text-center text-sm text-base-content/60">Lädt…</div>
           }
         >
-          <AddMotorcycleForm onSubmit={() => setIsAddOpen(false)} currencies={currencies} />
+          <AddMotorcycleForm
+            onSubmit={() => setIsAddOpen(false)}
+            currencies={currencies}
+            modelSeries={modelSeries}
+          />
         </Suspense>
       </Modal>
     </div>

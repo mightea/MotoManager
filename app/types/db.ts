@@ -48,6 +48,8 @@ export interface Motorcycle {
   normalizedPurchasePrice: number | null;
   currencyCode: string | null;
   fuelTankSize: number | null;
+  /** Model-series link for derived part compatibility (migration 012). */
+  seriesId: number | null;
   latestOdo?: number | null;
   openIssues?: number;
   maintenanceCount?: number;

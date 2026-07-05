@@ -3,6 +3,7 @@ import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
 import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting } from "~/types/db";
+import type { Part } from "~/types/parts";
 import {
     Wrench,
     Battery,
@@ -26,6 +27,8 @@ interface MaintenanceFormProps {
     defaultOdo?: number | null;
     userLocations?: Location[];
     currencies?: CurrencySetting[];
+    /** Parts with positive on-hand, offered as "Verwendete Teile" on create. */
+    availableParts?: Part[];
     onCancel: () => void;
     onDelete?: () => void;
     existingBundledItems?: string[];
@@ -34,6 +37,12 @@ interface MaintenanceFormProps {
 const EMPTY_CURRENCIES: CurrencySetting[] = [];
 const EMPTY_BUNDLED_ITEMS: string[] = [];
 const EMPTY_LOCATIONS: Location[] = [];
+const EMPTY_PARTS: Part[] = [];
+
+interface UsedPartEntry {
+    partId: number;
+    quantity: number;
+}
 
 interface LocationPickerFieldProps {
     userLocations: Location[];
@@ -132,6 +141,7 @@ export function MaintenanceForm({
     defaultOdo,
     userLocations = EMPTY_LOCATIONS,
     currencies = EMPTY_CURRENCIES,
+    availableParts = EMPTY_PARTS,
     onCancel,
     onDelete,
     existingBundledItems = EMPTY_BUNDLED_ITEMS
@@ -177,6 +187,21 @@ export function MaintenanceForm({
     };
 
     const today = new Date().toISOString().split('T')[0];
+
+    // Parts consumed by this entry (create-only; existing consumptions are
+    // managed on the Teile page). Serialized as a JSON hidden field.
+    const [usedParts, setUsedParts] = useState<UsedPartEntry[]>([]);
+    const showUsedParts =
+        !initialData && availableParts.length > 0 && type !== "fuel" && type !== "location";
+    const unusedParts = availableParts.filter(
+        (part) => !usedParts.some((entry) => entry.partId === part.id),
+    );
+
+    const setUsedPartQuantity = (partId: number, quantity: number) => {
+        setUsedParts((current) =>
+            current.map((entry) => (entry.partId === partId ? { ...entry, quantity } : entry)),
+        );
+    };
 
     // The dialog stays open while the action runs; the route closes it on success.
     const handleFormSubmit = () => {
@@ -577,6 +602,79 @@ export function MaintenanceForm({
                     className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
             </div>
+
+            {showUsedParts && (
+                <div className="space-y-2">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+                        Verwendete Teile
+                    </span>
+                    <input type="hidden" name="usedParts" value={JSON.stringify(usedParts)} />
+                    {usedParts.map((entry) => {
+                        const part = availableParts.find((candidate) => candidate.id === entry.partId);
+                        if (!part) return null;
+                        return (
+                            <div key={entry.partId} className="flex items-center gap-2">
+                                <div className="min-w-0 flex-1 rounded-sm border border-base-300 bg-base-100 p-3 text-sm dark:border-navy-700 dark:bg-navy-900">
+                                    <p className="truncate text-base-content dark:text-white">{part.name}</p>
+                                    <p className="truncate font-mono text-[10px] text-base-content/55">
+                                        {part.partNumber} · {part.onHand} auf Lager
+                                    </p>
+                                </div>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={part.onHand}
+                                    step={1}
+                                    value={entry.quantity}
+                                    onChange={(event) => {
+                                        const value = Number(event.target.value);
+                                        if (Number.isInteger(value) && value >= 1) {
+                                            setUsedPartQuantity(entry.partId, Math.min(value, part.onHand));
+                                        }
+                                    }}
+                                    aria-label={`Menge für ${part.name}`}
+                                    className="w-20 rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setUsedParts((current) =>
+                                            current.filter((candidate) => candidate.partId !== entry.partId),
+                                        )
+                                    }
+                                    aria-label={`${part.name} entfernen`}
+                                    className="grid h-10 w-10 shrink-0 place-items-center rounded-sm border border-base-content/15 text-base-content/55 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:text-navy-300"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        );
+                    })}
+                    {unusedParts.length > 0 && (
+                        <select
+                            value=""
+                            onChange={(event) => {
+                                const partId = Number(event.target.value);
+                                if (Number.isFinite(partId) && partId > 0) {
+                                    setUsedParts((current) => [...current, { partId, quantity: 1 }]);
+                                }
+                            }}
+                            aria-label="Teil hinzufügen"
+                            className="block w-full rounded-sm border border-dashed border-base-300 bg-base-100 p-3 text-sm text-base-content/70 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300"
+                        >
+                            <option value="">+ Teil aus dem Bestand hinzufügen …</option>
+                            {unusedParts.map((part) => (
+                                <option key={part.id} value={part.id}>
+                                    {part.name} ({part.partNumber}) — {part.onHand} auf Lager
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    <p className="text-xs text-base-content/55">
+                        Verbrauchte Teile werden vom Bestand abgezogen und mit diesem Eintrag verknüpft.
+                    </p>
+                </div>
+            )}
 
             <div className="flex items-center justify-between pt-2">
                 {initialData && onDelete ? (
