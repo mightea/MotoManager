@@ -136,6 +136,18 @@ export async function fetchParts(token: string): Promise<Part[]> {
   return response.parts;
 }
 
+/** Parts compatible with a motorcycle's catalog node — the backend matches
+ *  hierarchy-aware (Familie/Serie/Modell in either direction). Returns an
+ *  empty list for bikes without an assigned node. */
+export async function fetchCompatibleParts(token: string, motorcycleId: number): Promise<Part[]> {
+  const response = await fetchFromBackend<{ parts: Part[] }>(
+    `/parts?motorcycleId=${motorcycleId}`,
+    {},
+    token,
+  );
+  return response.parts;
+}
+
 export async function fetchPublicParts(
   token: string,
   query?: string | null,

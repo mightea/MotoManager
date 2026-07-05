@@ -253,6 +253,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: false },
     { label: "Werkstattdaten", to: `${basePath}/torque-specs`, isActive: true },
+    { label: "Teile", to: `${basePath}/parts`, isActive: false },
   ];
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

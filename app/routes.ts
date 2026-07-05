@@ -22,5 +22,6 @@ export default [
     route("motorcycle/:slug/:id", "routes/motorcycle.detail.tsx"),
     route("motorcycle/:slug/:id/documents", "routes/motorcycle.detail.documents.tsx"),
     route("motorcycle/:slug/:id/torque-specs", "routes/motorcycle.detail.torque-specifications.tsx"),
+    route("motorcycle/:slug/:id/parts", "routes/motorcycle.detail.parts.tsx"),
   ]),
 ] satisfies RouteConfig;

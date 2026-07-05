@@ -814,6 +814,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: location.pathname.includes("/documents") },
     { label: "Werkstattdaten", to: `${basePath}/torque-specs`, isActive: location.pathname.includes("/torque-specs") },
+    { label: "Teile", to: `${basePath}/parts`, isActive: location.pathname.includes("/parts") },
   ];
   const normalizePath = (path: string) => path.replace(/\/+$/, "");
   const overviewLink = {
