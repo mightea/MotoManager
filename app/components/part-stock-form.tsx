@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Form, useNavigation, useSubmit } from "react-router";
-import { Trash2 } from "lucide-react";
+import { Recycle, Trash2 } from "lucide-react";
 import { Button } from "./button";
 import { StorageLocationPickerField } from "./storage-location-picker-field";
 import { AVAILABLE_CURRENCY_PRESETS, DEFAULT_CURRENCY_CODE } from "~/constants";
@@ -37,9 +38,13 @@ export function PartStockForm({
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const [isUsed, setIsUsed] = useState(initialValues?.isUsed ?? false);
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    submit(new FormData(event.currentTarget), { method: "post" });
+    const formData = new FormData(event.currentTarget);
+    formData.set("isUsed", isUsed ? "true" : "false");
+    submit(formData, { method: "post" });
   };
 
   return (
@@ -131,6 +136,27 @@ export function PartStockForm({
           className={inputClass}
         />
       </div>
+
+      <label
+        aria-label="Gebrauchtteil"
+        className="flex cursor-pointer items-start gap-3 rounded-sm border border-base-300 p-3 transition-colors hover:border-base-content/30 dark:border-navy-700"
+      >
+        <input
+          type="checkbox"
+          checked={isUsed}
+          onChange={(event) => setIsUsed(event.target.checked)}
+          className="checkbox checkbox-sm checkbox-primary mt-0.5"
+        />
+        <span className="min-w-0">
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-base-content dark:text-white">
+            <Recycle className="h-3.5 w-3.5" />
+            Gebrauchtteil
+          </span>
+          <span className="mt-0.5 block text-xs text-base-content/60">
+            Gebrauchtes Teil, z.B. aus einem Motorrad ausgeschlachtet.
+          </span>
+        </span>
+      </label>
 
       <div className="flex items-center justify-between pt-4">
         <div>

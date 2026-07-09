@@ -1,6 +1,6 @@
 import { Form, useNavigation, useSubmit } from "react-router";
 import { useState } from "react";
-import { Trash2, Globe, Lock } from "lucide-react";
+import { Trash2, Globe, Lock, Recycle } from "lucide-react";
 import clsx from "clsx";
 import { Button } from "./button";
 import { StorageLocationPickerField } from "./storage-location-picker-field";
@@ -13,11 +13,25 @@ import {
   type StorageLocation,
 } from "~/types/parts";
 
+/** Prefill for create mode, e.g. from a BMWBike import. Fields stay fully
+ *  editable; imageUrl travels as a hidden field so the action can attach the
+ *  image after the part is created. */
+export interface PartFormPrefill {
+  partNumber?: string;
+  name?: string;
+  description?: string;
+  seriesIds?: number[];
+  stockPrice?: number;
+  stockCurrency?: string;
+  imageUrl?: string;
+}
+
 interface PartFormProps {
   initialValues?: Part | null;
   modelSeries: ModelSeries[];
   /** For the initial-stock Lagerort picker (create mode only). */
   storageLocations?: StorageLocation[];
+  prefill?: PartFormPrefill;
   onClose: () => void;
   onDelete?: (part: Part) => void;
 }
@@ -37,6 +51,7 @@ export function PartForm({
   initialValues,
   modelSeries,
   storageLocations = EMPTY_LOCATIONS,
+  prefill,
   onClose,
   onDelete,
 }: PartFormProps) {
@@ -48,8 +63,9 @@ export function PartForm({
     (pendingIntent === "createPart" || pendingIntent === "updatePart");
 
   const [isPublic, setIsPublic] = useState(initialValues?.isPublic ?? false);
+  const [stockIsUsed, setStockIsUsed] = useState(false);
   const [selectedSeriesIds, setSelectedSeriesIds] = useState<Set<number>>(
-    new Set(initialValues?.seriesIds ?? []),
+    new Set(initialValues?.seriesIds ?? prefill?.seriesIds ?? []),
   );
   const [seriesFilter, setSeriesFilter] = useState("");
 
@@ -79,6 +95,9 @@ export function PartForm({
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     formData.set("isPublic", isPublic ? "true" : "false");
+    if (!initialValues) {
+      formData.set("stockIsUsed", stockIsUsed ? "true" : "false");
+    }
     for (const id of selectedSeriesIds) {
       formData.append("seriesIds", String(id));
     }
@@ -89,6 +108,9 @@ export function PartForm({
     <Form method="post" className="space-y-5" onSubmit={handleSubmit}>
       <input type="hidden" name="intent" value={initialValues ? "updatePart" : "createPart"} />
       {initialValues && <input type="hidden" name="partId" value={initialValues.id} />}
+      {!initialValues && prefill?.imageUrl && (
+        <input type="hidden" name="importImageUrl" value={prefill.imageUrl} />
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -101,7 +123,7 @@ export function PartForm({
             id="partNumber"
             required
             placeholder="z.B. 11 42 7 673 541"
-            defaultValue={initialValues?.partNumber}
+            defaultValue={initialValues?.partNumber ?? prefill?.partNumber}
             className={clsx(inputClass, "font-mono")}
           />
         </div>
@@ -115,7 +137,7 @@ export function PartForm({
             id="name"
             required
             placeholder="z.B. Ölfilter"
-            defaultValue={initialValues?.name}
+            defaultValue={initialValues?.name ?? prefill?.name}
             className={inputClass}
           />
         </div>
@@ -201,7 +223,7 @@ export function PartForm({
           id="description"
           rows={2}
           placeholder="z.B. passt auch für Ölkühler-Variante"
-          defaultValue={initialValues?.description ?? ""}
+          defaultValue={initialValues?.description ?? prefill?.description ?? ""}
           className={inputClass}
         />
       </div>
@@ -222,7 +244,8 @@ export function PartForm({
             Öffentlich teilen
           </span>
           <span className="mt-0.5 block text-xs text-base-content/60">
-            Andere Nutzer sehen Teiledaten und Verfügbarkeit — nie Preise, Kaufdaten oder Lagerorte.
+            Teiledaten sind für alle Nutzer sichtbar. Öffentlich teilt zusätzlich Bestand, Preise,
+            Kaufdaten und Lagerorte.
           </span>
         </span>
       </label>
@@ -275,6 +298,7 @@ export function PartForm({
                 min={0}
                 step="0.01"
                 placeholder="0.00"
+                defaultValue={prefill?.stockPrice}
                 className={inputClass}
               />
             </div>
@@ -285,7 +309,7 @@ export function PartForm({
               <select
                 name="currency"
                 id="initial-currency"
-                defaultValue={DEFAULT_CURRENCY_CODE}
+                defaultValue={prefill?.stockCurrency ?? DEFAULT_CURRENCY_CODE}
                 className={inputClass}
               >
                 {AVAILABLE_CURRENCY_PRESETS.map((currency) => (
@@ -298,6 +322,27 @@ export function PartForm({
           </div>
 
           <StorageLocationPickerField storageLocations={storageLocations} />
+
+          <label
+            aria-label="Gebrauchtteil"
+            className="flex cursor-pointer items-start gap-3 rounded-sm border border-base-300 p-3 transition-colors hover:border-base-content/30 dark:border-navy-700"
+          >
+            <input
+              type="checkbox"
+              checked={stockIsUsed}
+              onChange={(event) => setStockIsUsed(event.target.checked)}
+              className="checkbox checkbox-sm checkbox-primary mt-0.5"
+            />
+            <span className="min-w-0">
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-base-content dark:text-white">
+                <Recycle className="h-3.5 w-3.5" />
+                Gebrauchtteil
+              </span>
+              <span className="mt-0.5 block text-xs text-base-content/60">
+                Gebrauchtes Teil, z.B. aus einem Motorrad ausgeschlachtet.
+              </span>
+            </span>
+          </label>
         </fieldset>
       )}
 

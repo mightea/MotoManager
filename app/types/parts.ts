@@ -95,6 +95,8 @@ export interface PartStock {
   purchaseDate: string | null;
   storageLocationId: number | null;
   notes: string | null;
+  /** Used/salvaged piece (e.g. pulled from a donor motorcycle). */
+  isUsed: boolean;
   createdAt: string;
   clientId: string | null;
   updatedAt: string | null;
@@ -109,6 +111,7 @@ export interface NewPartStock {
   purchaseDate?: string | null;
   storageLocationId?: number | null;
   notes?: string | null;
+  isUsed?: boolean;
 }
 
 export interface PartConsumption {
@@ -132,8 +135,9 @@ export interface NewPartConsumption {
   notes?: string | null;
 }
 
-/** Another user's shared part from `GET /api/parts/public`. The server
- *  whitelists catalog data + availability; prices/locations never appear. */
+/** Another user's part from `GET /api/parts/public`. Catalog data is always
+ *  visible; availability and stock detail (prices, purchase dates, storage
+ *  locations) are only present when the owner marked the part public. */
 export interface PublicPart {
   id: number;
   partNumber: string;
@@ -143,6 +147,48 @@ export interface PublicPart {
   image: string | null;
   seriesIds: number[];
   ownerName: string;
-  hasStock: boolean;
-  totalQuantity: number;
+  isPublic: boolean;
+  hasStock: boolean | null;
+  totalQuantity: number | null;
+  stocks: PublicStockEntry[] | null;
+}
+
+export interface PublicStockEntry {
+  quantity: number;
+  price: number | null;
+  currency: string | null;
+  purchaseDate: string | null;
+  storageLocation: string | null;
+  isUsed: boolean;
+}
+
+// MARK: Invoice import (`POST /api/part-imports/parse`)
+
+/** One parsed invoice line, annotated with the user's inventory match. */
+export interface ParsedInvoiceItem {
+  quantity: number;
+  /** As printed on the invoice, e.g. "61 31 2 300 383". */
+  partNumber: string;
+  name: string;
+  unitPrice: number | null;
+  lineTotal: number | null;
+  matchedPartId: number | null;
+  matchedPartName: string | null;
+  warnings: string[];
+}
+
+export interface ParsedInvoice {
+  invoice: {
+    supplier: string | null;
+    invoiceNumber: string | null;
+    /** ISO date (YYYY-MM-DD). */
+    invoiceDate: string | null;
+    currency: string;
+  };
+  items: ParsedInvoiceItem[];
+  /** "llm" when the local model structured the text, "fallback" for the
+   *  deterministic layout parser. */
+  source: "llm" | "fallback";
+  /** Stock entries referencing this invoice number already exist. */
+  alreadyImported: boolean;
 }
