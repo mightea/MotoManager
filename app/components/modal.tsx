@@ -12,6 +12,11 @@ interface ModalProps {
    * Defaults to "FORM" for the service-manual feel.
    */
   code?: string;
+  /**
+   * Sheet width: "md" (default, forms) or "lg" for content that needs a
+   * table-like row layout (e.g. the invoice import review).
+   */
+  size?: "md" | "lg";
 }
 
 /**
@@ -25,6 +30,7 @@ export function Modal({
   children,
   description,
   code = "FORM",
+  size = "md",
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -48,7 +54,11 @@ export function Modal({
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
     >
-      <div className="modal-box flex max-h-[90vh] w-full flex-col rounded-sm p-0 sm:max-h-[85vh] sm:max-w-xl">
+      <div
+        className={`modal-box flex max-h-[90vh] w-full flex-col rounded-sm p-0 sm:max-h-[85vh] ${
+          size === "lg" ? "sm:max-w-3xl" : "sm:max-w-xl"
+        }`}
+      >
         {/* Sticky Header */}
         <div className="sticky top-0 z-10 border-b border-base-300 bg-base-100/95 backdrop-blur-sm dark:bg-navy-800/95">
           {/* Top motorsport stripe — signature */}

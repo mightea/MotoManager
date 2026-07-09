@@ -5,6 +5,7 @@ import type {
   NewPart,
   NewPartConsumption,
   NewPartStock,
+  ParsedInvoice,
   Part,
   PartConsumption,
   PartStock,
@@ -207,6 +208,25 @@ export async function deletePartImage(token: string, id: number): Promise<Part> 
   return response.part;
 }
 
+/** Let the backend download a part image from an allowlisted source
+ *  (BMWBike import) — the browser never touches the image bytes. */
+export async function importPartImageFromUrl(
+  token: string,
+  id: number,
+  url: string,
+): Promise<Part> {
+  const response = await fetchFromBackend<{ part: Part }>(
+    `/parts/${id}/image-from-url`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    },
+    token,
+  );
+  return response.part;
+}
+
 export async function deletePart(token: string, id: number): Promise<boolean> {
   try {
     await fetchFromBackend(`/parts/${id}`, { method: "DELETE" }, token);
@@ -215,6 +235,26 @@ export async function deletePart(token: string, id: number): Promise<boolean> {
     rethrowRedirect(error);
     return false;
   }
+}
+
+// MARK: Invoice import
+
+/** Parse a supplier-invoice PDF into reviewed line items. Pure read — the
+ *  backend extracts text and structures it (local LLM with deterministic
+ *  fallback); nothing is written until the user confirms in the dialog. */
+export async function parsePartsInvoice(token: string, file: File): Promise<ParsedInvoice> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return await fetchFromBackend<ParsedInvoice>(
+    "/part-imports/parse",
+    {
+      method: "POST",
+      body: formData,
+      // Text extraction + LLM structuring can exceed the default timeout.
+      signal: AbortSignal.timeout(120_000),
+    },
+    token,
+  );
 }
 
 // MARK: Part stocks
