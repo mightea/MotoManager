@@ -13,6 +13,7 @@ export default [
     route("fleet-expenses", "routes/fleet-expenses.tsx"),
     route("documents", "routes/documents.tsx"),
     route("parts", "routes/parts.tsx"),
+    route("parts/:id", "routes/parts.detail.tsx"),
     route("storage-locations", "routes/storage-locations.tsx"),
     route("storage-locations/:id", "routes/storage-locations.detail.tsx"),
     route("model-series", "routes/model-series.tsx"),
