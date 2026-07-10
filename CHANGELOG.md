@@ -1,5 +1,25 @@
 # Changelog
 
+## [2026.7.1](https://github.com/mightea/MotoManager/compare/2026.7.0...2026.7.1) (2026-07-09)
+
+
+### ✨ Features
+
+* add compatible-parts page to the motorcycle detail ([c5d79bf](https://github.com/mightea/MotoManager/commit/c5d79bf213c4ee11ccc00e7fe8329c70eb94e46a))
+* add Modellkatalog page, hierarchical pickers and VIN auto-detection ([84c306f](https://github.com/mightea/MotoManager/commit/84c306f29b26cb743b7eb024fd3a4e0eb0191285))
+* add part detail page with catalog-sheet hero and printable labels ([d742049](https://github.com/mightea/MotoManager/commit/d7420491ac8de7143e9a66874accd6823230eedc))
+* add parts inventory, part images and storage location QR labels ([1435419](https://github.com/mightea/MotoManager/commit/1435419019f16d27d4d256ce2c95311602ffa50b))
+* decode frame numbers in the motorcycle form and fix field saving ([26f4c47](https://github.com/mightea/MotoManager/commit/26f4c47f32e6cecf9d532808b73c5c6717bae84b))
+* import parts and stock from Huggett invoice PDFs ([e7a49c0](https://github.com/mightea/MotoManager/commit/e7a49c042ca3fc101e1eff1a7cc3e2a7c25b095b))
+* import parts from BMWBike by URL or part number ([da505cf](https://github.com/mightea/MotoManager/commit/da505cf25625767ab62f8fa9b98944aeff8cbdc5))
+* mark stock entries as used/salvaged parts ([aa0a457](https://github.com/mightea/MotoManager/commit/aa0a457e1f59cecb543d1ea11aa876b7e3efa36c))
+* rework storage location pages and unify the Lagerort picker ([9ea0252](https://github.com/mightea/MotoManager/commit/9ea0252811c1e9c183b2582b3495df206b5c30ce))
+
+
+### 🐛 Bug Fixes
+
+* repair motorcycle dialog layout overflow and misalignments ([1800444](https://github.com/mightea/MotoManager/commit/1800444329a53c74632213551632a3ed6621de53))
+
 ## [2026.7.0](https://github.com/mightea/MotoManager/compare/2026.6.5...2026.7.0) (2026-07-04)
 
 
