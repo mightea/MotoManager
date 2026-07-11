@@ -50,7 +50,13 @@ export function Modal({
     <dialog
       ref={dialogRef}
       className="modal modal-bottom sm:modal-middle"
-      onClose={onClose}
+      // A nested Modal (e.g. the image-crop sheet inside the edit form) emits a
+      // close event that bubbles through React's synthetic event system; only a
+      // close of THIS dialog may close this modal, or the parent sheet would
+      // silently shut and drop its form state.
+      onClose={(event) => {
+        if (event.target === dialogRef.current) onClose();
+      }}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
     >
