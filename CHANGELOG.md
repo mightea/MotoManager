@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.7.2](https://github.com/mightea/MotoManager/compare/2026.7.1...2026.7.2) (2026-07-11)
+
+
+### 🐛 Bug Fixes
+
+* keep parent modal open when a nested dialog closes ([cbe7fa0](https://github.com/mightea/MotoManager/commit/cbe7fa0e0683a571593e6d5d474ad132d729eff4))
+
 ## [2026.7.1](https://github.com/mightea/MotoManager/compare/2026.7.0...2026.7.1) (2026-07-09)
 
 
