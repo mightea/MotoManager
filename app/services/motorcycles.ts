@@ -127,6 +127,26 @@ export async function updateMotorcycle(
   return response.motorcycle;
 }
 
+/**
+ * Persist just the "ownership history incomplete" flag. The motorcycle update
+ * endpoint is multipart and merges absent fields (absent = keep), so a payload
+ * carrying only this flag leaves every other field untouched — letting the
+ * previous-owners dialog toggle it independently of the main edit form's Save.
+ */
+export async function updateMotorcycleUnknownOwners(
+  token: string,
+  motorcycleId: number,
+  hasUnknownOwners: boolean,
+) {
+  const formData = new FormData();
+  formData.append("hasUnknownOwners", hasUnknownOwners ? "true" : "false");
+  const response = await fetchFromBackend<{ motorcycle: any }>(`/motorcycles/${motorcycleId}`, {
+    method: "PUT",
+    body: formData,
+  }, token);
+  return response.motorcycle;
+}
+
 export async function updateIssue(
   token: string,
   issueId: number,

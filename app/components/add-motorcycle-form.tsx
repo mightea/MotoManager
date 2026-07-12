@@ -10,7 +10,7 @@ import getCroppedImg from "~/utils/cropImage";
 import { toast } from "~/hooks/use-toast";
 import { Modal } from "./modal";
 import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
-import { Fuel } from "lucide-react";
+import { Fuel, Users } from "lucide-react";
 import { Button } from "./button";
 import { FormField } from "./form-field";
 import { getBackendAssetUrl } from "~/utils/backend";
@@ -27,6 +27,10 @@ interface AddMotorcycleFormProps {
   modelSeries?: ModelSeries[];
   onDelete?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   existingMaintenance?: MaintenanceRecord[];
+  /** Opens the previous-owners management dialog. Only meaningful when editing. */
+  onManagePreviousOwners?: () => void;
+  /** Recorded previous-owner count, shown on the manage button. */
+  previousOwnersCount?: number;
 }
 
 const formatDateInput = (value?: string | null) => {
@@ -49,6 +53,8 @@ export function AddMotorcycleForm({
   modelSeries = EMPTY_SERIES,
   onDelete,
   existingMaintenance = EMPTY_MAINTENANCE,
+  onManagePreviousOwners,
+  previousOwnersCount = 0,
 }: AddMotorcycleFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -496,6 +502,22 @@ export function AddMotorcycleForm({
               Archiviert
             </label>
           </div>
+
+          {initialValues?.id && onManagePreviousOwners && (
+            <div className="pt-2 border-t border-gray-100 dark:border-navy-700">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onManagePreviousOwners}
+                leftIcon={<Users className="h-4 w-4" />}
+              >
+                Vorbesitzer verwalten{previousOwnersCount > 0 ? ` (${previousOwnersCount})` : ""}
+              </Button>
+              <p className="mt-1.5 text-[10px] text-secondary/70 dark:text-navy-400">
+                Erfasse die Besitzerkette oder markiere die Historie als unvollständig.
+              </p>
+            </div>
+          )}
 
           {initialValues?.id && (
             <div className="pt-2 border-t border-gray-100 dark:border-navy-700">

@@ -1,4 +1,4 @@
-import { ChevronRight, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Plus, Fuel, Route, Navigation2 } from "lucide-react";
+import { ChevronRight, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Fuel, Route, Navigation2 } from "lucide-react";
 import type { Motorcycle, PreviousOwner } from "~/types/db";
 import { StatisticEntry } from "./statistic-entry";
 import { Card, CardAction, CardHeading } from "./card";
@@ -15,8 +15,12 @@ interface MotorcycleInfoCardProps {
   hasPurchaseDate: boolean;
   onEdit: () => void;
   previousOwnersList: PreviousOwner[];
-  onAddPreviousOwner: () => void;
-  onEditPreviousOwner: (owner: PreviousOwner) => void;
+  /**
+   * Ownership history is known to be incomplete. Suppresses the definitive
+   * "N. Hand" position in favour of an "unknown" note. Owners are managed from
+   * the motorcycle edit form, so this view is read-only.
+   */
+  hasUnknownOwners?: boolean;
   ownerCount?: number;
   avgFuelConsumption?: number | null;
   avgTripDistance?: number | null;
@@ -48,8 +52,7 @@ export function MotorcycleInfoCard({
   hasPurchaseDate,
   onEdit,
   previousOwnersList,
-  onAddPreviousOwner,
-  onEditPreviousOwner,
+  hasUnknownOwners = false,
   ownerCount,
   avgFuelConsumption,
   avgTripDistance,
@@ -58,9 +61,17 @@ export function MotorcycleInfoCard({
   variant = "summary",
   onShowDetails,
 }: MotorcycleInfoCardProps) {
+  // With an incomplete history the recorded owners no longer pin down a
+  // definitive "N. Hand" position, so we surface uncertainty instead of a count.
+  const handLabel = hasUnknownOwners
+    ? "Besitzhistorie unbekannt"
+    : ownerCount !== undefined && ownerCount > 0
+      ? `${ownerCount}. Hand`
+      : null;
+
   const summaryItems = [
     hasPurchaseDate && kmDriven > 0 ? `${formatNumber(kmDriven)} km gefahren` : null,
-    ownerCount !== undefined && ownerCount > 0 ? `${ownerCount}. Hand` : null,
+    handLabel,
     ownershipLabel ? `${ownershipLabel} im Besitz` : null,
     avgFuelConsumption ? `${avgFuelConsumption.toFixed(2)} L/100km` : null,
   ].filter((item): item is string => Boolean(item));
@@ -229,24 +240,20 @@ export function MotorcycleInfoCard({
             )}
           </div>
 
-          {/* Previous Owners Group */}
+          {/* Previous Owners Group — read-only; managed from the edit form. */}
           <div className="border-t border-base-300 pt-4 dark:border-navy-700">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="label-tag">
                 <span className="tabular-nums">02·3</span>
                 <span>Vorbesitzer</span>
               </h3>
-              <CardAction onClick={onAddPreviousOwner} aria-label="Vorbesitzer hinzufügen">
-                <Plus className="h-3 w-3" aria-hidden="true" />
-                Hinzufügen
-              </CardAction>
             </div>
             {previousOwnersList.length > 0 ? (
               <ul className="space-y-2">
                 {previousOwnersList.map((owner) => (
                   <li
                     key={owner.id}
-                    className="group relative flex items-center justify-between gap-3 rounded-sm border border-base-300 bg-base-100 px-3 py-2.5 transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-900/50"
+                    className="relative flex items-center justify-between gap-3 rounded-sm border border-base-300 bg-base-100 px-3 py-2.5 dark:border-navy-700 dark:bg-navy-900/50"
                   >
                     <div className="min-w-0">
                       <p className="font-subdisplay text-sm text-base-content dark:text-white truncate">
@@ -256,20 +263,17 @@ export function MotorcycleInfoCard({
                         Kauf · {owner.purchaseDate}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => onEditPreviousOwner(owner)}
-                      aria-label={`${owner.name} ${owner.surname} bearbeiten`}
-                      className="rounded-sm p-1.5 text-base-content/50 transition-all hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
-                    >
-                      <Info className="h-4 w-4" />
-                    </button>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
-                Keine Vorbesitzer · 1. Hand
+                {hasUnknownOwners ? "Besitzhistorie unbekannt" : "Keine Vorbesitzer · 1. Hand"}
+              </p>
+            )}
+            {hasUnknownOwners && previousOwnersList.length > 0 && (
+              <p className="mt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-warning">
+                Besitzhistorie unvollständig
               </p>
             )}
           </div>

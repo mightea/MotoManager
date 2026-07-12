@@ -42,6 +42,12 @@ export interface Motorcycle {
   isArchived: boolean;
   /** Sidecar rig — gates the sidecar-related UI (e.g. sidecar tire pressure). */
   hasSidecar: boolean;
+  /**
+   * Further, unidentified previous owners exist beyond the recorded ones — the
+   * ownership history is incomplete. When true the clients stop asserting a
+   * definitive "N. Hand" position.
+   */
+  hasUnknownOwners: boolean;
   firstRegistration: string | null;
   initialOdo: number;
   manualOdo: number | null;

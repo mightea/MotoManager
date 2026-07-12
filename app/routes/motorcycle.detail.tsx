@@ -44,6 +44,7 @@ import { formatCurrency } from "~/utils/numberUtils";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
+import { PreviousOwnersDialog } from "~/components/previous-owners-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
 import { Card, CardAction, CardHeading } from "~/components/card";
 import { fetchFromBackend } from "~/utils/backend";
@@ -261,6 +262,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     createPreviousOwner,
     updatePreviousOwner,
     deletePreviousOwner,
+    updateMotorcycleUnknownOwners,
   } = await import("~/services/motorcycles");
 
   // Fetch currencies for normalization via backend
@@ -597,6 +599,16 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return data({ success: true, intent: intent === "createPreviousOwner" ? "createPreviousOwner" : "updatePreviousOwner" });
   }
 
+  if (intent === "setPreviousOwnersUnknown") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    if (!Number.isFinite(motorcycleId)) {
+      throw new Response("Ungültige Fahrzeug-ID", { status: 400 });
+    }
+    const hasUnknownOwners = formData.get("hasUnknownOwners") === "true";
+    await updateMotorcycleUnknownOwners(token, motorcycleId, hasUnknownOwners);
+    return data({ success: true, intent: "setPreviousOwnersUnknown" });
+  }
+
   if (intent === "deletePreviousOwner") {
     const motorcycleId = Number(formData.get("motorcycleId"));
     const ownerId = Number(formData.get("ownerId"));
@@ -800,6 +812,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [previousOwnersManageOpen, setPreviousOwnersManageOpen] = useState(false);
   const [previousOwnerDialogOpen, setPreviousOwnerDialogOpen] = useState(false);
   const [selectedPreviousOwner, setSelectedPreviousOwner] = useState<(typeof previousOwnersList)[number] | null>(null);
   const [deletePreviousOwnerConfirmationOpen, setDeletePreviousOwnerConfirmationOpen] = useState(false);
@@ -933,14 +946,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             onEdit={() => setEditMotorcycleDialogOpen(true)}
             onShowDetails={() => setInfoSheetOpen(true)}
             previousOwnersList={previousOwnersList}
-            onAddPreviousOwner={() => {
-              setSelectedPreviousOwner(null);
-              setPreviousOwnerDialogOpen(true);
-            }}
-            onEditPreviousOwner={(owner) => {
-              setSelectedPreviousOwner(owner);
-              setPreviousOwnerDialogOpen(true);
-            }}
+            hasUnknownOwners={motorcycle.hasUnknownOwners}
             ownerCount={ownerCount}
           />
           <MaintenanceInsightsCard insights={insights} />
@@ -1073,14 +1079,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             setEditMotorcycleDialogOpen(true);
           }}
           previousOwnersList={previousOwnersList}
-          onAddPreviousOwner={() => {
-            setSelectedPreviousOwner(null);
-            setPreviousOwnerDialogOpen(true);
-          }}
-          onEditPreviousOwner={(owner) => {
-            setSelectedPreviousOwner(owner);
-            setPreviousOwnerDialogOpen(true);
-          }}
+          hasUnknownOwners={motorcycle.hasUnknownOwners}
           ownerCount={ownerCount}
         />
       </Modal>
@@ -1105,9 +1104,27 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             currencies={currencies}
             modelSeries={modelSeries}
             existingMaintenance={maintenanceHistory}
+            previousOwnersCount={previousOwnersList.length}
+            onManagePreviousOwners={() => setPreviousOwnersManageOpen(true)}
           />
         </Suspense>
       </Modal>
+
+      <PreviousOwnersDialog
+        isOpen={previousOwnersManageOpen}
+        onClose={() => setPreviousOwnersManageOpen(false)}
+        motorcycleId={motorcycle.id}
+        owners={previousOwnersList}
+        hasUnknownOwners={motorcycle.hasUnknownOwners}
+        onAddOwner={() => {
+          setSelectedPreviousOwner(null);
+          setPreviousOwnerDialogOpen(true);
+        }}
+        onEditOwner={(owner) => {
+          setSelectedPreviousOwner(owner);
+          setPreviousOwnerDialogOpen(true);
+        }}
+      />
 
       <DeleteConfirmationDialog
         isOpen={deleteConfirmationOpen}
