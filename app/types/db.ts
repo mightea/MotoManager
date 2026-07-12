@@ -40,6 +40,8 @@ export interface Motorcycle {
   image: string | null;
   isVeteran: boolean;
   isArchived: boolean;
+  /** Sidecar rig — gates the sidecar-related UI (e.g. sidecar tire pressure). */
+  hasSidecar: boolean;
   firstRegistration: string | null;
   initialOdo: number;
   manualOdo: number | null;
@@ -196,10 +198,26 @@ export type PressureUnit = "bar" | "psi";
 export interface TirePressure {
   id: number;
   motorcycleId: number;
-  frontBar: number;
-  rearBar: number;
-  /** Only used on motorcycles with a sidecar; null otherwise. */
+  /**
+   * One optional front/rear pair per riding configuration; at least one
+   * pair is present on a stored record.
+   */
+  frontBar: number | null;
+  rearBar: number | null;
+  /** Riding with a passenger; null when not recorded. */
+  frontPassengerBar: number | null;
+  rearPassengerBar: number | null;
+  /** Offroad riding; null when not recorded. */
+  frontOffroadBar: number | null;
+  rearOffroadBar: number | null;
+  /**
+   * Sidecar wheel — a third tire position with one optional value per
+   * configuration; `sidecarBar` is the solo value. All null on motorcycles
+   * without a sidecar.
+   */
   sidecarBar: number | null;
+  sidecarPassengerBar: number | null;
+  sidecarOffroadBar: number | null;
   preferredUnit: PressureUnit;
   createdAt: string;
   updatedAt: string;

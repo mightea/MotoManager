@@ -106,24 +106,52 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   if (intent === "upsertTirePressure") {
     const motorcycleId = Number(formData.get("motorcycleId"));
-    const frontBar = Number(formData.get("frontBar"));
-    const rearBar = Number(formData.get("rearBar"));
     const preferredUnitRaw = String(formData.get("preferredUnit") ?? "bar");
     const preferredUnit: PressureUnit = preferredUnitRaw === "psi" ? "psi" : "bar";
-    const sidecarRaw = formData.get("sidecarBar");
-    const sidecarBar = sidecarRaw == null || sidecarRaw === "" ? null : Number(sidecarRaw);
+    // Every pressure is optional: absent/empty = not recorded (stored as
+    // NULL). The backend enforces pair integrity and at-least-one-config.
+    const optionalBar = (name: string): number | null => {
+      const raw = formData.get(name);
+      return raw == null || raw === "" ? null : Number(raw);
+    };
+    const frontBar = optionalBar("frontBar");
+    const rearBar = optionalBar("rearBar");
+    const frontPassengerBar = optionalBar("frontPassengerBar");
+    const rearPassengerBar = optionalBar("rearPassengerBar");
+    const frontOffroadBar = optionalBar("frontOffroadBar");
+    const rearOffroadBar = optionalBar("rearOffroadBar");
+    const sidecarBar = optionalBar("sidecarBar");
+    const sidecarPassengerBar = optionalBar("sidecarPassengerBar");
+    const sidecarOffroadBar = optionalBar("sidecarOffroadBar");
 
-    if (!motorcycleId || !Number.isFinite(frontBar) || !Number.isFinite(rearBar)) {
-      return data({ error: "Bitte Vorder- und Hinterreifen-Druck angeben." }, { status: 400 });
+    const all = [
+      frontBar,
+      rearBar,
+      frontPassengerBar,
+      rearPassengerBar,
+      frontOffroadBar,
+      rearOffroadBar,
+      sidecarBar,
+      sidecarPassengerBar,
+      sidecarOffroadBar,
+    ];
+    if (!motorcycleId || all.every((v) => v == null)) {
+      return data({ error: "Bitte mindestens eine Konfiguration angeben." }, { status: 400 });
     }
-    if (sidecarBar != null && !Number.isFinite(sidecarBar)) {
-      return data({ error: "Beiwagen-Druck ist ungültig." }, { status: 400 });
+    if (all.some((v) => v != null && !Number.isFinite(v))) {
+      return data({ error: "Ein Druckwert ist ungültig." }, { status: 400 });
     }
 
     await upsertTirePressure(token, motorcycleId, {
       frontBar,
       rearBar,
+      frontPassengerBar,
+      rearPassengerBar,
+      frontOffroadBar,
+      rearOffroadBar,
       sidecarBar,
+      sidecarPassengerBar,
+      sidecarOffroadBar,
       preferredUnit,
     });
     return data({ success: true });
@@ -457,11 +485,25 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
               Borderless, tight rows. */}
           {pressure && (
             <div className="hidden print:block">
-              <PressurePrintRow label="Vorne" bar={pressure.frontBar} preferred={pressure.preferredUnit} />
-              <PressurePrintRow label="Hinten" bar={pressure.rearBar} preferred={pressure.preferredUnit} />
-              {pressure.sidecarBar != null && (
-                <PressurePrintRow label="Beiwagen" bar={pressure.sidecarBar} preferred={pressure.preferredUnit} />
-              )}
+              {[
+                { key: "Solo", front: pressure.frontBar, rear: pressure.rearBar, sidecar: pressure.sidecarBar },
+                { key: "Sozius", front: pressure.frontPassengerBar, rear: pressure.rearPassengerBar, sidecar: pressure.sidecarPassengerBar },
+                { key: "Offroad", front: pressure.frontOffroadBar, rear: pressure.rearOffroadBar, sidecar: pressure.sidecarOffroadBar },
+              ]
+                .filter((g) => g.front != null || g.rear != null)
+                .map((g) => (
+                  <div key={g.key}>
+                    {g.front != null && (
+                      <PressurePrintRow label={`Vorne (${g.key})`} bar={g.front} preferred={pressure.preferredUnit} />
+                    )}
+                    {g.rear != null && (
+                      <PressurePrintRow label={`Hinten (${g.key})`} bar={g.rear} preferred={pressure.preferredUnit} />
+                    )}
+                    {g.sidecar != null && (
+                      <PressurePrintRow label={`Beiwagen (${g.key})`} bar={g.sidecar} preferred={pressure.preferredUnit} />
+                    )}
+                  </div>
+                ))}
             </div>
           )}
         </section>
@@ -655,6 +697,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       >
         <TirePressureForm
           motorcycleId={motorcycle.id}
+          hasSidecar={Boolean(motorcycle.hasSidecar)}
           initialValues={pressure}
           onClose={() => setIsPressureModalOpen(false)}
           onSubmit={() => setIsPressureModalOpen(false)}

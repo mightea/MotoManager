@@ -7,62 +7,133 @@ interface TirePressureCardProps {
 }
 
 /**
- * Read-only display of one motorcycle's recommended tire pressures.
- * Three rows max — Vorne / Hinten / Beiwagen — each shows the user's
- * preferred unit prominently with the converted unit in a small
- * mono-uppercase secondary line.
+ * Read-only display of one motorcycle's recommended tire pressures as a
+ * matrix: one row per tire position (Vorne / Hinten / Beiwagen), one
+ * column per riding configuration (Solo / Sozius / Offroad). Only
+ * recorded configurations get a column; with a single configuration no
+ * column headers render and the card stays a simple two-row list.
  */
 export function TirePressureCard({ pressure }: TirePressureCardProps) {
+  // Only recorded configurations become columns — every set is optional.
+  const variants = [
+    {
+      key: "solo",
+      label: "Solo",
+      front: pressure.frontBar,
+      rear: pressure.rearBar,
+      sidecar: pressure.sidecarBar,
+    },
+    {
+      key: "passenger",
+      label: "Sozius",
+      front: pressure.frontPassengerBar,
+      rear: pressure.rearPassengerBar,
+      sidecar: pressure.sidecarPassengerBar,
+    },
+    {
+      key: "offroad",
+      label: "Offroad",
+      front: pressure.frontOffroadBar,
+      rear: pressure.rearOffroadBar,
+      sidecar: pressure.sidecarOffroadBar,
+    },
+  ].filter((v) => v.front != null || v.rear != null);
+  // Headers render for several columns — and for a single non-solo column,
+  // where values without their configuration label would be ambiguous.
+  const showHeader = variants.length > 1 || variants.some((v) => v.key !== "solo");
+  const hasSidecar = variants.some((v) => v.sidecar != null);
+
   return (
     <Card>
-      <div className="px-4 py-4">
-        <dl className="space-y-3">
-          <PressureRow
-            label="Vorne"
-            bar={pressure.frontBar}
-            preferred={pressure.preferredUnit}
-          />
-          <PressureRow
-            label="Hinten"
-            bar={pressure.rearBar}
-            preferred={pressure.preferredUnit}
-          />
-          {pressure.sidecarBar != null && (
-            <PressureRow
-              label="Beiwagen"
-              bar={pressure.sidecarBar}
+      {/* overflow-x-auto: three value columns plus labels can exceed a
+          narrow phone viewport; the card must scroll, not the page. */}
+      <div className="overflow-x-auto px-4 py-4">
+        <table className="w-full">
+          {showHeader && (
+            <thead>
+              <tr>
+                <th aria-label="Reifenposition" />
+                {variants.map((v) => (
+                  <th
+                    key={v.key}
+                    scope="col"
+                    className="pb-2 text-right font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500"
+                  >
+                    {v.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            <PositionRow
+              label="Vorne"
+              values={variants.map((v) => ({ key: v.key, bar: v.front }))}
               preferred={pressure.preferredUnit}
             />
-          )}
-        </dl>
+            <PositionRow
+              label="Hinten"
+              values={variants.map((v) => ({ key: v.key, bar: v.rear }))}
+              preferred={pressure.preferredUnit}
+            />
+            {hasSidecar && (
+              <PositionRow
+                label="Beiwagen"
+                values={variants.map((v) => ({ key: v.key, bar: v.sidecar }))}
+                preferred={pressure.preferredUnit}
+              />
+            )}
+          </tbody>
+        </table>
       </div>
     </Card>
   );
 }
 
-function PressureRow({
+function PositionRow({
   label,
-  bar,
+  values,
   preferred,
 }: {
   label: string;
+  values: { key: string; bar: number | null }[];
+  preferred: TirePressure["preferredUnit"];
+}) {
+  return (
+    <tr className="border-b border-base-200/70 last:border-b-0 dark:border-navy-700/60">
+      <th
+        scope="row"
+        className="py-2.5 pr-4 text-left align-baseline font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+      >
+        {label}
+      </th>
+      {values.map(({ key, bar }) => (
+        <td key={key} className="py-2.5 pl-4 text-right align-baseline">
+          {bar != null ? <PressureValue bar={bar} preferred={preferred} /> : (
+            <span aria-hidden="true" className="text-base-content/30">—</span>
+          )}
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+function PressureValue({
+  bar,
+  preferred,
+}: {
   bar: number;
   preferred: TirePressure["preferredUnit"];
 }) {
   const formatted = formatPressure(bar, preferred);
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-base-200/70 pb-2 last:border-b-0 last:pb-0 dark:border-navy-700/60">
-      <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
-        {label}
-      </dt>
-      <dd className="flex items-baseline gap-2">
-        <span className="font-numeric text-base font-semibold tabular-nums text-base-content dark:text-white">
-          {formatted.primary}
-        </span>
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
-          ≈ {formatted.secondary}
-        </span>
-      </dd>
-    </div>
+    <span className="inline-flex flex-col items-end gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
+      <span className="font-numeric text-base font-semibold tabular-nums text-base-content dark:text-white">
+        {formatted.primary}
+      </span>
+      <span className="whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+        ≈ {formatted.secondary}
+      </span>
+    </span>
   );
 }

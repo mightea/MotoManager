@@ -211,6 +211,7 @@ export function AddMotorcycleForm({
     // un-archiving and clearing the veteran flag actually save.
     formData.set("isVeteran", formData.has("isVeteran") ? "true" : "false");
     formData.set("isArchived", formData.has("isArchived") ? "true" : "false");
+    formData.set("hasSidecar", formData.has("hasSidecar") ? "true" : "false");
 
     if (croppedImageBlob) {
       formData.append("image", croppedImageBlob, "motorcycle.jpg");
@@ -469,6 +470,18 @@ export function AddMotorcycleForm({
               className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900 dark:checked:bg-primary" />
             <label htmlFor="isVeteran" className="text-sm font-medium text-foreground dark:text-white">
               Veteranen-Status
+            </label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              name="hasSidecar"
+              id="hasSidecar"
+              value="true"
+              defaultChecked={Boolean(initialValues?.hasSidecar)}
+              className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900 dark:checked:bg-primary" />
+            <label htmlFor="hasSidecar" className="text-sm font-medium text-foreground dark:text-white">
+              Beiwagen (Gespann)
             </label>
           </div>
           <div className="flex items-center gap-3">
