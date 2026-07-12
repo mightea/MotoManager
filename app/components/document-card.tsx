@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
 import clsx from "clsx";
 import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucide-react";
-import { getBackendAssetUrl } from "~/utils/backend";
-import { getSessionToken } from "~/services/auth";
+import { getAuthenticatedAssetUrl } from "~/utils/backend";
 
 export type DocumentSummary = {
   id: number;
@@ -39,20 +38,16 @@ export function DocumentCard({
   assignedMotorcycleNames = EMPTY_MOTORCYCLE_NAMES,
 }: DocumentCardProps) {
   const ownerLabel = document.ownerName || document.uploadedBy || "Unbekannt";
-  const previewUrl = getBackendAssetUrl(document.previewPath);
+  // Previews are auth-gated like the documents themselves; a plain <img> can't
+  // send the Authorization header, so the URL carries the session token.
+  const previewUrl = getAuthenticatedAssetUrl(document.previewPath);
   const [previewFailed, setPreviewFailed] = useState(false);
   const hasPreview = Boolean(previewUrl) && !previewFailed;
 
   const handleOpen = useCallback(() => {
-    const token = getSessionToken();
-    const backendUrl = getBackendAssetUrl(document.filePath);
-    if (!backendUrl) return;
-
-    const url = new URL(backendUrl);
-    if (token) {
-      url.searchParams.set("token", token);
-    }
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
+    const url = getAuthenticatedAssetUrl(document.filePath);
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
   }, [document.filePath]);
 
   return (

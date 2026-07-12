@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import { getBackendUrl } from "~/config";
-import { clearSessionToken } from "~/services/auth";
+import { clearSessionToken, getSessionToken } from "~/services/auth";
 
 /** Default per-request timeout so a hung backend fails fast instead of blocking a
  *  loader indefinitely. Callers can override by passing their own `signal`. */
@@ -100,4 +100,22 @@ export function getBackendAssetUrl(path: string | null | undefined): string | nu
   const normalizedPath = (path.startsWith("/") ? path : `/${path}`).replace(/^\/data/, "");
 
   return `${baseUrl}${normalizedPath}`;
+}
+
+/**
+ * Asset URL for the auth-gated file routes (/documents, /previews) with the
+ * session token as a query parameter. Browser-initiated loads (`window.open`,
+ * `<img src>`) can't carry an Authorization header, so these routes accept
+ * `?token=` instead.
+ */
+export function getAuthenticatedAssetUrl(path: string | null | undefined): string | null {
+  const assetUrl = getBackendAssetUrl(path);
+  if (!assetUrl) return null;
+
+  const token = getSessionToken();
+  if (!token) return assetUrl;
+
+  const url = new URL(assetUrl);
+  url.searchParams.set("token", token);
+  return url.toString();
 }

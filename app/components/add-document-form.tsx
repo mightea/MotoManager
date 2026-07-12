@@ -5,7 +5,7 @@ import clsx from "clsx";
 import type { Document, Motorcycle } from "~/types/db";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone, type FileRejection } from "react-dropzone";
-import { getBackendAssetUrl } from "~/utils/backend";
+import { getAuthenticatedAssetUrl } from "~/utils/backend";
 
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -162,7 +162,7 @@ export function AddDocumentForm({
                 <div className="flex p-4 gap-4 items-center">
                     <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-navy-900 border border-gray-100 dark:border-navy-600">
                         {document.previewPath ? (
-                            <img src={getBackendAssetUrl(document.previewPath) ?? ""} alt="Preview" className="h-full w-full object-cover" />
+                            <img src={getAuthenticatedAssetUrl(document.previewPath) ?? ""} alt="Preview" className="h-full w-full object-cover" />
                         ) : (
                             <div className="flex h-full w-full items-center justify-center">
                                 <FileText className="h-8 w-8 text-gray-400" />
