@@ -235,14 +235,16 @@ export interface TorqueSpecification {
   variation: number | null;
   toolSize: string | null;
   description: string | null;
+  unverified: boolean;
   createdAt: string;
 }
 
-export type NewTorqueSpecification = Omit<TorqueSpecification, "id" | "createdAt" | "torqueEnd" | "variation" | "toolSize" | "description"> & {
+export type NewTorqueSpecification = Omit<TorqueSpecification, "id" | "createdAt" | "torqueEnd" | "variation" | "toolSize" | "description" | "unverified"> & {
   torqueEnd?: number | null;
   variation?: number | null;
   toolSize?: string | null;
   description?: string | null;
+  unverified?: boolean;
 };
 
 export interface UserSettings {

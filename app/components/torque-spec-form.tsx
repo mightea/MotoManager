@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "./button";
 import type { TorqueSpecification } from "~/types/db";
 
-import { Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 
 type VariationType = "none" | "plus_minus" | "range";
 
@@ -43,10 +43,13 @@ export function TorqueSpecForm({
   };
 
   const [variationType, setVariationType] = useState<VariationType>(getInitialVariationType());
+  const [unverified, setUnverified] = useState(initialValues?.unverified ?? false);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    // Controlled checkbox has no `name`, so inject it explicitly (FormData is built from the DOM).
+    formData.set("unverified", unverified ? "true" : "false");
     submit(formData, { method: "post" });
     if (onSubmit) {
       onSubmit();
@@ -181,6 +184,27 @@ export function TorqueSpecForm({
           className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>
+
+      <label
+        aria-label="Unverifiziert"
+        className="flex cursor-pointer items-start gap-3 rounded-sm border border-base-300 p-3 transition-colors hover:border-base-content/30 dark:border-navy-700"
+      >
+        <input
+          type="checkbox"
+          checked={unverified}
+          onChange={(event) => setUnverified(event.target.checked)}
+          className="checkbox checkbox-sm checkbox-warning mt-0.5"
+        />
+        <span className="min-w-0">
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-base-content dark:text-white">
+            <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+            Unverifiziert
+          </span>
+          <span className="mt-0.5 block text-xs text-base-content/60">
+            Wert aus unsicherer Quelle – im Zweifel vor Gebrauch prüfen.
+          </span>
+        </span>
+      </label>
 
       <div className="flex justify-between items-center pt-4">
         <div>

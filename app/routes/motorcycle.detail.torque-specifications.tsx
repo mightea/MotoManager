@@ -14,7 +14,7 @@ import {
 import { requireUser } from "~/services/auth";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Gauge, Wrench, Plus, Pencil, Import, Printer } from "lucide-react";
+import { Gauge, Wrench, Plus, Pencil, Import, Printer, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { Modal } from "~/components/modal";
@@ -213,6 +213,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     const toolSize = formData.get("toolSize") as string | undefined;
     const description = formData.get("description") as string | undefined;
+    const unverified = formData.get("unverified") === "true";
 
     if (!motorcycleId || !category || !name || isNaN(torque)) {
       return data({ error: "Bitte alle Pflichtfelder ausfüllen." }, { status: 400 });
@@ -228,6 +229,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         variation,
         toolSize,
         description,
+        unverified,
       });
     } else {
       const torqueId = Number(formData.get("torqueId"));
@@ -242,6 +244,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         variation: variation ?? null,
         toolSize: toolSize ?? null,
         description: description ?? null,
+        unverified,
       });
     }
 
@@ -581,9 +584,17 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     {specs.filter((s: any) => s.category === category).map((spec: TorqueSpecification) => (
                       <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5 sm:py-4 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-0 print:py-0 print:!bg-white print:!text-black print:border-0 print-row">
                         <div className="flex-1 min-w-0 space-y-0.5">
-                          <h3 className="text-sm font-semibold leading-tight truncate text-foreground dark:text-white print:text-[10pt] print:font-semibold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
-                            {spec.name}
-                          </h3>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <h3 className="text-sm font-semibold leading-tight truncate text-foreground dark:text-white print:text-[10pt] print:font-semibold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
+                              {spec.name}
+                            </h3>
+                            {spec.unverified && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] print:!bg-white print:!text-black print:border print:border-black">
+                                <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                                Unverifiziert
+                              </span>
+                            )}
+                          </div>
                           {spec.description && (
                             <p className="mt-0.5 text-xs leading-snug text-base-content/65 dark:text-navy-400 max-w-xl truncate sm:whitespace-normal print:text-[8.5pt] print:!text-gray-700 print:mt-0 print:block print:overflow-visible print:whitespace-normal print:leading-tight">
                               {spec.description}
@@ -606,7 +617,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                             <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500 mb-0.5 print:hidden">Drehmoment</span>
                             <div className="flex items-center gap-1.5 sm:gap-2">
                               <div className="flex items-baseline gap-1">
-                                <span className="font-numeric text-xl sm:text-2xl font-semibold tracking-tight text-foreground dark:text-white leading-none print:text-[10pt] print:font-bold print:!text-black">
+                                <span className={`font-numeric text-xl sm:text-2xl font-semibold tracking-tight leading-none print:text-[10pt] print:font-bold print:!text-black ${spec.unverified ? "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]" : "text-foreground dark:text-white"}`}>
                                   {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
                                 </span>
                                 {!spec.variation && (
