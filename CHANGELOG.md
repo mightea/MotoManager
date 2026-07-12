@@ -1,5 +1,20 @@
 # Changelog
 
+## [2026.7.3](https://github.com/mightea/MotoManager/compare/2026.7.2...2026.7.3) (2026-07-12)
+
+
+### ✨ Features
+
+* manage previous owners from the edit screen + unknown-history flag ([392f38e](https://github.com/mightea/MotoManager/commit/392f38e6898c8b8bc074900adb109a8a9a906c0b))
+* show unverified badge on torque specs ([9282edb](https://github.com/mightea/MotoManager/commit/9282edb99895c021fdc1667a4673b4f2e2dcb70e))
+* tire pressure configurations with sidecar support ([06271a3](https://github.com/mightea/MotoManager/commit/06271a3c723c47b839da5fbd8b68afcdfa11f697))
+
+
+### 🐛 Bug Fixes
+
+* hide unknown-history label from the summary card ([a789bae](https://github.com/mightea/MotoManager/commit/a789baef5b30e9d1653a87e68f32b5f3401e5113))
+* send session token with document and preview file requests ([27309f7](https://github.com/mightea/MotoManager/commit/27309f7c2f1f2f5dc31b0c703481d21dcdaae7e3))
+
 ## [2026.7.2](https://github.com/mightea/MotoManager/compare/2026.7.1...2026.7.2) (2026-07-11)
 
 
