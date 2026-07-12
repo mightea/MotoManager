@@ -62,10 +62,11 @@ export function MotorcycleInfoCard({
   onShowDetails,
 }: MotorcycleInfoCardProps) {
   // With an incomplete history the recorded owners no longer pin down a
-  // definitive "N. Hand" position, so we surface uncertainty instead of a count.
-  const handLabel = hasUnknownOwners
-    ? "Besitzhistorie unbekannt"
-    : ownerCount !== undefined && ownerCount > 0
+  // definitive "N. Hand" position. Rather than surface an "unknown" chip in the
+  // compact summary, we omit the hand label there entirely (the details view
+  // still spells the uncertainty out).
+  const handLabel =
+    !hasUnknownOwners && ownerCount !== undefined && ownerCount > 0
       ? `${ownerCount}. Hand`
       : null;
 
