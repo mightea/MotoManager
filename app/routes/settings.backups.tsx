@@ -1,5 +1,6 @@
 import { Form, Link, useActionData, useLoaderData, useNavigation, useSubmit } from "react-router";
 import { requireAdmin, requireUser, getSessionToken } from "~/services/auth";
+import { getVersion } from "~/config";
 import {
   deleteBackup,
   downloadBackup,
@@ -36,7 +37,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   if (intent === "createBackup") {
     try {
-      await triggerBackup(token);
+      await triggerBackup(token, getVersion());
       return { success: "Backup erfolgreich erstellt." };
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
@@ -211,6 +212,7 @@ export default function BackupsSettings() {
                   <th className="px-4 py-3 font-semibold">Zeitpunkt</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Auslöser</th>
+                  <th className="px-4 py-3 font-semibold">Versionen</th>
                   <th className="px-4 py-3 font-semibold">Größe</th>
                   <th className="px-4 py-3 font-semibold">Dauer</th>
                   <th className="px-4 py-3 font-semibold text-right">Aktionen</th>
@@ -227,6 +229,16 @@ export default function BackupsSettings() {
                     </td>
                     <td className="px-4 py-3 text-secondary dark:text-navy-300">
                       {b.trigger === "manual" ? "Manuell" : "Geplant"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-secondary dark:text-navy-300">
+                      <div className="whitespace-nowrap">
+                        <span className="text-secondary/70 dark:text-navy-400">BE</span>{" "}
+                        {b.backendVersion ?? "–"}
+                      </div>
+                      <div className="whitespace-nowrap">
+                        <span className="text-secondary/70 dark:text-navy-400">FE</span>{" "}
+                        {b.frontendVersion ?? "–"}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-secondary dark:text-navy-300">{formatBytes(b.sizeBytes)}</td>
                     <td className="px-4 py-3 text-secondary dark:text-navy-300">

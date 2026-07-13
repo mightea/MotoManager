@@ -12,6 +12,8 @@ export interface BackupRecord {
   sizeBytes: number | null;
   filePath: string | null;
   error: string | null;
+  backendVersion: string | null;
+  frontendVersion: string | null;
 }
 
 export interface BackupOverview {
@@ -31,11 +33,18 @@ export async function listBackups(token: string): Promise<BackupOverview> {
   return fetchFromBackend<BackupOverview>("/admin/backups", {}, token);
 }
 
-/** Trigger a backup now. Rejects with a 409 ApiError if one is already running. */
-export async function triggerBackup(token: string): Promise<BackupRecord> {
+/**
+ * Trigger a backup now. Passes the frontend version so the archive/manifest
+ * records the frontend that was live. Rejects with a 409 ApiError if one is
+ * already running.
+ */
+export async function triggerBackup(
+  token: string,
+  frontendVersion: string,
+): Promise<BackupRecord> {
   const response = await fetchFromBackend<{ backup: BackupRecord }>(
     "/admin/backups",
-    { method: "POST" },
+    { method: "POST", body: JSON.stringify({ frontendVersion }) },
     token,
   );
   return response.backup;
