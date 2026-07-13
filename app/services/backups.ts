@@ -1,7 +1,7 @@
 import { getBackendUrl } from "~/config";
 import { fetchFromBackend } from "~/utils/backend";
 
-export type BackupStatus = "running" | "success" | "failed";
+export type BackupStatus = "running" | "success" | "failed" | "skipped";
 
 export interface BackupRecord {
   id: number;

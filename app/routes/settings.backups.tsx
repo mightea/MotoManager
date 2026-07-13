@@ -9,7 +9,7 @@ import {
   type BackupRecord,
 } from "~/services/backups";
 import { ApiError } from "~/utils/backend";
-import { ArrowLeft, DatabaseBackup, Download, Trash2, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, DatabaseBackup, Download, Trash2, CheckCircle2, XCircle, Loader2, MinusCircle } from "lucide-react";
 import { Button } from "~/components/button";
 import { useConfirm } from "~/components/confirm-provider";
 import { useState } from "react";
@@ -321,6 +321,16 @@ function StatusBadge({ status, error }: { status: BackupRecord["status"]; error:
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
         <Loader2 className="h-3.5 w-3.5 animate-spin" /> Läuft
+      </span>
+    );
+  }
+  if (status === "skipped") {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-navy-700 dark:text-navy-300"
+        title="Keine Änderungen seit dem letzten Backup"
+      >
+        <MinusCircle className="h-3.5 w-3.5" /> Übersprungen
       </span>
     );
   }
