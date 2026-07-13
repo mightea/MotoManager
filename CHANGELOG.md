@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.7.5](https://github.com/mightea/MotoManager/compare/2026.7.4...2026.7.5) (2026-07-13)
+
+
+### ✨ Features
+
+* show skipped backup status ([9e13cd7](https://github.com/mightea/MotoManager/commit/9e13cd75b7f61e073543dd80e00d082e42537f96))
+
 ## [2026.7.4](https://github.com/mightea/MotoManager/compare/2026.7.3...2026.7.4) (2026-07-13)
 
 
