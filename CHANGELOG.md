@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.7.4](https://github.com/mightea/MotoManager/compare/2026.7.3...2026.7.4) (2026-07-13)
+
+
+### ✨ Features
+
+* add admin backup monitor page ([5320839](https://github.com/mightea/MotoManager/commit/5320839d95bf73dfecdab2058e852e77fbd293fc))
+* show backup frontend/backend versions ([ace4272](https://github.com/mightea/MotoManager/commit/ace427245450a3d03006615166478eb22ecaf83a))
+
 ## [2026.7.3](https://github.com/mightea/MotoManager/compare/2026.7.2...2026.7.3) (2026-07-12)
 
 
