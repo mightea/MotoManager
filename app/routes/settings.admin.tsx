@@ -25,7 +25,7 @@ import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useConfirm } from "~/components/confirm-provider";
 import { useEffect, useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server, DatabaseBackup } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
 import { fetchFromBackend } from "~/utils/backend";
@@ -221,6 +221,35 @@ export default function AdminSettings() {
               <h3 className="font-semibold text-foreground dark:text-white">Server Statistiken</h3>
               <p className="text-sm text-secondary dark:text-navy-300">
                 Globale Kennzahlen und Systemstatus einsehen.
+              </p>
+            </div>
+          </div>
+          <div className="text-secondary dark:text-navy-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-5 w-5"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </div>
+        </Link>
+      </div>
+
+      {/* Backups Link */}
+      <div className="rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
+        <Link to="/settings/backups" className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <DatabaseBackup className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground dark:text-white">Backups</h3>
+              <p className="text-sm text-secondary dark:text-navy-300">
+                Datenbank-Backups überwachen und manuell auslösen.
               </p>
             </div>
           </div>
