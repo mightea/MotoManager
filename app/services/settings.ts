@@ -111,6 +111,29 @@ export async function deleteLocation(
   return result;
 }
 
+/**
+ * Merge duplicate locations into a canonical one. The backend re-points every
+ * referencing row (maintenance entries, location markers, storage places) at
+ * `canonicalId` and then deletes the duplicates — so links are preserved rather
+ * than detached the way a plain delete would.
+ */
+export async function mergeLocations(
+  token: string,
+  canonicalId: number,
+  duplicateIds: number[],
+) {
+  const result = await fetchFromBackend<{ merged: number; canonicalId: number }>(
+    "/locations/merge",
+    {
+      method: "POST",
+      body: JSON.stringify({ canonicalId, duplicateIds }),
+    },
+    token,
+  );
+  invalidatePrefix("locations:");
+  return result;
+}
+
 export async function updateCurrencySetting(
   token: string,
   currencyId: number,

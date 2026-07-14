@@ -9,10 +9,12 @@ import {
   createLocation,
   deleteLocation,
   getLocations,
+  mergeLocations,
   getUserSettings,
   updateLocation,
   updateUserSettings,
 } from "~/services/settings";
+import { normalizeLocationName } from "~/utils/geo";
 import {
   requireUser,
 } from "~/services/auth";
@@ -22,6 +24,7 @@ import { Button } from "~/components/button";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { useConfirm } from "~/components/confirm-provider";
 import { LocationEditDialog } from "~/components/location-edit-dialog";
+import { Modal } from "~/components/modal";
 import { useEffect, useMemo, useState } from "react";
 import {
   Trash2,
@@ -36,6 +39,7 @@ import {
   Fuel,
   ClipboardCheck,
   CheckSquare,
+  Combine,
 } from "lucide-react";
 import { registerPasskey } from "~/utils/webauthn";
 import type { Location, LocationType } from "~/types/db";
@@ -236,7 +240,89 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return { success: `${succeeded} Standort${succeeded === 1 ? "" : "e"} gelöscht.` };
   }
 
+  if (intent === "mergeDuplicateLocations") {
+    const groupsRaw = formData.get("groups");
+    if (typeof groupsRaw !== "string") return { error: "Keine Auswahl." };
+    let groups: { canonicalId: number; duplicateIds: number[] }[];
+    try {
+      groups = JSON.parse(groupsRaw);
+    } catch {
+      return { error: "Ungültige Daten." };
+    }
+    const valid = groups.filter(
+      (g) =>
+        Number.isFinite(g.canonicalId) &&
+        Array.isArray(g.duplicateIds) &&
+        g.duplicateIds.some((id) => Number.isFinite(id)),
+    );
+    if (valid.length === 0) return { error: "Keine Duplikate gefunden." };
+    // Sequential, not parallel: each merge opens a write transaction on the
+    // backend, and SQLite has a single writer — parallel calls would lose the
+    // lock with SQLITE_BUSY.
+    let mergedCount = 0;
+    let failedGroups = 0;
+    for (const g of valid) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await mergeLocations(token, g.canonicalId, g.duplicateIds);
+        mergedCount += res?.merged ?? g.duplicateIds.length;
+      } catch {
+        failedGroups += 1;
+      }
+    }
+    if (mergedCount === 0) {
+      return { error: "Zusammenführen fehlgeschlagen." };
+    }
+    const suffix = failedGroups > 0 ? ` (${failedGroups} Gruppe(n) fehlgeschlagen)` : "";
+    return {
+      success: `${mergedCount} Duplikat${mergedCount === 1 ? "" : "e"} zusammengeführt${suffix}.`,
+    };
+  }
+
   return null;
+}
+
+/** One survivor plus the same-named entries that fold into it. */
+type DuplicateGroup = {
+  canonical: Location;
+  duplicates: Location[];
+};
+
+/**
+ * Pick the entry that survives a merge: prefer one that carries coordinates (so
+ * the merge keeps them), then the oldest (lowest id) for a stable choice.
+ */
+function chooseCanonical(items: Location[]): Location {
+  const withCoords = items.filter(
+    (l) => l.latitude !== null && l.longitude !== null,
+  );
+  const pool = withCoords.length > 0 ? withCoords : items;
+  return pool.reduce((best, l) => (l.id < best.id ? l : best));
+}
+
+/**
+ * Group a section's locations by normalized name and return only the groups
+ * that actually have duplicates (two or more entries sharing a name).
+ */
+function findDuplicateGroups(items: Location[]): DuplicateGroup[] {
+  const byName = new Map<string, Location[]>();
+  for (const loc of items) {
+    const key = normalizeLocationName(loc.name);
+    if (!key) continue;
+    const arr = byName.get(key);
+    if (arr) arr.push(loc);
+    else byName.set(key, [loc]);
+  }
+  const groups: DuplicateGroup[] = [];
+  for (const arr of byName.values()) {
+    if (arr.length < 2) continue;
+    const canonical = chooseCanonical(arr);
+    groups.push({
+      canonical,
+      duplicates: arr.filter((l) => l.id !== canonical.id),
+    });
+  }
+  return groups;
 }
 
 type LocationSection = {
@@ -310,6 +396,9 @@ export default function Settings() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkType, setBulkType] = useState<LocationType>("fuelStation");
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [mergePreview, setMergePreview] = useState<
+    { section: LocationSection; groups: DuplicateGroup[] } | null
+  >(null);
   const submit = useSubmit();
   const confirmDialog = useConfirm();
 
@@ -351,6 +440,19 @@ export default function Settings() {
       }
       return next;
     });
+  };
+
+  const confirmMerge = () => {
+    if (!mergePreview) return;
+    const groups = mergePreview.groups.map((g) => ({
+      canonicalId: g.canonical.id,
+      duplicateIds: g.duplicates.map((d) => d.id),
+    }));
+    const fd = new FormData();
+    fd.set("intent", "mergeDuplicateLocations");
+    fd.set("groups", JSON.stringify(groups));
+    submit(fd, { method: "post" });
+    setMergePreview(null);
   };
 
   // Exit selection mode and close the create/edit dialog on a successful action.
@@ -565,6 +667,11 @@ export default function Settings() {
             const items = groupedLocations[section.type];
             const isSelecting = selectionSection === section.type;
             const allSelectedInSection = items.length > 0 && selectedIds.size === items.length;
+            const duplicateGroups = findDuplicateGroups(items);
+            const duplicateCount = duplicateGroups.reduce(
+              (n, g) => n + g.duplicates.length,
+              0,
+            );
             return (
               <div key={section.type} className="space-y-3">
                 <div className="flex items-center gap-3 border-b border-gray-100 pb-2 dark:border-navy-700">
@@ -582,6 +689,20 @@ export default function Settings() {
                   <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums text-base-content/50">
                     {items.length}
                   </span>
+                  {!isSelecting && duplicateGroups.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMergePreview({ section, groups: duplicateGroups })}
+                      title={`${duplicateCount} Duplikat${duplicateCount === 1 ? "" : "e"} zusammenführen`}
+                    >
+                      <Combine className="h-4 w-4" />
+                      <span className="ml-1 font-mono text-[11px] tabular-nums">
+                        {duplicateCount}
+                      </span>
+                    </Button>
+                  )}
                   {!isSelecting && items.length > 0 && (
                     <Button
                       type="button"
@@ -765,6 +886,56 @@ export default function Settings() {
         confirmLabel="Löschen"
         confirmDisabled={selectedIds.size === 0}
       />
+
+      <Modal
+        isOpen={mergePreview !== null}
+        onClose={() => setMergePreview(null)}
+        title="Duplikate zusammenführen"
+        code="MERGE"
+        description={
+          mergePreview
+            ? `${mergePreview.section.label}: ${mergePreview.groups.reduce(
+                (n, g) => n + g.duplicates.length,
+                0,
+              )} Eintrag/Einträge werden zusammengeführt. Verknüpfte Wartungs- und Standort-Einträge bleiben erhalten.`
+            : undefined
+        }
+      >
+        {mergePreview && (
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {mergePreview.groups.map((g) => (
+                <li
+                  key={g.canonical.id}
+                  className="rounded-sm border border-base-300/70 bg-base-100 p-3 dark:border-navy-700 dark:bg-navy-900"
+                >
+                  <p className="flex items-center gap-2 text-sm font-medium text-base-content dark:text-white">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-success">
+                      Behalten
+                    </span>
+                    <span className="truncate">{g.canonical.name}</span>
+                  </p>
+                  <p className="mt-1 text-xs text-secondary dark:text-navy-400">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                      Zusammenführen
+                    </span>{" "}
+                    {g.duplicates.map((d) => d.name).join(", ")} ({g.duplicates.length})
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setMergePreview(null)}>
+                Abbrechen
+              </Button>
+              <Button onClick={confirmMerge} disabled={isSubmitting}>
+                <Combine className="mr-1 h-4 w-4" aria-hidden="true" />
+                Zusammenführen
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Maintenance Intervals Section */}
       <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
