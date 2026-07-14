@@ -639,8 +639,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const recordsJson = formData.get("records") as string;
     const records = JSON.parse(recordsJson) as any[];
 
-    const { getLocations } = await import("~/services/settings");
-    const { findNearestWithinRadius, normalizeLocationName } = await import("~/utils/geo");
+    const { getLocations, getNearbyLocations } = await import("~/services/settings");
+    const { normalizeLocationName } = await import("~/utils/geo");
     const { createReverseGeocoder } = await import("~/utils/reverse-geocode");
     const userLocations = await getLocations(token, user.id);
     const reverseGeocode = createReverseGeocoder();
@@ -662,12 +662,21 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       let hasName = rawName.length > 0;
 
       if (hasCoords) {
-        const match = findNearestWithinRadius(
-          { latitude: record.latitude, longitude: record.longitude },
-          knownFuelStations,
-          100,
-        );
-        if (match) return match.id;
+        // Delegate coordinate matching to the backend (haversine, nearest-first)
+        // — the same proximity endpoint the iOS app and the interactive near-me
+        // flow use. On failure, fall through to name-based matching/creation
+        // rather than dropping the record.
+        try {
+          const nearby = await getNearbyLocations(token, {
+            lat: record.latitude,
+            lon: record.longitude,
+            radius: 100,
+            type: "fuelStation",
+          });
+          if (nearby.length > 0) return nearby[0].id;
+        } catch {
+          // ignore — proceed to name fallback below
+        }
       }
 
       // No usable name, but we do have coords — ask Nominatim for one so we
