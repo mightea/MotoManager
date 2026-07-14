@@ -3,6 +3,7 @@ import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
 import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting } from "~/types/db";
+import { fluidTypeLabels } from "~/utils/maintenance";
 import type { Part } from "~/types/parts";
 import {
     Wrench,
@@ -469,12 +470,7 @@ export function MaintenanceForm({
                             </span>
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {[
-                                    { value: "engineoil", label: "Motoröl" },
-                                    { value: "gearboxoil", label: "Getriebeöl" },
-                                    { value: "finaldriveoil", label: "Kardanöl" },
-                                    { value: "forkoil", label: "Gabelöl" },
-                                    { value: "brakefluid", label: "Bremsflüssigkeit" },
-                                    { value: "coolant", label: "Kühlflüssigkeit" },
+                                    ...Object.entries(fluidTypeLabels).map(([value, label]) => ({ value, label })),
                                     { value: "chain", label: "Kette reinigen/fetten" },
                                 ].map((opt) => (
                                     <label
@@ -577,12 +573,9 @@ export function MaintenanceForm({
                                 defaultValue={initialData?.fluidType || "engineoil"}
                                 className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             >
-                                <option value="engineoil">Motoröl</option>
-                                <option value="gearboxoil">Getriebeöl</option>
-                                <option value="finaldriveoil">Kardanöl</option>
-                                <option value="forkoil">Gabelöl</option>
-                                <option value="brakefluid">Bremsflüssigkeit</option>
-                                <option value="coolant">Kühlflüssigkeit</option>
+                                {Object.entries(fluidTypeLabels).map(([value, label]) => (
+                                    <option key={value} value={value}>{label}</option>
+                                ))}
                             </select>
                         </div>
                         <div className="space-y-1.5">

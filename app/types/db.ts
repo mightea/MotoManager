@@ -84,6 +84,7 @@ export type FluidType =
   | "engineoil"
   | "gearboxoil"
   | "finaldriveoil"
+  | "finaldrivegearboxoil"
   | "forkoil"
   | "brakefluid"
   | "coolant";
@@ -262,6 +263,7 @@ export interface UserSettings {
   engineOilInterval: number;
   gearboxOilInterval: number;
   finalDriveOilInterval: number;
+  finalDriveGearboxOilInterval: number;
   forkOilInterval: number;
   brakeFluidInterval: number;
   coolantInterval: number;
@@ -270,6 +272,7 @@ export interface UserSettings {
   engineOilKmInterval: number | null;
   gearboxOilKmInterval: number | null;
   finalDriveOilKmInterval: number | null;
+  finalDriveGearboxOilKmInterval: number | null;
   forkOilKmInterval: number | null;
   brakeFluidKmInterval: number | null;
   coolantKmInterval: number | null;

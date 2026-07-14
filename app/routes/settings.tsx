@@ -15,6 +15,7 @@ import {
   updateUserSettings,
 } from "~/services/settings";
 import { normalizeLocationName } from "~/utils/geo";
+import { fluidTypeLabels } from "~/utils/maintenance";
 import {
   requireUser,
 } from "~/services/auth";
@@ -42,7 +43,7 @@ import {
   Combine,
 } from "lucide-react";
 import { registerPasskey } from "~/utils/webauthn";
-import type { Location, LocationType } from "~/types/db";
+import type { FluidType, Location, LocationType, UserSettings } from "~/types/db";
 
 export function meta() {
   return [
@@ -76,6 +77,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const engineOilInterval = Number(formData.get("engineOilInterval"));
     const gearboxOilInterval = Number(formData.get("gearboxOilInterval"));
     const finalDriveOilInterval = Number(formData.get("finalDriveOilInterval"));
+    const finalDriveGearboxOilInterval = Number(formData.get("finalDriveGearboxOilInterval"));
     const forkOilInterval = Number(formData.get("forkOilInterval"));
     const brakeFluidInterval = Number(formData.get("brakeFluidInterval"));
     const coolantInterval = Number(formData.get("coolantInterval"));
@@ -90,6 +92,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const engineOilKmInterval = parseKm(formData.get("engineOilKmInterval"));
     const gearboxOilKmInterval = parseKm(formData.get("gearboxOilKmInterval"));
     const finalDriveOilKmInterval = parseKm(formData.get("finalDriveOilKmInterval"));
+    const finalDriveGearboxOilKmInterval = parseKm(formData.get("finalDriveGearboxOilKmInterval"));
     const forkOilKmInterval = parseKm(formData.get("forkOilKmInterval"));
     const brakeFluidKmInterval = parseKm(formData.get("brakeFluidKmInterval"));
     const coolantKmInterval = parseKm(formData.get("coolantKmInterval"));
@@ -102,6 +105,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       engineOilInterval,
       gearboxOilInterval,
       finalDriveOilInterval,
+      finalDriveGearboxOilInterval,
       forkOilInterval,
       brakeFluidInterval,
       coolantInterval,
@@ -110,6 +114,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       engineOilKmInterval,
       gearboxOilKmInterval,
       finalDriveOilKmInterval,
+      finalDriveGearboxOilKmInterval,
       forkOilKmInterval,
       brakeFluidKmInterval,
       coolantKmInterval,
@@ -324,6 +329,26 @@ function findDuplicateGroups(items: Location[]): DuplicateGroup[] {
   }
   return groups;
 }
+
+/**
+ * Fluid service-interval fields, rendered as a loop in the settings form.
+ * Labels come from the single fluidTypeLabels map; each entry maps to its
+ * UserSettings year + km columns. Adding a fluid type here is all it takes to
+ * expose its configurable interval.
+ */
+const FLUID_INTERVAL_FIELDS: {
+  type: FluidType;
+  yearsName: keyof UserSettings;
+  kmName: keyof UserSettings;
+}[] = [
+  { type: "engineoil", yearsName: "engineOilInterval", kmName: "engineOilKmInterval" },
+  { type: "gearboxoil", yearsName: "gearboxOilInterval", kmName: "gearboxOilKmInterval" },
+  { type: "finaldriveoil", yearsName: "finalDriveOilInterval", kmName: "finalDriveOilKmInterval" },
+  { type: "finaldrivegearboxoil", yearsName: "finalDriveGearboxOilInterval", kmName: "finalDriveGearboxOilKmInterval" },
+  { type: "forkoil", yearsName: "forkOilInterval", kmName: "forkOilKmInterval" },
+  { type: "brakefluid", yearsName: "brakeFluidInterval", kmName: "brakeFluidKmInterval" },
+  { type: "coolant", yearsName: "coolantInterval", kmName: "coolantKmInterval" },
+];
 
 type LocationSection = {
   type: LocationType;
@@ -1019,179 +1044,36 @@ export default function Settings() {
             <div className="space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Öle & Flüssigkeiten</h3>
               
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="engineOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Motoröl (Jahre)</label>
-                  <input
-                    type="number"
-                    name="engineOilInterval"
-                    id="engineOilInterval"
-                    defaultValue={settings?.engineOilInterval}
-                    min="1"
-                    max="10"
-                    required
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
+              {FLUID_INTERVAL_FIELDS.map((f) => (
+                <div key={f.type} className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label htmlFor={f.yearsName} className="text-xs font-semibold text-secondary dark:text-navy-300">{fluidTypeLabels[f.type]} (Jahre)</label>
+                    <input
+                      type="number"
+                      name={f.yearsName}
+                      id={f.yearsName}
+                      defaultValue={settings?.[f.yearsName] ?? undefined}
+                      min="1"
+                      max="10"
+                      required
+                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor={f.kmName} className="text-xs font-semibold text-secondary dark:text-navy-300">{fluidTypeLabels[f.type]} (km)</label>
+                    <input
+                      type="number"
+                      name={f.kmName}
+                      id={f.kmName}
+                      defaultValue={settings?.[f.kmName] ?? ""}
+                      min="1000"
+                      step="1000"
+                      placeholder="Optional"
+                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="engineOilKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Motoröl (km)</label>
-                  <input
-                    type="number"
-                    name="engineOilKmInterval"
-                    id="engineOilKmInterval"
-                    defaultValue={settings?.engineOilKmInterval ?? ""}
-                    min="1000"
-                    step="1000"
-                    placeholder="Optional"
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="gearboxOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Getriebeöl (Jahre)</label>
-                  <input
-                    type="number"
-                    name="gearboxOilInterval"
-                    id="gearboxOilInterval"
-                    defaultValue={settings?.gearboxOilInterval}
-                    min="1"
-                    max="10"
-                    required
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="gearboxOilKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Getriebeöl (km)</label>
-                  <input
-                    type="number"
-                    name="gearboxOilKmInterval"
-                    id="gearboxOilKmInterval"
-                    defaultValue={settings?.gearboxOilKmInterval ?? ""}
-                    min="1000"
-                    step="1000"
-                    placeholder="Optional"
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="finalDriveOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kardanöl (Jahre)</label>
-                  <input
-                    type="number"
-                    name="finalDriveOilInterval"
-                    id="finalDriveOilInterval"
-                    defaultValue={settings?.finalDriveOilInterval}
-                    min="1"
-                    max="10"
-                    required
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="finalDriveOilKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kardanöl (km)</label>
-                  <input
-                    type="number"
-                    name="finalDriveOilKmInterval"
-                    id="finalDriveOilKmInterval"
-                    defaultValue={settings?.finalDriveOilKmInterval ?? ""}
-                    min="1000"
-                    step="1000"
-                    placeholder="Optional"
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="forkOilInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Gabelöl (Jahre)</label>
-                  <input
-                    type="number"
-                    name="forkOilInterval"
-                    id="forkOilInterval"
-                    defaultValue={settings?.forkOilInterval}
-                    min="1"
-                    max="10"
-                    required
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="forkOilKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Gabelöl (km)</label>
-                  <input
-                    type="number"
-                    name="forkOilKmInterval"
-                    id="forkOilKmInterval"
-                    defaultValue={settings?.forkOilKmInterval ?? ""}
-                    min="1000"
-                    step="1000"
-                    placeholder="Optional"
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="brakeFluidInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Bremsflüssigkeit (Jahre)</label>
-                  <input
-                    type="number"
-                    name="brakeFluidInterval"
-                    id="brakeFluidInterval"
-                    defaultValue={settings?.brakeFluidInterval}
-                    min="1"
-                    max="10"
-                    required
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="brakeFluidKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Bremsflüssigkeit (km)</label>
-                  <input
-                    type="number"
-                    name="brakeFluidKmInterval"
-                    id="brakeFluidKmInterval"
-                    defaultValue={settings?.brakeFluidKmInterval ?? ""}
-                    min="1000"
-                    step="1000"
-                    placeholder="Optional"
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="coolantInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kühlflüssigkeit (Jahre)</label>
-                  <input
-                    type="number"
-                    name="coolantInterval"
-                    id="coolantInterval"
-                    defaultValue={settings?.coolantInterval}
-                    min="1"
-                    max="10"
-                    required
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="coolantKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kühlflüssigkeit (km)</label>
-                  <input
-                    type="number"
-                    name="coolantKmInterval"
-                    id="coolantKmInterval"
-                    defaultValue={settings?.coolantKmInterval ?? ""}
-                    min="1000"
-                    step="1000"
-                    placeholder="Optional"
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="space-y-4 sm:col-span-2">

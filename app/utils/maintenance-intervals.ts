@@ -1,4 +1,5 @@
-import { type MaintenanceRecord, type UserSettings } from "~/types/db";
+import { type FluidType, type MaintenanceRecord, type UserSettings } from "~/types/db";
+import { fluidTypeLabels } from "~/utils/maintenance";
 
 export const DEFAULT_MAINTENANCE_INTERVALS = {
   tire: 8,
@@ -10,6 +11,7 @@ export const DEFAULT_MAINTENANCE_INTERVALS = {
     engineoil: 2,
     gearboxoil: 2,
     finaldriveoil: 2,
+    finaldrivegearboxoil: 2,
     forkoil: 4,
     brakefluid: 4,
     coolant: 4,
@@ -110,6 +112,7 @@ export const getMaintenanceInsights = (
           engineoil: { years: settings.engineOilInterval, kms: settings.engineOilKmInterval },
           gearboxoil: { years: settings.gearboxOilInterval, kms: settings.gearboxOilKmInterval },
           finaldriveoil: { years: settings.finalDriveOilInterval, kms: settings.finalDriveOilKmInterval },
+          finaldrivegearboxoil: { years: settings.finalDriveGearboxOilInterval, kms: settings.finalDriveGearboxOilKmInterval },
           forkoil: { years: settings.forkOilInterval, kms: settings.forkOilKmInterval },
           brakefluid: { years: settings.brakeFluidInterval, kms: settings.brakeFluidKmInterval },
           coolant: { years: settings.coolantInterval, kms: settings.coolantKmInterval },
@@ -123,6 +126,7 @@ export const getMaintenanceInsights = (
           engineoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.engineoil, kms: null },
           gearboxoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.gearboxoil, kms: null },
           finaldriveoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.finaldriveoil, kms: null },
+          finaldrivegearboxoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.finaldrivegearboxoil, kms: null },
           forkoil: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.forkoil, kms: null },
           brakefluid: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.brakefluid, kms: null },
           coolant: { years: DEFAULT_MAINTENANCE_INTERVALS.fluid.coolant, kms: null },
@@ -228,27 +232,18 @@ export const getMaintenanceInsights = (
     : intervals.battery.default;
   createInsight("battery", "Batterie", "Batterie", latestBattery, batteryYears);
 
-  // 3. Fluids
-  const fluidsToCheck = [
-    { type: "engineoil", label: "Motoröl" },
-    { type: "gearboxoil", label: "Getriebeöl" },
-    { type: "finaldriveoil", label: "Kardanöl" },
-    { type: "forkoil", label: "Gabelöl" },
-    { type: "brakefluid", label: "Bremsflüssigkeit" },
-    { type: "coolant", label: "Kühlflüssigkeit" },
-  ] as const;
-
-  fluidsToCheck.forEach((fluid) => {
+  // 3. Fluids — order + labels come from the single fluidTypeLabels map.
+  (Object.keys(intervals.fluid) as FluidType[]).forEach((fluidType) => {
     const record = findLatest(
-      (r) => r.type === "fluid" && r.fluidType === fluid.type,
+      (r) => r.type === "fluid" && r.fluidType === fluidType,
     );
     createInsight(
-      `fluid-${fluid.type}`,
+      `fluid-${fluidType}`,
       "Flüssigkeiten",
-      fluid.label,
+      fluidTypeLabels[fluidType],
       record,
-      intervals.fluid[fluid.type].years,
-      intervals.fluid[fluid.type].kms,
+      intervals.fluid[fluidType].years,
+      intervals.fluid[fluidType].kms,
     );
   });
 
