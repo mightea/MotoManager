@@ -1,6 +1,8 @@
 import { fetchFromBackend } from "~/utils/backend";
 import { cachedFetch, invalidate, invalidatePrefix } from "~/utils/request-cache";
 import {
+  type Location,
+  type LocationType,
   type NewCurrencySetting,
   type NewLocation,
   type NewUserSettings,
@@ -33,6 +35,24 @@ export async function updateUserSettings(
 export async function getLocations(token: string, _userId: number) {
   const response = await cachedFetch(`locations:${token}`, LOCATIONS_TTL_MS, () =>
     fetchFromBackend<{ locations: any[] }>("/locations", {}, token),
+  );
+  return response.locations;
+}
+
+/**
+ * Proximity search for locations that have coordinates, nearest-first. Unlike
+ * `getLocations` this is intentionally NOT request-cached: the result depends on
+ * the caller's live coordinates, so caching by token alone would return a stale
+ * neighbourhood for a different position.
+ */
+export async function getNearbyLocations(
+  token: string,
+  { lat, lon, radius, type }: { lat: number; lon: number; radius: number; type: LocationType },
+): Promise<Location[]> {
+  const response = await fetchFromBackend<{ locations: Location[] }>(
+    `/locations?types=${type}&lat=${lat}&lon=${lon}&radius=${radius}`,
+    {},
+    token,
   );
   return response.locations;
 }

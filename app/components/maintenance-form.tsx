@@ -19,6 +19,9 @@ import {
     Fuel
 } from "lucide-react";
 import { useUmami } from "./umami-provider";
+import { getSessionToken } from "~/services/auth";
+import { getNearbyLocations } from "~/services/settings";
+import { createReverseGeocoder } from "~/utils/reverse-geocode";
 
 interface MaintenanceFormProps {
     motorcycleId: number;
@@ -51,6 +54,15 @@ interface LocationPickerFieldProps {
     label: string;
     selectPlaceholder: string;
     newPlaceholder: string;
+    /**
+     * Enables the "near me" geolocation flow: picks up the current position,
+     * queries nearby locations of `locationType`, and either selects the nearest
+     * match or falls back to creating a new one (name reverse-geocoded,
+     * coordinates captured in hidden inputs). Used for fuel stations.
+     */
+    enableNearMe?: boolean;
+    /** Button label for the near-me action (e.g. "Tankstelle in der Nähe"). */
+    nearMeLabel?: string;
 }
 
 function LocationPickerField({
@@ -60,23 +72,104 @@ function LocationPickerField({
     label,
     selectPlaceholder,
     newPlaceholder,
+    enableNearMe = false,
+    nearMeLabel = "In der Nähe",
 }: LocationPickerFieldProps) {
     const options = userLocations.filter(l => l.type === locationType);
     const hasOptions = options.length > 0;
     const [isNewLocation, setIsNewLocation] = useState(!hasOptions);
+    const [locationId, setLocationId] = useState<string>(
+        initialLocationId != null ? String(initialLocationId) : "",
+    );
+    const [newName, setNewName] = useState("");
+    // Coordinates captured from the near-me flow; only submitted when creating a
+    // brand-new station so the backend can persist them.
+    const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [isLocating, setIsLocating] = useState(false);
+    const [geoError, setGeoError] = useState<string | null>(null);
+    const [nearInfo, setNearInfo] = useState<string | null>(null);
+
+    const handleNearMe = () => {
+        if (!navigator.geolocation) {
+            setGeoError("Geolokalisierung wird nicht unterstützt.");
+            return;
+        }
+        setIsLocating(true);
+        setGeoError(null);
+        setNearInfo(null);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                try {
+                    const token = getSessionToken();
+                    if (!token) {
+                        setGeoError("Nicht angemeldet.");
+                        return;
+                    }
+                    const nearby = await getNearbyLocations(token, {
+                        lat: latitude,
+                        lon: longitude,
+                        radius: 250,
+                        type: locationType,
+                    });
+                    if (nearby.length > 0) {
+                        // Response is nearest-first — take the closest match.
+                        const nearest = nearby[0];
+                        setIsNewLocation(false);
+                        setLocationId(String(nearest.id));
+                        setCoords(null);
+                        setNearInfo(`Erkannt: ${nearest.name}`);
+                    } else {
+                        // Nothing known nearby → new-station mode, name reverse-
+                        // geocoded and coordinates captured for submission.
+                        setCoords({ latitude, longitude });
+                        setLocationId("");
+                        setIsNewLocation(true);
+                        const reverseGeocode = createReverseGeocoder();
+                        const name = await reverseGeocode(latitude, longitude);
+                        if (name) setNewName(name);
+                        setNearInfo("Keine bekannte in der Nähe – neuer Eintrag wird erstellt.");
+                    }
+                } catch {
+                    setGeoError("In der Nähe konnte nichts geladen werden.");
+                } finally {
+                    setIsLocating(false);
+                }
+            },
+            (error) => {
+                setGeoError(error.message || "Standort konnte nicht ermittelt werden.");
+                setIsLocating(false);
+            },
+        );
+    };
 
     return (
         <div className="space-y-1.5 sm:col-span-2">
-            <label htmlFor="locationId" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
-                {label}
-            </label>
+            <div className="flex items-center justify-between gap-2">
+                <label htmlFor="locationId" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+                    {label}
+                </label>
+                {enableNearMe && (
+                    <button
+                        type="button"
+                        onClick={handleNearMe}
+                        disabled={isLocating}
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 disabled:opacity-60 dark:border-navy-600 dark:hover:bg-navy-800"
+                    >
+                        <MapPin className="h-3.5 w-3.5" />
+                        {isLocating ? "Ortet..." : nearMeLabel}
+                    </button>
+                )}
+            </div>
             <div className="space-y-2">
                 {!isNewLocation && hasOptions ? (
                     <div className="flex gap-2">
                         <select
                             name="locationId"
                             id="locationId"
-                            defaultValue={initialLocationId ?? ""}
+                            value={locationId}
+                            onChange={(e) => setLocationId(e.target.value)}
                             className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         >
                             <option value="" disabled>{selectPlaceholder}</option>
@@ -99,18 +192,32 @@ function LocationPickerField({
                             name="newLocationName"
                             id="newLocationName"
                             placeholder={newPlaceholder}
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
                             className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                         />
                         {hasOptions && (
                             <button
                                 type="button"
-                                onClick={() => setIsNewLocation(false)}
+                                onClick={() => { setIsNewLocation(false); setCoords(null); }}
                                 className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-navy-600 dark:hover:bg-navy-800"
                             >
                                 Abbrechen
                             </button>
                         )}
                     </div>
+                )}
+                {isNewLocation && coords && (
+                    <>
+                        <input type="hidden" name="newLocationLatitude" value={coords.latitude} />
+                        <input type="hidden" name="newLocationLongitude" value={coords.longitude} />
+                    </>
+                )}
+                {nearInfo && (
+                    <p className="text-xs text-secondary/80 dark:text-navy-400">{nearInfo}</p>
+                )}
+                {geoError && (
+                    <p className="text-xs text-error">{geoError}</p>
                 )}
             </div>
         </div>
@@ -586,6 +693,8 @@ export function MaintenanceForm({
                             label="Tankstelle"
                             selectPlaceholder="Wähle eine Tankstelle..."
                             newPlaceholder="Neue Tankstelle (z.B. Shell Zürich)"
+                            enableNearMe
+                            nearMeLabel="Tankstelle in der Nähe"
                         />
                     </>
                 )}

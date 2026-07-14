@@ -422,10 +422,17 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     if (newLocationName) {
       const locationType = maintenanceTypeToLocationType[type] ?? "fuelStation";
+      // Coordinates only present when the "near me" flow created this station;
+      // a manually typed name submits no coords and keeps the no-coords path.
+      const newLocationLatitude = parseNumber(formData.get("newLocationLatitude"));
+      const newLocationLongitude = parseNumber(formData.get("newLocationLongitude"));
       const newLoc = await createLocation(token, {
         name: newLocationName,
         type: locationType,
         userId: user.id,
+        ...(newLocationLatitude != null && newLocationLongitude != null
+          ? { latitude: newLocationLatitude, longitude: newLocationLongitude }
+          : {}),
       });
       if (newLoc) {
         locationId = newLoc.id;
