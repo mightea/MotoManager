@@ -22,6 +22,8 @@ type InspectionTier = "overdue" | "due-soon" | "ok" | "none";
 
 interface MotorcycleCardProps {
   moto: DashboardCard;
+  /** Warn the yearly-km slot when the bike's distance this year is below this. */
+  minKmPerYear: number;
 }
 
 /**
@@ -40,7 +42,7 @@ interface MotorcycleCardProps {
  *
  * Hover lifts the card and elevates the photo slightly.
  */
-export function MotorcycleCard({ moto }: MotorcycleCardProps) {
+export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
   const [imageError, setImageError] = useState(false);
   const slug = createMotorcycleSlug(moto.make, moto.model);
   const currentYear = new Date().getFullYear();
@@ -61,6 +63,9 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
     );
     return daysUntil <= INSPECTION_WARNING_DAYS ? "due-soon" : "ok";
   })();
+
+  // Flag bikes ridden less than the yearly minimum (0 disables the check).
+  const belowYearlyTarget = minKmPerYear > 0 && moto.odometerThisYear < minKmPerYear;
 
   const hasMaintenance = moto.hasOverdueMaintenance;
   const hasIssues = moto.numberOfIssues > 0;
@@ -149,7 +154,7 @@ export function MotorcycleCard({ moto }: MotorcycleCardProps) {
           icon={RouteIcon}
           value={moto.odometerThisYear > 0 ? formatNumber(moto.odometerThisYear) : "—"}
           caption={`km · ${currentYear}`}
-          tone={moto.odometerThisYear > 0 ? "default" : "muted"}
+          tone={belowYearlyTarget ? "warn" : moto.odometerThisYear > 0 ? "default" : "muted"}
         />
         <TelemetrySlot
           icon={CalendarDays}

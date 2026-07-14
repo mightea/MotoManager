@@ -277,6 +277,7 @@ export interface UserSettings {
   brakeFluidKmInterval: number | null;
   coolantKmInterval: number | null;
   chainKmInterval: number | null;
+  minKmPerYear: number;
   updatedAt: string;
 }
 

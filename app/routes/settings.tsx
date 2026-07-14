@@ -14,7 +14,7 @@ import {
   updateLocation,
   updateUserSettings,
 } from "~/services/settings";
-import { normalizeLocationName } from "~/utils/geo";
+import { haversineMeters, normalizeLocationName } from "~/utils/geo";
 import { fluidTypeLabels } from "~/utils/maintenance";
 import {
   requireUser,
@@ -97,6 +97,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const brakeFluidKmInterval = parseKm(formData.get("brakeFluidKmInterval"));
     const coolantKmInterval = parseKm(formData.get("coolantKmInterval"));
     const chainKmInterval = parseKm(formData.get("chainKmInterval"));
+    // 0 (or blank) disables the yearly-distance warning on the overview cards.
+    const minKmPerYear = parseKm(formData.get("minKmPerYear")) ?? 0;
 
     await updateUserSettings(token, user.id, {
       tireInterval,
@@ -119,6 +121,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       brakeFluidKmInterval,
       coolantKmInterval,
       chainKmInterval,
+      minKmPerYear,
     });
     return { success: "Service-Intervalle aktualisiert." };
   }
@@ -305,21 +308,67 @@ function chooseCanonical(items: Location[]): Location {
   return pool.reduce((best, l) => (l.id < best.id ? l : best));
 }
 
+/** Two coordinate-bearing locations closer than this count as the same place. */
+const PROXIMITY_MERGE_RADIUS_M = 50;
+
+/** "47.3769, 8.5417" for a coordinate-bearing location, else null. */
+function formatCoords(l: Location): string | null {
+  if (l.latitude === null || l.longitude === null) return null;
+  return `${l.latitude.toFixed(4)}, ${l.longitude.toFixed(4)}`;
+}
+
 /**
- * Group a section's locations by normalized name and return only the groups
- * that actually have duplicates (two or more entries sharing a name).
+ * Cluster a section's locations into duplicate groups. Two entries are linked
+ * when they share a normalized name OR sit within PROXIMITY_MERGE_RADIUS_M of
+ * each other; links are transitive (union-find), so a chain A~B~C collapses
+ * into one group. Only clusters with 2+ members are returned. O(n²) is fine —
+ * per-user, per-section location counts are small.
  */
 function findDuplicateGroups(items: Location[]): DuplicateGroup[] {
-  const byName = new Map<string, Location[]>();
-  for (const loc of items) {
-    const key = normalizeLocationName(loc.name);
-    if (!key) continue;
-    const arr = byName.get(key);
-    if (arr) arr.push(loc);
-    else byName.set(key, [loc]);
+  const n = items.length;
+  if (n < 2) return [];
+
+  const names = items.map((l) => normalizeLocationName(l.name));
+  const parent = items.map((_, i) => i);
+  const find = (i: number): number => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  };
+  const union = (a: number, b: number) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  };
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = items[i];
+      const b = items[j];
+      const sameName = names[i] !== "" && names[i] === names[j];
+      const nearby =
+        a.latitude !== null &&
+        a.longitude !== null &&
+        b.latitude !== null &&
+        b.longitude !== null &&
+        haversineMeters(a.latitude, a.longitude, b.latitude, b.longitude) <=
+          PROXIMITY_MERGE_RADIUS_M;
+      if (sameName || nearby) union(i, j);
+    }
   }
+
+  const clusters = new Map<number, Location[]>();
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    const arr = clusters.get(root);
+    if (arr) arr.push(items[i]);
+    else clusters.set(root, [items[i]]);
+  }
+
   const groups: DuplicateGroup[] = [];
-  for (const arr of byName.values()) {
+  for (const arr of clusters.values()) {
     if (arr.length < 2) continue;
     const canonical = chooseCanonical(arr);
     groups.push({
@@ -939,13 +988,30 @@ export default function Settings() {
                       Behalten
                     </span>
                     <span className="truncate">{g.canonical.name}</span>
+                    {formatCoords(g.canonical) && (
+                      <span className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-base-content/45">
+                        {formatCoords(g.canonical)}
+                      </span>
+                    )}
                   </p>
-                  <p className="mt-1 text-xs text-secondary dark:text-navy-400">
-                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
-                      Zusammenführen
-                    </span>{" "}
-                    {g.duplicates.map((d) => d.name).join(", ")} ({g.duplicates.length})
-                  </p>
+                  <ul className="mt-1.5 space-y-1">
+                    {g.duplicates.map((d) => (
+                      <li
+                        key={d.id}
+                        className="flex items-center gap-2 text-xs text-secondary dark:text-navy-400"
+                      >
+                        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                          Zusammenführen
+                        </span>
+                        <span className="truncate">{d.name}</span>
+                        {formatCoords(d) && (
+                          <span className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-base-content/40">
+                            {formatCoords(d)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
@@ -1038,6 +1104,22 @@ export default function Settings() {
                   required
                   className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="minKmPerYear" className="text-xs font-semibold text-secondary dark:text-navy-300">Mindest-km / Jahr</label>
+                <input
+                  type="number"
+                  name="minKmPerYear"
+                  id="minKmPerYear"
+                  defaultValue={settings?.minKmPerYear ?? 150}
+                  min="0"
+                  step="50"
+                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                />
+                <p className="text-[11px] text-secondary/70 dark:text-navy-400">
+                  Jahresfahrleistung unter diesem Wert wird auf der Übersicht als Warnung markiert. 0 deaktiviert die Warnung.
+                </p>
               </div>
             </div>
 

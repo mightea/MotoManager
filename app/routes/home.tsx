@@ -2,7 +2,7 @@ import { data, useActionData, useNavigate, useNavigation, useSearchParams } from
 import type { Route } from "./+types/home";
 import { createMotorcycle } from "~/services/motorcycles";
 import { fetchModelSeries } from "~/services/parts";
-import { getCurrencies } from "~/services/settings";
+import { getCurrencies, getUserSettings } from "~/services/settings";
 import { requireUser } from "~/services/auth";
 import { getUserPrefs, setUserPrefs } from "~/services/preferences";
 import { fetchFromBackend } from "~/utils/backend";
@@ -74,16 +74,19 @@ export function meta() {
 export async function clientLoader({ request: _request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(_request);
 
-  const [dashboardData, currencies, modelSeries] = await Promise.all([
+  const [dashboardData, currencies, modelSeries, settings] = await Promise.all([
     fetchFromBackend<any>("/home", {}, token),
     getCurrencies(),
     fetchModelSeries(token).catch(() => []),
+    getUserSettings(token, user.id).catch(() => null),
   ]);
 
   const cards: MotorcycleDashboardItem[] = dashboardData?.motorcycles ?? [];
   const stats = normalizeDashboardStats(dashboardData?.stats);
+  // Yearly-distance warning threshold for the overview cards (default 150 km/yr).
+  const minKmPerYear = settings?.minKmPerYear ?? 150;
 
-  return data({ cards, stats, user, currencies, modelSeries });
+  return data({ cards, stats, user, currencies, modelSeries, minKmPerYear });
 }
 
 export function shouldRevalidate({
@@ -203,7 +206,7 @@ function matchesFilter(card: MotorcycleDashboardItem, filter: FilterKey): boolea
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { cards, stats, currencies, modelSeries } = loaderData;
+  const { cards, stats, currencies, modelSeries, minKmPerYear } = loaderData;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -501,7 +504,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           pagedCards.map((moto: MotorcycleDashboardItem) => (
             <MotorcycleCard
               key={moto.id}
-              moto={moto} />
+              moto={moto}
+              minKmPerYear={minKmPerYear} />
           ))
         )}
       </div>
