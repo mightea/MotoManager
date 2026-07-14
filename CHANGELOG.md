@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026.7.6](https://github.com/mightea/MotoManager/compare/2026.7.5...2026.7.6) (2026-07-14)
+
+
+### ✨ Features
+
+* add Hinterachsgetriebeöl fluid type, consolidate labels ([fc8df3e](https://github.com/mightea/MotoManager/commit/fc8df3e3d8acbd54e1b3f4b4cf0cc9e0b50386c1))
+* de-duplicate locations per section in settings ([ff79b3b](https://github.com/mightea/MotoManager/commit/ff79b3b2c03669410d5ae2520034514965280119))
+* pick a nearby fuel station from your location ([af6660b](https://github.com/mightea/MotoManager/commit/af6660b1e343eaf92ebcb3b74aee3438d31b5793))
+* use backend coordinate matching in fuel import ([93df932](https://github.com/mightea/MotoManager/commit/93df9324a5898b959f33363676a82fb9159fa313))
+
 ## [2026.7.5](https://github.com/mightea/MotoManager/compare/2026.7.4...2026.7.5) (2026-07-13)
 
 
