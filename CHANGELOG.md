@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026.7.7](https://github.com/mightea/MotoManager/compare/2026.7.6...2026.7.7) (2026-07-15)
+
+
+### ✨ Features
+
+* brake-type config and simplified brake maintenance dialog ([cee38f9](https://github.com/mightea/MotoManager/commit/cee38f9d3d2cc0216f43eb828c278916d0fa56be))
+* drivetrain filtering and drum-brake component fix ([d15ea53](https://github.com/mightea/MotoManager/commit/d15ea5330aafde5c3ee6f40d9bed1a828bce3a43))
+* min km/year card warning and proximity location merge ([9a7dec6](https://github.com/mightea/MotoManager/commit/9a7dec62e016ca637ae340f8e512d41393fa79d8))
+
 ## [2026.7.6](https://github.com/mightea/MotoManager/compare/2026.7.5...2026.7.6) (2026-07-14)
 
 
