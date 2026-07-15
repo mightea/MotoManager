@@ -58,10 +58,20 @@ export interface Motorcycle {
   fuelTankSize: number | null;
   /** Model-series link for derived part compatibility (migration 012). */
   seriesId: number | null;
+  /**
+   * Per-wheel brake type; null = unconfigured (maintenance UI then shows every
+   * brake option). Sidecar only meaningful when hasSidecar. See migration 038.
+   */
+  frontBrakeType: BrakeType | null;
+  rearBrakeType: BrakeType | null;
+  sidecarBrakeType: BrakeType | null;
   latestOdo?: number | null;
   openIssues?: number;
   maintenanceCount?: number;
 }
+
+/** Disc (Scheibenbremse) vs drum (Trommelbremse) brake at a wheel. */
+export type BrakeType = "disc" | "drum";
 
 export type NewMotorcycle = Omit<Motorcycle, "id" | "latestOdo" | "openIssues" | "maintenanceCount">;
 export type EditorMotorcycle = Partial<NewMotorcycle>;

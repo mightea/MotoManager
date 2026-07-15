@@ -49,6 +49,10 @@ export const motorcycleSchema = z.object({
   isArchived: z.preprocess(preprocessBoolean, z.boolean().default(false)),
   hasSidecar: z.preprocess(preprocessBoolean, z.boolean().default(false)),
   fuelTankSize: z.preprocess(preprocessNumber, z.number().min(0, "Tankgrösse muss grösser oder gleich 0 sein.").optional()),
+  // Per-wheel brake type; empty string clears the value on the backend.
+  frontBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
+  rearBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
+  sidecarBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
 });
 
 export const previousOwnerSchema = z.object({

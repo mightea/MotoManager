@@ -1,4 +1,4 @@
-import type { MaintenanceRecord, MaintenanceType, Location, FluidType, TirePosition, BatteryType } from "~/types/db";
+import type { MaintenanceRecord, MaintenanceType, Location, FluidType, TirePosition, BatteryType, BrakeType } from "~/types/db";
 
 export const maintenanceTypeLabels: Record<MaintenanceType, string> = {
   tire: "Reifenwechsel",
@@ -30,6 +30,27 @@ export const tirePositionLabels: Record<TirePosition, string> = {
   rear: "Hinten",
   sidecar: "Beiwagen",
 };
+
+export const brakeTypeLabels: Record<BrakeType, string> = {
+  disc: "Scheibenbremse",
+  drum: "Trommelbremse",
+};
+
+/**
+ * Label for a brake component, given the wheel's brake type. The stored record
+ * `type` stays `brakepad` / `brakerotor`; the disc/drum wording is derived from
+ * the motorcycle's config. Unknown type falls back to the disc (Bremsbeläge/
+ * Bremsscheibe) wording.
+ */
+export function brakeComponentLabel(
+  component: "brakepad" | "brakerotor",
+  brakeType: BrakeType | null | undefined,
+): string {
+  if (brakeType === "drum") {
+    return component === "brakepad" ? "Bremsbacken" : "Bremstrommel";
+  }
+  return component === "brakepad" ? "Bremsbeläge" : "Bremsscheibe";
+}
 
 export const batteryTypeLabels: Record<BatteryType, string> = {
   "lead-acid": "Blei-Säure",

@@ -59,6 +59,8 @@ export function AddMotorcycleForm({
   const submit = useSubmit();
   const navigation = useNavigation();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  // Tracked so the sidecar brake select only shows for a sidecar rig.
+  const [hasSidecar, setHasSidecar] = useState<boolean>(Boolean(initialValues?.hasSidecar));
 
   const isSubmitting = navigation.state === "submitting" &&
                       (navigation.formData?.get("intent") === intent ||
@@ -484,7 +486,8 @@ export function AddMotorcycleForm({
               name="hasSidecar"
               id="hasSidecar"
               value="true"
-              defaultChecked={Boolean(initialValues?.hasSidecar)}
+              checked={hasSidecar}
+              onChange={(e) => setHasSidecar(e.target.checked)}
               className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900 dark:checked:bg-primary" />
             <label htmlFor="hasSidecar" className="text-sm font-medium text-foreground dark:text-white">
               Beiwagen (Gespann)
@@ -501,6 +504,41 @@ export function AddMotorcycleForm({
             <label htmlFor="isArchived" className="text-sm font-medium text-foreground dark:text-white">
               Archiviert
             </label>
+          </div>
+
+          {/* Per-wheel brake type — drives the brake options in the maintenance
+              dialog. Leave a wheel on "—" to keep every option available. */}
+          <div className="space-y-2 border-t border-gray-100 pt-3 dark:border-navy-700">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+              Bremsen
+            </span>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {(
+                [
+                  { name: "frontBrakeType", label: "Vorne", value: initialValues?.frontBrakeType },
+                  { name: "rearBrakeType", label: "Hinten", value: initialValues?.rearBrakeType },
+                  ...(hasSidecar
+                    ? [{ name: "sidecarBrakeType", label: "Beiwagen", value: initialValues?.sidecarBrakeType }]
+                    : []),
+                ] as const
+              ).map((b) => (
+                <div key={b.name} className="space-y-1">
+                  <label htmlFor={b.name} className="text-xs font-medium text-secondary dark:text-navy-300">
+                    {b.label}
+                  </label>
+                  <select
+                    name={b.name}
+                    id={b.name}
+                    defaultValue={b.value ?? ""}
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                  >
+                    <option value="">—</option>
+                    <option value="disc">Scheibenbremse</option>
+                    <option value="drum">Trommelbremse</option>
+                  </select>
+                </div>
+              ))}
+            </div>
           </div>
 
           {initialValues?.id && onManagePreviousOwners && (

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
-import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting } from "~/types/db";
-import { fluidTypeLabels } from "~/utils/maintenance";
+import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting, BrakeType, TirePosition } from "~/types/db";
+import { fluidTypeLabels, brakeComponentLabel, tirePositionLabels } from "~/utils/maintenance";
 import type { Part } from "~/types/parts";
 import {
     Wrench,
@@ -13,7 +13,6 @@ import {
     Link,
     ClipboardCheck,
     Hammer,
-    Layers,
     CircleDashed,
     ClipboardList,
     MapPin,
@@ -24,6 +23,14 @@ import { getSessionToken } from "~/services/auth";
 import { getNearbyLocations } from "~/services/settings";
 import { createReverseGeocoder } from "~/utils/reverse-geocode";
 
+/** The motorcycle's per-wheel brake config, used to filter brake options. */
+export interface BrakeConfig {
+    hasSidecar: boolean;
+    front: BrakeType | null;
+    rear: BrakeType | null;
+    sidecar: BrakeType | null;
+}
+
 interface MaintenanceFormProps {
     motorcycleId: number;
     initialData?: MaintenanceRecord | null;
@@ -33,9 +40,27 @@ interface MaintenanceFormProps {
     currencies?: CurrencySetting[];
     /** Parts with positive on-hand, offered as "Verwendete Teile" on create. */
     availableParts?: Part[];
+    /** Per-wheel brake config; drives which brake jobs/positions are offered. */
+    brakeConfig?: BrakeConfig;
     onCancel: () => void;
     onDelete?: () => void;
     existingBundledItems?: string[];
+}
+
+/**
+ * Brake positions offered for a config: front/rear always exist; sidecar only
+ * when it's a rig with a configured sidecar brake. Each carries the wheel's
+ * disc/drum type (null when unconfigured → generic disc wording).
+ */
+function brakePositions(cfg?: BrakeConfig): { value: TirePosition; brakeType: BrakeType | null }[] {
+    const positions: { value: TirePosition; brakeType: BrakeType | null }[] = [
+        { value: "front", brakeType: cfg?.front ?? null },
+        { value: "rear", brakeType: cfg?.rear ?? null },
+    ];
+    if (cfg?.hasSidecar && cfg?.sidecar) {
+        positions.push({ value: "sidecar", brakeType: cfg.sidecar });
+    }
+    return positions;
 }
 
 const EMPTY_CURRENCIES: CurrencySetting[] = [];
@@ -225,7 +250,11 @@ function LocationPickerField({
     );
 }
 
-const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] = [
+// UI-only "brake" groups the brakepad/brakerotor record types behind a
+// position + component picker; the real type is resolved on submit.
+type FormType = MaintenanceType | "brake";
+
+const maintenanceTypes: { value: FormType; label: string; icon: any }[] = [
     { value: "tire", label: "Reifenwechsel", icon: CircleDashed },
     { value: "service", label: "Service", icon: ClipboardList },
     { value: "repair", label: "Reparatur", icon: Hammer },
@@ -233,8 +262,7 @@ const maintenanceTypes: { value: MaintenanceType; label: string; icon: any }[] =
     { value: "fuel", label: "Tanken", icon: Fuel },
     { value: "fluid", label: "Flüssigkeit", icon: Droplet },
     { value: "chain", label: "Kette", icon: Link },
-    { value: "brakepad", label: "Bremsbeläge", icon: Layers },
-    { value: "brakerotor", label: "Bremsscheibe", icon: Disc },
+    { value: "brake", label: "Bremse", icon: Disc },
     { value: "battery", label: "Batterie", icon: Battery },
     { value: "location", label: "Standort", icon: MapPin },
     { value: "general", label: "Allgemein", icon: Wrench },
@@ -250,6 +278,7 @@ export function MaintenanceForm({
     userLocations = EMPTY_LOCATIONS,
     currencies = EMPTY_CURRENCIES,
     availableParts = EMPTY_PARTS,
+    brakeConfig,
     onCancel,
     onDelete,
     existingBundledItems = EMPTY_BUNDLED_ITEMS
@@ -260,7 +289,24 @@ export function MaintenanceForm({
     const isSubmitting =
         navigation.state === "submitting" &&
         (pendingIntent === "createMaintenance" || pendingIntent === "updateMaintenance");
-    const [type, setType] = useState<MaintenanceType>(initialData?.type || "fuel");
+    // A stored brakepad/brakerotor record maps back to the UI-only "brake" type.
+    const initialIsBrake = initialData?.type === "brakepad" || initialData?.type === "brakerotor";
+    const [type, setType] = useState<FormType>(
+        initialIsBrake ? "brake" : (initialData?.type || "fuel"),
+    );
+
+    const positions = brakePositions(brakeConfig);
+    const [brakeComponent, setBrakeComponent] = useState<"brakepad" | "brakerotor">(
+        initialData?.type === "brakerotor" ? "brakerotor" : "brakepad",
+    );
+    const [brakePosition, setBrakePosition] = useState<TirePosition>(
+        (initialIsBrake && (initialData?.tirePosition as TirePosition)) || positions[0].value,
+    );
+    const activeBrakeType =
+        positions.find((p) => p.value === brakePosition)?.brakeType ?? null;
+    // The record type actually submitted: brakepad/brakerotor for a brake entry.
+    const submittedType: MaintenanceType = type === "brake" ? brakeComponent : type;
+
     const [bundledItems, setBundledItems] = useState<string[]>(existingBundledItems);
 
     const [fuelAmount, setFuelAmount] = useState<string>(initialData?.fuelAmount?.toString() || "");
@@ -326,13 +372,15 @@ export function MaintenanceForm({
             {initialData && <input type="hidden" name="maintenanceId" value={initialData.id} />}
                         <input type="hidden" name="motorcycleId" value={motorcycleId} />
              
-                         {/* Type Selection */}
+                         {/* Type Selection — the select is UI-only; the record
+                             type actually submitted is `submittedType` (brake →
+                             brakepad/brakerotor). */}
+                         <input type="hidden" name="type" value={submittedType} />
                          <div className="space-y-1.5">
                              <label htmlFor="type" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Typ</label>
                              <select
-                                 name="type"
                                  id="type"                    value={type}
-                    onChange={(e) => setType(e.target.value as MaintenanceType)}
+                    onChange={(e) => setType(e.target.value as FormType)}
                     className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 >
                     {maintenanceTypes.map((t) => (
@@ -426,8 +474,41 @@ export function MaintenanceForm({
                     </div>
                 )}
 
+                {/* Brake position + component — options derived from the bike's
+                    per-wheel brake config. */}
+                {type === "brake" && (
+                    <>
+                        <div className="space-y-1.5">
+                            <label htmlFor="brakePosition" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Position</label>
+                            <select
+                                name="tirePosition"
+                                id="brakePosition"
+                                value={brakePosition}
+                                onChange={(e) => setBrakePosition(e.target.value as TirePosition)}
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                            >
+                                {positions.map((p) => (
+                                    <option key={p.value} value={p.value}>{tirePositionLabels[p.value]}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label htmlFor="brakeComponent" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Bauteil</label>
+                            <select
+                                id="brakeComponent"
+                                value={brakeComponent}
+                                onChange={(e) => setBrakeComponent(e.target.value as "brakepad" | "brakerotor")}
+                                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                            >
+                                <option value="brakepad">{brakeComponentLabel("brakepad", activeBrakeType)}</option>
+                                <option value="brakerotor">{brakeComponentLabel("brakerotor", activeBrakeType)}</option>
+                            </select>
+                        </div>
+                    </>
+                )}
+
                 {/* Brand/Model - Show for technical types */}
-                {(["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(type)) && (
+                {(["tire", "battery", "fluid", "chain", "brake"].includes(type)) && (
                     <>
                         <div className="space-y-1.5">
                             <label htmlFor="brand" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Marke / Hersteller</label>

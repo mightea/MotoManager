@@ -1174,6 +1174,12 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         userLocations={userLocations}
         currencies={currencies}
         availableParts={availableParts}
+        brakeConfig={{
+          hasSidecar: Boolean(motorcycle.hasSidecar),
+          front: motorcycle.frontBrakeType,
+          rear: motorcycle.rearBrakeType,
+          sidecar: motorcycle.sidecarBrakeType,
+        }}
       />
 
       <DeleteConfirmationDialog
