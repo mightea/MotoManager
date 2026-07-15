@@ -1180,6 +1180,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           rear: motorcycle.rearBrakeType,
           sidecar: motorcycle.sidecarBrakeType,
         }}
+        driveType={motorcycle.driveType}
       />
 
       <DeleteConfirmationDialog

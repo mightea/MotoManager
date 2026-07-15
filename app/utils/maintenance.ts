@@ -36,22 +36,6 @@ export const brakeTypeLabels: Record<BrakeType, string> = {
   drum: "Trommelbremse",
 };
 
-/**
- * Label for a brake component, given the wheel's brake type. The stored record
- * `type` stays `brakepad` / `brakerotor`; the disc/drum wording is derived from
- * the motorcycle's config. Unknown type falls back to the disc (Bremsbeläge/
- * Bremsscheibe) wording.
- */
-export function brakeComponentLabel(
-  component: "brakepad" | "brakerotor",
-  brakeType: BrakeType | null | undefined,
-): string {
-  if (brakeType === "drum") {
-    return component === "brakepad" ? "Bremsbacken" : "Bremstrommel";
-  }
-  return component === "brakepad" ? "Bremsbeläge" : "Bremsscheibe";
-}
-
 export const batteryTypeLabels: Record<BatteryType, string> = {
   "lead-acid": "Blei-Säure",
   gel: "Gel",

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
-import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting, BrakeType, TirePosition } from "~/types/db";
-import { fluidTypeLabels, brakeComponentLabel, tirePositionLabels } from "~/utils/maintenance";
+import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting, BrakeType, TirePosition, FluidType, DriveType } from "~/types/db";
+import { fluidTypeLabels, tirePositionLabels } from "~/utils/maintenance";
 import type { Part } from "~/types/parts";
 import {
     Wrench,
@@ -42,6 +42,8 @@ interface MaintenanceFormProps {
     availableParts?: Part[];
     /** Per-wheel brake config; drives which brake jobs/positions are offered. */
     brakeConfig?: BrakeConfig;
+    /** Drivetrain; filters chain- vs shaft-drive options. null = show all. */
+    driveType?: DriveType | null;
     onCancel: () => void;
     onDelete?: () => void;
     existingBundledItems?: string[];
@@ -61,6 +63,19 @@ function brakePositions(cfg?: BrakeConfig): { value: TirePosition; brakeType: Br
         positions.push({ value: "sidecar", brakeType: cfg.sidecar });
     }
     return positions;
+}
+
+/** Fluids that only exist on a shaft drive (hidden for chain-drive bikes). */
+const SHAFT_ONLY_FLUIDS: FluidType[] = ["finaldriveoil", "finaldrivegearboxoil"];
+
+/** A chain-drive bike has no Kardanöl / Hinterachsgetriebeöl. */
+function isFluidHiddenByDrive(fluidType: string, driveType?: DriveType | null): boolean {
+    return driveType === "chain" && SHAFT_ONLY_FLUIDS.includes(fluidType as FluidType);
+}
+
+/** A shaft-drive bike has no chain to service. */
+function isChainHiddenByDrive(driveType?: DriveType | null): boolean {
+    return driveType === "shaft";
 }
 
 const EMPTY_CURRENCIES: CurrencySetting[] = [];
@@ -279,6 +294,7 @@ export function MaintenanceForm({
     currencies = EMPTY_CURRENCIES,
     availableParts = EMPTY_PARTS,
     brakeConfig,
+    driveType,
     onCancel,
     onDelete,
     existingBundledItems = EMPTY_BUNDLED_ITEMS
@@ -304,8 +320,32 @@ export function MaintenanceForm({
     );
     const activeBrakeType =
         positions.find((p) => p.value === brakePosition)?.brakeType ?? null;
+    // Drum brakes have no separate disc/rotor, so only the friction part
+    // ("Bremsbeläge") is offered; disc (and unconfigured) also offer the disc.
+    const brakeComponentOptions: { value: "brakepad" | "brakerotor"; label: string }[] =
+        activeBrakeType === "drum"
+            ? [{ value: "brakepad", label: "Bremsbeläge" }]
+            : [
+                { value: "brakepad", label: "Bremsbeläge" },
+                { value: "brakerotor", label: "Bremsscheibe" },
+            ];
+    // Fall back to the friction part when the selected component isn't offered
+    // for this position (e.g. switching to a drum wheel while "Bremsscheibe" was
+    // selected), so we never submit a rotor for a drum brake.
+    const effectiveBrakeComponent = brakeComponentOptions.some((o) => o.value === brakeComponent)
+        ? brakeComponent
+        : brakeComponentOptions[0].value;
     // The record type actually submitted: brakepad/brakerotor for a brake entry.
-    const submittedType: MaintenanceType = type === "brake" ? brakeComponent : type;
+    const submittedType: MaintenanceType = type === "brake" ? effectiveBrakeComponent : type;
+
+    // Drivetrain filtering. An option the edited record already uses stays
+    // visible, so editing a legacy entry never hides its current value.
+    const visibleTypes = maintenanceTypes.filter(
+        (t) => t.value !== "chain" || !isChainHiddenByDrive(driveType) || initialData?.type === "chain",
+    );
+    const visibleFluidTypes = (Object.keys(fluidTypeLabels) as FluidType[]).filter(
+        (ft) => !isFluidHiddenByDrive(ft, driveType) || initialData?.fluidType === ft,
+    );
 
     const [bundledItems, setBundledItems] = useState<string[]>(existingBundledItems);
 
@@ -383,7 +423,7 @@ export function MaintenanceForm({
                     onChange={(e) => setType(e.target.value as FormType)}
                     className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 >
-                    {maintenanceTypes.map((t) => (
+                    {visibleTypes.map((t) => (
                         <option key={t.value} value={t.value}>
                             {t.label}
                         </option>
@@ -496,12 +536,13 @@ export function MaintenanceForm({
                             <label htmlFor="brakeComponent" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Bauteil</label>
                             <select
                                 id="brakeComponent"
-                                value={brakeComponent}
+                                value={effectiveBrakeComponent}
                                 onChange={(e) => setBrakeComponent(e.target.value as "brakepad" | "brakerotor")}
                                 className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
                             >
-                                <option value="brakepad">{brakeComponentLabel("brakepad", activeBrakeType)}</option>
-                                <option value="brakerotor">{brakeComponentLabel("brakerotor", activeBrakeType)}</option>
+                                {brakeComponentOptions.map((o) => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                ))}
                             </select>
                         </div>
                     </>
@@ -551,8 +592,12 @@ export function MaintenanceForm({
                             </span>
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {[
-                                    ...Object.entries(fluidTypeLabels).map(([value, label]) => ({ value, label })),
-                                    { value: "chain", label: "Kette reinigen/fetten" },
+                                    ...(Object.keys(fluidTypeLabels) as FluidType[])
+                                        .filter((ft) => !isFluidHiddenByDrive(ft, driveType) || existingBundledItems.includes(ft))
+                                        .map((value) => ({ value, label: fluidTypeLabels[value] })),
+                                    ...(!isChainHiddenByDrive(driveType) || existingBundledItems.includes("chain")
+                                        ? [{ value: "chain", label: "Kette reinigen/fetten" }]
+                                        : []),
                                 ].map((opt) => (
                                     <label
                                         key={opt.value}
@@ -654,8 +699,8 @@ export function MaintenanceForm({
                                 defaultValue={initialData?.fluidType || "engineoil"}
                                 className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                             >
-                                {Object.entries(fluidTypeLabels).map(([value, label]) => (
-                                    <option key={value} value={value}>{label}</option>
+                                {visibleFluidTypes.map((value) => (
+                                    <option key={value} value={value}>{fluidTypeLabels[value]}</option>
                                 ))}
                             </select>
                         </div>

@@ -65,6 +65,11 @@ export interface Motorcycle {
   frontBrakeType: BrakeType | null;
   rearBrakeType: BrakeType | null;
   sidecarBrakeType: BrakeType | null;
+  /**
+   * Drivetrain; null = unconfigured (maintenance UI shows every option). Filters
+   * chain- vs shaft-drive options. See migration 039.
+   */
+  driveType: DriveType | null;
   latestOdo?: number | null;
   openIssues?: number;
   maintenanceCount?: number;
@@ -72,6 +77,9 @@ export interface Motorcycle {
 
 /** Disc (Scheibenbremse) vs drum (Trommelbremse) brake at a wheel. */
 export type BrakeType = "disc" | "drum";
+
+/** Chain (Kettenantrieb) vs shaft (Kardanantrieb) final drive. */
+export type DriveType = "chain" | "shaft";
 
 export type NewMotorcycle = Omit<Motorcycle, "id" | "latestOdo" | "openIssues" | "maintenanceCount">;
 export type EditorMotorcycle = Partial<NewMotorcycle>;

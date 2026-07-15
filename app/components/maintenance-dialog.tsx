@@ -1,6 +1,6 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm, type BrakeConfig } from "~/components/maintenance-form";
-import type { MaintenanceRecord, Location, CurrencySetting } from "~/types/db";
+import type { MaintenanceRecord, Location, CurrencySetting, DriveType } from "~/types/db";
 import type { Part } from "~/types/parts";
 import { useUmami } from "./umami-provider";
 import { useEffect } from "react";
@@ -19,12 +19,14 @@ interface MaintenanceDialogProps {
   availableParts?: Part[];
   /** Per-wheel brake config; drives the brake options in the form. */
   brakeConfig?: BrakeConfig;
+  /** Drivetrain; filters chain- vs shaft-drive options in the form. */
+  driveType?: DriveType | null;
   onDelete?: () => void;
 }
 
 const EMPTY_RECORDS: MaintenanceRecord[] = [];
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, currencies, availableParts, brakeConfig, onDelete }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, currencies, availableParts, brakeConfig, driveType, onDelete }: MaintenanceDialogProps) {
   const { trackEvent } = useUmami();
 
   useEffect(() => {
@@ -60,6 +62,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         currencies={currencies}
         availableParts={availableParts}
         brakeConfig={brakeConfig}
+        driveType={driveType}
         onCancel={onClose}
         onDelete={onDelete}
         existingBundledItems={existingBundledItems}

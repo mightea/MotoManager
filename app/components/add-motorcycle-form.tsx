@@ -506,9 +506,27 @@ export function AddMotorcycleForm({
             </label>
           </div>
 
+          {/* Drivetrain — filters chain- vs shaft-drive maintenance options.
+              "—" keeps every option available. */}
+          <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-navy-700">
+            <label htmlFor="driveType" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+              Antrieb
+            </label>
+            <select
+              name="driveType"
+              id="driveType"
+              defaultValue={initialValues?.driveType ?? ""}
+              className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white sm:max-w-xs"
+            >
+              <option value="">—</option>
+              <option value="chain">Kettenantrieb</option>
+              <option value="shaft">Kardanantrieb</option>
+            </select>
+          </div>
+
           {/* Per-wheel brake type — drives the brake options in the maintenance
               dialog. Leave a wheel on "—" to keep every option available. */}
-          <div className="space-y-2 border-t border-gray-100 pt-3 dark:border-navy-700">
+          <div className="space-y-2 pt-1">
             <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
               Bremsen
             </span>

@@ -53,6 +53,8 @@ export const motorcycleSchema = z.object({
   frontBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
   rearBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
   sidecarBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
+  // Drivetrain; empty string clears the value on the backend.
+  driveType: z.preprocess(emptyStringToUndefined, z.enum(["chain", "shaft"]).optional()),
 });
 
 export const previousOwnerSchema = z.object({
