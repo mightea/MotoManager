@@ -39,6 +39,12 @@ export interface Motorcycle {
   numberPlate: string | null;
   image: string | null;
   isVeteran: boolean;
+  /**
+   * Lifecycle status. Source of truth. `isArchived` below is kept in sync
+   * (archived/sold => true) for backward compatibility.
+   */
+  status: MotorcycleStatus;
+  /** @deprecated derived from `status`; use `status`. Kept for legacy clients. */
   isArchived: boolean;
   /** Sidecar rig — gates the sidecar-related UI (e.g. sidecar tire pressure). */
   hasSidecar: boolean;
@@ -70,10 +76,19 @@ export interface Motorcycle {
    * chain- vs shaft-drive options. See migration 039.
    */
   driveType: DriveType | null;
+  /** Sale details, populated when status === "sold" (see migration 040). */
+  soldDate: string | null;
+  salePrice: number | null;
+  normalizedSalePrice: number | null;
+  saleCurrencyCode: string | null;
+  buyerName: string | null;
   latestOdo?: number | null;
   openIssues?: number;
   maintenanceCount?: number;
 }
+
+/** Lifecycle: active fleet, archived (kept, hidden), or sold (no longer owned). */
+export type MotorcycleStatus = "active" | "archived" | "sold";
 
 /** Disc (Scheibenbremse) vs drum (Trommelbremse) brake at a wheel. */
 export type BrakeType = "disc" | "drum";

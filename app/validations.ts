@@ -46,9 +46,15 @@ export const motorcycleSchema = z.object({
   purchasePrice: z.preprocess(preprocessNumber, z.number().min(0, "Kaufpreis muss grösser oder gleich 0 sein.").optional()),
   currencyCode: z.preprocess(emptyStringToUndefined, z.string().optional()),
   isVeteran: z.preprocess(preprocessBoolean, z.boolean().default(false)),
-  isArchived: z.preprocess(preprocessBoolean, z.boolean().default(false)),
+  // Lifecycle status (replaces isArchived; the backend derives isArchived).
+  status: z.preprocess(emptyStringToUndefined, z.enum(["active", "archived", "sold"]).default("active")),
   hasSidecar: z.preprocess(preprocessBoolean, z.boolean().default(false)),
   fuelTankSize: z.preprocess(preprocessNumber, z.number().min(0, "Tankgrösse muss grösser oder gleich 0 sein.").optional()),
+  // Sale details (used when status === "sold").
+  soldDate: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  salePrice: z.preprocess(preprocessNumber, z.number().min(0, "Verkaufspreis muss grösser oder gleich 0 sein.").optional()),
+  saleCurrencyCode: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  buyerName: z.preprocess(emptyStringToUndefined, z.string().optional()),
   // Per-wheel brake type; empty string clears the value on the backend.
   frontBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
   rearBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),

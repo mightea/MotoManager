@@ -154,9 +154,12 @@ export function MotorcycleInfoCard({
               label="Status"
               value={
                 <span className="flex items-center gap-2">
-                  {motorcycle.isArchived && "Archiviert"}
-                  {motorcycle.isVeteran && (motorcycle.isArchived ? " • Veteran" : "Veteran")}
-                  {!motorcycle.isArchived && !motorcycle.isVeteran && "Aktiv"}
+                  {motorcycle.status === "sold"
+                    ? "Verkauft"
+                    : motorcycle.status === "archived"
+                      ? "Archiviert"
+                      : "Aktiv"}
+                  {motorcycle.isVeteran && " • Veteran"}
                 </span>
               }
             />
@@ -240,6 +243,30 @@ export function MotorcycleInfoCard({
               />
             )}
           </div>
+
+          {/* Sale Group — only for sold bikes. */}
+          {motorcycle.status === "sold" && (
+            <div className="border-t border-base-300 pt-4 dark:border-navy-700">
+              <h3 className="label-tag mb-3">Verkauf</h3>
+              <div className="space-y-3">
+                <StatisticEntry
+                  icon={Calendar}
+                  label="Verkaufsdatum"
+                  value={motorcycle.soldDate ? new Date(motorcycle.soldDate).toLocaleDateString("de-CH") : null}
+                />
+                <StatisticEntry
+                  icon={DollarSign}
+                  label="Verkaufspreis"
+                  value={
+                    motorcycle.salePrice !== null && motorcycle.salePrice !== undefined
+                      ? formatCurrency(motorcycle.salePrice, motorcycle.saleCurrencyCode || motorcycle.currencyCode || undefined)
+                      : null
+                  }
+                />
+                <StatisticEntry icon={Info} label="Käufer" value={motorcycle.buyerName || null} />
+              </div>
+            </div>
+          )}
 
           {/* Previous Owners Group — read-only; managed from the edit form. */}
           <div className="border-t border-base-300 pt-4 dark:border-navy-700">

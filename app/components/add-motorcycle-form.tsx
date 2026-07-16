@@ -1,5 +1,5 @@
 import { Form, useSubmit, useActionData, useNavigation } from "react-router";
-import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord } from "~/types/db";
+import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord, MotorcycleStatus } from "~/types/db";
 import { modelSeriesDisplayName, type ModelSeries } from "~/types/parts";
 import { seriesPath, seriesTree } from "~/utils/series";
 import { decodeVin } from "~/services/parts";
@@ -61,6 +61,8 @@ export function AddMotorcycleForm({
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   // Tracked so the sidecar brake select only shows for a sidecar rig.
   const [hasSidecar, setHasSidecar] = useState<boolean>(Boolean(initialValues?.hasSidecar));
+  // Status drives the conditional "Verkauf" (sale) block.
+  const [status, setStatus] = useState<MotorcycleStatus>(initialValues?.status ?? "active");
 
   const isSubmitting = navigation.state === "submitting" &&
                       (navigation.formData?.get("intent") === intent ||
@@ -218,8 +220,8 @@ export function AddMotorcycleForm({
     // reads as "keep the current value" — send explicit booleans so
     // un-archiving and clearing the veteran flag actually save.
     formData.set("isVeteran", formData.has("isVeteran") ? "true" : "false");
-    formData.set("isArchived", formData.has("isArchived") ? "true" : "false");
     formData.set("hasSidecar", formData.has("hasSidecar") ? "true" : "false");
+    // status is a <select> (always submits); no boolean coercion needed.
 
     if (croppedImageBlob) {
       formData.append("image", croppedImageBlob, "motorcycle.jpg");
@@ -493,18 +495,77 @@ export function AddMotorcycleForm({
               Beiwagen (Gespann)
             </label>
           </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              name="isArchived"
-              id="isArchived"
-              value="true"
-              defaultChecked={Boolean(initialValues?.isArchived)}
-              className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900 dark:checked:bg-primary" />
-            <label htmlFor="isArchived" className="text-sm font-medium text-foreground dark:text-white">
-              Archiviert
+          <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-navy-700">
+            <label htmlFor="status" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+              Status
             </label>
+            <select
+              name="status"
+              id="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as MotorcycleStatus)}
+              className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white sm:max-w-xs"
+            >
+              <option value="active">Aktiv</option>
+              <option value="archived">Archiviert</option>
+              <option value="sold">Verkauft</option>
+            </select>
           </div>
+
+          {/* Sale details — shown when the bike is sold. */}
+          {status === "sold" && (
+            <div className="space-y-3 rounded-sm border border-base-300/70 bg-base-100 p-3 dark:border-navy-700 dark:bg-navy-900">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+                Verkauf
+              </span>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label htmlFor="soldDate" className="text-xs font-medium text-secondary dark:text-navy-300">Verkaufsdatum</label>
+                  <input
+                    type="date"
+                    name="soldDate"
+                    id="soldDate"
+                    defaultValue={formatDateInput(initialValues?.soldDate)}
+                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:[color-scheme:dark]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="salePrice" className="text-xs font-medium text-secondary dark:text-navy-300">Verkaufspreis</label>
+                  <div className="flex rounded-xl shadow-sm">
+                    <input
+                      type="number"
+                      name="salePrice"
+                      id="salePrice"
+                      step="0.05"
+                      placeholder="0.00"
+                      defaultValue={typeof initialValues?.salePrice === "number" ? initialValues.salePrice : ""}
+                      className="block w-full rounded-l-xl border-gray-200 bg-gray-50 p-3 text-sm text-foreground focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    />
+                    <select
+                      name="saleCurrencyCode"
+                      defaultValue={initialValues?.saleCurrencyCode ?? initialValues?.currencyCode ?? "CHF"}
+                      className="shrink-0 rounded-r-xl border-l-0 border-gray-200 bg-gray-100 py-3 pl-3 pr-9 text-sm text-secondary focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-navy-300"
+                    >
+                      {currencies?.map((c) => (
+                        <option key={c.code} value={c.code}>{c.code}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="buyerName" className="text-xs font-medium text-secondary dark:text-navy-300">Käufer</label>
+                <input
+                  type="text"
+                  name="buyerName"
+                  id="buyerName"
+                  placeholder="Name des Käufers"
+                  defaultValue={initialValues?.buyerName ?? ""}
+                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Drivetrain — filters chain- vs shaft-drive maintenance options.
               "—" keeps every option available. */}

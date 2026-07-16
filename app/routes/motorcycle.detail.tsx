@@ -296,6 +296,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
           const {      purchasePrice,
       currencyCode,
+      salePrice,
+      saleCurrencyCode,
     } = validationResult.data;
 
     // Empty field = clear: propagate the clear to the normalized value too,
@@ -305,6 +307,14 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     } else {
       const normalizedPurchasePrice = purchasePrice * getCurrencyFactor(currencyCode);
       formData.set("normalizedPurchasePrice", normalizedPurchasePrice.toString());
+    }
+
+    // Same normalization for the sale price.
+    if (salePrice == null) {
+      formData.set("normalizedSalePrice", "");
+    } else {
+      const normalizedSalePrice = salePrice * getCurrencyFactor(saleCurrencyCode);
+      formData.set("normalizedSalePrice", normalizedSalePrice.toString());
     }
 
     const updated = await updateMotorcycle(

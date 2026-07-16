@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Map as MapIcon,
   AlertTriangle,
+  Archive,
   Wrench,
   X,
 } from "lucide-react";
@@ -106,6 +107,7 @@ export function shouldRevalidate({
     const p = new URLSearchParams(u.searchParams);
     p.delete("sort");
     p.delete("filter");
+    p.delete("show");
     return p.toString();
   };
 
@@ -135,6 +137,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   const {
     purchasePrice,
     currencyCode,
+    salePrice,
+    saleCurrencyCode,
   } = validationResult.data;
 
   const currencies = await getCurrencies();
@@ -146,6 +150,12 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   const normalizedPurchasePrice = (purchasePrice || 0) * getCurrencyFactor(currencyCode);
   formData.set("normalizedPurchasePrice", normalizedPurchasePrice.toString());
+
+  if (salePrice == null) {
+    formData.set("normalizedSalePrice", "");
+  } else {
+    formData.set("normalizedSalePrice", (salePrice * getCurrencyFactor(saleCurrencyCode)).toString());
+  }
 
   await createMotorcycle(token, formData);
 
@@ -254,10 +264,20 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     openIssues: cards.reduce((sum: number, c: MotorcycleDashboardItem) => sum + (c.numberOfIssues || 0), 0),
   }), [cards]);
 
+  // Inactive = archived/sold. Hidden by default; a toggle (?show=all) reveals them.
+  const showInactive = searchParams.get("show") === "all";
+  const inactiveCount = useMemo(
+    () => cards.filter((c: MotorcycleDashboardItem) => (c.status ?? "active") !== "active").length,
+    [cards],
+  );
+
   const visibleCards = useMemo(() => {
-    const filtered = cards.filter((c: MotorcycleDashboardItem) => matchesFilter(c, currentFilter));
+    const base = showInactive
+      ? cards
+      : cards.filter((c: MotorcycleDashboardItem) => (c.status ?? "active") === "active");
+    const filtered = base.filter((c: MotorcycleDashboardItem) => matchesFilter(c, currentFilter));
     return [...filtered].sort(compareCards(currentSort));
-  }, [cards, currentSort, currentFilter]);
+  }, [cards, currentSort, currentFilter, showInactive]);
 
   // Pagination — server-side contract (page/pageSize/total/totalPages) applied
   // client-side over the /home payload so cards/filters/attention chips still
@@ -317,6 +337,16 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   const toggleFilter = (next: FilterKey) => {
     updateParam("filter", currentFilter === next ? null : next);
+  };
+
+  const toggleShowInactive = () => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (showInactive) next.delete("show");
+      else next.set("show", "all");
+      next.delete("page");
+      return next;
+    }, { replace: true, preventScrollReset: true });
   };
 
   const goToPage = (page: number) => {
@@ -383,6 +413,22 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             >
               <X className="h-3 w-3" aria-hidden="true" />
               Filter aufheben
+            </button>
+          )}
+          {inactiveCount > 0 && (
+            <button
+              type="button"
+              onClick={toggleShowInactive}
+              aria-pressed={showInactive}
+              className={clsx(
+                "ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                showInactive
+                  ? "border-primary/50 bg-primary/5 text-primary"
+                  : "border-base-300 text-secondary hover:text-foreground dark:border-navy-600 dark:text-navy-300 dark:hover:text-white",
+              )}
+            >
+              <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+              {showInactive ? "Verkaufte/archivierte ausblenden" : `Verkaufte/archivierte anzeigen (${inactiveCount})`}
             </button>
           )}
           </div>

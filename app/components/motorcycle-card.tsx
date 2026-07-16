@@ -93,7 +93,19 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
             ID · {String(moto.id).padStart(4, "0")}
           </span>
         </div>
-        {moto.isVeteran && <span className="stamp">Veteran</span>}
+        <div className="flex items-center gap-1.5">
+          {moto.status === "sold" && (
+            <span className="rounded-sm bg-error/10 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-error">
+              Verkauft
+            </span>
+          )}
+          {moto.status === "archived" && (
+            <span className="rounded-sm bg-base-content/10 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-base-content/60">
+              Archiviert
+            </span>
+          )}
+          {moto.isVeteran && <span className="stamp">Veteran</span>}
+        </div>
       </div>
 
       {/* Hero photo */}
