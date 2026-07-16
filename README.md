@@ -1,5 +1,8 @@
 # MotoManager
 
+[![CI](https://github.com/mightea/MotoManager/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mightea/MotoManager/actions/workflows/ci.yml)
+[![Coverage](https://raw.githubusercontent.com/mightea/MotoManager/badges/coverage.svg)](https://github.com/mightea/MotoManager/actions/workflows/ci.yml)
+
 MotoManager keeps track of your motorcycle fleet: maintenance logs, storage locations, running issues, odometer history, and torque specifications. The app features a modern **React Router 7** frontend and communicates with a high-performance **Rust** backend.
 
 ## Highlights

@@ -10,7 +10,8 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # push the coverage badge to the `badges` branch (main only)
+      pull-requests: write # post the coverage comment on PRs
 
     steps:
       - name: Checkout repository
@@ -33,8 +34,8 @@ jobs:
       - name: Lint TypeScript
         run: pnpm typecheck
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm test:coverage
 
       - name: Build application
         run: pnpm build
@@ -46,3 +47,55 @@ jobs:
           name: web-build
           path: build
           retention-days: 7
+
+      # --- Coverage reporting -------------------------------------------------
+      - name: Build coverage comment
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          node -e '
+            const t = require("./coverage/coverage-summary.json").total;
+            const row = (n, o) => `| ${n} | ${o.pct}% | ${o.covered}/${o.total} |`;
+            require("fs").writeFileSync("coverage-comment.md", [
+              "## 🧪 Frontend test coverage",
+              "",
+              "| Metric | Coverage | Covered / Total |",
+              "|---|---:|---:|",
+              row("Lines", t.lines),
+              row("Statements", t.statements),
+              row("Functions", t.functions),
+              row("Branches", t.branches),
+              "",
+              "<sub>vitest v8 coverage · updated on every push</sub>",
+            ].join("\n"));
+          '
+
+      - name: Post coverage comment
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: frontend-coverage
+          path: coverage-comment.md
+
+      - name: Update coverage badge (main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PCT=$(node -e 'process.stdout.write(String(require("./coverage/coverage-summary.json").total.lines.pct))')
+          INT=${PCT%.*}
+          if   [ "$INT" -ge 90 ]; then COLOR=brightgreen
+          elif [ "$INT" -ge 80 ]; then COLOR=green
+          elif [ "$INT" -ge 70 ]; then COLOR=yellowgreen
+          elif [ "$INT" -ge 60 ]; then COLOR=yellow
+          elif [ "$INT" -ge 50 ]; then COLOR=orange
+          else COLOR=red; fi
+          curl -sSL "https://img.shields.io/badge/coverage-${PCT}%25-${COLOR}?style=flat" -o coverage.svg
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          work=$(mktemp -d)
+          cp coverage.svg "$work/coverage.svg"
+          cd "$work"
+          git init -q -b badges
+          git add coverage.svg
+          git commit -q -m "chore: update coverage badge [skip ci]"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges

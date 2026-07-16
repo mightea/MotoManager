@@ -15,7 +15,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./tests/setup-test-env.ts",
     coverage: {
-      reporter: ["text", "html"],
+      provider: "v8",
+      // text: local console; json-summary: badge %; lcov/json: CI PR report.
+      reporter: ["text", "json-summary", "json", "lcov"],
+      reportOnFailure: true,
       include: ["app/**/*.{ts,tsx}"],
       exclude: ["app/**/*.d.ts"],
     },
