@@ -28,6 +28,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
+    // Dev server on 5174 (not Vite's default 5173) to avoid clashing with other
+    // locally-developed apps. `preview` mirrors it for consistency.
+    server: {
+      port: 5174,
+    },
+    preview: {
+      port: 5174,
+    },
     define: {
       "process.env.APP_VERSION": JSON.stringify(pkg.version),
     },

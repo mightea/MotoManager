@@ -9,7 +9,7 @@ MotoManager is a React Router + TypeScript app rooted in `app/`. Route modules l
 Use pnpm for every workflow:
 
 - `pnpm install` — hydrate dependencies.
-- `pnpm dev` — start the React Router dev server with HMR on port 5173.
+- `pnpm dev` — start the React Router dev server with HMR on port 5174.
 - `pnpm test` / `pnpm test:watch` — run Vitest once or in watch mode with the configured jsdom environment.
 - `pnpm typecheck` — generate route types and execute `tsc` for regressions.
 - `pnpm lint` — run oxlint to check for style and correctness issues.
