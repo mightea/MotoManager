@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Map as MapIcon,
   AlertTriangle,
-  Archive,
+  Eye,
+  EyeOff,
   Wrench,
   X,
 } from "lucide-react";
@@ -264,7 +265,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     openIssues: cards.reduce((sum: number, c: MotorcycleDashboardItem) => sum + (c.numberOfIssues || 0), 0),
   }), [cards]);
 
-  // Inactive = archived/sold. Hidden by default; a toggle (?show=all) reveals them.
+  // Inactive = sold. Hidden by default; a toggle (?show=all) reveals them.
   const showInactive = searchParams.get("show") === "all";
   const inactiveCount = useMemo(
     () => cards.filter((c: MotorcycleDashboardItem) => (c.status ?? "active") !== "active").length,
@@ -415,22 +416,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               Filter aufheben
             </button>
           )}
-          {inactiveCount > 0 && (
-            <button
-              type="button"
-              onClick={toggleShowInactive}
-              aria-pressed={showInactive}
-              className={clsx(
-                "ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                showInactive
-                  ? "border-primary/50 bg-primary/5 text-primary"
-                  : "border-base-300 text-secondary hover:text-foreground dark:border-navy-600 dark:text-navy-300 dark:hover:text-white",
-              )}
-            >
-              <Archive className="h-3.5 w-3.5" aria-hidden="true" />
-              {showInactive ? "Verkaufte/archivierte ausblenden" : `Verkaufte/archivierte anzeigen (${inactiveCount})`}
-            </button>
-          )}
           </div>
         </div>
       )}
@@ -454,10 +439,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           <span>Flotte · {cards.length} {cards.length === 1 ? "Eintrag" : "Einträge"}</span>
         </span>
 
-        {/* Sort selector on the left, Neues-Motorrad on the right.
-            items-stretch keeps the button matching the sort trigger
-            height so they read as a single control row. */}
+        {/* Sort selector + "show sold" toggle on the left, Neues-Motorrad on
+            the right. items-stretch keeps them all the same height so they read
+            as a single control row. */}
         <div className="flex items-stretch justify-between gap-3">
+          <div className="flex items-stretch gap-2">
           <DropdownMenu
             align="start"
             trigger={
@@ -496,6 +482,37 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               );
             })}
           </DropdownMenu>
+
+          {inactiveCount > 0 && (
+            <button
+              type="button"
+              onClick={toggleShowInactive}
+              aria-pressed={showInactive}
+              title={showInactive ? "Verkaufte ausblenden" : "Verkaufte anzeigen"}
+              className={clsx(
+                "inline-flex items-center justify-center gap-2 rounded-sm border px-3 py-2 text-sm font-medium shadow-[0_1px_0_0_rgba(15,23,42,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                showInactive
+                  ? "border-primary/40 bg-primary/5 text-primary"
+                  : "border-base-300 bg-base-100 text-base-content hover:bg-base-200 dark:bg-navy-800",
+              )}
+            >
+              {showInactive ? (
+                <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <Eye className="h-3.5 w-3.5 text-base-content/60" aria-hidden="true" />
+              )}
+              <span className="hidden font-semibold sm:inline">Verkaufte</span>
+              <span
+                className={clsx(
+                  "font-mono text-[10px] font-semibold tabular-nums",
+                  showInactive ? "text-primary/70" : "text-base-content/50",
+                )}
+              >
+                {inactiveCount}
+              </span>
+            </button>
+          )}
+          </div>
 
           <Button
             type="button"

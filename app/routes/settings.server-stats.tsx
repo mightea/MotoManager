@@ -60,10 +60,10 @@ export default function ServerStats() {
                             color="indigo"
                         />
                         <StatCard
-                            icon={Bike} // Or Archive icon if available
-                            label="Archivierte Motorräder"
+                            icon={Bike}
+                            label="Verkaufte Motorräder"
                             value={formatNumber(stats.archivedMotorcycles)}
-                            description="Motorräder im Archivstatus"
+                            description="Motorräder mit Status «verkauft»"
                             color="indigo"
                         />
                         <StatCard

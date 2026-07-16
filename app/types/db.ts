@@ -39,13 +39,8 @@ export interface Motorcycle {
   numberPlate: string | null;
   image: string | null;
   isVeteran: boolean;
-  /**
-   * Lifecycle status. Source of truth. `isArchived` below is kept in sync
-   * (archived/sold => true) for backward compatibility.
-   */
+  /** Lifecycle status. The backend still emits a derived `isArchived` for legacy clients. */
   status: MotorcycleStatus;
-  /** @deprecated derived from `status`; use `status`. Kept for legacy clients. */
-  isArchived: boolean;
   /** Sidecar rig — gates the sidecar-related UI (e.g. sidecar tire pressure). */
   hasSidecar: boolean;
   /**
@@ -87,8 +82,8 @@ export interface Motorcycle {
   maintenanceCount?: number;
 }
 
-/** Lifecycle: active fleet, archived (kept, hidden), or sold (no longer owned). */
-export type MotorcycleStatus = "active" | "archived" | "sold";
+/** Lifecycle: active fleet, or sold (no longer owned — hidden by default). */
+export type MotorcycleStatus = "active" | "sold";
 
 /** Disc (Scheibenbremse) vs drum (Trommelbremse) brake at a wheel. */
 export type BrakeType = "disc" | "drum";

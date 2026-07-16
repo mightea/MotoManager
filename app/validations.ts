@@ -47,7 +47,7 @@ export const motorcycleSchema = z.object({
   currencyCode: z.preprocess(emptyStringToUndefined, z.string().optional()),
   isVeteran: z.preprocess(preprocessBoolean, z.boolean().default(false)),
   // Lifecycle status (replaces isArchived; the backend derives isArchived).
-  status: z.preprocess(emptyStringToUndefined, z.enum(["active", "archived", "sold"]).default("active")),
+  status: z.preprocess(emptyStringToUndefined, z.enum(["active", "sold"]).default("active")),
   hasSidecar: z.preprocess(preprocessBoolean, z.boolean().default(false)),
   fuelTankSize: z.preprocess(preprocessNumber, z.number().min(0, "Tankgrösse muss grösser oder gleich 0 sein.").optional()),
   // Sale details (used when status === "sold").

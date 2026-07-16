@@ -154,11 +154,7 @@ export function MotorcycleInfoCard({
               label="Status"
               value={
                 <span className="flex items-center gap-2">
-                  {motorcycle.status === "sold"
-                    ? "Verkauft"
-                    : motorcycle.status === "archived"
-                      ? "Archiviert"
-                      : "Aktiv"}
+                  {motorcycle.status === "sold" ? "Verkauft" : "Aktiv"}
                   {motorcycle.isVeteran && " • Veteran"}
                 </span>
               }

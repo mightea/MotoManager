@@ -507,7 +507,6 @@ export function AddMotorcycleForm({
               className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white sm:max-w-xs"
             >
               <option value="active">Aktiv</option>
-              <option value="archived">Archiviert</option>
               <option value="sold">Verkauft</option>
             </select>
           </div>
