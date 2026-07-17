@@ -542,7 +542,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                             stacked tightly so the metric line and the type
                             tag share one mono-uppercase voice. */}
                         <div className="mt-0.5 flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-                          <p className={clsx("min-w-0 text-[13px] font-medium line-clamp-2 leading-tight sm:line-clamp-1", tone.fg)}>
+                          <p className={clsx("min-w-0 break-words text-[13px] font-medium leading-tight", tone.fg)}>
                             {group.count > 1 && (
                               <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-base-content/8 px-1.5 py-[1px] font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-base-content/60 dark:bg-navy-700 dark:text-navy-300 align-middle">
                                 {group.count}×
@@ -587,8 +587,6 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                             const childRecords = group.originalRecords.filter(r => r.parentId === record.id);
 
                             const metadataItems = [
-                              { label: "Beschreibung", value: record.description, icon: Info },
-
                               // Parts consumed by this entry (from the parts inventory)
                               { label: "Verwendete Teile", value: usedPartsByRecordId?.[record.id] ?? null, icon: Wrench },
 
@@ -666,6 +664,22 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                 </div>
 
                                 <div className="space-y-4">
+                                  {/* Description is prose: full-width, wrapping block
+                                      instead of a right-aligned key/value cell. */}
+                                  {record.description && (
+                                    <div className="space-y-1 border-b border-base-300/40 pb-2 dark:border-navy-700/40">
+                                      <div className="flex items-center gap-2">
+                                        <Info className="icon-muted h-3 w-3 shrink-0" aria-hidden="true" />
+                                        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+                                          Beschreibung
+                                        </span>
+                                      </div>
+                                      <p className="whitespace-pre-wrap break-words text-[13px] font-medium text-foreground dark:text-gray-100">
+                                        {record.description}
+                                      </p>
+                                    </div>
+                                  )}
+
                                   {metadataItems.length > 0 && (
                                     <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
                                       {metadataItems.map((item) => {
@@ -678,7 +692,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                                 {item.label}
                                               </dt>
                                             </div>
-                                            <dd suppressHydrationWarning className="font-numeric text-[13px] font-semibold text-foreground dark:text-gray-100 text-right shrink-0">
+                                            <dd suppressHydrationWarning className="min-w-0 break-words font-numeric text-[13px] font-semibold text-foreground dark:text-gray-100 text-right">
                                               {item.value}
                                             </dd>
                                           </div>
@@ -695,9 +709,9 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                         {childRecords.map(child => (
                                           <div key={child.id} className="flex items-center justify-between rounded-sm border border-base-200 bg-base-100 px-3 py-2 text-xs dark:border-navy-700 dark:bg-navy-900/40">
-                                            <div className="flex items-center gap-2">
-                                              <Wrench className="h-3 w-3 text-base-content/55 dark:text-navy-500" aria-hidden="true" />
-                                              <span className="font-medium text-foreground dark:text-gray-200">
+                                            <div className="flex min-w-0 items-center gap-2">
+                                              <Wrench className="h-3 w-3 shrink-0 text-base-content/55 dark:text-navy-500" aria-hidden="true" />
+                                              <span className="min-w-0 break-words font-medium text-foreground dark:text-gray-200">
                                                 {summarizeMaintenanceRecord(child, userLocations)}
                                               </span>
                                             </div>
@@ -733,7 +747,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                     );
                                   })()}
 
-                                  {metadataItems.length === 0 && childRecords.length === 0 && (
+                                  {!record.description && metadataItems.length === 0 && childRecords.length === 0 && (
                                     <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
                                       Keine weiteren Details
                                     </p>
