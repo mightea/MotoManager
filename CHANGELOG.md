@@ -1,5 +1,31 @@
 # Changelog
 
+## [2026.7.8](https://github.com/mightea/MotoManager/compare/2026.7.7...2026.7.8) (2026-07-17)
+
+
+### ✨ Features
+
+* drop archived status and restyle the sold toggle ([a7a2894](https://github.com/mightea/MotoManager/commit/a7a289499422c226801b1dad5d4838739f9ac356))
+* fuel additive and lead substitute checkboxes on fuel records ([c8ce203](https://github.com/mightea/MotoManager/commit/c8ce203965a4242438c6ee0173bddee545301194))
+* motorcycle status (active/archived/sold) with sell flow ([68e6ee2](https://github.com/mightea/MotoManager/commit/68e6ee201676a8a423abfec9fbadd2734fc51b70))
+
+
+### 🐛 Bug Fixes
+
+* wrap long maintenance titles and descriptions ([37dbf18](https://github.com/mightea/MotoManager/commit/37dbf1861aca7c67a8f7dcd4dbd81345c4346032))
+
+
+### ✏️ Miscellaneous Chores
+
+* default dev server port to 5174 ([e544abf](https://github.com/mightea/MotoManager/commit/e544abf93c34b9311d5de34ed5faa87c6ecfeb19))
+* fix all oxlint warnings ([213d1e6](https://github.com/mightea/MotoManager/commit/213d1e627806e61c0e0669686cab7c68f9edd5ff))
+* stop tracking .direnv/ (already gitignored) ([9a6a21f](https://github.com/mightea/MotoManager/commit/9a6a21f70eb3380d07ddd92e16de8d3e732194ba))
+
+
+### 👷 Continuous Integration
+
+* add coverage PR reports and main-tracking badge ([7c3ff85](https://github.com/mightea/MotoManager/commit/7c3ff855ff06a6f468295b3f04bfb629e7873c64))
+
 ## [2026.7.7](https://github.com/mightea/MotoManager/compare/2026.7.6...2026.7.7) (2026-07-15)
 
 
