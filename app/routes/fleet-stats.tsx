@@ -2,11 +2,40 @@ import { data, useLoaderData, Link } from "react-router";
 import type { Route } from "./+types/fleet-stats";
 import { requireUser } from "~/services/auth";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
-import { BarChart3, TrendingUp, Wallet, Bike, ChevronDown } from "lucide-react";
+import { BarChart3, TrendingUp, Wallet, Bike, ChevronDown, type LucideIcon } from "lucide-react";
 import clsx from "clsx";
 import { useState, Fragment, useRef, useEffect } from "react";
 import { fetchFromBackend } from "~/utils/backend";
 import { EmptyState } from "~/components/empty-state";
+
+/** Per-bike slice of one year in the `/stats` payload. */
+interface FleetYearMotorcycle {
+  id: number;
+  make: string;
+  model: string;
+  distance: number;
+  cost: number;
+}
+
+/** One year of aggregated fleet stats in the `/stats` payload. */
+interface FleetYearlyStats {
+  year: number;
+  distance: number;
+  cost: number;
+  motorcycleCount: number;
+  motorcycles: FleetYearMotorcycle[];
+}
+
+interface FleetStats {
+  yearly: FleetYearlyStats[];
+  overall: {
+    totalDistance: number;
+    totalCost: number;
+    maxYearlyDistance: number;
+    maxYearlyCost: number;
+    maxYearlyCount: number;
+  };
+}
 
 export function meta() {
   return [
@@ -17,7 +46,7 @@ export function meta() {
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { token } = await requireUser(request);
-  const response = await fetchFromBackend<any>("/stats", {}, token);
+  const response = await fetchFromBackend<{ stats: FleetStats }>("/stats", {}, token);
 
   return data({ stats: response.stats });
 }
@@ -42,10 +71,10 @@ function ChartSection({
   tone,
 }: {
   title: string;
-  icon: any;
-  data: any[];
+  icon: LucideIcon;
+  data: FleetYearlyStats[];
   maxValue: number;
-  valueKey: string;
+  valueKey: "motorcycleCount" | "distance" | "cost";
   unit: string;
   isCurrency?: boolean;
   colorClass: string;
@@ -79,7 +108,7 @@ function ChartSection({
         {/* Mobile: horizontal meter rows — readable without scrolling or tooltips */}
         <div className="space-y-2.5 sm:hidden">
           {data.map((year) => {
-            const value = (year as any)[valueKey] || 0;
+            const value = year[valueKey] || 0;
             const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
             return (
               <div key={year.year} className="flex items-center gap-3">
@@ -107,7 +136,7 @@ function ChartSection({
         >
           <div className="relative flex h-32 items-end gap-1.5 sm:gap-3 min-w-[max-content]">
             {reversedData.map((year, idx) => {
-              const value = (year as any)[valueKey] || 0;
+              const value = year[valueKey] || 0;
               const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
               const showLabel = (year.year % showEveryNthYear === 0) || idx === 0 || idx === reversedData.length - 1;
 
@@ -145,7 +174,7 @@ function SummaryCard({
   value,
   subline,
 }: {
-  icon: any;
+  icon: LucideIcon;
   tone: ChartTone;
   label: string;
   value: string;
@@ -171,14 +200,14 @@ function SummaryCard({
   );
 }
 
-function YearlyDetails({ yearStats }: { yearStats: any }) {
+function YearlyDetails({ yearStats }: { yearStats: FleetYearlyStats }) {
   return (
     <div className="space-y-3 border-t border-base-200 bg-base-200/40 p-5 animate-fade-in dark:border-navy-700 dark:bg-navy-900/30">
       <h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
         Fahrzeuge in {yearStats.year}
       </h4>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {yearStats.motorcycles.map((m: any) => (
+        {yearStats.motorcycles.map((m) => (
           <div key={m.id} className="rounded-sm border border-base-300/70 bg-base-100 p-3 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] dark:border-navy-700 dark:bg-navy-800">
             <div className="font-subdisplay text-sm text-base-content dark:text-white mb-2 truncate">
               {m.make} {m.model}
@@ -216,7 +245,7 @@ export default function FleetStatsPage() {
     setExpandedYear(expandedYear === year ? null : year);
   };
 
-  const activeYearlyStats = (Array.isArray(stats?.yearly) ? stats.yearly : []).filter((y: any) => y.distance > 0 || y.cost > 0);
+  const activeYearlyStats = (Array.isArray(stats?.yearly) ? stats.yearly : []).filter((y) => y.distance > 0 || y.cost > 0);
 
   if (activeYearlyStats.length === 0) {
     return (
@@ -321,7 +350,7 @@ export default function FleetStatsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200 dark:divide-navy-700">
-                  {activeYearlyStats.map((year: any) => {
+                  {activeYearlyStats.map((year) => {
                     const avgCostPerKm = year.distance > 0 ? year.cost / year.distance : 0;
                     const isExpanded = expandedYear === year.year;
                     return (

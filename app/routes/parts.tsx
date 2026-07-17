@@ -26,7 +26,7 @@ import {
   importPartImageFromUrl,
 } from "~/services/parts";
 import { getBackendAssetUrl } from "~/utils/backend";
-import type { PublicPart } from "~/types/parts";
+import type { PublicPart, PublicStockEntry } from "~/types/parts";
 import { seriesNames, storageLocationRoot } from "~/utils/parts";
 import { Card } from "~/components/card";
 import { DropdownMenu } from "~/components/dropdown-menu";
@@ -42,6 +42,22 @@ export function meta(_args: Route.MetaArgs) {
     { title: "Teile - Moto Manager" },
     { name: "description", content: "Ersatzteil-Bestand, Verbrauch und öffentliche Teile." },
   ];
+}
+
+/**
+ * Public stock rows carry no id — derive a stable list key from their fields.
+ * The list is read-only and re-rendered wholesale from loader data, so a rare
+ * collision between two identical rows is harmless.
+ */
+function publicStockKey(stock: PublicStockEntry): string {
+  return [
+    stock.quantity,
+    stock.price ?? "",
+    stock.currency ?? "",
+    stock.purchaseDate ?? "",
+    stock.storageLocation ?? "",
+    stock.isUsed,
+  ].join("|");
 }
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
@@ -507,8 +523,8 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
               </div>
               {part.isPublic && (part.stocks?.length ?? 0) > 0 && (
                 <ul className="mt-2 space-y-0.5 border-t border-base-200 pt-2 text-[11px] text-base-content/60 dark:border-navy-700">
-                  {part.stocks!.map((stock, index) => (
-                    <li key={index} className="truncate">
+                  {part.stocks!.map((stock) => (
+                    <li key={publicStockKey(stock)} className="truncate">
                       {stock.quantity} Stk.
                       {stock.price != null && ` · ${stock.price.toFixed(2)} ${stock.currency ?? ""}`}
                       {stock.purchaseDate && ` · ${new Date(stock.purchaseDate).toLocaleDateString("de-CH")}`}

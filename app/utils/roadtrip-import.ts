@@ -120,10 +120,18 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
+/** The subset of a maintenance entry consulted for duplicate detection. */
+export interface ExistingFuelRecord {
+  type: string;
+  date: string;
+  fuelAmount?: number | null;
+  odo?: number | null;
+}
+
 /**
  * Checks if a fuel entry already exists in the current maintenance history.
  */
-export function isDuplicate(entry: RoadTripFuelEntry, existing: any[]): boolean {
+export function isDuplicate(entry: RoadTripFuelEntry, existing: ExistingFuelRecord[]): boolean {
   return existing.some(record => {
     if (record.type !== 'fuel') return false;
     

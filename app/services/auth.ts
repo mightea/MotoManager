@@ -28,15 +28,18 @@ const loginResponseSchema = z
   .object({ user: authUserSchema, token: z.string().min(1) })
   .passthrough();
 
-export function toPublicUser(user: any): PublicUser {
+/** Raw user shape as the backend returns it (lenient — see `authUserSchema`). */
+type AuthUser = z.infer<typeof authUserSchema>;
+
+export function toPublicUser(user: AuthUser): PublicUser {
   return {
     id: user.id,
     email: user.email,
     username: user.username,
-    name: user.name,
+    name: user.name as string,
     role: (user.role as UserRole) ?? "user",
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    createdAt: user.createdAt as string,
+    updatedAt: user.updatedAt as string,
     lastLoginAt: user.lastLoginAt,
   } satisfies PublicUser;
 }
@@ -73,7 +76,7 @@ export async function getCurrentSession(): Promise<AuthSession> {
 
   try {
     const response = await cachedFetch(`session:${token}`, SESSION_TTL_MS, () =>
-      fetchFromBackend<any>("/auth/me", {}, token),
+      fetchFromBackend<unknown>("/auth/me", {}, token),
     );
 
     const parsed = meResponseSchema.safeParse(response);
@@ -138,8 +141,16 @@ export async function getUserCount() {
   }
 }
 
-export async function createUser(input: any): Promise<PublicUser> {
-  const user = await fetchFromBackend<any>("/auth/register", {
+export type CreateUserInput = {
+  email: string;
+  username: string;
+  name: string;
+  password: string;
+  role?: UserRole;
+};
+
+export async function createUser(input: CreateUserInput): Promise<PublicUser> {
+  const user = await fetchFromBackend<AuthUser>("/auth/register", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -147,8 +158,8 @@ export async function createUser(input: any): Promise<PublicUser> {
   return toPublicUser(user);
 }
 
-export async function updateUser(userId: number, input: any, token: string): Promise<PublicUser> {
-  const user = await fetchFromBackend<any>(
+export async function updateUser(userId: number, input: Partial<CreateUserInput>, token: string): Promise<PublicUser> {
+  const user = await fetchFromBackend<AuthUser>(
     `/admin/users/${userId}`,
     {
       method: "PUT",
@@ -172,7 +183,7 @@ export async function verifyLogin(
   password: string,
 ): Promise<{ user: PublicUser; token: string } | null> {
   try {
-    const response = await fetchFromBackend<{ user: any; token: string }>("/auth/login", {
+    const response = await fetchFromBackend<{ user: AuthUser; token: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ identifier, password }),
     });
@@ -229,7 +240,7 @@ export function requireAdmin(user: PublicUser) {
 }
 
 export async function listUsers(token: string): Promise<PublicUser[]> {
-  const response = await fetchFromBackend<{ users: any[] }>("/admin/users", {}, token);
+  const response = await fetchFromBackend<{ users: AuthUser[] }>("/admin/users", {}, token);
   return response.users.map(toPublicUser);
 }
 

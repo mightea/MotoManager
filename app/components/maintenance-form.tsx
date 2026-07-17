@@ -18,6 +18,7 @@ import {
     MapPin,
     Fuel
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useUmami } from "./umami-provider";
 import { getSessionToken } from "~/services/auth";
 import { getNearbyLocations } from "~/services/settings";
@@ -269,7 +270,7 @@ function LocationPickerField({
 // position + component picker; the real type is resolved on submit.
 type FormType = MaintenanceType | "brake";
 
-const maintenanceTypes: { value: FormType; label: string; icon: any }[] = [
+const maintenanceTypes: { value: FormType; label: string; icon: LucideIcon }[] = [
     { value: "tire", label: "Reifenwechsel", icon: CircleDashed },
     { value: "service", label: "Service", icon: ClipboardList },
     { value: "repair", label: "Reparatur", icon: Hammer },

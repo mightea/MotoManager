@@ -211,6 +211,10 @@ export function InvoiceImportDialog({
         let partId = row.matchedPartId;
         if (partId == null) {
           const enriched = row.enrichment?.status === "found" ? row.enrichment : null;
+          // Rows are committed sequentially on purpose: the stock write below
+          // needs this part's id, and a thrown Response (e.g. expired session)
+          // must abort the remaining rows instead of firing them in parallel.
+          // eslint-disable-next-line no-await-in-loop
           const created = await createPart(token, {
             partNumber: row.partNumber,
             name: row.name.trim() || row.invoiceName,
@@ -222,6 +226,7 @@ export function InvoiceImportDialog({
           if (enriched?.part.imageUrl) {
             // Image is a nice-to-have; a failed download must not lose the row.
             try {
+              // eslint-disable-next-line no-await-in-loop -- depends on the part created above
               await importPartImageFromUrl(token, partId, enriched.part.imageUrl);
             } catch {
               /* ignore */
@@ -229,6 +234,7 @@ export function InvoiceImportDialog({
           }
         }
         const price = Number(row.priceTotal.replace(",", "."));
+        // eslint-disable-next-line no-await-in-loop -- needs partId; keeps backend writes ordered
         await createPartStock(token, {
           partId,
           quantity: row.quantity,

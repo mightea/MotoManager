@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { startPerfMark, trackPerformance } from "~/components/umami-provider";
+import type { UmamiTracker } from "~/types/umami";
+
+// The node test environment has no `window`; the helpers guard on it, so the
+// tests fake just the slice they touch.
+const testGlobal = globalThis as typeof globalThis & {
+  window: { umami?: UmamiTracker };
+};
 
 // IS_PROD inside umami-provider is computed once at module-load time from
 // process.env.NODE_ENV. Vitest sets NODE_ENV=test, so the helpers will
@@ -11,12 +18,15 @@ describe("trackPerformance (non-production no-op)", () => {
 
   beforeEach(() => {
     umamiTrack = vi.fn();
-    (globalThis as any).window = (globalThis as any).window ?? {};
-    (globalThis as any).window.umami = { track: umamiTrack, identify: vi.fn() };
+    testGlobal.window = testGlobal.window ?? ({} as typeof testGlobal.window);
+    testGlobal.window.umami = {
+      track: umamiTrack,
+      identify: vi.fn(),
+    } as unknown as UmamiTracker;
   });
 
   afterEach(() => {
-    delete (globalThis as any).window.umami;
+    delete testGlobal.window.umami;
   });
 
   it("does not call window.umami.track outside production", () => {

@@ -2,11 +2,12 @@ import { data, useActionData, useSubmit, useLocation, useNavigate } from "react-
 import { useCallback, useMemo } from "react";
 import type { Route } from "./+types/documents";
 import { requireUser } from "~/services/auth";
-import { FileText, Plus, User as UserIcon, Bike, Globe, Filter } from "lucide-react";
+import { FileText, Plus, User as UserIcon, Bike, Globe, Filter, type LucideIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Modal } from "~/components/modal";
 import { AddDocumentForm } from "~/components/add-document-form";
-import { DocumentCard } from "~/components/document-card";
+import { DocumentCard, type DocumentSummary } from "~/components/document-card";
+import type { Motorcycle } from "~/types/db";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { fetchFromBackend } from "~/utils/backend";
 import { getDocumentsPayload, invalidateDocuments } from "~/services/documents";
@@ -22,18 +23,31 @@ export function meta() {
   ];
 }
 
+/**
+ * Motorcycle entry in the `/documents` payload. The backend sends a lean
+ * projection (id/userId/make/model/ownerName); it is typed as the full
+ * Motorcycle to match AddDocumentForm, which only reads the projected fields.
+ */
+type DocumentsMotorcycle = Motorcycle & { ownerName: string | null };
+
+interface DocumentsPayload {
+  docs: DocumentSummary[];
+  allMotorcycles: DocumentsMotorcycle[];
+  assignments: { documentId: number; motorcycleId: number }[];
+}
+
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
 
   const [response, userMotosResponse] = await Promise.all([
-    getDocumentsPayload(token),
-    fetchFromBackend<{ motorcycles: any[] }>("/motorcycles", {}, token),
+    getDocumentsPayload(token) as Promise<DocumentsPayload>,
+    fetchFromBackend<{ motorcycles: Motorcycle[] }>("/motorcycles", {}, token),
   ]);
 
   const userMotoIds = new Set(
-    (userMotosResponse.motorcycles ?? []).map((m: any) => m.id),
+    (userMotosResponse.motorcycles ?? []).map((m) => m.id),
   );
-  const allMotorcycles = (response.allMotorcycles ?? []).map((m: any) => ({
+  const allMotorcycles = (response.allMotorcycles ?? []).map((m) => ({
     ...m,
     userId: m.userId ?? (userMotoIds.has(m.id) ? user.id : null),
   }));
@@ -55,8 +69,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       }, token);
       invalidateDocuments();
       return data({ success: true, intent: "create" });
-    } catch (e: any) {
-      return data({ error: e.message, intent: "create" }, { status: 400 });
+    } catch (e) {
+      return data({ error: e instanceof Error ? e.message : undefined, intent: "create" }, { status: 400 });
     }
   }
 
@@ -69,8 +83,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       }, token);
       invalidateDocuments();
       return data({ success: true, intent: "update" });
-    } catch (e: any) {
-      return data({ error: e.message, intent: "update" }, { status: 400 });
+    } catch (e) {
+      return data({ error: e instanceof Error ? e.message : undefined, intent: "update" }, { status: 400 });
     }
   }
 
@@ -82,8 +96,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       }, token);
       invalidateDocuments();
       return data({ success: true, intent: "delete" });
-    } catch (e: any) {
-      return data({ error: e.message, intent: "delete" }, { status: 400 });
+    } catch (e) {
+      return data({ error: e instanceof Error ? e.message : undefined, intent: "delete" }, { status: 400 });
     }
   }
 
@@ -137,19 +151,19 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
 
   const getAssignedMotorcycleIds = (docId?: number) => {
     if (!docId) return [];
-    return (assignments as any[])
-      .filter((a: any) => a.documentId === docId)
-      .map((a: any) => a.motorcycleId);
+    return assignments
+      .filter((a) => a.documentId === docId)
+      .map((a) => a.motorcycleId);
   };
 
   const myMotorcycleIds = useMemo(() =>
-    new Set((allMotorcycles as any[]).filter(m => m.userId === user.id).map(m => m.id)),
+    new Set(allMotorcycles.filter(m => m.userId === user.id).map(m => m.id)),
     [allMotorcycles, user.id]
   );
 
   const assignedToMeDocIds = useMemo(() => {
     const docIds = new Set<number>();
-    (assignments as any[]).forEach(a => {
+    assignments.forEach(a => {
       if (myMotorcycleIds.has(a.motorcycleId)) {
         docIds.add(a.documentId);
       }
@@ -190,20 +204,20 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
 
   const counts = useMemo(() => ({
     all: docs.length,
-    mine: docs.filter((d: any) => d.ownerId === user.id).length,
-    assigned: docs.filter((d: any) => assignedToMeDocIds.has(d.id)).length,
-    others: docs.filter((d: any) => d.ownerId !== user.id).length,
+    mine: docs.filter((d) => d.ownerId === user.id).length,
+    assigned: docs.filter((d) => assignedToMeDocIds.has(d.id)).length,
+    others: docs.filter((d) => d.ownerId !== user.id).length,
   }), [docs, user.id, assignedToMeDocIds]);
 
   const motorcycleNameMap = new Map(
-    (allMotorcycles as any[]).map((moto: any) => {
+    allMotorcycles.map((moto) => {
       const nameParts = [moto.make, moto.model].filter(Boolean);
       const label = nameParts.length > 0 ? nameParts.join(" ") : `Motorrad #${moto.id}`;
       return [moto.id, label];
     })
   );
 
-  const documentMotorcycleNames = (assignments as any[]).reduce<Record<number, string[]>>((acc, assignment: any) => {
+  const documentMotorcycleNames = assignments.reduce<Record<number, string[]>>((acc, assignment) => {
     const label = motorcycleNameMap.get(assignment.motorcycleId);
     if (!label) return acc;
     if (!acc[assignment.documentId]) {
@@ -229,7 +243,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     const searchParams = new URLSearchParams(location.search);
     const docIdParam = searchParams.get("doc");
     if (!docIdParam) return;
-    const docToEdit = (docs as any[]).find((d: any) => d.id === Number(docIdParam));
+    const docToEdit = docs.find((d) => d.id === Number(docIdParam));
     if (!docToEdit) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     openEditDialog(docToEdit);
@@ -243,7 +257,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     );
   }, [location.search, docs, navigate, openEditDialog, location.pathname]);
 
-  const filters: { id: FilterType; label: string; icon: any; count: number }[] = [
+  const filters: { id: FilterType; label: string; icon: LucideIcon; count: number }[] = [
     { id: "all", label: "Alle", icon: Filter, count: counts.all },
     { id: "mine", label: "Meine", icon: UserIcon, count: counts.mine },
     { id: "assigned", label: "Zugeordnet", icon: Bike, count: counts.assigned },
@@ -313,7 +327,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
             />
           </div>
         ) : (
-          filteredAndSortedDocs.map((doc: any) => (
+          filteredAndSortedDocs.map((doc) => (
             <DocumentCard
               key={doc.id}
               document={doc}

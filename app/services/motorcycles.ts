@@ -2,6 +2,10 @@ import { fetchFromBackend, rethrowRedirect } from "~/utils/backend";
 import { invalidatePrefix } from "~/utils/request-cache";
 import {
   type EditorIssue,
+  type Issue,
+  type Location,
+  type MaintenanceRecord,
+  type Motorcycle,
   type NewCurrentLocationRecord,
   type NewIssue,
   type NewLocation,
@@ -9,14 +13,16 @@ import {
   type NewTirePressure,
   type NewTorqueSpecification,
   type NewPreviousOwner,
+  type PreviousOwner,
   type TirePressure,
+  type TorqueSpecification,
 } from "~/types/db";
 
 export async function createMotorcycle(
   token: string,
   values: FormData,
 ) {
-  const response = await fetchFromBackend<{ motorcycle: any }>("/motorcycles", {
+  const response = await fetchFromBackend<{ motorcycle: Motorcycle }>("/motorcycles", {
     method: "POST",
     body: values,
   }, token);
@@ -24,7 +30,7 @@ export async function createMotorcycle(
 }
 
 export async function createIssue(token: string, values: NewIssue) {
-  const response = await fetchFromBackend<{ issue: any }>(`/motorcycles/${values.motorcycleId}/issues`, {
+  const response = await fetchFromBackend<{ issue: Issue }>(`/motorcycles/${values.motorcycleId}/issues`, {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -35,7 +41,7 @@ export async function createMaintenanceRecord(
   token: string,
   values: NewMaintenanceRecord,
 ) {
-  const response = await fetchFromBackend<{ maintenanceRecord: any }>(`/motorcycles/${values.motorcycleId}/maintenance`, {
+  const response = await fetchFromBackend<{ maintenanceRecord: MaintenanceRecord }>(`/motorcycles/${values.motorcycleId}/maintenance`, {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -46,7 +52,7 @@ export async function createPreviousOwner(
   token: string,
   values: NewPreviousOwner,
 ) {
-  const response = await fetchFromBackend<{ previousOwner: any }>(`/motorcycles/${values.motorcycleId}/previous-owners`, {
+  const response = await fetchFromBackend<{ previousOwner: PreviousOwner }>(`/motorcycles/${values.motorcycleId}/previous-owners`, {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -59,7 +65,7 @@ export async function updatePreviousOwner(
   motorcycleId: number,
   values: Partial<NewPreviousOwner>,
 ) {
-  const response = await fetchFromBackend<{ previousOwner: any }>(`/motorcycles/${motorcycleId}/previous-owners/${ownerId}`, {
+  const response = await fetchFromBackend<{ previousOwner: PreviousOwner }>(`/motorcycles/${motorcycleId}/previous-owners/${ownerId}`, {
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
@@ -86,7 +92,7 @@ export async function createLocationRecord(
   token: string,
   values: NewCurrentLocationRecord,
 ) {
-  const response = await fetchFromBackend<{ location: any }>("/locations", {
+  const response = await fetchFromBackend<{ location: Location }>("/locations", {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -95,7 +101,7 @@ export async function createLocationRecord(
 }
 
 export async function createLocation(token: string, values: NewLocation) {
-  const response = await fetchFromBackend<{ location: any }>("/locations", {
+  const response = await fetchFromBackend<{ location: Location }>("/locations", {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -107,7 +113,7 @@ export async function createTorqueSpecification(
   token: string,
   values: NewTorqueSpecification,
 ) {
-  const response = await fetchFromBackend<{ torqueSpec: any }>(`/motorcycles/${values.motorcycleId}/torque-specs`, {
+  const response = await fetchFromBackend<{ torqueSpec: TorqueSpecification }>(`/motorcycles/${values.motorcycleId}/torque-specs`, {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -120,7 +126,7 @@ export async function updateMotorcycle(
   _userId: number,
   values: FormData,
 ) {
-  const response = await fetchFromBackend<{ motorcycle: any }>(`/motorcycles/${motorcycleId}`, {
+  const response = await fetchFromBackend<{ motorcycle: Motorcycle }>(`/motorcycles/${motorcycleId}`, {
     method: "PUT",
     body: values,
   }, token);
@@ -140,7 +146,7 @@ export async function updateMotorcycleUnknownOwners(
 ) {
   const formData = new FormData();
   formData.append("hasUnknownOwners", hasUnknownOwners ? "true" : "false");
-  const response = await fetchFromBackend<{ motorcycle: any }>(`/motorcycles/${motorcycleId}`, {
+  const response = await fetchFromBackend<{ motorcycle: Motorcycle }>(`/motorcycles/${motorcycleId}`, {
     method: "PUT",
     body: formData,
   }, token);
@@ -153,7 +159,7 @@ export async function updateIssue(
   motorcycleId: number,
   values: EditorIssue,
 ) {
-  const response = await fetchFromBackend<{ issue: any }>(`/motorcycles/${motorcycleId}/issues/${issueId}`, {
+  const response = await fetchFromBackend<{ issue: Issue }>(`/motorcycles/${motorcycleId}/issues/${issueId}`, {
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
@@ -182,7 +188,7 @@ export async function updateMaintenanceRecord(
   motorcycleId: number,
   values: Partial<NewMaintenanceRecord>,
 ) {
-  const response = await fetchFromBackend<{ maintenanceRecord: any }>(`/motorcycles/${motorcycleId}/maintenance/${maintenanceId}`, {
+  const response = await fetchFromBackend<{ maintenanceRecord: MaintenanceRecord }>(`/motorcycles/${motorcycleId}/maintenance/${maintenanceId}`, {
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
@@ -211,7 +217,7 @@ export async function updateTorqueSpecification(
   motorcycleId: number,
   values: Partial<NewTorqueSpecification>,
 ) {
-  const response = await fetchFromBackend<{ torqueSpec: any }>(`/motorcycles/${motorcycleId}/torque-specs/${torqueId}`, {
+  const response = await fetchFromBackend<{ torqueSpec: TorqueSpecification }>(`/motorcycles/${motorcycleId}/torque-specs/${torqueId}`, {
     method: "PUT",
     body: JSON.stringify(values),
   }, token);

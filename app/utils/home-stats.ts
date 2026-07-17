@@ -27,6 +27,14 @@ export type BusiestBike =
       odometerThisYear?: number;
     };
 
+/** One per-year aggregate row as emitted by the backend stats endpoints. */
+export type YearlyStat = {
+  year: number;
+  distance: number;
+  cost: number;
+  motorcycleCount: number;
+};
+
 export type DashboardStats = {
   year: number;
   totalMotorcycles: number;
@@ -36,7 +44,7 @@ export type DashboardStats = {
   totalMaintenanceCostThisYear: number;
   veteranCount: number;
   busiestBike: BusiestBike;
-  yearly?: any[];
+  yearly?: YearlyStat[];
 };
 
 /**
@@ -44,12 +52,13 @@ export type DashboardStats = {
  * shapes since the backend returns the latter today. Returning a single
  * canonical shape lets the UI drop its `as any` casts.
  */
-export function normalizeDashboardStats(raw: any): DashboardStats | null {
+export function normalizeDashboardStats(raw: unknown): DashboardStats | null {
   if (!raw || typeof raw !== "object") return null;
+  const source = raw as Record<string, unknown>;
 
   const pick = <T,>(...keys: string[]): T | undefined => {
     for (const k of keys) {
-      if (raw[k] !== undefined) return raw[k] as T;
+      if (source[k] !== undefined) return source[k] as T;
     }
     return undefined;
   };
@@ -64,6 +73,6 @@ export function normalizeDashboardStats(raw: any): DashboardStats | null {
       pick<number>("totalMaintenanceCostThisYear", "total_maintenance_cost_this_year") ?? 0,
     veteranCount: pick<number>("veteranCount", "veteran_count") ?? 0,
     busiestBike: pick<BusiestBike>("busiestBike", "busiest_bike") ?? null,
-    yearly: pick<any[]>("yearly"),
+    yearly: pick<YearlyStat[]>("yearly"),
   };
 }

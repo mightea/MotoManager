@@ -43,7 +43,7 @@ import {
   Combine,
 } from "lucide-react";
 import { registerPasskey } from "~/utils/webauthn";
-import type { FluidType, Location, LocationType, UserSettings } from "~/types/db";
+import type { Authenticator, FluidType, Location, LocationType, UserSettings } from "~/types/db";
 
 export function meta() {
   return [
@@ -57,7 +57,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const [locations, settings, userAuthenticatorsRaw] = await Promise.all([
     getLocations(token, user.id),
     getUserSettings(token, user.id),
-    fetchFromBackend<any>("/settings/authenticators", {}, token).catch(() => []),
+    fetchFromBackend<Authenticator[]>("/settings/authenticators", {}, token).catch(() => []),
   ]);
   
   const userAuthenticators = Array.isArray(userAuthenticatorsRaw) ? userAuthenticatorsRaw : [];
@@ -152,8 +152,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         body: JSON.stringify({ currentPassword, newPassword }),
       }, token);
       return { success: "Passwort erfolgreich geändert." };
-    } catch (err: any) {
-      return { error: err.message || "Passwortänderung fehlgeschlagen." };
+    } catch (err) {
+      return { error: (err instanceof Error && err.message) || "Passwortänderung fehlgeschlagen." };
     }
   }
 
@@ -565,7 +565,7 @@ export default function Settings() {
         <div className="relative flex items-start gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3 text-sm text-success dark:border-success/40 dark:bg-success/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-success" />
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] pt-0.5 opacity-70">OK</span>
-          <span>{(actionData as any).success}</span>
+          <span>{actionData.success}</span>
         </div>
       )}
 

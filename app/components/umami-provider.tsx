@@ -1,25 +1,26 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigation } from "react-router";
 import { getUmamiScriptUrl, getUmamiWebsiteId } from "~/config";
+import type { UmamiEventData } from "~/types/umami";
 
 /**
  * Stop function returned by {@link startPerfMark}. Call once to fire the
  * `perf.<name>` event with the elapsed time; the optional `data` argument is
  * merged into the Umami event payload alongside `duration_ms`.
  */
-export type PerfMarkStop = (data?: Record<string, any>) => void;
+export type PerfMarkStop = (data?: UmamiEventData) => void;
 
 interface UmamiContextProps {
   /**
    * Track a custom event with optional data.
    * Only tracks in production environment.
    */
-  trackEvent: (name: string, data?: Record<string, any>) => void;
+  trackEvent: (name: string, data?: UmamiEventData) => void;
   /**
    * Identify a user session.
    * Only tracks in production environment.
    */
-  identifyUser: (data: Record<string, any>) => void;
+  identifyUser: (data: UmamiEventData) => void;
   /**
    * Fire a `perf.<name>` Umami event with an explicit duration in ms. Useful
    * when the duration is already known (e.g. from a server response).
@@ -27,7 +28,7 @@ interface UmamiContextProps {
   trackPerformance: (
     name: string,
     durationMs: number,
-    data?: Record<string, any>,
+    data?: UmamiEventData,
   ) => void;
   /**
    * Start a performance mark. Call the returned stop function once the work
@@ -47,7 +48,7 @@ const IS_PROD = process.env.NODE_ENV === "production";
 export function trackPerformance(
   name: string,
   durationMs: number,
-  data?: Record<string, any>,
+  data?: UmamiEventData,
 ): void {
   if (!IS_PROD) return;
   if (typeof window === "undefined" || !window.umami) return;
@@ -187,12 +188,12 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // 3. Memoized Context Value
   const value = useMemo(
     () => ({
-      trackEvent: (name: string, data?: Record<string, any>) => {
+      trackEvent: (name: string, data?: UmamiEventData) => {
         if (IS_PROD && window.umami) {
           window.umami.track(name, data);
         }
       },
-      identifyUser: (data: Record<string, any>) => {
+      identifyUser: (data: UmamiEventData) => {
         if (IS_PROD && window.umami) {
           window.umami.identify(data);
         }

@@ -7,6 +7,8 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.torque-specifications";
 import {
+  type MaintenanceRecord,
+  type Motorcycle,
   type PressureUnit,
   type TirePressure,
   type TorqueSpecification,
@@ -37,6 +39,16 @@ import { fetchFromBackend } from "~/utils/backend";
 import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
 import { formatPressure } from "~/utils/pressure";
 
+/** Slice of the `/motorcycles/:id` payload this route consumes. */
+interface MotorcycleDetailResponse {
+  motorcycle: Motorcycle;
+  torqueSpecs?: TorqueSpecification[];
+  maintenanceRecords?: MaintenanceRecord[];
+}
+
+/** `/motorcycles` list entry; older backends sent `modelYear` instead of `fabricationDate`. */
+type MotorcycleListItem = Motorcycle & { modelYear?: string | null };
+
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
     return [{ title: "Werkstattdaten - Moto Manager" }];
@@ -60,14 +72,14 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   }
 
   const [response, allMotorcyclesResponse, tirePressure] = await Promise.all([
-    fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
-    fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
+    fetchFromBackend<MotorcycleDetailResponse>(`/motorcycles/${motorcycleId}`, {}, token),
+    fetchFromBackend<{ motorcycles: MotorcycleListItem[] }>(`/motorcycles`, {}, token),
     getTirePressure(token, motorcycleId),
   ]);
 
   const otherMotorcycles = (allMotorcyclesResponse.motorcycles ?? [])
-    .filter((m: any) => m.id !== motorcycleId)
-    .map((m: any) => ({
+    .filter((m) => m.id !== motorcycleId)
+    .map((m) => ({
       id: m.id,
       make: m.make,
       model: m.model,
@@ -268,7 +280,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   const pressure = (tirePressure ?? null) as TirePressure | null;
 
   const specs = specsRaw as TorqueSpecification[];
-  const allCategories = Array.from(new Set(specs.map((s: any) => s.category as string))).sort() as string[];
+  const allCategories = Array.from(new Set(specs.map((s) => s.category))).sort();
   const actionData = useActionData<typeof clientAction>();
   const submit = useSubmit();
   const params = useParams<{ slug?: string; id?: string }>();
@@ -572,7 +584,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           ) : (
             <div className="grid gap-6 print:block print:gap-0 print:!bg-white">
               {/* Group by category */}
-              {Array.from(new Set((specs as any[]).map((s: any) => s.category))).map((category: any) => (
+              {Array.from(new Set(specs.map((s) => s.category))).map((category) => (
                 <Card
                   key={category as string}
                   className="overflow-hidden print:block print:rounded-none print:border-0 print:break-inside-avoid print:print-force-white print:shadow-none"
@@ -581,7 +593,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     {category as string}
                   </div>
                   <div className="divide-y divide-base-200 dark:divide-navy-700 print:divide-transparent">
-                    {specs.filter((s: any) => s.category === category).map((spec: TorqueSpecification) => (
+                    {specs.filter((s) => s.category === category).map((spec: TorqueSpecification) => (
                       <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5 sm:py-4 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-0 print:py-0 print:!bg-white print:!text-black print:border-0 print-row">
                         <div className="flex-1 min-w-0 space-y-0.5">
                           <div className="flex items-center gap-2 min-w-0">

@@ -20,7 +20,7 @@ import {
   updateUser,
   updateUserPassword,
 } from "~/services/auth";
-import { USER_ROLES } from "~/types/auth";
+import { USER_ROLES, type UserRole } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useConfirm } from "~/components/confirm-provider";
@@ -62,7 +62,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const username = formData.get("username") as string;
     const name = formData.get("name") as string;
     const password = formData.get("password") as string;
-    const role = formData.get("role") as any;
+    const role = formData.get("role") as UserRole;
 
     if (!email || !username || !name || !password || !USER_ROLES.includes(role)) {
       return { error: "Ungültige Daten." };
@@ -71,8 +71,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     try {
       await createUser({ email, username, name, password, role });
       return { success: "Benutzer erfolgreich erstellt." };
-    } catch (e: any) {
-      return { error: e.message || "Fehler beim Erstellen des Benutzers." };
+    } catch (e) {
+      return { error: (e instanceof Error && e.message) || "Fehler beim Erstellen des Benutzers." };
     }
   }
 
@@ -81,7 +81,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const email = formData.get("email") as string;
     const username = formData.get("username") as string;
     const name = formData.get("name") as string;
-    const role = formData.get("role") as any;
+    const role = formData.get("role") as UserRole;
     const password = formData.get("password") as string;
 
     if (!userId || !email || !username || !name || !USER_ROLES.includes(role)) {
@@ -101,8 +101,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       }
 
       return { success: "Benutzer erfolgreich aktualisiert." };
-    } catch (e: any) {
-      return { error: e.message || "Fehler beim Aktualisieren des Benutzers." };
+    } catch (e) {
+      return { error: (e instanceof Error && e.message) || "Fehler beim Aktualisieren des Benutzers." };
     }
   }
 
@@ -133,8 +133,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     try {
       await createCurrencySetting(token, { code: code.toUpperCase(), symbol, conversionFactor: 1 });
       return { success: `Währung ${code.toUpperCase()} erstellt.` };
-    } catch (error: any) {
-      return { error: error.message || "Fehler beim Erstellen der Währung." };
+    } catch (error) {
+      return { error: (error instanceof Error && error.message) || "Fehler beim Erstellen der Währung." };
     }
   }
 
@@ -276,7 +276,7 @@ export default function AdminSettings() {
 
       {actionData && "success" in actionData && (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-green-600 dark:border-green-900/40 dark:bg-green-900/20 dark:text-green-300">
-          {(actionData as any).success}
+          {actionData.success}
         </div>
       )}
 

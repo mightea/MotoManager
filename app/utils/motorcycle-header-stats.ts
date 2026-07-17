@@ -1,10 +1,17 @@
 import type { NextInspectionInfo } from "./inspection";
 import { getNextInspectionInfo } from "./inspection";
 import { getLocations } from "~/services/settings";
+import type { MaintenanceRecord, Motorcycle } from "~/types/db";
 
 export type MotorcycleHeaderStats = {
   nextInspection: NextInspectionInfo | null;
   currentLocationName: string | null;
+};
+
+/** The slice of the `/motorcycles/:id` response the header stats depend on. */
+export type MotorcycleDetailResponse = {
+  motorcycle?: Pick<Motorcycle, "firstRegistration" | "isVeteran"> | null;
+  maintenanceRecords?: MaintenanceRecord[] | null;
 };
 
 /**
@@ -15,12 +22,12 @@ export type MotorcycleHeaderStats = {
  * the same on every tab and the layout does not shift on navigation.
  */
 export async function computeMotorcycleHeaderStats(
-  motoResponse: any,
+  motoResponse: MotorcycleDetailResponse | null | undefined,
   token: string,
   userId: number,
 ): Promise<MotorcycleHeaderStats> {
   const motorcycle = motoResponse?.motorcycle;
-  const maintenanceRecords: any[] = Array.isArray(motoResponse?.maintenanceRecords)
+  const maintenanceRecords: MaintenanceRecord[] = Array.isArray(motoResponse?.maintenanceRecords)
     ? motoResponse.maintenanceRecords
     : [];
 
@@ -39,7 +46,7 @@ export async function computeMotorcycleHeaderStats(
   const userLocations = await getLocations(token, userId);
   // "Where the bike lives" → only Storage-typed locations qualify.
   const storageLocationIds = new Set(
-    userLocations.filter((l: any) => l.type === "storage").map((l: any) => l.id),
+    userLocations.filter((l) => l.type === "storage").map((l) => l.id),
   );
   const currentLocationId =
     maintenanceRecords
@@ -49,7 +56,7 @@ export async function computeMotorcycleHeaderStats(
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.locationId ??
     null;
   const currentLocationName =
-    userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
+    userLocations.find((l) => l.id === currentLocationId)?.name ?? null;
 
   return { nextInspection, currentLocationName };
 }

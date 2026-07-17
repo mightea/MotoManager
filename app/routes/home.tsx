@@ -77,7 +77,11 @@ export async function clientLoader({ request: _request }: Route.ClientLoaderArgs
   const { user, token } = await requireUser(_request);
 
   const [dashboardData, currencies, modelSeries, settings] = await Promise.all([
-    fetchFromBackend<any>("/home", {}, token),
+    fetchFromBackend<{ motorcycles?: MotorcycleDashboardItem[]; stats?: unknown }>(
+      "/home",
+      {},
+      token,
+    ),
     getCurrencies(),
     fetchModelSeries(token).catch(() => []),
     getUserSettings(token, user.id).catch(() => null),

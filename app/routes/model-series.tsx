@@ -12,7 +12,7 @@ import {
   updateModelSeries,
 } from "~/services/parts";
 import { modelSeriesDisplayName, type ModelSeries } from "~/types/parts";
-import { seriesDepth, seriesLevelLabel, seriesPath, seriesTree } from "~/utils/series";
+import { seriesLevelLabel, seriesPath, seriesTree } from "~/utils/series";
 import { Card } from "~/components/card";
 import { EmptyState } from "~/components/empty-state";
 import { Modal } from "~/components/modal";

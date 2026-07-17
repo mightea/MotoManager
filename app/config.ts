@@ -3,7 +3,7 @@
  */
 function getEnv(name: string): string | undefined {
   if (typeof window === "undefined") return undefined;
-  return (window as any).ENV?.[name];
+  return (window as { ENV?: Record<string, string | undefined> }).ENV?.[name];
 }
 
 /**

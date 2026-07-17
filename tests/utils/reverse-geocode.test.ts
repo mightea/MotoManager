@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createReverseGeocoder } from "~/utils/reverse-geocode";
 
-function makeFetch(response: any, status = 200) {
+function makeFetch(response: unknown, status = 200) {
   return vi.fn(async () =>
     ({
       ok: status >= 200 && status < 300,
@@ -82,11 +82,11 @@ describe("createReverseGeocoder", () => {
     // a `now` reading at least minIntervalMs after the first.
     const callTimes: number[] = [];
     const origSetTimeout = globalThis.setTimeout;
-    vi.spyOn(globalThis, "setTimeout").mockImplementation(((cb: any, ms: number) => {
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((cb: () => void, ms?: number) => {
       virtualNow += ms ?? 0;
       callTimes.push(ms ?? 0);
       return origSetTimeout(cb, 0);
-    }) as any);
+    }) as unknown as typeof setTimeout);
 
     await geocode(47.0, 9.0);
     await geocode(47.1, 9.1);

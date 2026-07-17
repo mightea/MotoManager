@@ -7,7 +7,7 @@ interface StatisticEntryProps {
   label: string;
   value: ReactNode;
   valueClassName?: string;
-  checkValue?: any; // Used to check for null/empty/zero if different from value
+  checkValue?: unknown; // Used to check for null/empty/zero if different from value
 }
 
 /**

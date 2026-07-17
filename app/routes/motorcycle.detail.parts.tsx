@@ -10,6 +10,7 @@ import {
   fetchStorageLocations,
 } from "~/services/parts";
 import type { ModelSeries, Part, PartStock, StorageLocation } from "~/types/parts";
+import type { MaintenanceRecord, Motorcycle } from "~/types/db";
 import { seriesNames, storageLocationPath } from "~/utils/parts";
 import { seriesPath } from "~/utils/series";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
@@ -41,7 +42,11 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   }
 
   const [response, compatibleParts, modelSeries, stocks, storageLocations] = await Promise.all([
-    fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
+    fetchFromBackend<{ motorcycle: Motorcycle; maintenanceRecords?: MaintenanceRecord[] }>(
+      `/motorcycles/${motorcycleId}`,
+      {},
+      token,
+    ),
     fetchCompatibleParts(token, motorcycleId).catch(() => [] as Part[]),
     fetchModelSeries(token).catch(() => [] as ModelSeries[]),
     fetchPartStocks(token).catch(() => [] as PartStock[]),

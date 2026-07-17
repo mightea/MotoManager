@@ -1,11 +1,13 @@
 import { fetchFromBackend } from "~/utils/backend";
 import { cachedFetch, invalidate, invalidatePrefix } from "~/utils/request-cache";
 import {
+  type CurrencySetting,
   type Location,
   type LocationType,
   type NewCurrencySetting,
   type NewLocation,
   type NewUserSettings,
+  type UserSettings,
 } from "~/types/db";
 
 const SETTINGS_TTL_MS = 60_000;
@@ -14,7 +16,7 @@ const CURRENCIES_TTL_MS = 5 * 60_000;
 
 export async function getUserSettings(token: string, _userId: number) {
   const response = await cachedFetch(`settings:${token}`, SETTINGS_TTL_MS, () =>
-    fetchFromBackend<{ settings: any }>("/settings", {}, token),
+    fetchFromBackend<{ settings: UserSettings }>("/settings", {}, token),
   );
   return response.settings;
 }
@@ -24,7 +26,7 @@ export async function updateUserSettings(
   _userId: number,
   values: Partial<Omit<NewUserSettings, "id" | "userId" | "updatedAt">>,
 ) {
-  const response = await fetchFromBackend<{ settings: any }>("/settings", {
+  const response = await fetchFromBackend<{ settings: UserSettings }>("/settings", {
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
@@ -34,7 +36,7 @@ export async function updateUserSettings(
 
 export async function getLocations(token: string, _userId: number) {
   const response = await cachedFetch(`locations:${token}`, LOCATIONS_TTL_MS, () =>
-    fetchFromBackend<{ locations: any[] }>("/locations", {}, token),
+    fetchFromBackend<{ locations: Location[] }>("/locations", {}, token),
   );
   return response.locations;
 }
@@ -58,7 +60,7 @@ export async function getNearbyLocations(
 }
 
 export async function createLocation(token: string, values: NewLocation) {
-  const response = await fetchFromBackend<{ location: any }>("/locations", {
+  const response = await fetchFromBackend<{ location: Location }>("/locations", {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -68,7 +70,7 @@ export async function createLocation(token: string, values: NewLocation) {
 
 export async function getCurrencies() {
   const response = await cachedFetch("currencies", CURRENCIES_TTL_MS, () =>
-    fetchFromBackend<{ currencies: any[] }>("/currencies"),
+    fetchFromBackend<{ currencies: CurrencySetting[] }>("/currencies"),
   );
   return response.currencies;
 }
@@ -77,7 +79,7 @@ export async function createCurrencySetting(
   token: string,
   values: NewCurrencySetting,
 ) {
-  const response = await fetchFromBackend<{ currency: any }>("/admin/currencies", {
+  const response = await fetchFromBackend<{ currency: CurrencySetting }>("/admin/currencies", {
     method: "POST",
     body: JSON.stringify(values),
   }, token);
@@ -91,7 +93,7 @@ export async function updateLocation(
   _userId: number,
   values: Partial<NewLocation>,
 ) {
-  const response = await fetchFromBackend<{ location: any }>(`/locations/${locationId}`, {
+  const response = await fetchFromBackend<{ location: Location }>(`/locations/${locationId}`, {
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
@@ -104,7 +106,7 @@ export async function deleteLocation(
   locationId: number,
   _userId: number,
 ) {
-  const result = await fetchFromBackend<any>(`/locations/${locationId}`, {
+  const result = await fetchFromBackend<{ message: string }>(`/locations/${locationId}`, {
     method: "DELETE",
   }, token);
   invalidatePrefix("locations:");
@@ -139,7 +141,7 @@ export async function updateCurrencySetting(
   currencyId: number,
   values: Partial<NewCurrencySetting>,
 ) {
-  const response = await fetchFromBackend<{ currency: any }>(`/admin/currencies/${currencyId}`, {
+  const response = await fetchFromBackend<{ currency: CurrencySetting }>(`/admin/currencies/${currencyId}`, {
     method: "PUT",
     body: JSON.stringify(values),
   }, token);
@@ -151,7 +153,7 @@ export async function deleteCurrencySetting(
   token: string,
   currencyId: number,
 ) {
-  const result = await fetchFromBackend<any>(`/admin/currencies/${currencyId}`, {
+  const result = await fetchFromBackend<{ message: string }>(`/admin/currencies/${currencyId}`, {
     method: "DELETE",
   }, token);
   invalidate("currencies");

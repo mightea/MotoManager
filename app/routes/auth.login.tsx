@@ -196,15 +196,15 @@ export default function Login() {
 
   const loginError =
     actionData && !actionData.success && actionData.form === "login" && "message" in actionData
-      ? (actionData as any).message
+      ? actionData.message
       : null;
   const registerError =
     actionData && !actionData.success && actionData.form === "register" && "message" in actionData
-      ? (actionData as any).message
+      ? actionData.message
       : null;
 
   const fieldErrors =
-    actionData && !actionData.success && "errors" in actionData ? (actionData as any).errors : null;
+    actionData && !actionData.success && "errors" in actionData ? actionData.errors : null;
 
   const handlePasskeyLogin = async () => {
     try {

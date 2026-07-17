@@ -1,5 +1,9 @@
 import { fetchFromBackend } from "~/utils/backend";
 import { cachedFetch, invalidatePrefix } from "~/utils/request-cache";
+import {
+  type Document,
+  type DocumentMotorcycle,
+} from "~/types/db";
 
 // The `/documents` payload ({ docs, allMotorcycles, assignments }) is read by both
 // the documents route and each motorcycle's documents tab — cache it so those
@@ -7,9 +11,32 @@ import { cachedFetch, invalidatePrefix } from "~/utils/request-cache";
 // document mutation.
 const DOCUMENTS_TTL_MS = 60_000;
 
+/**
+ * One `/documents` docs row: the document plus its assigned motorcycle ids.
+ * `updatedAt` stays optional so the narrower `DocumentSummary` card shape
+ * remains compatible with these rows.
+ */
+export type DocumentListItem = Omit<Document, "updatedAt"> & {
+  updatedAt?: string;
+  motorcycleIds?: number[];
+};
+
+/** Shape of the `/documents` response. */
+export interface DocumentsPayload {
+  docs: DocumentListItem[];
+  allMotorcycles: {
+    id: number;
+    userId: number;
+    make: string;
+    model: string;
+    ownerName: string;
+  }[];
+  assignments: DocumentMotorcycle[];
+}
+
 export function getDocumentsPayload(token: string) {
   return cachedFetch(`documents:${token}`, DOCUMENTS_TTL_MS, () =>
-    fetchFromBackend<any>("/documents", {}, token),
+    fetchFromBackend<DocumentsPayload>("/documents", {}, token),
   );
 }
 
@@ -39,7 +66,7 @@ export function getFileCategory(file: File): "pdf" | "image" | null {
 }
 
 export async function listDocuments(token: string) {
-    const response = await fetchFromBackend<{ documents: any[] }>("/documents", {}, token);
+    const response = await fetchFromBackend<{ documents: Document[] }>("/documents", {}, token);
     return response.documents;
 }
 
@@ -47,7 +74,7 @@ export async function saveDocumentFile(file: File, token: string) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetchFromBackend<{ document: any }>("/documents", {
+    const response = await fetchFromBackend<{ document: Document }>("/documents", {
         method: "POST",
         body: formData,
     }, token);
@@ -55,13 +82,13 @@ export async function saveDocumentFile(file: File, token: string) {
 }
 
 export async function deleteDocumentFiles(docId: number, token: string) {
-    return fetchFromBackend<any>(`/documents/${docId}`, {
+    return fetchFromBackend<{ message: string }>(`/documents/${docId}`, {
         method: "DELETE",
     }, token);
 }
 
 export async function regenerateAllDocumentPreviews(token: string) {
-    const result = await fetchFromBackend<any>("/admin/regenerate-previews", {
+    const result = await fetchFromBackend<{ message: string; docCount: number; motoCount: number }>("/admin/regenerate-previews", {
         method: "POST",
     }, token);
     invalidateDocuments();

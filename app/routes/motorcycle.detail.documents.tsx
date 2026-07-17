@@ -21,6 +21,7 @@ import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialo
 import { fetchFromBackend } from "~/utils/backend";
 import { getDocumentsPayload } from "~/services/documents";
 import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
+import type { MaintenanceRecord, Motorcycle } from "~/types/db";
 
 export type DocumentWithAssignment = DocumentSummary & {
   assignedMotorcycleNames: string[];
@@ -30,6 +31,19 @@ export type DocumentAssignment = {
   documentId: number;
   motorcycleId: number;
 };
+
+/**
+ * Motorcycle entry in the `/documents` payload. The backend sends a lean
+ * projection (id/userId/make/model/ownerName); it is typed as the full
+ * Motorcycle to match AddDocumentForm, which only reads the projected fields.
+ */
+type DocumentsMotorcycle = Motorcycle & { ownerName: string | null };
+
+interface DocumentsPayload {
+  docs: DocumentSummary[];
+  allMotorcycles: DocumentsMotorcycle[];
+  assignments: DocumentAssignment[];
+}
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
@@ -54,20 +68,24 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   }
 
   const [motoResponse, docsResponse, userMotosResponse] = await Promise.all([
-    fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
-    getDocumentsPayload(token),
-    fetchFromBackend<{ motorcycles: any[] }>(`/motorcycles`, {}, token),
+    fetchFromBackend<{ motorcycle: Motorcycle; maintenanceRecords?: MaintenanceRecord[] }>(
+      `/motorcycles/${motorcycleId}`,
+      {},
+      token,
+    ),
+    getDocumentsPayload(token) as Promise<DocumentsPayload>,
+    fetchFromBackend<{ motorcycles: Motorcycle[] }>(`/motorcycles`, {}, token),
   ]);
 
   // Only depends on motoResponse — start the fetch before the sync work below.
   const headerStatsPromise = computeMotorcycleHeaderStats(motoResponse, token, user.id);
 
-  const allDocs: any[] = docsResponse.docs ?? [];
+  const allDocs = docsResponse.docs ?? [];
   const userMotoIds = new Set(
-    (userMotosResponse.motorcycles ?? []).map((m: any) => m.id),
+    (userMotosResponse.motorcycles ?? []).map((m) => m.id),
   );
-  const allMotorcycles: any[] = (docsResponse.allMotorcycles ?? []).map(
-    (m: any) => ({
+  const allMotorcycles = (docsResponse.allMotorcycles ?? []).map(
+    (m) => ({
       ...m,
       userId: m.userId ?? (userMotoIds.has(m.id) ? user.id : null),
     }),
@@ -75,7 +93,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const assignments: DocumentAssignment[] = docsResponse.assignments ?? [];
 
   const motorcycleNameById = new Map<number, string>(
-    allMotorcycles.map((moto: any) => {
+    allMotorcycles.map((moto) => {
       const nameParts = [moto.make, moto.model].filter(Boolean);
       const label = nameParts.length > 0 ? nameParts.join(" ") : `Motorrad #${moto.id}`;
       return [moto.id, label];
@@ -90,7 +108,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     if (!bucket.includes(label)) bucket.push(label);
   }
 
-  const decorate = (doc: any) => ({
+  const decorate = (doc: DocumentSummary): DocumentWithAssignment => ({
     ...doc,
     assignedMotorcycleNames: namesByDocId[doc.id] ?? [],
   });

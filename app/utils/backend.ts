@@ -65,7 +65,7 @@ export async function fetchFromBackend<T>(
   }
 
   if (!response.ok) {
-    let errorData: any;
+    let errorData: { error?: string; message?: string };
     try {
       errorData = await response.json();
     } catch {

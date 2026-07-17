@@ -1,10 +1,31 @@
 import { Link, useLoaderData } from "react-router";
 import { requireUser } from "~/services/auth";
 import { formatNumber } from "~/utils/numberUtils";
-import { ArrowLeft, Users, Bike, FileText, Wrench, AlertCircle, MapPin, History, PenTool, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, Users, Bike, FileText, Wrench, AlertCircle, MapPin, History, PenTool, Link as LinkIcon, type LucideIcon } from "lucide-react";
 import type { Route } from "./+types/settings.server-stats";
 import clsx from "clsx";
 import { fetchFromBackend } from "~/utils/backend";
+
+/** Instance-wide counters in the `/stats` payload's `global` block. */
+interface GlobalStats {
+  users: number;
+  motorcycles: number;
+  archivedMotorcycles: number;
+  documents: number;
+  documentAssignments: number;
+  maintenance: number;
+  issues: number;
+  openIssues: number;
+  locations: number;
+  locationHistory: number;
+  torqueSpecs: number;
+}
+
+interface ServerStatsResponse {
+  stats: { global: GlobalStats };
+  avgMotoPerUser?: number;
+  avgDocsPerUser?: number;
+}
 
 export function meta() {
   return [
@@ -16,7 +37,7 @@ export function meta() {
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     const { token } = await requireUser(request);
 
-    const response = await fetchFromBackend<any>("/stats", {}, token);
+    const response = await fetchFromBackend<ServerStatsResponse>("/stats", {}, token);
 
     const { stats, avgMotoPerUser, avgDocsPerUser } = response;
 
@@ -177,7 +198,7 @@ function StatCard({
     description,
     color = "indigo",
 }: {
-    icon: any;
+    icon: LucideIcon;
     label: string;
     value: string;
     description: string;

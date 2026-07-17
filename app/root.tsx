@@ -81,7 +81,7 @@ const CONTENT_SECURITY_POLICY = [
 ].join("; ");
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<any>();
+  const data = useLoaderData<typeof clientLoader>();
   const theme = data?.theme || Theme.LIGHT;
 
   return (

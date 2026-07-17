@@ -5,11 +5,12 @@ import { seriesPath, seriesTree } from "~/utils/series";
 import { decodeVin } from "~/services/parts";
 import { getSessionToken } from "~/services/auth";
 import { useState } from "react";
-import Cropper from "react-easy-crop";
+import Cropper, { type Area } from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
 import { toast } from "~/hooks/use-toast";
 import { Modal } from "./modal";
 import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
+import type { RoadTripFuelEntry } from "~/utils/roadtrip-import";
 import { Fuel, Users } from "lucide-react";
 import { Button } from "./button";
 import { FormField } from "./form-field";
@@ -68,7 +69,7 @@ export function AddMotorcycleForm({
                       (navigation.formData?.get("intent") === intent ||
                        navigation.formData?.get("intent") === "importFuelData");
 
-  const handleRoadTripImport = (selectedEntries: any[]) => {
+  const handleRoadTripImport = (selectedEntries: RoadTripFuelEntry[]) => {
     if (initialValues?.id) {
       const formData = new FormData();
       formData.append("intent", "importFuelData");
@@ -156,7 +157,7 @@ export function AddMotorcycleForm({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [croppedImageBlob, setCroppedImageBlob] = useState<Blob | null>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
@@ -190,7 +191,7 @@ export function AddMotorcycleForm({
     reader.readAsDataURL(file);
   };
 
-  const onCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+  const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 

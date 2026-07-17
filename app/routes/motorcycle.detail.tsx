@@ -11,14 +11,20 @@ import {
 import type { Route } from "./+types/motorcycle.detail";
 import {
   type NewMaintenanceRecord,
+  type EditMaintenanceRecord,
+  type MaintenanceRecord,
   type MaintenanceType,
+  type Location,
   type LocationType,
   type TirePosition,
   type BatteryType,
+  type CurrencySetting,
   type FluidType,
+  type Motorcycle,
   type NewIssue,
   type Issue,
-  type NewPreviousOwner
+  type NewPreviousOwner,
+  type PreviousOwner
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
 import { Plus } from "lucide-react";
@@ -58,6 +64,29 @@ import {
 import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
 
+/** Slice of the `/motorcycles/:id` payload this route consumes. */
+interface MotorcycleDetailResponse {
+  motorcycle?: Motorcycle;
+  issues?: Issue[];
+  maintenanceRecords?: MaintenanceRecord[];
+  previousOwners?: PreviousOwner[];
+}
+
+/** One row of the fuel-import dialog's JSON payload (genuinely dynamic input). */
+interface FuelImportRecord {
+  date: string;
+  odo: number;
+  cost: number | null;
+  currency?: string | null;
+  currencyRate?: number | null;
+  fuelType?: string | null;
+  fuelAmount?: number | null;
+  pricePerUnit?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationName?: string | null;
+}
+
 export function meta({ data }: Route.MetaArgs) {
   if (!data || !data.motorcycle) {
     return [{ title: "Fahrzeug nicht gefunden - Moto Manager" }];
@@ -86,7 +115,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   // consumption display; failures degrade to empty lists instead of blocking.
   const [response, settings, userLocations, currencies, allExpenses, modelSeries, parts, partConsumptions] =
     await Promise.all([
-      fetchFromBackend<any>(`/motorcycles/${motorcycleId}`, {}, token),
+      fetchFromBackend<MotorcycleDetailResponse>(`/motorcycles/${motorcycleId}`, {}, token),
       getUserSettings(token, user.id),
       getLocations(token, user.id),
       getCurrencies(),
@@ -104,7 +133,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Motorrad nicht gefunden.", { status: 404 });
   }
 
-  const openIssues = issues.filter((i: any) => i.status !== "done");
+  const openIssues = issues.filter((i) => i.status !== "done");
   const maintenanceHistory = maintenanceRecords;
   const previousOwnersList = previousOwners;
   const ownerCount = previousOwners.length + 1;
@@ -113,8 +142,8 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const odometerCandidates = [
     motorcycle.initialOdo,
     motorcycle.manualOdo,
-    ...maintenanceRecords.map((r: any) => r.odo),
-    ...issues.map((i: any) => i.odo),
+    ...maintenanceRecords.map((r) => r.odo),
+    ...issues.map((i) => i.odo),
   ].filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   const lastKnownOdo = Math.max(0, ...odometerCandidates);
 
@@ -124,26 +153,26 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   // "Where the bike lives" → only Storage-typed locations qualify. Workshop / fuel /
   // inspection visits do not change the current location.
   const storageLocationIds = new Set(
-    userLocations.filter((l: any) => l.type === "storage").map((l: any) => l.id),
+    userLocations.filter((l: Location) => l.type === "storage").map((l: Location) => l.id),
   );
   const currentLocationId =
     maintenanceRecords
       .filter(
-        (r: any) =>
+        (r) =>
           r.type === "location" && r.locationId && storageLocationIds.has(r.locationId),
       )
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
       ?.locationId ?? null;
   const currentLocationName =
-    userLocations.find((l: any) => l.id === currentLocationId)?.name ?? null;
+    userLocations.find((l: Location) => l.id === currentLocationId)?.name ?? null;
 
   // Fuel stats
-  const fuelRecords = maintenanceRecords.filter((r: any) => r.type === "fuel" && r.fuelAmount && r.tripDistance);
-  const avgFuelConsumption = fuelRecords.length > 0 
-    ? fuelRecords.reduce((sum: number, r: any) => sum + (r.fuelConsumption || 0), 0) / fuelRecords.length 
+  const fuelRecords = maintenanceRecords.filter((r) => r.type === "fuel" && r.fuelAmount && r.tripDistance);
+  const avgFuelConsumption = fuelRecords.length > 0
+    ? fuelRecords.reduce((sum, r) => sum + (r.fuelConsumption || 0), 0) / fuelRecords.length
     : null;
   const avgTripDistance = fuelRecords.length > 0
-    ? fuelRecords.reduce((sum: number, r: any) => sum + (r.tripDistance || 0), 0) / fuelRecords.length
+    ? fuelRecords.reduce((sum, r) => sum + (r.tripDistance || 0), 0) / fuelRecords.length
     : null;
   const estimatedRange = avgFuelConsumption && motorcycle.fuelTankSize 
     ? (motorcycle.fuelTankSize / avgFuelConsumption) * 100 
@@ -166,8 +195,8 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     : null;
 
   const lastInspection = maintenanceRecords
-    .filter((entry: any) => entry.type === "inspection" && entry.date)
-    .map((entry: any) => entry.date as string)
+    .filter((entry) => entry.type === "inspection" && entry.date)
+    .map((entry) => entry.date)
     .sort((a: string, b: string) => new Date(b).getTime() - new Date(a).getTime())
     .at(0) ?? null;
 
@@ -181,11 +210,11 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const motorcycleExpenses = allExpenses.filter(e => e.motorcycleIds?.includes(motorcycleId));
 
   // Calculate total costs
-  const maintenanceCost = maintenanceHistory.reduce((sum: number, r: any) => sum + (r.normalizedCost || 0), 0);
+  const maintenanceCost = maintenanceHistory.reduce((sum, r) => sum + (r.normalizedCost || 0), 0);
   const purchasePrice = motorcycle.normalizedPurchasePrice || 0;
-  const sharedExpensesCost = motorcycleExpenses.reduce((sum: number, e: any) => {
+  const sharedExpensesCost = motorcycleExpenses.reduce((sum, e) => {
     const factor = e.motorcycleIds?.length || 1;
-    const currency = currencies.find((c: any) => c.code === e.currency);
+    const currency = currencies.find((c: CurrencySetting) => c.code === e.currency);
     const normalizedAmount = e.amount * (currency?.conversionFactor || 1);
     return sum + (normalizedAmount / factor);
   }, 0);
@@ -269,7 +298,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   const currencies = await getCurrencies();
   const getCurrencyFactor = (code: string | null | undefined) => {
     if (!code) return 1;
-    const currency = currencies.find((c: any) => c.code === code);
+    const currency = currencies.find((c: CurrencySetting) => c.code === code);
     return currency ? currency.conversionFactor : 1;
   };
 
@@ -449,7 +478,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       }
     }
 
-    const recordData: any = {
+    const recordData: EditMaintenanceRecord = {
       motorcycleId,
       type,
       date: String(formData.get("date")),
@@ -649,7 +678,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     const recordsJson = formData.get("records") as string;
-    const records = JSON.parse(recordsJson) as any[];
+    const records = JSON.parse(recordsJson) as FuelImportRecord[];
 
     const { getLocations, getNearbyLocations } = await import("~/services/settings");
     const { normalizeLocationName } = await import("~/utils/geo");
@@ -659,17 +688,17 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     type KnownStation = { id: number; name: string; latitude: number | null; longitude: number | null };
     const knownFuelStations: KnownStation[] = userLocations
-      .filter((l: any) => l.type === "fuelStation")
-      .map((l: any) => ({
+      .filter((l: Location) => l.type === "fuelStation")
+      .map((l: Location) => ({
         id: l.id,
         name: l.name,
         latitude: l.latitude ?? null,
         longitude: l.longitude ?? null,
       }));
 
-    const resolveLocationId = async (record: any): Promise<number | null> => {
-      const hasCoords =
-        typeof record.latitude === "number" && typeof record.longitude === "number";
+    const resolveLocationId = async (record: FuelImportRecord): Promise<number | null> => {
+      const { latitude, longitude } = record;
+      const hasCoords = typeof latitude === "number" && typeof longitude === "number";
       let rawName = typeof record.locationName === "string" ? record.locationName.trim() : "";
       let hasName = rawName.length > 0;
 
@@ -680,8 +709,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         // rather than dropping the record.
         try {
           const nearby = await getNearbyLocations(token, {
-            lat: record.latitude,
-            lon: record.longitude,
+            lat: latitude,
+            lon: longitude,
             radius: 100,
             type: "fuelStation",
           });
@@ -695,7 +724,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       // can still attach (or create) a fuel station instead of dropping the
       // location entirely.
       if (!hasName && hasCoords) {
-        const reversed = await reverseGeocode(record.latitude, record.longitude);
+        const reversed = await reverseGeocode(latitude, longitude);
         if (reversed) {
           rawName = reversed;
           hasName = true;
@@ -713,8 +742,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           name: rawName,
           type: "fuelStation",
           userId: user.id,
-          latitude: hasCoords ? record.latitude : null,
-          longitude: hasCoords ? record.longitude : null,
+          latitude: hasCoords ? latitude : null,
+          longitude: hasCoords ? longitude : null,
         });
         if (created && typeof created.id === "number") {
           knownFuelStations.push({
@@ -763,8 +792,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         }
         stopPerf({ count: records.length, locations_known: knownFuelStations.length });
         return data({ success: true, intent: "importFuelData", count: records.length });
-      } catch (e: any) {
-        return data({ success: false, intent: "importFuelData", error: e.message || "Import fehlgeschlagen" }, { status: 500 });
+      } catch (e) {
+        return data({ success: false, intent: "importFuelData", error: (e instanceof Error && e.message) || "Import fehlgeschlagen" }, { status: 500 });
       }
     }
 
