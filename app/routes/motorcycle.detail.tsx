@@ -469,6 +469,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       fuelType: parseString(formData.get("fuelType")),
       fuelAmount: parseNumber(formData.get("fuelAmount")),
       pricePerUnit: parseNumber(formData.get("pricePerUnit")),
+      fuelAdditiveAdded: formData.get("fuelAdditiveAdded") === "true",
+      leadSubstituteAdded: formData.get("leadSubstituteAdded") === "true",
       normalizedCost: (parseNumber(formData.get("cost")) || 0) * getCurrencyFactor(parseString(formData.get("currency"))),
       bundledItems: formData.getAll("bundledItems[]") as string[],
     };

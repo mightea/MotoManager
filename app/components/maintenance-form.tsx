@@ -815,6 +815,32 @@ export function MaintenanceForm({
                             enableNearMe
                             nearMeLabel="Tankstelle in der Nähe"
                         />
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    name="fuelAdditiveAdded"
+                                    id="fuelAdditiveAdded"
+                                    value="true"
+                                    defaultChecked={Boolean(initialData?.fuelAdditiveAdded)}
+                                    className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900 dark:checked:bg-primary" />
+                                <label htmlFor="fuelAdditiveAdded" className="text-sm font-medium text-foreground dark:text-white">
+                                    Additiv zugegeben
+                                </label>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    name="leadSubstituteAdded"
+                                    id="leadSubstituteAdded"
+                                    value="true"
+                                    defaultChecked={Boolean(initialData?.leadSubstituteAdded)}
+                                    className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900 dark:checked:bg-primary" />
+                                <label htmlFor="leadSubstituteAdded" className="text-sm font-medium text-foreground dark:text-white">
+                                    Bleiersatz zugegeben
+                                </label>
+                            </div>
+                        </div>
                     </>
                 )}
             </div>

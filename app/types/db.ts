@@ -146,6 +146,8 @@ export interface MaintenanceRecord {
   pricePerUnit: number | null;
   fuelConsumption: number | null;
   tripDistance: number | null;
+  fuelAdditiveAdded: boolean;
+  leadSubstituteAdded: boolean;
   parentId: number | null;
 }
 

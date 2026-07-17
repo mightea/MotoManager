@@ -25,6 +25,7 @@ import {
   Check,
   CheckSquare,
   Trash2,
+  FlaskConical,
 } from "lucide-react";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location, FluidType, BatteryType } from "~/types/db";
@@ -630,6 +631,8 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                               { label: "Verbrauch", value: record.type === "fuel" ? (record.fuelConsumption ? `${record.fuelConsumption.toFixed(2)} L/100km` : null) : null, icon: Activity },
                               { label: "Trip", value: record.type === "fuel" ? (record.tripDistance ? `${record.tripDistance} km` : null) : null, icon: Hash },
                               { label: "Preis/Liter", value: record.type === "fuel" ? (record.pricePerUnit ? formatCurrency(record.pricePerUnit, record.currency || currencyCode || "CHF") : null) : null, icon: Coins },
+                              { label: "Additiv", value: record.type === "fuel" && record.fuelAdditiveAdded ? "Ja" : null, icon: FlaskConical },
+                              { label: "Bleiersatz", value: record.type === "fuel" && record.leadSubstituteAdded ? "Ja" : null, icon: Droplet },
 
                               { 
                                 label: "Kosten", 
