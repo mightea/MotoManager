@@ -9,18 +9,21 @@ import type { Route } from "./+types/motorcycle.detail.torque-specifications";
 import {
   type MaintenanceRecord,
   type Motorcycle,
+  type MotorcycleDetail,
   type PressureUnit,
   type TirePressure,
   type TorqueSpecification,
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
+import { LinkifiedText } from "~/components/linkified-text";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Gauge, Wrench, Plus, Pencil, Import, Printer, AlertTriangle } from "lucide-react";
+import { Gauge, Wrench, Plus, Pencil, Import, Printer, AlertTriangle, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { Modal } from "~/components/modal";
 import { TorqueSpecForm } from "~/components/torque-spec-form";
+import { MotorcycleDetailForm } from "~/components/motorcycle-detail-form";
 import { TirePressureForm } from "~/components/tire-pressure-form";
 import { TirePressureCard } from "~/components/tire-pressure-card";
 import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
@@ -28,10 +31,14 @@ import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialo
 import { Card } from "~/components/card";
 import { EmptyState } from "~/components/empty-state";
 import {
+  createMotorcycleDetail,
   createTorqueSpecification,
+  deleteMotorcycleDetail,
   deleteTirePressure,
   deleteTorqueSpecification,
   getTirePressure,
+  listMotorcycleDetails,
+  updateMotorcycleDetail,
   updateTorqueSpecification,
   upsertTirePressure,
 } from "~/services/motorcycles";
@@ -71,10 +78,11 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid motorcycle ID", { status: 400 });
   }
 
-  const [response, allMotorcyclesResponse, tirePressure] = await Promise.all([
+  const [response, allMotorcyclesResponse, tirePressure, motorcycleDetails] = await Promise.all([
     fetchFromBackend<MotorcycleDetailResponse>(`/motorcycles/${motorcycleId}`, {}, token),
     fetchFromBackend<{ motorcycles: MotorcycleListItem[] }>(`/motorcycles`, {}, token),
     getTirePressure(token, motorcycleId),
+    listMotorcycleDetails(token, motorcycleId),
   ]);
 
   const otherMotorcycles = (allMotorcyclesResponse.motorcycles ?? [])
@@ -105,6 +113,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     ...response,
     ...headerStats,
     tirePressure,
+    motorcycleDetails,
     allMotorcycles: otherMotorcycles,
     otherSpecs,
     printDate: new Date().toLocaleDateString("de-CH"),
@@ -178,6 +187,44 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     if (!deleted) {
       return data({ error: "Reifendruck konnte nicht gelöscht werden." }, { status: 404 });
     }
+    return data({ success: true });
+  }
+
+  if (intent === "createDetail" || intent === "updateDetail" || intent === "deleteDetail") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+
+    if (intent === "deleteDetail") {
+      const detailId = Number(formData.get("detailId"));
+      if (!detailId) {
+        return data({ error: "ID fehlt für Löschen." }, { status: 400 });
+      }
+      const deleted = await deleteMotorcycleDetail(token, detailId, motorcycleId);
+      if (!deleted) {
+        return data(
+          { error: "Detail nicht gefunden oder gehört nicht zu diesem Motorrad." },
+          { status: 404 },
+        );
+      }
+      return data({ success: true });
+    }
+
+    const title = String(formData.get("title") ?? "").trim();
+    const value = String(formData.get("value") ?? "").trim();
+
+    if (!motorcycleId || !title || !value) {
+      return data({ error: "Bitte alle Pflichtfelder ausfüllen." }, { status: 400 });
+    }
+
+    if (intent === "createDetail") {
+      await createMotorcycleDetail(token, { motorcycleId, title, value });
+    } else {
+      const detailId = Number(formData.get("detailId"));
+      if (!detailId) {
+        return data({ error: "ID fehlt für Update." }, { status: 400 });
+      }
+      await updateMotorcycleDetail(token, detailId, motorcycleId, { title, value });
+    }
+
     return data({ success: true });
   }
 
@@ -273,6 +320,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     currentLocationName,
     torqueSpecs: specsRaw = [],
     tirePressure,
+    motorcycleDetails: detailsRaw = [],
     allMotorcycles: otherMotorcycles = [],
     otherSpecs = [],
     printDate,
@@ -280,6 +328,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   const pressure = (tirePressure ?? null) as TirePressure | null;
 
   const specs = specsRaw as TorqueSpecification[];
+  const details = detailsRaw as MotorcycleDetail[];
   const allCategories = Array.from(new Set(specs.map((s) => s.category))).sort();
   const actionData = useActionData<typeof clientAction>();
   const submit = useSubmit();
@@ -304,6 +353,9 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   const [editingSpec, setEditingSpec] = useState<TorqueSpecification | null>(null);
   const [deletingSpec, setDeletingSpec] = useState<TorqueSpecification | null>(null);
   const [isPressureModalOpen, setIsPressureModalOpen] = useState(false);
+  const [isAddDetailOpen, setIsAddDetailOpen] = useState(false);
+  const [editingDetail, setEditingDetail] = useState<MotorcycleDetail | null>(null);
+  const [deletingDetail, setDeletingDetail] = useState<MotorcycleDetail | null>(null);
 
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
@@ -313,6 +365,9 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       setEditingSpec(null);
       setDeletingSpec(null);
       setIsPressureModalOpen(false);
+      setIsAddDetailOpen(false);
+      setEditingDetail(null);
+      setDeletingDetail(null);
     }
   }, [actionData]);
 
@@ -322,6 +377,15 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     formData.append("intent", "deleteTorqueSpec");
     formData.append("motorcycleId", motorcycle.id.toString());
     formData.append("torqueId", deletingSpec.id.toString());
+    submit(formData, { method: "post" });
+  };
+
+  const handleDeleteDetail = () => {
+    if (!deletingDetail) return;
+    const formData = new FormData();
+    formData.append("intent", "deleteDetail");
+    formData.append("motorcycleId", motorcycle.id.toString());
+    formData.append("detailId", deletingDetail.id.toString());
     submit(formData, { method: "post" });
   };
 
@@ -523,6 +587,73 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           )}
         </section>
 
+        {/* Details section */}
+        <section className="space-y-3 print:space-y-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="label-tag print:!text-black">
+              <span>Details</span>
+            </h2>
+            {details.length > 0 && (
+              <div className="flex items-center gap-2 print:hidden">
+                <button
+                  onClick={() => setIsAddDetailOpen(true)}
+                  className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  <span>Hinzufügen</span>
+                  <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {details.length === 0 ? (
+            <div className="print:hidden">
+              <EmptyState
+                icon={Info}
+                title="Keine Details erfasst"
+                description="Hinterlege Angaben wie Zündkerzen, Ölsorte oder Reifendimensionen für dieses Fahrzeug."
+                action={
+                  <button
+                    onClick={() => setIsAddDetailOpen(true)}
+                    className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+                  >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Ersten Eintrag erstellen
+                    <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+                  </button>
+                }
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 print:grid-cols-2 print:gap-1">
+              {details.map((detail) => (
+                <Card
+                  key={detail.id}
+                  className="group relative flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:block print:rounded-none print:border-0 print:break-inside-avoid print:print-force-white print:shadow-none print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
+                >
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 print:text-[8pt] print:!text-black">
+                      {detail.title}
+                    </h3>
+                    <p className="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground dark:text-white print:text-[10pt] print:!text-black">
+                      <LinkifiedText text={detail.value} />
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingDetail(detail)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
+                    aria-label={`${detail.title} bearbeiten`}
+                  >
+                    <Pencil className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* Anzugsmomente section */}
         <section className="space-y-3 print:space-y-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -664,6 +795,42 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           )}
         </section>
       </div>
+
+      <Modal
+        isOpen={isAddDetailOpen}
+        onClose={() => setIsAddDetailOpen(false)}
+        title="Detail hinzufügen"
+        description="Füge einen neuen Eintrag hinzu."
+      >
+        <MotorcycleDetailForm
+          motorcycleId={motorcycle.id}
+          onClose={() => setIsAddDetailOpen(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(editingDetail)}
+        onClose={() => setEditingDetail(null)}
+        title="Detail bearbeiten"
+        description="Passe den Eintrag an."
+      >
+        {editingDetail && (
+          <MotorcycleDetailForm
+            motorcycleId={motorcycle.id}
+            initialValues={editingDetail}
+            onClose={() => setEditingDetail(null)}
+            onDelete={(detail) => setDeletingDetail(detail)}
+          />
+        )}
+      </Modal>
+
+      <DeleteConfirmationDialog
+        isOpen={Boolean(deletingDetail)}
+        title="Detail löschen"
+        description={`Möchtest du das Detail "${deletingDetail?.title}" wirklich löschen?`}
+        onConfirm={handleDeleteDetail}
+        onCancel={() => setDeletingDetail(null)}
+      />
 
       <Modal
         isOpen={isAddModalOpen}

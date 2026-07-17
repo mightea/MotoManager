@@ -284,6 +284,17 @@ export type NewTorqueSpecification = Omit<TorqueSpecification, "id" | "createdAt
   unverified?: boolean;
 };
 
+/** Free-form Title/Value pair attached to a motorcycle (e.g. spark plug model). */
+export interface MotorcycleDetail {
+  id: number;
+  motorcycleId: number;
+  title: string;
+  value: string;
+  createdAt: string;
+}
+
+export type NewMotorcycleDetail = Omit<MotorcycleDetail, "id" | "createdAt">;
+
 export interface UserSettings {
   id: number;
   userId: number;

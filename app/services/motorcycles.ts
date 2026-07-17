@@ -10,6 +10,8 @@ import {
   type NewIssue,
   type NewLocation,
   type NewMaintenanceRecord,
+  type MotorcycleDetail,
+  type NewMotorcycleDetail,
   type NewTirePressure,
   type NewTorqueSpecification,
   type NewPreviousOwner,
@@ -231,6 +233,68 @@ export async function deleteTorqueSpecification(
 ) {
   try {
     await fetchFromBackend(`/motorcycles/${motorcycleId}/torque-specs/${torqueId}`, {
+      method: "DELETE",
+    }, token);
+    return true;
+  } catch (error) {
+    rethrowRedirect(error);
+    return false;
+  }
+}
+
+/* ============================================================
+   Motorcycle details — free-form Title/Value pairs per motorcycle.
+
+   Backend contract:
+   - GET    /motorcycles/:id/details       → { motorcycleDetails: MotorcycleDetail[] }
+   - POST   /motorcycles/:id/details       → { motorcycleDetail: MotorcycleDetail }
+   - PUT    /motorcycles/:id/details/:did  → { motorcycleDetail: MotorcycleDetail }
+   - DELETE /motorcycles/:id/details/:did  → { message: ... } (soft delete)
+   ============================================================ */
+
+export async function listMotorcycleDetails(
+  token: string,
+  motorcycleId: number,
+): Promise<MotorcycleDetail[]> {
+  const response = await fetchFromBackend<{ motorcycleDetails: MotorcycleDetail[] }>(
+    `/motorcycles/${motorcycleId}/details`,
+    {},
+    token,
+  );
+  return response.motorcycleDetails ?? [];
+}
+
+export async function createMotorcycleDetail(
+  token: string,
+  values: NewMotorcycleDetail,
+) {
+  const response = await fetchFromBackend<{ motorcycleDetail: MotorcycleDetail }>(`/motorcycles/${values.motorcycleId}/details`, {
+    method: "POST",
+    body: JSON.stringify({ title: values.title, value: values.value }),
+  }, token);
+  return response.motorcycleDetail;
+}
+
+export async function updateMotorcycleDetail(
+  token: string,
+  detailId: number,
+  motorcycleId: number,
+  values: Partial<Omit<NewMotorcycleDetail, "motorcycleId">>,
+) {
+  const response = await fetchFromBackend<{ motorcycleDetail: MotorcycleDetail }>(`/motorcycles/${motorcycleId}/details/${detailId}`, {
+    method: "PUT",
+    body: JSON.stringify(values),
+  }, token);
+  return response.motorcycleDetail;
+}
+
+export async function deleteMotorcycleDetail(
+  token: string,
+  detailId: number,
+  motorcycleId: number,
+) {
+  try {
+    await fetchFromBackend(`/motorcycles/${motorcycleId}/details/${detailId}`, {
       method: "DELETE",
     }, token);
     return true;
