@@ -51,8 +51,12 @@ export function StorageLocationLabel({
   placeName,
 }: StorageLocationLabelProps) {
   const qrUrl = useQrDataUrl(storageLocationUrl(location.id));
-  const rawPath = storageLocationPath(location, allLocations);
-  const path = placeName ? `${placeName} › ${rawPath}` : rawPath;
+  // Ancestors only — the location's own name is already the label title.
+  const ancestors = storageLocationPath(location, allLocations)
+    .split(" › ")
+    .slice(0, -1)
+    .join(" › ");
+  const path = [placeName, ancestors].filter(Boolean).join(" › ");
 
   return (
     <div className="flex items-center gap-3 border border-dashed border-base-content/30 p-3 print:break-inside-avoid print:border-gray-400">
@@ -69,7 +73,7 @@ export function StorageLocationLabel({
         <p className="break-words font-display text-base uppercase leading-tight tracking-wide text-base-content print:!text-black">
           {location.name}
         </p>
-        {path !== location.name && (
+        {path.length > 0 && (
           <p className="mt-0.5 break-words text-[11px] leading-snug text-base-content/60 print:!text-gray-700">
             {path}
           </p>
