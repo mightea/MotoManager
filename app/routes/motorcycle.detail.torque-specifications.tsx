@@ -18,7 +18,7 @@ import { requireUser } from "~/services/auth";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { LinkifiedText } from "~/components/linkified-text";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Gauge, Wrench, Plus, Pencil, Import, Printer, AlertTriangle, Info } from "lucide-react";
+import { Gauge, Wrench, Plus, Pencil, Import, Printer, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { Modal } from "~/components/modal";
@@ -518,6 +518,55 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           </div>
         )}
 
+        {/* Details section */}
+        <section
+          className={clsx("space-y-3 print:space-y-1 print-section", details.length === 0 && "print:hidden")}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="label-tag print:!text-black">
+              <span>Details</span>
+            </h2>
+            <div className="flex items-center gap-2 print:hidden">
+              <button
+                onClick={() => setIsAddDetailOpen(true)}
+                className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                <span>Hinzufügen</span>
+                <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
+              </button>
+            </div>
+          </div>
+
+          {details.length > 0 && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 print:grid-cols-2 print:gap-1">
+              {details.map((detail) => (
+                <Card
+                  key={detail.id}
+                  className="group relative flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:block print:rounded-none print:border-0 print:break-inside-avoid print:print-force-white print:shadow-none print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
+                >
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 print:text-[8pt] print:!text-black">
+                      {detail.title}
+                    </h3>
+                    <p className="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground dark:text-white print:text-[10pt] print:!text-black">
+                      <LinkifiedText text={detail.value} />
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingDetail(detail)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
+                    aria-label={`${detail.title} bearbeiten`}
+                  >
+                    <Pencil className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/* Reifendruck section */}
         <section className="space-y-3 print:space-y-1 print-section">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -583,73 +632,6 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     )}
                   </div>
                 ))}
-            </div>
-          )}
-        </section>
-
-        {/* Details section */}
-        <section className="space-y-3 print:space-y-1">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="label-tag print:!text-black">
-              <span>Details</span>
-            </h2>
-            {details.length > 0 && (
-              <div className="flex items-center gap-2 print:hidden">
-                <button
-                  onClick={() => setIsAddDetailOpen(true)}
-                  className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  <span>Hinzufügen</span>
-                  <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {details.length === 0 ? (
-            <div className="print:hidden">
-              <EmptyState
-                icon={Info}
-                title="Keine Details erfasst"
-                description="Hinterlege Angaben wie Zündkerzen, Ölsorte oder Reifendimensionen für dieses Fahrzeug."
-                action={
-                  <button
-                    onClick={() => setIsAddDetailOpen(true)}
-                    className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
-                  >
-                    <Plus className="h-4 w-4" aria-hidden="true" />
-                    Ersten Eintrag erstellen
-                    <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
-                  </button>
-                }
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 print:grid-cols-2 print:gap-1">
-              {details.map((detail) => (
-                <Card
-                  key={detail.id}
-                  className="group relative flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:block print:rounded-none print:border-0 print:break-inside-avoid print:print-force-white print:shadow-none print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
-                >
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 print:text-[8pt] print:!text-black">
-                      {detail.title}
-                    </h3>
-                    <p className="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground dark:text-white print:text-[10pt] print:!text-black">
-                      <LinkifiedText text={detail.value} />
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditingDetail(detail)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
-                    aria-label={`${detail.title} bearbeiten`}
-                  >
-                    <Pencil className="h-3 w-3" aria-hidden="true" />
-                  </button>
-                </Card>
-              ))}
             </div>
           )}
         </section>
