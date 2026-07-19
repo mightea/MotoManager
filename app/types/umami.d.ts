@@ -20,11 +20,15 @@ export interface UmamiTracker {
     /** Track an event with an object payload */
     (data: { name: string; data?: UmamiEventData }): void;
   };
-  /**
-   * Identify a user session.
-   * @param data - User data to associate with the session (e.g., { email: 'user@example.com' })
-   */
-  identify: (data: UmamiEventData) => void;
+  identify: {
+    /**
+     * Identify a user session with a distinct ID and optional session data.
+     * The ID is what the umami dashboard shows for the visitor.
+     */
+    (uniqueId: string, data?: UmamiEventData): void;
+    /** Attach session data without setting a distinct ID. */
+    (data: UmamiEventData): void;
+  };
 }
 
 declare global {

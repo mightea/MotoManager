@@ -17,10 +17,11 @@ interface UmamiContextProps {
    */
   trackEvent: (name: string, data?: UmamiEventData) => void;
   /**
-   * Identify a user session.
+   * Identify a user session by a distinct ID (shown in the umami dashboard),
+   * with optional session data attached.
    * Only tracks in production environment.
    */
-  identifyUser: (data: UmamiEventData) => void;
+  identifyUser: (uniqueId: string, data?: UmamiEventData) => void;
   /**
    * Fire a `perf.<name>` Umami event with an explicit duration in ms. Useful
    * when the duration is already known (e.g. from a server response).
@@ -96,10 +97,6 @@ const LOADER_MARKER = "data-umami-loader";
 export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const navigation = useNavigation();
-  // Whether we've already fired the initial pageview. Used to prevent
-  // double-counting the first page when both the script onload handler
-  // and the route-change effect race after the SDK arrives.
-  const initialTrackedRef = useRef(false);
   // Captures the start of a non-idle navigation/submission so we can emit
   // a `perf.route_navigation` event once it settles.
   const transitionStartRef = useRef<{ start: number; path: string; kind: "loading" | "submitting" } | null>(null);
@@ -116,40 +113,21 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     if (document.head.querySelector(`script[${LOADER_MARKER}]`)) return;
 
+    // Auto-track stays enabled (the default): the tracker handles the initial
+    // pageview, SPA route changes (it hooks history.pushState/replaceState and
+    // observes document.title), and — only when auto-track is on — initializes
+    // the Core Web Vitals observers that data-performance enables.
     const script = document.createElement("script");
     script.async = true;
     script.defer = true;
     script.src = scriptUrl;
     script.dataset.websiteId = websiteId;
-    script.dataset.autoTrack = "false";
     script.dataset.performance = "true";
     script.setAttribute(LOADER_MARKER, "");
-    script.addEventListener("load", () => {
-      // If the route-change effect (below) already tracked the initial
-      // page while the SDK was loading, don't track it again.
-      if (initialTrackedRef.current) return;
-      initialTrackedRef.current = true;
-      window.umami?.track();
-    });
     document.head.appendChild(script);
   }, []);
 
-  // 2. Track on every route change. Also picks up the initial pageview
-  //    if the SDK is ready in time.
-  useEffect(() => {
-    if (!IS_PROD) return;
-    // Small delay so React Router has updated document.title before umami
-    // snapshots the page metadata.
-    const timer = setTimeout(() => {
-      if (window.umami) {
-        initialTrackedRef.current = true;
-        window.umami.track();
-      }
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [location.pathname, location.search]);
-
-  // 2b. Time every SPA route transition. The umami script's `data-performance`
+  // 2. Time every SPA route transition. The umami script's `data-performance`
   //     flag captures Core Web Vitals on the initial document load only;
   //     client-side navigations inside the SPA don't trigger it. This effect
   //     fills that gap by measuring from the moment React Router enters a
@@ -193,9 +171,9 @@ export const UmamiProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           window.umami.track(name, data);
         }
       },
-      identifyUser: (data: UmamiEventData) => {
+      identifyUser: (uniqueId: string, data?: UmamiEventData) => {
         if (IS_PROD && window.umami) {
-          window.umami.identify(data);
+          window.umami.identify(uniqueId, data);
         }
       },
       trackPerformance,

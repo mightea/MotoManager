@@ -20,9 +20,13 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
 
   useEffect(() => {
     if (user?.username) {
-      identifyUser({ username: user.username });
+      identifyUser(user.username, {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
     }
-  }, [user?.username, identifyUser]);
+  }, [user?.username, user?.name, user?.email, user?.role, identifyUser]);
 
   // On client-side navigation, move focus to <main> so screen-reader and keyboard
   // users are informed the route changed (and start from the new content). Skip
