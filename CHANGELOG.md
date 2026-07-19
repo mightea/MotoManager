@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.7.11](https://github.com/mightea/MotoManager/compare/2026.7.10...2026.7.11) (2026-07-19)
+
+
+### 🐛 Bug Fixes
+
+* serve the apple-app-site-association for iOS passkey login ([5e45190](https://github.com/mightea/MotoManager/commit/5e45190e6471752f28892c5aea98dcd3aff1bfe2))
+
 ## [2026.7.10](https://github.com/mightea/MotoManager/compare/2026.7.9...2026.7.10) (2026-07-19)
 
 
