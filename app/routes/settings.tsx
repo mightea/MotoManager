@@ -147,9 +147,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     try {
-      await fetchFromBackend("/auth/change-password", {
+      await fetchFromBackend("/settings/change-password", {
         method: "POST",
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
       }, token);
       return { success: "Passwort erfolgreich geändert." };
     } catch (err) {
