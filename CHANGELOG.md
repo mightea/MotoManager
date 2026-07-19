@@ -1,5 +1,20 @@
 # Changelog
 
+## [2026.7.9](https://github.com/mightea/MotoManager/compare/2026.7.8...2026.7.9) (2026-07-19)
+
+
+### ✨ Features
+
+* motorcycle details (Title/Value pairs) in Werkstattdaten ([df64df4](https://github.com/mightea/MotoManager/commit/df64df4b1c44954fe6724eaeae4b986e550a2ba7))
+
+
+### 🐛 Bug Fixes
+
+* drop the duplicate location name from printed bin labels ([f441a5d](https://github.com/mightea/MotoManager/commit/f441a5db2cea0befd1c3b5f7215e92a4951abbc3))
+* force patched undici and esbuild via pnpm overrides ([62d41be](https://github.com/mightea/MotoManager/commit/62d41be5494edc88323991031612b2aa8a268e57))
+* move Details above Reifendruck and slim down its empty state ([be26b0a](https://github.com/mightea/MotoManager/commit/be26b0adbd5b97e57eec480dea04769ad0642b3f))
+* update vitest to 4.1.10 to match @vitest/coverage-v8 peer range ([adf6660](https://github.com/mightea/MotoManager/commit/adf66602afabf3730d878f606b27c48b52646034))
+
 ## [2026.7.8](https://github.com/mightea/MotoManager/compare/2026.7.7...2026.7.8) (2026-07-17)
 
 
