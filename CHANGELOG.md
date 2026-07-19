@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.7.10](https://github.com/mightea/MotoManager/compare/2026.7.9...2026.7.10) (2026-07-19)
+
+
+### 🐛 Bug Fixes
+
+* enable umami web vitals and identify users with a distinct ID ([2ce41ae](https://github.com/mightea/MotoManager/commit/2ce41aeb34fff59a5e6bf3ee122e5d467934ab6b))
+
 ## [2026.7.9](https://github.com/mightea/MotoManager/compare/2026.7.8...2026.7.9) (2026-07-19)
 
 
