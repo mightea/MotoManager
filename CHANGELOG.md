@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.7.12](https://github.com/mightea/MotoManager/compare/2026.7.11...2026.7.12) (2026-07-19)
+
+
+### 🐛 Bug Fixes
+
+* point the password change at the settings endpoint ([a22e9e2](https://github.com/mightea/MotoManager/commit/a22e9e2405ccb5d155ed932f805b4abee5d90c64))
+
 ## [2026.7.11](https://github.com/mightea/MotoManager/compare/2026.7.10...2026.7.11) (2026-07-19)
 
 
