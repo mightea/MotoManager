@@ -1,4 +1,5 @@
-:80 {
+# 8080: the container runs caddy as a non-root user, which can't bind :80.
+:8080 {
     root * /usr/share/caddy
     encode gzip
 

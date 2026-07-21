@@ -69,7 +69,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     try {
-      await createUser({ email, username, name, password, role });
+      await createUser({ email, username, name, password, role }, token);
       return { success: "Benutzer erfolgreich erstellt." };
     } catch (e) {
       return { error: (e instanceof Error && e.message) || "Fehler beim Erstellen des Benutzers." };

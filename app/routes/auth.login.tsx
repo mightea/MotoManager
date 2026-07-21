@@ -13,7 +13,7 @@ import clsx from "clsx";
 import type { Route } from "./+types/auth.login";
 import {
   createSession,
-  createUser,
+  registerFirstUser,
   getCurrentSession,
   getUserCount,
   verifyLogin,
@@ -21,6 +21,7 @@ import {
 import { authenticateWithPasskey } from "~/utils/webauthn";
 import { getVersion } from "~/config";
 import { useUmami } from "~/components/umami-provider";
+import { safeRedirectPath } from "~/utils/navigation";
 
 const EMAIL_REGEX = /.+@.+\..+/i;
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
@@ -34,17 +35,26 @@ export function meta() {
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const url = new URL(request.url);
-  const redirectTo = url.searchParams.get("redirectTo") ?? "/";
+  const redirectTo = safeRedirectPath(url.searchParams.get("redirectTo"));
 
-  const { user } = await getCurrentSession();
+  const { user, status } = await getCurrentSession();
 
   if (user) {
     throw redirect(redirectTo);
   }
 
+  let userCount: number | null = null;
+  try {
+    userCount = await getUserCount();
+  } catch {
+    // Keep the login screen available for a later retry, but do not mistake an
+    // outage for a fresh installation and offer administrator registration.
+  }
+
   return data({
     redirectTo,
-    isFirstUser: false,
+    isFirstUser: userCount === 0,
+    backendAvailable: status !== "unavailable" && userCount !== null,
     version: getVersion(),
   });
 }
@@ -85,44 +95,37 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       errors.confirmPassword = "Die Passwörter stimmen nicht überein.";
     }
 
-    const userCount = await getUserCount();
-    if (userCount > 0) {
-      return data(
-        { success: false, message: "Registrierungen sind deaktiviert.", form: "register" },
-        { status: 400 },
-      );
-    }
-
     if (Object.keys(errors).length > 0) {
       return data({ success: false, errors, form: "register" }, { status: 400 });
     }
 
     try {
-      const _newUser = await createUser({
+      // Re-check immediately before registration: the setup screen may have
+      // been open while another client created the first account.
+      const userCount = await getUserCount();
+      if (userCount > 0) {
+        return data(
+          { success: false, message: "Registrierungen sind deaktiviert.", form: "register" },
+          { status: 400 },
+        );
+      }
+
+      const registration = await registerFirstUser({
         email,
         username,
         name,
         password,
       });
+      await createSession(registration.token);
 
-      // After registration, we need to login to get the token
-      const loginResult = await verifyLogin(username, password);
-
-      if (!loginResult) {
-        return redirect("/auth/login");
-      }
-
-      await createSession(loginResult.token);
-
-      const redirectTo = redirectToRaw.startsWith("/") ? redirectToRaw : "/";
+      const redirectTo = safeRedirectPath(redirectToRaw);
       return redirect(redirectTo);
     } catch (error) {
       console.error(`[Login Page] Registration failed:`, error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Registrierung fehlgeschlagen. Bitte versuche es erneut.";
-      return data({ success: false, message, form: "register" }, { status: 400 });
+      const message = error instanceof Error
+        ? error.message
+        : "Registrierung fehlgeschlagen. Bitte versuche es erneut.";
+      return data({ success: false, message, form: "register" }, { status: 503 });
     }
   }
 
@@ -174,7 +177,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   await createSession(loginResult.token);
 
-  const redirectTo = redirectToRaw.startsWith("/") ? redirectToRaw : "/";
+  const redirectTo = safeRedirectPath(redirectToRaw);
   return redirect(redirectTo);
 }
 
@@ -183,6 +186,7 @@ export default function Login() {
   const loaderData = useLoaderData<typeof clientLoader>();
   const redirectTo = loaderData?.redirectTo || "/";
   const isFirstUser = loaderData?.isFirstUser || false;
+  const backendAvailable = loaderData?.backendAvailable ?? true;
   const version = loaderData?.version || "0.0.0";
   
   const actionData = useActionData<typeof clientAction>();
@@ -211,9 +215,10 @@ export default function Login() {
       setPasskeyError(null);
       trackEvent("passkey_login_attempt");
       await authenticateWithPasskey(identifier || undefined);
-      // If successful, the server has set the cookie. We just need to navigate.
+      // The passkey helper persisted the returned bearer token; continue to the
+      // same validated application path as password login.
       trackEvent("passkey_login_success");
-      navigate(redirectTo);
+      navigate(safeRedirectPath(redirectTo));
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
         setPasskeyError(
@@ -294,6 +299,16 @@ export default function Login() {
           </div>
 
           <div className="p-8 pt-6">
+            {!backendAvailable && (
+              <output
+                className="mb-5 block rounded-sm border border-warning/35 bg-warning/10 px-4 py-3 text-sm text-base-content dark:text-gray-100"
+              >
+                <p className="font-semibold">Server momentan nicht erreichbar</p>
+                <p className="mt-1 text-xs text-base-content/65 dark:text-navy-300">
+                  Deine bestehende Sitzung bleibt gespeichert. Du kannst die Anmeldung erneut versuchen, sobald die Verbindung wiederhergestellt ist.
+                </p>
+              </output>
+            )}
             {isFirstUser ? (
               <div className="space-y-6">
                 <div className="relative rounded-sm border border-dashed border-primary/40 bg-primary/5 p-4 dark:border-primary/40 dark:bg-primary/10">

@@ -47,6 +47,7 @@ export function toPublicUser(user: AuthUser): PublicUser {
 export type AuthSession = {
   user: PublicUser | null;
   token: string | null;
+  status: "anonymous" | "authenticated" | "unavailable";
 };
 
 export function getSessionToken(): string | null {
@@ -71,7 +72,7 @@ export async function getCurrentSession(): Promise<AuthSession> {
   const token = getSessionToken();
 
   if (!token) {
-    return { user: null, token: null };
+    return { user: null, token: null, status: "anonymous" };
   }
 
   try {
@@ -82,18 +83,19 @@ export async function getCurrentSession(): Promise<AuthSession> {
     const parsed = meResponseSchema.safeParse(response);
     if (!parsed.success) {
       console.error("[Auth Service] /auth/me response failed validation", parsed.error);
-      return { user: null, token };
+      return { user: null, token, status: "unavailable" };
     }
 
     return {
       user: toPublicUser(parsed.data.user),
       token,
+      status: "authenticated",
     };
   } catch (error) {
     // If it's a redirect response (likely 401 from fetchFromBackend), let it bubble up or handle it
     if (error instanceof Response) {
       clearSessionToken();
-      return { user: null, token: null };
+      return { user: null, token: null, status: "anonymous" };
     }
 
     // Offline / network / 5xx (not a 401): the session may still be valid, so
@@ -103,6 +105,7 @@ export async function getCurrentSession(): Promise<AuthSession> {
     return {
       user: null,
       token,
+      status: "unavailable",
     };
   }
 }
@@ -133,12 +136,8 @@ export async function destroySessionFromRequest(_request: Request) {
 }
 
 export async function getUserCount() {
-  try {
-    const result = await fetchFromBackend<{ userCount: number }>("/auth/status");
-    return result.userCount;
-  } catch {
-    return 0;
-  }
+  const result = await fetchFromBackend<{ userCount: number }>("/auth/status");
+  return result.userCount;
 }
 
 export type CreateUserInput = {
@@ -149,13 +148,25 @@ export type CreateUserInput = {
   role?: UserRole;
 };
 
-export async function createUser(input: CreateUserInput): Promise<PublicUser> {
-  const user = await fetchFromBackend<AuthUser>("/auth/register", {
+export async function registerFirstUser(
+  input: CreateUserInput,
+): Promise<{ user: PublicUser; token: string }> {
+  const response = await fetchFromBackend<unknown>("/auth/register", {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, confirmPassword: input.password }),
   });
 
-  return toPublicUser(user);
+  const parsed = loginResponseSchema.parse(response);
+  return { user: toPublicUser(parsed.user), token: parsed.token };
+}
+
+export async function createUser(input: CreateUserInput, token: string): Promise<PublicUser> {
+  const response = await fetchFromBackend<{ user: AuthUser }>("/admin/users", {
+    method: "POST",
+    body: JSON.stringify(input),
+  }, token);
+
+  return toPublicUser(response.user);
 }
 
 export async function updateUser(userId: number, input: Partial<CreateUserInput>, token: string): Promise<PublicUser> {
@@ -213,7 +224,14 @@ export async function verifyLogin(
 }
 
 export async function requireUser(request: Request) {
-  const { user, token } = await getCurrentSession();
+  const { user, token, status } = await getCurrentSession();
+
+  if (status === "unavailable" && token) {
+    throw new Response("Deine Sitzung ist gespeichert, aber der Server ist momentan nicht erreichbar.", {
+      status: 503,
+      statusText: "Server nicht erreichbar",
+    });
+  }
 
   if (!user || !token) {
     const url = new URL(request.url);

@@ -92,14 +92,11 @@ export async function authenticateWithPasskey(username?: string) {
     }),
   });
 
-  if (!verificationResult || !verificationResult.verified) {
+  if (!verificationResult?.verified || !verificationResult.token) {
     throw new Error("Login fehlgeschlagen: Server-Verifizierung negativ");
   }
 
-  // Handle session creation on client
-  if (verificationResult.token) {
-    await createSession(verificationResult.token);
-  }
+  await createSession(verificationResult.token);
   
   return verificationResult;
 }
