@@ -66,7 +66,7 @@ export const motorcycleSchema = z.object({
 export const previousOwnerSchema = z.object({
   name: z.string().min(1, "Vorname ist erforderlich."),
   surname: z.string().min(1, "Nachname ist erforderlich."),
-  purchaseDate: z.string().min(1, "Kaufdatum ist erforderlich."),
+  purchaseDate: z.preprocess(emptyStringToUndefined, z.string().optional()),
   address: z.preprocess(emptyStringToUndefined, z.string().optional()),
   city: z.preprocess(emptyStringToUndefined, z.string().optional()),
   postcode: z.preprocess(emptyStringToUndefined, z.string().optional()),

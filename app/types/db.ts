@@ -360,7 +360,8 @@ export interface PreviousOwner {
   motorcycleId: number;
   name: string;
   surname: string;
-  purchaseDate: string;
+  purchaseDate: string | null;
+  sortOrder: number;
   address: string | null;
   city: string | null;
   postcode: string | null;
@@ -372,7 +373,10 @@ export interface PreviousOwner {
   updatedAt: string;
 }
 
-export type NewPreviousOwner = Omit<PreviousOwner, "id" | "createdAt" | "updatedAt">;
+export type NewPreviousOwner = Omit<
+  PreviousOwner,
+  "id" | "createdAt" | "updatedAt" | "sortOrder"
+>;
 
 export interface Challenge {
   id: string;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { motorcycleSchema } from "~/validations";
+import { motorcycleSchema, previousOwnerSchema } from "~/validations";
 
 describe("motorcycleSchema", () => {
   const validBase = {
@@ -45,5 +45,27 @@ describe("motorcycleSchema", () => {
       fabricationDate: "",
     });
     expect(data.fabricationDate).toBeUndefined();
+  });
+});
+
+describe("previousOwnerSchema", () => {
+  it("allows an unknown purchase date", () => {
+    const data = previousOwnerSchema.parse({
+      name: "Anna",
+      surname: "Muster",
+      purchaseDate: "",
+    });
+
+    expect(data.purchaseDate).toBeUndefined();
+  });
+
+  it("still requires the owner's name", () => {
+    const result = previousOwnerSchema.safeParse({
+      name: "",
+      surname: "Muster",
+      purchaseDate: "",
+    });
+
+    expect(result.success).toBe(false);
   });
 });

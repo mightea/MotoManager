@@ -291,6 +291,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     createPreviousOwner,
     updatePreviousOwner,
     deletePreviousOwner,
+    reorderPreviousOwners,
     updateMotorcycleUnknownOwners,
   } = await import("~/services/motorcycles");
 
@@ -625,6 +626,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const ownerData: NewPreviousOwner = {
       motorcycleId,
       ...validationResult.data,
+      purchaseDate: validationResult.data.purchaseDate ?? null,
       address: validationResult.data.address ?? null,
       city: validationResult.data.city ?? null,
       postcode: validationResult.data.postcode ?? null,
@@ -645,6 +647,42 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     return data({ success: true, intent: intent === "createPreviousOwner" ? "createPreviousOwner" : "updatePreviousOwner" });
+  }
+
+  if (intent === "reorderPreviousOwners") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    let ownerIds: unknown;
+    try {
+      ownerIds = JSON.parse(String(formData.get("ownerIds") ?? "[]"));
+    } catch {
+      return data(
+        { success: false, intent, error: "Ungültige Reihenfolge." },
+        { status: 400 },
+      );
+    }
+
+    if (
+      !Number.isFinite(motorcycleId)
+      || !Array.isArray(ownerIds)
+      || !ownerIds.every((id) => Number.isSafeInteger(id) && id > 0)
+    ) {
+      return data(
+        { success: false, intent, error: "Ungültige Reihenfolge." },
+        { status: 400 },
+      );
+    }
+
+    try {
+      await reorderPreviousOwners(token, motorcycleId, ownerIds);
+      return data({ success: true, intent });
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      console.error("[Previous Owners] Reorder failed", error);
+      return data(
+        { success: false, intent, error: "Reihenfolge konnte nicht gespeichert werden." },
+        { status: 500 },
+      );
+    }
   }
 
   if (intent === "setPreviousOwnersUnknown") {

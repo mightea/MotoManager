@@ -1,8 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import { AlertTriangle, Pencil, Plus } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, GripVertical, Pencil, Plus } from "lucide-react";
 import { Modal } from "./modal";
 import { Button } from "./button";
 import type { PreviousOwner } from "~/types/db";
+import { movePreviousOwner } from "~/utils/previous-owner-order";
 
 interface PreviousOwnersDialogProps {
   isOpen: boolean;
@@ -12,6 +14,12 @@ interface PreviousOwnersDialogProps {
   hasUnknownOwners: boolean;
   onAddOwner: () => void;
   onEditOwner: (owner: PreviousOwner) => void;
+}
+
+interface ReorderResponse {
+  success: boolean;
+  intent: string;
+  error?: string;
 }
 
 /**
@@ -33,16 +41,40 @@ export function PreviousOwnersDialog({
   onAddOwner,
   onEditOwner,
 }: PreviousOwnersDialogProps) {
-  const fetcher = useFetcher();
+  const toggleFetcher = useFetcher();
+  const orderFetcher = useFetcher<ReorderResponse>();
+  const [orderedOwners, setOrderedOwners] = useState(owners);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const draggedOwnerId = useRef<number | null>(null);
+
+  useEffect(() => {
+    setOrderedOwners(owners);
+  }, [owners]);
+
+  useEffect(() => {
+    if (
+      orderFetcher.state === "idle"
+      && orderFetcher.data?.intent === "reorderPreviousOwners"
+    ) {
+      if (orderFetcher.data.success) {
+        setOrderError(null);
+      } else {
+        setOrderedOwners(owners);
+        setOrderError(orderFetcher.data.error ?? "Reihenfolge konnte nicht gespeichert werden.");
+      }
+    }
+  }, [orderFetcher.data, orderFetcher.state, owners]);
+
+  const isSavingOrder = orderFetcher.state !== "idle";
 
   // Optimistic: reflect the in-flight toggle immediately, fall back to the
   // persisted value once the submission settles and the route revalidates.
-  const pendingValue = fetcher.formData?.get("hasUnknownOwners");
+  const pendingValue = toggleFetcher.formData?.get("hasUnknownOwners");
   const checked =
     pendingValue != null ? pendingValue === "true" : hasUnknownOwners;
 
   const toggleUnknown = () => {
-    fetcher.submit(
+    toggleFetcher.submit(
       {
         intent: "setPreviousOwnersUnknown",
         motorcycleId: String(motorcycleId),
@@ -50,6 +82,39 @@ export function PreviousOwnersDialog({
       },
       { method: "post" },
     );
+  };
+
+  const persistOrder = (nextOwners: PreviousOwner[]) => {
+    if (isSavingOrder) return;
+    setOrderedOwners(nextOwners);
+    setOrderError(null);
+    orderFetcher.submit(
+      {
+        intent: "reorderPreviousOwners",
+        motorcycleId: String(motorcycleId),
+        ownerIds: JSON.stringify(nextOwners.map((owner) => owner.id)),
+      },
+      { method: "post" },
+    );
+  };
+
+  const moveOwner = (ownerId: number, offset: -1 | 1) => {
+    const sourceIndex = orderedOwners.findIndex((owner) => owner.id === ownerId);
+    const targetIndex = sourceIndex + offset;
+    if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= orderedOwners.length) return;
+
+    persistOrder(movePreviousOwner(orderedOwners, ownerId, targetIndex));
+  };
+
+  const dropOwner = (targetOwnerId: number) => {
+    const sourceOwnerId = draggedOwnerId.current;
+    draggedOwnerId.current = null;
+    if (sourceOwnerId == null || sourceOwnerId === targetOwnerId) return;
+
+    const targetIndex = orderedOwners.findIndex((owner) => owner.id === targetOwnerId);
+    if (targetIndex < 0) return;
+
+    persistOrder(movePreviousOwner(orderedOwners, sourceOwnerId, targetIndex));
   };
 
   return (
@@ -69,7 +134,7 @@ export function PreviousOwnersDialog({
             type="checkbox"
             checked={checked}
             onChange={toggleUnknown}
-            disabled={fetcher.state !== "idle"}
+            disabled={toggleFetcher.state !== "idle"}
             className="checkbox checkbox-sm checkbox-warning mt-0.5"
           />
           <span className="min-w-0">
@@ -90,30 +155,78 @@ export function PreviousOwnersDialog({
               <span>Erfasste Vorbesitzer</span>
             </h3>
             <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
-              {owners.length} {owners.length === 1 ? "Eintrag" : "Einträge"}
+              {orderedOwners.length} {orderedOwners.length === 1 ? "Eintrag" : "Einträge"}
             </span>
           </div>
 
-          {owners.length > 0 ? (
+          {orderedOwners.length > 1 && (
+            <p className="text-xs text-base-content/60">
+              Der direkte Vorbesitzer steht oben. Ziehe Einträge oder nutze die Pfeiltasten.
+            </p>
+          )}
+
+          {orderedOwners.length > 0 ? (
             <ul className="space-y-2">
-              {owners.map((owner) => (
+              {orderedOwners.map((owner, index) => (
                 <li
                   key={owner.id}
-                  className="group relative flex items-center justify-between gap-3 rounded-sm border border-base-300 bg-base-100 px-3 py-2.5 transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-900/50"
+                  draggable={!isSavingOrder}
+                  onDragStart={(event) => {
+                    draggedOwnerId.current = owner.id;
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", String(owner.id));
+                  }}
+                  onDragEnd={() => { draggedOwnerId.current = null; }}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    dropOwner(owner.id);
+                  }}
+                  aria-label={`${owner.name} ${owner.surname}, Position ${index + 1}`}
+                  className="group relative flex items-center gap-2 rounded-sm border border-base-300 bg-base-100 px-2 py-2.5 transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-900/50"
                 >
-                  <div className="min-w-0">
+                  <GripVertical
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 cursor-grab text-base-content/35 active:cursor-grabbing dark:text-navy-500"
+                  />
+                  <div className="min-w-0 flex-1">
                     <p className="truncate font-subdisplay text-sm text-base-content dark:text-white">
                       {owner.name} {owner.surname}
                     </p>
                     <p className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
-                      Kauf · {owner.purchaseDate}
+                      {index === 0 ? "Direkter Vorbesitzer" : `Position ${index + 1}`}
+                      {owner.purchaseDate ? ` · Kauf ${owner.purchaseDate}` : " · Kaufdatum unbekannt"}
                     </p>
+                  </div>
+                  <div className="flex shrink-0 items-center">
+                    <button
+                      type="button"
+                      onClick={() => moveOwner(owner.id, -1)}
+                      disabled={index === 0 || isSavingOrder}
+                      aria-label={`${owner.name} ${owner.surname} nach oben verschieben`}
+                      className="rounded-sm p-1.5 text-base-content/50 transition-all hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-25 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveOwner(owner.id, 1)}
+                      disabled={index === orderedOwners.length - 1 || isSavingOrder}
+                      aria-label={`${owner.name} ${owner.surname} nach unten verschieben`}
+                      className="rounded-sm p-1.5 text-base-content/50 transition-all hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-25 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                   <button
                     type="button"
                     onClick={() => onEditOwner(owner)}
+                    disabled={isSavingOrder}
                     aria-label={`${owner.name} ${owner.surname} bearbeiten`}
-                    className="rounded-sm p-1.5 text-base-content/50 transition-all hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
+                    className="rounded-sm p-1.5 text-base-content/50 transition-all hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-40 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -123,6 +236,17 @@ export function PreviousOwnersDialog({
           ) : (
             <p className="rounded-sm border border-dashed border-base-300 px-3 py-4 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 dark:border-navy-700">
               Keine Vorbesitzer erfasst
+            </p>
+          )}
+
+          {isSavingOrder && (
+            <output className="block text-center font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+              Reihenfolge wird gespeichert …
+            </output>
+          )}
+          {orderError && (
+            <p role="alert" className="text-sm text-error">
+              {orderError}
             </p>
           )}
 

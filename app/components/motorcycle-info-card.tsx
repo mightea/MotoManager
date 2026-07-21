@@ -284,7 +284,7 @@ export function MotorcycleInfoCard({
                         {owner.name} {owner.surname}
                       </p>
                       <p className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
-                        Kauf · {owner.purchaseDate}
+                        {owner.purchaseDate ? `Kauf · ${owner.purchaseDate}` : "Kaufdatum unbekannt"}
                       </p>
                     </div>
                   </li>

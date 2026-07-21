@@ -74,6 +74,22 @@ export async function updatePreviousOwner(
   return response.previousOwner;
 }
 
+export async function reorderPreviousOwners(
+  token: string,
+  motorcycleId: number,
+  ownerIds: number[],
+) {
+  const response = await fetchFromBackend<{ previousOwners: PreviousOwner[] }>(
+    `/motorcycles/${motorcycleId}/previous-owners/order`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ ownerIds }),
+    },
+    token,
+  );
+  return response.previousOwners;
+}
+
 export async function deletePreviousOwner(
   token: string,
   ownerId: number,

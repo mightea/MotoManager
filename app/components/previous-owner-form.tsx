@@ -101,13 +101,13 @@ export function PreviousOwnerForm({
 
       <div className="space-y-1">
         <label htmlFor="purchaseDate" className="text-sm font-medium text-foreground dark:text-gray-200">
-          Kaufdatum (Jahr oder volles Datum)
+          Kaufdatum (optional · Jahr oder volles Datum)
         </label>
         <input
           type="text"
           id="purchaseDate"
           name="purchaseDate"
-          defaultValue={initialValues?.purchaseDate}
+          defaultValue={initialValues?.purchaseDate ?? ""}
           placeholder="z.B. 2020 oder 01.05.2020"
           className={clsx(
             "w-full rounded-lg border px-3 py-2 text-sm focus:border-primary focus:outline-none dark:bg-navy-900 dark:text-white",
