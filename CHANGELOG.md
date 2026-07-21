@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.7.13](https://github.com/mightea/MotoManager/compare/2026.7.12...2026.7.13) (2026-07-21)
+
+
+### 🐛 Bug Fixes
+
+* harden authentication and container runtime ([3c79563](https://github.com/mightea/MotoManager/commit/3c795631f5a3709d80052fa3ad061f8a14660f52))
+
 ## [2026.7.12](https://github.com/mightea/MotoManager/compare/2026.7.11...2026.7.12) (2026-07-19)
 
 
