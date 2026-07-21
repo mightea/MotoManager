@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.7.14](https://github.com/mightea/MotoManager/compare/2026.7.13...2026.7.14) (2026-07-21)
+
+
+### ✨ Features
+
+* support manual previous owner ordering ([987d86d](https://github.com/mightea/MotoManager/commit/987d86d19392236eaa0a78f1cd35521e8eed0477))
+
 ## [2026.7.13](https://github.com/mightea/MotoManager/compare/2026.7.12...2026.7.13) (2026-07-21)
 
 
