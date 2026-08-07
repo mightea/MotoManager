@@ -56,11 +56,11 @@ interface MotorcycleDetailResponse {
 /** `/motorcycles` list entry; older backends sent `modelYear` instead of `fabricationDate`. */
 type MotorcycleListItem = Motorcycle & { modelYear?: string | null };
 
-export function meta({ data }: Route.MetaArgs) {
-  if (!data || !data.motorcycle) {
+export function meta({ loaderData }: Route.MetaArgs) {
+  if (!loaderData || !loaderData.motorcycle) {
     return [{ title: "Werkstattdaten - Moto Manager" }];
   }
-  const { make, model } = data.motorcycle;
+  const { make, model } = loaderData.motorcycle;
   return [
     { title: `Werkstattdaten: ${make} ${model} - Moto Manager` },
     { name: "description", content: `Reifendruck & Anzugsmomente für ${make} ${model}.` },

@@ -23,8 +23,8 @@ import { StorageLocationForm } from "~/components/storage-location-form";
 import { StorageLocationLabel } from "~/components/storage-location-label";
 import { toast } from "~/hooks/use-toast";
 
-export function meta({ data }: Route.MetaArgs) {
-  const name = data?.location?.name;
+export function meta({ loaderData }: Route.MetaArgs) {
+  const name = loaderData?.location?.name;
   return [
     { title: name ? `Lagerort: ${name} - Moto Manager` : "Lagerort - Moto Manager" },
     { name: "description", content: "Inhalt dieses Lagerorts." },

@@ -2,11 +2,7 @@ import type { Config } from "@react-router/dev/config";
 
 export default {
   ssr: false,
-  future: {
-    v8_middleware: true,
-    v8_splitRouteModules: true,
-    v8_viteEnvironmentApi: true,
-    v8_passThroughRequests: true,
-    v8_trailingSlashAwareDataRequests: true,
-  },
+  // Was `future.v8_splitRouteModules` — in v8 the flag is gone and the behaviour
+  // is the default; kept explicit because the route modules rely on it.
+  splitRouteModules: true,
 } satisfies Config;

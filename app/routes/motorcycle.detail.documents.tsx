@@ -45,11 +45,11 @@ interface DocumentsPayload {
   assignments: DocumentAssignment[];
 }
 
-export function meta({ data }: Route.MetaArgs) {
-  if (!data || !data.motorcycle) {
+export function meta({ loaderData }: Route.MetaArgs) {
+  if (!loaderData || !loaderData.motorcycle) {
     return [{ title: "Dokumente - Moto Manager" }];
   }
-  const { make, model } = data.motorcycle;
+  const { make, model } = loaderData.motorcycle;
   return [
     { title: `Dokumente: ${make} ${model} - Moto Manager` },
     { name: "description", content: `Dokumente und Unterlagen für ${make} ${model}.` },

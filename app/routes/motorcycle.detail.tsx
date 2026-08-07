@@ -87,11 +87,11 @@ interface FuelImportRecord {
   locationName?: string | null;
 }
 
-export function meta({ data }: Route.MetaArgs) {
-  if (!data || !data.motorcycle) {
+export function meta({ loaderData }: Route.MetaArgs) {
+  if (!loaderData || !loaderData.motorcycle) {
     return [{ title: "Fahrzeug nicht gefunden - Moto Manager" }];
   }
-  const { make, model } = data.motorcycle;
+  const { make, model } = loaderData.motorcycle;
   return [
     { title: `${make} ${model} - Moto Manager` },
     { name: "description", content: `Details, Historie und Mängel für ${make} ${model}.` },

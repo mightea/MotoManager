@@ -19,11 +19,11 @@ import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
 import { Card } from "~/components/card";
 import { EmptyState } from "~/components/empty-state";
 
-export function meta({ data }: Route.MetaArgs) {
-  if (!data || !data.motorcycle) {
+export function meta({ loaderData }: Route.MetaArgs) {
+  if (!loaderData || !loaderData.motorcycle) {
     return [{ title: "Teile - Moto Manager" }];
   }
-  const { make, model } = data.motorcycle;
+  const { make, model } = loaderData.motorcycle;
   return [
     { title: `Teile: ${make} ${model} - Moto Manager` },
     { name: "description", content: `Kompatible Ersatzteile für ${make} ${model}.` },

@@ -54,13 +54,13 @@ import { PartLabel } from "~/components/part-label";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { toast } from "~/hooks/use-toast";
 
-export function meta({ data }: Route.MetaArgs) {
-  if (!data || !data.part) {
+export function meta({ loaderData }: Route.MetaArgs) {
+  if (!loaderData || !loaderData.part) {
     return [{ title: "Teil - Moto Manager" }];
   }
   return [
-    { title: `${data.part.name} - Moto Manager` },
-    { name: "description", content: `Ersatzteil ${data.part.partNumber} verwalten.` },
+    { title: `${loaderData.part.name} - Moto Manager` },
+    { name: "description", content: `Ersatzteil ${loaderData.part.partNumber} verwalten.` },
   ];
 }
 
