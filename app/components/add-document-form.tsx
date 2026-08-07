@@ -69,7 +69,10 @@ export function AddDocumentForm({
   };
 
   // Surface rejected files (wrong type, too large, too many) instead of silently
-  // ignoring them.
+  // ignoring them. Note react-dropzone calls onDrop before onDropRejected, so on
+  // a multi-file drop the first file is already selected by the time this runs —
+  // hence the "too-many-files" wording reports what happened rather than asking
+  // the user to retry.
   const onDropRejected = (rejections: FileRejection[]) => {
     const code = rejections[0]?.errors[0]?.code;
     if (code === "file-too-large") {
@@ -77,7 +80,7 @@ export function AddDocumentForm({
     } else if (code === "file-invalid-type") {
       setError("Ungültiger Dateityp. Erlaubt sind PDF- und Bilddateien.");
     } else if (code === "too-many-files") {
-      setError("Bitte nur eine Datei auswählen.");
+      setError("Es kann nur eine Datei hochgeladen werden - die erste wurde übernommen.");
     } else {
       setError("Die Datei konnte nicht verwendet werden.");
     }
