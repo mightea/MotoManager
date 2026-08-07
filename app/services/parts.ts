@@ -333,6 +333,22 @@ export async function createPartConsumption(
   return response.partConsumption;
 }
 
+/** Re-quantify an existing consumption. The server revalidates on-hand against
+ *  the delta only, so raising the quantity can still fail with "Not enough
+ *  stock" while lowering it always succeeds. */
+export async function updatePartConsumption(
+  token: string,
+  id: number,
+  values: { quantity?: number; date?: string; notes?: string | null },
+): Promise<PartConsumption> {
+  const response = await fetchFromBackend<{ partConsumption: PartConsumption }>(
+    `/part-consumptions/${id}`,
+    { method: "PUT", body: JSON.stringify(values) },
+    token,
+  );
+  return response.partConsumption;
+}
+
 export async function deletePartConsumption(token: string, id: number): Promise<boolean> {
   try {
     await fetchFromBackend(`/part-consumptions/${id}`, { method: "DELETE" }, token);

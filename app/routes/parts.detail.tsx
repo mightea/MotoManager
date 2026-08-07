@@ -43,6 +43,9 @@ import type {
   StorageLocation,
 } from "~/types/parts";
 import { storageLocationPath } from "~/utils/parts";
+import { createMotorcycleSlug } from "~/utils/motorcycle";
+import { maintenanceTypeLabels } from "~/utils/maintenance";
+import type { MaintenanceType } from "~/types/db";
 import { DEFAULT_CURRENCY_CODE, findCurrencyPreset } from "~/constants";
 import { seriesPath } from "~/utils/series";
 import { Card, CardAction, CardBody, CardHeading } from "~/components/card";
@@ -652,13 +655,38 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                         −{consumption.quantity}
                       </span>
                       <span className="text-base-content/50"> · {formatDate(consumption.date)}</span>
-                      {consumption.maintenanceRecordId != null && (
-                        <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-base-content/55 dark:bg-navy-800 dark:text-navy-300">
-                          <Wrench className="h-2.5 w-2.5" />
-                          Wartung
-                        </span>
-                      )}
+                      {/* Linked repairs jump straight to the bike's history.
+                          The badge stays inert when the entry was booked before
+                          the server started joining this context, or when the
+                          record has since been deleted. */}
+                      {consumption.maintenanceRecordId != null &&
+                        (consumption.motorcycleId != null ? (
+                          <Link
+                            to={`/motorcycle/${createMotorcycleSlug(
+                              consumption.motorcycleMake ?? "",
+                              consumption.motorcycleModel ?? "",
+                            )}/${consumption.motorcycleId}#maintenance`}
+                            className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:bg-base-300 hover:text-base-content dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700"
+                          >
+                            <Wrench className="h-2.5 w-2.5" />
+                            {[consumption.motorcycleMake, consumption.motorcycleModel]
+                              .filter(Boolean)
+                              .join(" ") || "Wartung"}
+                          </Link>
+                        ) : (
+                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-base-content/55 dark:bg-navy-800 dark:text-navy-300">
+                            <Wrench className="h-2.5 w-2.5" />
+                            Wartung
+                          </span>
+                        ))}
                     </p>
+                    {consumption.maintenanceDate && (
+                      <p className="truncate text-[11px] text-base-content/50">
+                        {maintenanceTypeLabels[consumption.maintenanceType as MaintenanceType] ??
+                          "Eintrag"}{" "}
+                        vom {formatDate(consumption.maintenanceDate)}
+                      </p>
+                    )}
                     {consumption.notes && (
                       <p className="truncate text-[11px] text-base-content/50">{consumption.notes}</p>
                     )}

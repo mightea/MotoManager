@@ -125,6 +125,14 @@ export interface PartConsumption {
   clientId: string | null;
   updatedAt: string | null;
   deletedAt: string | null;
+  /** Context of the repair this was booked against, joined in by the server so
+   *  a consumption can be linked back without walking every bike's maintenance
+   *  list. All null for a manual consumption not tied to a record. */
+  motorcycleId: number | null;
+  motorcycleMake: string | null;
+  motorcycleModel: string | null;
+  maintenanceDate: string | null;
+  maintenanceType: string | null;
 }
 
 export interface NewPartConsumption {

@@ -128,6 +128,10 @@ export interface MaintenanceRecord {
   motorcycleId: number;
   cost: number | null;
   normalizedCost: number | null;
+  /** Normalized (CHF) value of the parts booked against this entry, derived by
+   *  the server from its consumptions (backend migration 046). Read-only —
+   *  never submitted. null = no parts booked; 0 = booked but unpriced. */
+  partsCost: number | null;
   currency: string | null;
   description: string | null;
   type: MaintenanceType;

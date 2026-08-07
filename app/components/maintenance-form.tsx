@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
 import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting, BrakeType, TirePosition, FluidType, DriveType } from "~/types/db";
 import { fluidTypeLabels, tirePositionLabels } from "~/utils/maintenance";
-import type { Part } from "~/types/parts";
+import type { Part, PartConsumption } from "~/types/parts";
 import {
     Wrench,
     Battery,
@@ -39,8 +39,16 @@ interface MaintenanceFormProps {
     defaultOdo?: number | null;
     userLocations?: Location[];
     currencies?: CurrencySetting[];
-    /** Parts with positive on-hand, offered as "Verwendete Teile" on create. */
+    /** Parts with positive on-hand, offered as "Verwendete Teile". */
     availableParts?: Part[];
+    /** Live consumptions already booked against `initialData`, so an existing
+     *  entry opens with its parts and they can be re-quantified or removed. */
+    existingConsumptions?: PartConsumption[];
+    /** The parts those consumptions refer to. Passed separately because a part
+     *  fully used up by this entry has zero on-hand and so is absent from
+     *  `availableParts` — without it the entry's own parts would vanish from
+     *  the picker as soon as you opened it. */
+    partsOnRecord?: Part[];
     /** Per-wheel brake config; drives which brake jobs/positions are offered. */
     brakeConfig?: BrakeConfig;
     /** Drivetrain; filters chain- vs shaft-drive options. null = show all. */
@@ -83,6 +91,7 @@ const EMPTY_CURRENCIES: CurrencySetting[] = [];
 const EMPTY_BUNDLED_ITEMS: string[] = [];
 const EMPTY_LOCATIONS: Location[] = [];
 const EMPTY_PARTS: Part[] = [];
+const EMPTY_CONSUMPTIONS: PartConsumption[] = [];
 
 interface UsedPartEntry {
     partId: number;
@@ -294,6 +303,8 @@ export function MaintenanceForm({
     userLocations = EMPTY_LOCATIONS,
     currencies = EMPTY_CURRENCIES,
     availableParts = EMPTY_PARTS,
+    existingConsumptions = EMPTY_CONSUMPTIONS,
+    partsOnRecord = EMPTY_PARTS,
     brakeConfig,
     driveType,
     onCancel,
@@ -383,12 +394,40 @@ export function MaintenanceForm({
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Parts consumed by this entry (create-only; existing consumptions are
-    // managed on the Teile page). Serialized as a JSON hidden field.
-    const [usedParts, setUsedParts] = useState<UsedPartEntry[]>([]);
-    const showUsedParts =
-        !initialData && availableParts.length > 0 && type !== "fuel" && type !== "location";
-    const unusedParts = availableParts.filter(
+    // Parts consumed by this entry, serialized as a JSON hidden field. On an
+    // existing entry this is seeded from the record's live consumptions; the
+    // action diffs the submitted list against them to create/update/delete.
+    const [usedParts, setUsedParts] = useState<UsedPartEntry[]>(() =>
+        existingConsumptions.map((consumption) => ({
+            partId: consumption.partId,
+            quantity: consumption.quantity,
+        })),
+    );
+
+    // How much of a part this record already holds. It is not in `onHand`
+    // anymore (it was consumed), so it has to be added back to work out the
+    // ceiling for this form — otherwise a record that consumed the last piece
+    // could never be re-saved without lowering its own quantity.
+    const alreadyBooked = useMemo(() => {
+        const map = new Map<number, number>();
+        for (const consumption of existingConsumptions) {
+            map.set(consumption.partId, (map.get(consumption.partId) ?? 0) + consumption.quantity);
+        }
+        return map;
+    }, [existingConsumptions]);
+
+    const maxQuantityFor = (part: Part) => part.onHand + (alreadyBooked.get(part.id) ?? 0);
+
+    // Parts already on the record must stay listed even at zero on-hand, or an
+    // entry's own parts would disappear from the picker on edit.
+    const selectableParts = useMemo(() => {
+        const byId = new Map(availableParts.map((part) => [part.id, part]));
+        for (const part of partsOnRecord) byId.set(part.id, part);
+        return [...byId.values()];
+    }, [availableParts, partsOnRecord]);
+
+    const showUsedParts = selectableParts.length > 0 && type !== "fuel" && type !== "location";
+    const unusedParts = selectableParts.filter(
         (part) => !usedParts.some((entry) => entry.partId === part.id),
     );
 
@@ -865,26 +904,27 @@ export function MaintenanceForm({
                     </span>
                     <input type="hidden" name="usedParts" value={JSON.stringify(usedParts)} />
                     {usedParts.map((entry) => {
-                        const part = availableParts.find((candidate) => candidate.id === entry.partId);
+                        const part = selectableParts.find((candidate) => candidate.id === entry.partId);
                         if (!part) return null;
+                        const maxQuantity = maxQuantityFor(part);
                         return (
                             <div key={entry.partId} className="flex items-center gap-2">
                                 <div className="min-w-0 flex-1 rounded-sm border border-base-300 bg-base-100 p-3 text-sm dark:border-navy-700 dark:bg-navy-900">
                                     <p className="truncate text-base-content dark:text-white">{part.name}</p>
                                     <p className="truncate font-mono text-[10px] text-base-content/55">
-                                        {part.partNumber} · {part.onHand} auf Lager
+                                        {part.partNumber} · max. {maxQuantity}
                                     </p>
                                 </div>
                                 <input
                                     type="number"
                                     min={1}
-                                    max={part.onHand}
+                                    max={maxQuantity}
                                     step={1}
                                     value={entry.quantity}
                                     onChange={(event) => {
                                         const value = Number(event.target.value);
                                         if (Number.isInteger(value) && value >= 1) {
-                                            setUsedPartQuantity(entry.partId, Math.min(value, part.onHand));
+                                            setUsedPartQuantity(entry.partId, Math.min(value, maxQuantity));
                                         }
                                     }}
                                     aria-label={`Menge für ${part.name}`}
@@ -920,13 +960,14 @@ export function MaintenanceForm({
                             <option value="">+ Teil aus dem Bestand hinzufügen …</option>
                             {unusedParts.map((part) => (
                                 <option key={part.id} value={part.id}>
-                                    {part.name} ({part.partNumber}) — {part.onHand} auf Lager
+                                    {part.name} ({part.partNumber}) — {maxQuantityFor(part)} auf Lager
                                 </option>
                             ))}
                         </select>
                     )}
                     <p className="text-xs text-base-content/55">
-                        Verbrauchte Teile werden vom Bestand abgezogen und mit diesem Eintrag verknüpft.
+                        Verbrauchte Teile werden vom Bestand abgezogen, mit diesem Eintrag verknüpft
+                        und ihr Wert wird zu den Kosten gezählt.
                     </p>
                 </div>
             )}

@@ -16,6 +16,7 @@ import {
   Maximize2,
   Calendar,
   Coins,
+  Package,
   Info,
   Hash,
   Fuel,
@@ -69,6 +70,11 @@ interface GroupedMaintenanceRecord {
   count: number;
   cost: number;
   currency: string | null;
+  /** Normalized-currency twin of `cost`, used only when the group also carries
+   *  parts: partsCost is always normalized, so the two can only be added up on
+   *  that basis without silently mixing currencies. */
+  normalizedCost: number;
+  partsCost: number;
   summaries: string[];
   originalRecords: MaintenanceRecord[];
 }
@@ -139,6 +145,8 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
         count: 0,
         cost: 0,
         currency: effectiveRecord.currency || null,
+        normalizedCost: 0,
+        partsCost: 0,
         summaries: [],
         originalRecords: [],
       });
@@ -152,10 +160,14 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
     if (!record.parentId) {
       group.count += 1;
       group.cost += record.cost || 0;
+      group.normalizedCost += record.normalizedCost ?? record.cost ?? 0;
       if (!group.currency && record.currency) {
         group.currency = record.currency;
       }
     }
+    // Parts ride on child records too (a bundled item can consume its own
+    // parts), so this is deliberately outside the parent-only guard.
+    group.partsCost += record.partsCost || 0;
 
     const summary = summarizeMaintenanceRecord(record, userLocations);
 
@@ -203,6 +215,13 @@ function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: stri
     const unique = [...new Set(positions)];
     if (unique.length > 0) return unique.join(" & ");
     return null;
+  }
+
+  // With parts in play the total has to be shown on the normalized basis —
+  // partsCost is normalized and group.cost is in the record's own currency, so
+  // adding them raw would silently mix currencies.
+  if (group.partsCost > 0) {
+    return formatCurrency(group.normalizedCost + group.partsCost, currencyCode || "CHF");
   }
 
   if (group.cost > 0) {
@@ -643,8 +662,29 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                       )}
                                     </span>
                                   ) : formatCurrency(record.cost, record.currency || currencyCode || "CHF")
-                                ) : null, 
-                                icon: Coins 
+                                ) : null,
+                                icon: Coins
+                              },
+                              // Parts are costed separately from the amount the
+                              // user typed, so they get their own row plus a
+                              // combined total — but only when both exist,
+                              // otherwise "Kosten" already says everything.
+                              {
+                                label: "Teile",
+                                value: record.partsCost != null && record.partsCost > 0
+                                  ? formatCurrency(record.partsCost, currencyCode || "CHF")
+                                  : null,
+                                icon: Package,
+                              },
+                              {
+                                label: "Gesamt",
+                                value: record.partsCost != null && record.partsCost > 0 && record.cost && record.cost > 0
+                                  ? formatCurrency(
+                                      (record.normalizedCost ?? record.cost) + record.partsCost,
+                                      currencyCode || "CHF",
+                                    )
+                                  : null,
+                                icon: Coins,
                               },
                             ].filter(item => item.value !== null && item.value !== undefined && String(item.value).trim() !== "");
 

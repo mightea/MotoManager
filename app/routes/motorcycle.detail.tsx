@@ -57,10 +57,14 @@ import { fetchFromBackend } from "~/utils/backend";
 import { seriesMatchesBike } from "~/utils/series";
 import {
   createPartConsumption,
+  deletePartConsumption,
   fetchModelSeries,
   fetchPartConsumptions,
   fetchParts,
+  updatePartConsumption,
 } from "~/services/parts";
+import type { PartConsumption } from "~/types/parts";
+import { parseUsedParts, planConsumptionChanges } from "~/utils/part-consumptions";
 import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
 
@@ -210,7 +214,13 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const motorcycleExpenses = allExpenses.filter(e => e.motorcycleIds?.includes(motorcycleId));
 
   // Calculate total costs
-  const maintenanceCost = maintenanceHistory.reduce((sum, r) => sum + (r.normalizedCost || 0), 0);
+  // Parts consumed by an entry count toward its cost (server-derived
+  // `partsCost`, already normalized) — the repair is where inventory turns into
+  // a vehicle expense, so it is counted here and not as inventory spend.
+  const maintenanceCost = maintenanceHistory.reduce(
+    (sum, r) => sum + (r.normalizedCost || 0) + (r.partsCost || 0),
+    0,
+  );
   const purchasePrice = motorcycle.normalizedPurchasePrice || 0;
   const sharedExpensesCost = motorcycleExpenses.reduce((sum, e) => {
     const factor = e.motorcycleIds?.length || 1;
@@ -248,6 +258,61 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     formattedFirstRegistration,
     hasPurchaseDate
   });
+}
+
+/** Stable identity so the form's `useMemo`/state seed doesn't churn per render. */
+const EMPTY_CONSUMPTIONS: PartConsumption[] = [];
+
+const PARTS_SYNC_ERROR =
+  "Eintrag gespeichert, aber nicht alle Teile konnten gebucht werden (nicht genug Bestand?).";
+
+/**
+ * Apply the reconciliation planned by `planConsumptionChanges`.
+ *
+ * The record itself is already saved by the time this runs, so a rejected
+ * consumption (a concurrent overdraw, say) is reported as a warning rather than
+ * rolling the entry back. Removals run before creations so freeing stock on one
+ * part can pay for booking another in the same submission. Returns true if
+ * anything failed.
+ */
+async function syncRecordConsumptions(
+  token: string,
+  maintenanceRecordId: number,
+  formData: FormData,
+  existing: PartConsumption[],
+): Promise<boolean> {
+  const plan = planConsumptionChanges(existing, parseUsedParts(formData.get("usedParts")));
+  let failed = false;
+
+  const attempt = async (operation: () => Promise<unknown>) => {
+    try {
+      await operation();
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      failed = true;
+    }
+  };
+
+  for (const id of plan.remove) {
+    // eslint-disable-next-line no-await-in-loop
+    await attempt(() => deletePartConsumption(token, id));
+  }
+  for (const entry of plan.update) {
+    // eslint-disable-next-line no-await-in-loop
+    await attempt(() => updatePartConsumption(token, entry.id, { quantity: entry.quantity }));
+  }
+  for (const entry of plan.create) {
+    // eslint-disable-next-line no-await-in-loop
+    await attempt(() =>
+      createPartConsumption(token, {
+        partId: entry.partId,
+        quantity: entry.quantity,
+        maintenanceRecordId,
+      }),
+    );
+  }
+
+  return failed;
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -507,46 +572,27 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     if (intent === "createMaintenance") {
       const created = await createMaintenanceRecord(token, recordData as NewMaintenanceRecord);
-
-      // Book the selected parts against the new entry. The record is already
-      // saved at this point, so a failed consumption (e.g. a concurrent
-      // overdraw) surfaces as a warning instead of rolling anything back.
-      const usedPartsRaw = formData.get("usedParts");
-      if (typeof usedPartsRaw === "string" && usedPartsRaw.trim() !== "" && created?.id) {
-        let usedParts: { partId: number; quantity: number }[] = [];
-        try {
-          usedParts = JSON.parse(usedPartsRaw);
-        } catch {
-          usedParts = [];
-        }
-        const failures: string[] = [];
-        for (const entry of usedParts) {
-          if (!Number.isFinite(entry.partId) || !Number.isInteger(entry.quantity) || entry.quantity < 1) {
-            continue;
-          }
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            await createPartConsumption(token, {
-              partId: entry.partId,
-              quantity: entry.quantity,
-              maintenanceRecordId: created.id,
-            });
-          } catch (error) {
-            if (error instanceof Response) throw error;
-            failures.push(String(entry.partId));
-          }
-        }
-        if (failures.length > 0) {
-          return data({
-            success: true,
-            intent: "createMaintenance",
-            error: "Eintrag gespeichert, aber nicht alle Teile konnten vom Bestand abgebucht werden (nicht genug Bestand?).",
-          });
+      if (created?.id) {
+        const failed = await syncRecordConsumptions(token, created.id, formData, []);
+        if (failed) {
+          return data({ success: true, intent: "createMaintenance", error: PARTS_SYNC_ERROR });
         }
       }
     } else {
       const maintenanceId = Number(formData.get("maintenanceId"));
       await updateMaintenanceRecord(token, maintenanceId, motorcycleId, recordData);
+
+      // The form submits the full desired part list, so the existing
+      // consumptions have to be re-read to work out what to add, re-quantify
+      // and remove. Fetched here rather than trusted from a hidden field so a
+      // stale tab cannot resurrect a consumption deleted elsewhere.
+      const existing = (await fetchPartConsumptions(token).catch(() => [])).filter(
+        (consumption: PartConsumption) => consumption.maintenanceRecordId === maintenanceId,
+      );
+      const failed = await syncRecordConsumptions(token, maintenanceId, formData, existing);
+      if (failed) {
+        return data({ success: true, intent: "updateMaintenance", error: PARTS_SYNC_ERROR });
+      }
     }
 
     return data({ success: true, intent: intent === "createMaintenance" ? "createMaintenance" : "updateMaintenance" });
@@ -905,6 +951,20 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [bulkDeleteConfirmationOpen, setBulkDeleteConfirmationOpen] = useState(false);
   const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] = useState<(typeof maintenanceHistory)[number] | null>(null);
+
+  // Parts already booked against the record being edited. `availableParts` is
+  // filtered to positive on-hand, so a part this entry used up entirely is not
+  // in there — those have to be resolved from the full list, otherwise the
+  // entry's own parts would be missing from the form.
+  const consumptionsForSelectedRecord = selectedMaintenance
+    ? partConsumptions.filter(
+        (consumption) => consumption.maintenanceRecordId === selectedMaintenance.id,
+      )
+    : EMPTY_CONSUMPTIONS;
+  const partsForSelectedRecord = parts.filter((part) =>
+    consumptionsForSelectedRecord.some((consumption) => consumption.partId === part.id),
+  );
+
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [previousOwnersManageOpen, setPreviousOwnersManageOpen] = useState(false);
@@ -1253,6 +1313,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         userLocations={userLocations}
         currencies={currencies}
         availableParts={availableParts}
+        existingConsumptions={consumptionsForSelectedRecord}
+        partsOnRecord={partsForSelectedRecord}
         brakeConfig={{
           hasSidecar: Boolean(motorcycle.hasSidecar),
           front: motorcycle.frontBrakeType,

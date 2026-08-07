@@ -1,7 +1,7 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm, type BrakeConfig } from "~/components/maintenance-form";
 import type { MaintenanceRecord, Location, CurrencySetting, DriveType } from "~/types/db";
-import type { Part } from "~/types/parts";
+import type { Part, PartConsumption } from "~/types/parts";
 import { useUmami } from "./umami-provider";
 import { useEffect } from "react";
 
@@ -17,6 +17,11 @@ interface MaintenanceDialogProps {
   currencies?: CurrencySetting[];
   /** Parts with positive on-hand, offered as "Verwendete Teile" on create. */
   availableParts?: Part[];
+  /** Consumptions already booked against `initialData`, for the form's
+   *  "Verwendete Teile" section. */
+  existingConsumptions?: PartConsumption[];
+  /** Parts referenced by those consumptions (may have zero on-hand). */
+  partsOnRecord?: Part[];
   /** Per-wheel brake config; drives the brake options in the form. */
   brakeConfig?: BrakeConfig;
   /** Drivetrain; filters chain- vs shaft-drive options in the form. */
@@ -26,7 +31,7 @@ interface MaintenanceDialogProps {
 
 const EMPTY_RECORDS: MaintenanceRecord[] = [];
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, currencies, availableParts, brakeConfig, driveType, onDelete }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, currencies, availableParts, existingConsumptions, partsOnRecord, brakeConfig, driveType, onDelete }: MaintenanceDialogProps) {
   const { trackEvent } = useUmami();
 
   useEffect(() => {
@@ -61,6 +66,8 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         userLocations={userLocations}
         currencies={currencies}
         availableParts={availableParts}
+        existingConsumptions={existingConsumptions}
+        partsOnRecord={partsOnRecord}
         brakeConfig={brakeConfig}
         driveType={driveType}
         onCancel={onClose}
