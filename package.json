@@ -2,7 +2,7 @@
   "name": "motomanager",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.4.0",
+  "packageManager": "pnpm@11.20.0",
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",

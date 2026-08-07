@@ -20,3 +20,9 @@ updates:
     # Check for updates once a week
     schedule:
       interval: "weekly"
+
+  # Keep the workflow action versions from drifting the way they did before.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

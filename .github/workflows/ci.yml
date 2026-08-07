@@ -15,17 +15,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
         # Version comes from package.json `packageManager` — do not
-        # also set `version:` here, pnpm/action-setup@v4 refuses both.
-        uses: pnpm/action-setup@v4
+        # also set `version:` here, pnpm/action-setup@v6 refuses both.
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 25
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
@@ -42,7 +42,7 @@ jobs:
 
       - name: Upload build artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-build
           path: build
@@ -71,7 +71,7 @@ jobs:
 
       - name: Post coverage comment
         if: always() && github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: frontend-coverage
           path: coverage-comment.md
