@@ -168,6 +168,11 @@ export function PreviousOwnersDialog({
           {orderedOwners.length > 0 ? (
             <ul className="space-y-2">
               {orderedOwners.map((owner, index) => (
+                // The drag handlers are a pointer-only enhancement: keyboard and
+                // screen-reader users reorder with the labelled ArrowUp/ArrowDown
+                // buttons rendered inside each row, so the rule's concern is
+                // already covered. The whole row has to stay the drop target.
+                // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
                 <li
                   key={owner.id}
                   draggable={!isSavingOrder}

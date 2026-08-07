@@ -2,7 +2,7 @@ packages:
   - '.'
 
 # Force patched versions of transitive deps flagged by Dependabot:
-# undici < 7.28.0 (via jsdom/vitest) and esbuild < 0.28.1 (via vite/tsx).
+# undici < 7.28.0 (via jsdom/vitest) and esbuild < 0.28.1 (via vite).
 overrides:
   'undici@<7.28.0': '^7.28.0'
   'esbuild@<0.28.1': '^0.28.1'
@@ -11,7 +11,6 @@ overrides:
 # blocks all build scripts by default; only the entries listed here will run.
 allowBuilds:
   esbuild: true
-  sharp: true
   '@tailwindcss/oxide': true
 
 # Packages that are newly published and would otherwise be blocked by
@@ -27,4 +26,3 @@ minimumReleaseAgeExclude:
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - esbuild
-  - sharp

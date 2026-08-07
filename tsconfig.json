@@ -20,7 +20,7 @@
       "vitest"
     ],
     "target": "ES2022",
-    "module": "ES2022",
+    "module": "ESNext",
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "incremental": true,

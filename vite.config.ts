@@ -2,7 +2,9 @@ import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import babel from "vite-plugin-babel";
-import pkg from "./package.json";
+// Import attribute required by Vite 8's native config loader (the planned
+// default), which otherwise warns on every dev/build/typecheck run.
+import pkg from "./package.json" with { type: "json" };
 
 function devConfigJsPlugin(env: Record<string, string>): Plugin {
   return {
