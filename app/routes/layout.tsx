@@ -18,15 +18,23 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
   const mainRef = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
 
+  // Umami scopes identify() to the current session, so this has to run on every
+  // page load for a user's sessions to roll up under one profile. The provider
+  // queues the call if the tracker script hasn't finished loading yet.
+  //
+  // `username` is the visitor ID because that is what reads well in the umami
+  // dashboard, but it is editable in the admin user form — so `userId` rides
+  // along as the immutable key to re-stitch history after a rename.
   useEffect(() => {
     if (user?.username) {
       identifyUser(user.username, {
+        userId: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
       });
     }
-  }, [user?.username, user?.name, user?.email, user?.role, identifyUser]);
+  }, [user?.id, user?.username, user?.name, user?.email, user?.role, identifyUser]);
 
   // On client-side navigation, move focus to <main> so screen-reader and keyboard
   // users are informed the route changed (and start from the new content). Skip
