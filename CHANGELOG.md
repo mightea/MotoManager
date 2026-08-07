@@ -1,5 +1,31 @@
 # Changelog
 
+## [2026.8.0](https://github.com/mightea/MotoManager/compare/2026.7.14...2026.8.0) (2026-08-07)
+
+
+### 🐛 Bug Fixes
+
+* deliver the umami identify() that was being dropped on page load ([3080434](https://github.com/mightea/MotoManager/commit/3080434ee98bbb12f6bf8c6e5c8a3a3210213092))
+
+
+### 📝 Documentation
+
+* record why @babel/preset-typescript is held at 7 ([8a2c558](https://github.com/mightea/MotoManager/commit/8a2c558210f2fb02bb4c68c1311e2b09b8cbda20))
+
+
+### ✏️ Miscellaneous Chores
+
+* drop unused deps, align to Node 24, bump minors ([e4e1185](https://github.com/mightea/MotoManager/commit/e4e11856def9781a3c25d40e26c97875fd9cb679))
+* roll calver to 2026.8.0 ([04274e2](https://github.com/mightea/MotoManager/commit/04274e2e8e6daf1d774e9142e36b5ad5c958cd3b))
+* upgrade React Router to 8.3 ([7d725fe](https://github.com/mightea/MotoManager/commit/7d725fe3d131837083621088c8690eafd02d15f3))
+* upgrade react-dropzone, react-easy-crop, jsdom and jest-dom ([3782662](https://github.com/mightea/MotoManager/commit/3782662abf8763c57ac481d790b384ae200eb99b))
+* upgrade TypeScript to 7.0 ([964dbe0](https://github.com/mightea/MotoManager/commit/964dbe0ec6e950a39fa441a311dd8aef588fcee1))
+
+
+### 👷 Continuous Integration
+
+* upgrade pnpm, the builder image and the workflow actions ([2c216e2](https://github.com/mightea/MotoManager/commit/2c216e2137b0476ea11b510e04a4a58bbfba0500))
+
 ## [2026.7.14](https://github.com/mightea/MotoManager/compare/2026.7.13...2026.7.14) (2026-07-21)
 
 
