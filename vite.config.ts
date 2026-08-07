@@ -49,6 +49,9 @@ export default defineConfig(({ mode }) => {
       devConfigJsPlugin(env),
       reactRouter(),
       // React Compiler — auto-memoizes app components (React 19 target).
+      // @babel/preset-typescript is held at 7: preset 8 requires @babel/core ^8,
+      // but vite-plugin-babel (1.7.3, latest) still peers on @babel/core ^7.
+      // Bump both together once vite-plugin-babel supports Babel 8.
       babel({
         include: /app\/.+\.[jt]sx?$/,
         babelConfig: {
