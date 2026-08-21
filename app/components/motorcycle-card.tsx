@@ -58,7 +58,10 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
   const inspectionTier: InspectionTier = (() => {
     if (!moto.nextInspection) return "none";
     if (moto.nextInspection.isOverdue) return "overdue";
+    // The tier only flips at day granularity, so an impure "now" during
+    // render cannot produce visibly unstable results.
     const daysUntil = Math.round(
+      // oxlint-disable-next-line react/purity
       (new Date(moto.nextInspection.dueDateISO).getTime() - Date.now()) / MS_PER_DAY
     );
     return daysUntil <= INSPECTION_WARNING_DAYS ? "due-soon" : "ok";

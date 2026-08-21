@@ -194,12 +194,17 @@ function DropdownMenuRoot({
   const triggerProps = isValidElement(trigger) ? (trigger.props as Record<string, unknown>) : {};
 
   const injectedTrigger = isValidElement(trigger)
+    // The caller's element ref is read here only to forward it from the merged
+    // ref callback below — a deliberate ref-merging clone, not a render read.
+    // oxlint-disable-next-line react/refs
     ? cloneElement(trigger as ReactElement<Record<string, unknown>>, {
         ref: (node: HTMLElement | null) => {
           triggerRef.current = node;
           const r = (trigger as unknown as { ref?: unknown }).ref;
           if (typeof r === "function") (r as (n: HTMLElement | null) => void)(node);
           else if (r && typeof r === "object" && "current" in r) {
+            // Filling the caller's ref object is the point of forwarding it.
+            // oxlint-disable-next-line react/immutability
             (r as { current: HTMLElement | null }).current = node;
           }
         },
