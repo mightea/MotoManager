@@ -1,6 +1,7 @@
 import { fetchFromBackend } from "~/utils/backend";
 import { cachedFetch, invalidate, invalidatePrefix } from "~/utils/request-cache";
 import {
+  type AppUpgradeSettings,
   type CurrencySetting,
   type Location,
   type LocationType,
@@ -73,6 +74,30 @@ export async function getCurrencies() {
     fetchFromBackend<{ currencies: CurrencySetting[] }>("/currencies"),
   );
   return response.currencies;
+}
+
+export async function getAppUpgradeSettings(token: string) {
+  const response = await fetchFromBackend<{ appUpgrade: AppUpgradeSettings }>(
+    "/admin/app-upgrade",
+    {},
+    token,
+  );
+  return response.appUpgrade;
+}
+
+export async function updateAppUpgradeSettings(
+  token: string,
+  values: Partial<Pick<AppUpgradeSettings, "softUpgradeBuild" | "hardUpgradeBuild">>,
+) {
+  const response = await fetchFromBackend<{ appUpgrade: AppUpgradeSettings }>(
+    "/admin/app-upgrade",
+    {
+      method: "PUT",
+      body: JSON.stringify(values),
+    },
+    token,
+  );
+  return response.appUpgrade;
 }
 
 export async function createCurrencySetting(

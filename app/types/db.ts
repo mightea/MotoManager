@@ -213,6 +213,18 @@ export type NewCurrencySetting = Omit<CurrencySetting, "id" | "createdAt" | "lab
   label?: string | null;
 };
 
+/**
+ * Admin-configured minimum build numbers for the iOS app. Builds at or below
+ * `softUpgradeBuild` see an update reminder; builds below `hardUpgradeBuild`
+ * are out of support and stop talking to the backend. 0 disables a check.
+ */
+export interface AppUpgradeSettings {
+  id: number;
+  softUpgradeBuild: number;
+  hardUpgradeBuild: number;
+  updatedAt: string;
+}
+
 export interface CurrentLocation {
   id: number;
   motorcycleId: number;

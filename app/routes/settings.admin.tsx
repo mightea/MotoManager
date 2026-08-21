@@ -9,7 +9,9 @@ import {
 import {
   createCurrencySetting,
   deleteCurrencySetting,
+  getAppUpgradeSettings,
   getCurrencies,
+  updateAppUpgradeSettings,
   updateCurrencySetting,
 } from "~/services/settings";
 import {
@@ -25,7 +27,7 @@ import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useConfirm } from "~/components/confirm-provider";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server, DatabaseBackup } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server, DatabaseBackup, Smartphone } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
 import { fetchFromBackend } from "~/utils/backend";
@@ -41,12 +43,13 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
   requireAdmin(user);
 
-  const [users, currencies] = await Promise.all([
+  const [users, currencies, appUpgrade] = await Promise.all([
     listUsers(token),
     getCurrencies(),
+    getAppUpgradeSettings(token),
   ]);
 
-  return { users, currencies, user };
+  return { users, currencies, appUpgrade, user };
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -158,6 +161,25 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     return { success: "Währung gelöscht." };
   }
 
+  if (intent === "updateAppUpgrade") {
+    const softUpgradeBuild = Number(formData.get("softUpgradeBuild"));
+    const hardUpgradeBuild = Number(formData.get("hardUpgradeBuild"));
+
+    if (
+      !Number.isInteger(softUpgradeBuild) || softUpgradeBuild < 0 ||
+      !Number.isInteger(hardUpgradeBuild) || hardUpgradeBuild < 0
+    ) {
+      return { error: "Build-Nummern müssen ganze Zahlen ≥ 0 sein." };
+    }
+
+    try {
+      await updateAppUpgradeSettings(token, { softUpgradeBuild, hardUpgradeBuild });
+      return { success: "App-Update-Anforderungen gespeichert." };
+    } catch (e) {
+      return { error: (e instanceof Error && e.message) || "Fehler beim Speichern der App-Update-Anforderungen." };
+    }
+  }
+
   if (intent === "regeneratePreviews") {
     await fetchFromBackend("/admin/regenerate-previews", { method: "POST" }, token);
     return { success: `Vorschauen erfolgreich neu generiert.` };
@@ -167,7 +189,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function AdminSettings() {
-  const { users = [], currencies = [], user: currentUser } = useLoaderData<typeof clientLoader>();
+  const { users = [], currencies = [], appUpgrade, user: currentUser } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   const submit = useSubmit();
@@ -515,6 +537,63 @@ export default function AdminSettings() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* App Upgrade Requirements */}
+      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-lg bg-sky-100 p-2 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+            <Smartphone className="h-6 w-6" />
+          </div>
+          <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
+            iOS-App-Updates
+          </h2>
+        </div>
+        <Form method="post" className="space-y-4">
+          <input type="hidden" name="intent" value="updateAppUpgrade" />
+          <p className="text-sm text-secondary dark:text-navy-300">
+            Apps mit Build-Nummer <strong>bis einschliesslich</strong> der Soft-Grenze zeigen nach dem
+            Login eine Update-Erinnerung. Apps <strong>unterhalb</strong> der Hard-Grenze sind nicht mehr
+            unterstützt und stellen keine Anfragen mehr an den Server. 0 deaktiviert die jeweilige Prüfung.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="soft-upgrade-build" className="text-xs font-semibold uppercase text-secondary dark:text-navy-300">
+                Soft-Update-Build (Erinnerung)
+              </label>
+              <input
+                id="soft-upgrade-build"
+                type="number"
+                name="softUpgradeBuild"
+                min="0"
+                step="1"
+                defaultValue={appUpgrade.softUpgradeBuild}
+                required
+                className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="hard-upgrade-build" className="text-xs font-semibold uppercase text-secondary dark:text-navy-300">
+                Hard-Update-Build (Sperre)
+              </label>
+              <input
+                id="hard-upgrade-build"
+                type="number"
+                name="hardUpgradeBuild"
+                min="0"
+                step="1"
+                defaultValue={appUpgrade.hardUpgradeBuild}
+                required
+                className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSubmitting}>
+              Speichern
+            </Button>
+          </div>
+        </Form>
       </section>
 
       {/* System Maintenance */}
