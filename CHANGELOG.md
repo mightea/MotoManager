@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.8.1](https://github.com/mightea/MotoManager/compare/2026.8.0...2026.8.1) (2026-08-21)
+
+
+### ✨ Features
+
+* cost parts into repairs and link consumptions back to them ([84abd48](https://github.com/mightea/MotoManager/commit/84abd48baedf8e4819dc74f55c1524db1a8c8d73))
+
+
+### ♻️ Code Refactoring
+
+* replace effect-driven state sync flagged by oxlint 1.79 ([16a7bf4](https://github.com/mightea/MotoManager/commit/16a7bf48cf0bb2635101750e2253c6aa45e10e61))
+
 ## [2026.8.0](https://github.com/mightea/MotoManager/compare/2026.7.14...2026.8.0) (2026-08-07)
 
 
