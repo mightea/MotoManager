@@ -24,7 +24,7 @@ import { USER_ROLES, type UserRole } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useConfirm } from "~/components/confirm-provider";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server, DatabaseBackup } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
@@ -179,12 +179,16 @@ export default function AdminSettings() {
 
   const isSubmitting = navigation.state === "submitting";
 
-  useEffect(() => {
+  // Close the user dialog once a submission settles — adjusted during render
+  // on the submitting→idle transition instead of in an effect.
+  const [wasSubmitting, setWasSubmitting] = useState(isSubmitting);
+  if (wasSubmitting !== isSubmitting) {
+    setWasSubmitting(isSubmitting);
     if (!isSubmitting) {
       setIsUserDialogOpen(false);
       setEditingUser(null);
     }
-  }, [isSubmitting]);
+  }
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
     dateStyle: "medium",

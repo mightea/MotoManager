@@ -71,21 +71,30 @@ export default function FleetExpenses() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
 
-  useEffect(() => {
+  // Close the dialog when an action result arrives — adjusted during render
+  // so the dialog never repaints over the fresh list. The toast stays in an
+  // effect: it is a real one-shot side effect on the toast store.
+  const [prevActionData, setPrevActionData] = useState(actionData);
+  if (prevActionData !== actionData) {
+    setPrevActionData(actionData);
     if (actionData?.success) {
-      switch (actionData.intent) {
-        case "createExpense":
-          toast.success("Ausgabe hinzugefügt");
-          break;
-        case "updateExpense":
-          toast.success("Ausgabe aktualisiert");
-          break;
-        case "deleteExpense":
-          toast.success("Ausgabe gelöscht");
-          break;
-      }
       setIsDialogOpen(false);
       setSelectedExpense(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!actionData?.success) return;
+    switch (actionData.intent) {
+      case "createExpense":
+        toast.success("Ausgabe hinzugefügt");
+        break;
+      case "updateExpense":
+        toast.success("Ausgabe aktualisiert");
+        break;
+      case "deleteExpense":
+        toast.success("Ausgabe gelöscht");
+        break;
     }
   }, [actionData]);
 

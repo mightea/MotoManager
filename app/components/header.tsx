@@ -31,10 +31,14 @@ export function Header({ user }: { user: PublicUser | null }) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isMobileMenuOpen]);
 
-  // Close mobile menu on route change
-  useEffect(() => {
+  // Close mobile menu on route change — adjusted during render (React's
+  // "storing information from previous renders" pattern) so the old menu
+  // never paints over the new route.
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+  if (prevPathname !== location.pathname) {
+    setPrevPathname(location.pathname);
     setMobileMenuOpen(false);
-  }, [location.pathname]);
+  }
 
   return (
     <div

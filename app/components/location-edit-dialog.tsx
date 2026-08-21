@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Form, useSubmit } from "react-router";
 import { MapPin, Trash2, X } from "lucide-react";
 import { Modal } from "./modal";
@@ -49,21 +49,35 @@ export function LocationEditDialog({ isOpen, onClose, location, defaultType }: L
     onClose();
   };
 
-  useEffect(() => {
-    if (!isOpen) return;
-    if (location) {
-      setName(location.name);
-      setType(location.type);
-      setLat(location.latitude);
-      setLng(location.longitude);
-    } else {
-      setName("");
-      setType(defaultType ?? "fuelStation");
-      setLat(null);
-      setLng(null);
+  // Seed the form when the dialog opens or is pointed at another location —
+  // adjusted during render (prev-compare pattern) so the fields are correct
+  // in the very frame the dialog appears, without an extra effect render.
+  const [prevTarget, setPrevTarget] = useState<{
+    isOpen: boolean;
+    location: Location | null;
+    defaultType?: LocationType;
+  }>({ isOpen: false, location: null, defaultType: undefined });
+  if (
+    prevTarget.isOpen !== isOpen
+    || prevTarget.location !== location
+    || prevTarget.defaultType !== defaultType
+  ) {
+    setPrevTarget({ isOpen, location, defaultType });
+    if (isOpen) {
+      if (location) {
+        setName(location.name);
+        setType(location.type);
+        setLat(location.latitude);
+        setLng(location.longitude);
+      } else {
+        setName("");
+        setType(defaultType ?? "fuelStation");
+        setLat(null);
+        setLng(null);
+      }
+      setGeoError(null);
     }
-    setGeoError(null);
-  }, [isOpen, location, defaultType]);
+  }
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {

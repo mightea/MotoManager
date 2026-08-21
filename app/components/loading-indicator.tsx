@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 export function LoadingIndicator() {
   const navigation = useNavigation();
   const [isHydrating, setIsHydrating] = useState(true);
-  const [visible, setVisible] = useState(false);
-  const [width, setWidth] = useState(0);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -15,6 +13,21 @@ export function LoadingIndicator() {
   }, []);
 
   const active = navigation.state !== "idle" || isHydrating;
+
+  // Show and reset the bar in the same render that flips `active` (render-time
+  // state adjustment); the effect below only drives the async animation steps.
+  const [prevActive, setPrevActive] = useState(active);
+  const [visible, setVisible] = useState(active);
+  const [width, setWidth] = useState(0);
+  if (prevActive !== active) {
+    setPrevActive(active);
+    if (active) {
+      setVisible(true);
+      setWidth(0);
+    } else {
+      setWidth(100);
+    }
+  }
 
   useEffect(() => {
     if (hideTimer.current) {
@@ -27,14 +40,11 @@ export function LoadingIndicator() {
     }
 
     if (active) {
-      setVisible(true);
-      setWidth(0);
       // Double rAF ensures width:0 is painted before the CSS transition to 85% starts
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = requestAnimationFrame(() => setWidth(85));
       });
     } else {
-      setWidth(100);
       hideTimer.current = setTimeout(() => {
         setVisible(false);
         setWidth(0);

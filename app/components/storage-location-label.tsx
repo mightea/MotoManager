@@ -8,10 +8,7 @@ export function useQrDataUrl(text: string | null): string | null {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!text) {
-      setUrl(null);
-      return;
-    }
+    if (!text) return;
     let active = true;
     QRCode.toDataURL(text, { margin: 1, width: 512, errorCorrectionLevel: "M" })
       .then((dataUrl) => {
@@ -25,7 +22,8 @@ export function useQrDataUrl(text: string | null): string | null {
     };
   }, [text]);
 
-  return url;
+  // Derived: without text there is nothing to encode — no state reset needed.
+  return text ? url : null;
 }
 
 /** The absolute URL a printed label points at — the location's detail page. */

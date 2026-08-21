@@ -26,6 +26,15 @@ type DropdownMenuContextValue = {
 
 const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null);
 
+/** Standard mergeRefs building block: hand `node` to a callback or object ref. */
+function assignRef(ref: unknown, node: HTMLElement | null) {
+  if (typeof ref === "function") {
+    (ref as (n: HTMLElement | null) => void)(node);
+  } else if (ref && typeof ref === "object" && "current" in ref) {
+    (ref as { current: HTMLElement | null }).current = node;
+  }
+}
+
 function useDropdownMenuContext() {
   const ctx = useContext(DropdownMenuContext);
   if (!ctx) throw new Error("DropdownMenu.Item must be used inside DropdownMenu");
@@ -194,19 +203,16 @@ function DropdownMenuRoot({
   const triggerProps = isValidElement(trigger) ? (trigger.props as Record<string, unknown>) : {};
 
   const injectedTrigger = isValidElement(trigger)
-    // The caller's element ref is read here only to forward it from the merged
-    // ref callback below — a deliberate ref-merging clone, not a render read.
+    // The compiler cannot analyze ref injection through cloneElement (the
+    // same limit hits Radix's Slot); the merged ref callback below only ever
+    // runs at commit time, never during render.
     // oxlint-disable-next-line react/refs
     ? cloneElement(trigger as ReactElement<Record<string, unknown>>, {
+        // Merged ref: capture the node for the menu and forward it to the
+        // caller's own ref (React 19: element refs travel in props).
         ref: (node: HTMLElement | null) => {
           triggerRef.current = node;
-          const r = (trigger as unknown as { ref?: unknown }).ref;
-          if (typeof r === "function") (r as (n: HTMLElement | null) => void)(node);
-          else if (r && typeof r === "object" && "current" in r) {
-            // Filling the caller's ref object is the point of forwarding it.
-            // oxlint-disable-next-line react/immutability
-            (r as { current: HTMLElement | null }).current = node;
-          }
+          assignRef(triggerProps.ref, node);
         },
         onClick: (e: MouseEvent<HTMLElement>) => {
           (triggerProps.onClick as ((e: MouseEvent<HTMLElement>) => void) | undefined)?.(e);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { AlertTriangle, ArrowDown, ArrowUp, GripVertical, Pencil, Plus } from "lucide-react";
 import { Modal } from "./modal";
@@ -44,28 +44,29 @@ export function PreviousOwnersDialog({
   const toggleFetcher = useFetcher();
   const orderFetcher = useFetcher<ReorderResponse>();
   const [orderedOwners, setOrderedOwners] = useState(owners);
-  const [orderError, setOrderError] = useState<string | null>(null);
   const draggedOwnerId = useRef<number | null>(null);
 
-  useEffect(() => {
+  // Resync the optimistic order whenever the route revalidates `owners` —
+  // adjusted during render (React's prev-compare pattern), not in an effect.
+  const [prevOwners, setPrevOwners] = useState(owners);
+  if (prevOwners !== owners) {
+    setPrevOwners(owners);
     setOrderedOwners(owners);
-  }, [owners]);
-
-  useEffect(() => {
-    if (
-      orderFetcher.state === "idle"
-      && orderFetcher.data?.intent === "reorderPreviousOwners"
-    ) {
-      if (orderFetcher.data.success) {
-        setOrderError(null);
-      } else {
-        setOrderedOwners(owners);
-        setOrderError(orderFetcher.data.error ?? "Reihenfolge konnte nicht gespeichert werden.");
-      }
-    }
-  }, [orderFetcher.data, orderFetcher.state, owners]);
+  }
 
   const isSavingOrder = orderFetcher.state !== "idle";
+
+  // A settled, failed reorder: the error text and the fallback to the server
+  // order are both derived from the fetcher result instead of tracked in
+  // state. Starting the next submission clears them automatically.
+  const reorderFailed =
+    !isSavingOrder
+    && orderFetcher.data?.intent === "reorderPreviousOwners"
+    && !orderFetcher.data.success;
+  const orderError = reorderFailed
+    ? (orderFetcher.data?.error ?? "Reihenfolge konnte nicht gespeichert werden.")
+    : null;
+  const displayedOwners = reorderFailed ? owners : orderedOwners;
 
   // Optimistic: reflect the in-flight toggle immediately, fall back to the
   // persisted value once the submission settles and the route revalidates.
@@ -87,7 +88,6 @@ export function PreviousOwnersDialog({
   const persistOrder = (nextOwners: PreviousOwner[]) => {
     if (isSavingOrder) return;
     setOrderedOwners(nextOwners);
-    setOrderError(null);
     orderFetcher.submit(
       {
         intent: "reorderPreviousOwners",
@@ -99,11 +99,11 @@ export function PreviousOwnersDialog({
   };
 
   const moveOwner = (ownerId: number, offset: -1 | 1) => {
-    const sourceIndex = orderedOwners.findIndex((owner) => owner.id === ownerId);
+    const sourceIndex = displayedOwners.findIndex((owner) => owner.id === ownerId);
     const targetIndex = sourceIndex + offset;
-    if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= orderedOwners.length) return;
+    if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= displayedOwners.length) return;
 
-    persistOrder(movePreviousOwner(orderedOwners, ownerId, targetIndex));
+    persistOrder(movePreviousOwner(displayedOwners, ownerId, targetIndex));
   };
 
   const dropOwner = (targetOwnerId: number) => {
@@ -111,10 +111,10 @@ export function PreviousOwnersDialog({
     draggedOwnerId.current = null;
     if (sourceOwnerId == null || sourceOwnerId === targetOwnerId) return;
 
-    const targetIndex = orderedOwners.findIndex((owner) => owner.id === targetOwnerId);
+    const targetIndex = displayedOwners.findIndex((owner) => owner.id === targetOwnerId);
     if (targetIndex < 0) return;
 
-    persistOrder(movePreviousOwner(orderedOwners, sourceOwnerId, targetIndex));
+    persistOrder(movePreviousOwner(displayedOwners, sourceOwnerId, targetIndex));
   };
 
   return (
@@ -155,19 +155,19 @@ export function PreviousOwnersDialog({
               <span>Erfasste Vorbesitzer</span>
             </h3>
             <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
-              {orderedOwners.length} {orderedOwners.length === 1 ? "Eintrag" : "Einträge"}
+              {displayedOwners.length} {displayedOwners.length === 1 ? "Eintrag" : "Einträge"}
             </span>
           </div>
 
-          {orderedOwners.length > 1 && (
+          {displayedOwners.length > 1 && (
             <p className="text-xs text-base-content/60">
               Der direkte Vorbesitzer steht oben. Ziehe Einträge oder nutze die Pfeiltasten.
             </p>
           )}
 
-          {orderedOwners.length > 0 ? (
+          {displayedOwners.length > 0 ? (
             <ul className="space-y-2">
-              {orderedOwners.map((owner, index) => (
+              {displayedOwners.map((owner, index) => (
                 // The drag handlers are a pointer-only enhancement: keyboard and
                 // screen-reader users reorder with the labelled ArrowUp/ArrowDown
                 // buttons rendered inside each row, so the rule's concern is
@@ -219,7 +219,7 @@ export function PreviousOwnersDialog({
                     <button
                       type="button"
                       onClick={() => moveOwner(owner.id, 1)}
-                      disabled={index === orderedOwners.length - 1 || isSavingOrder}
+                      disabled={index === displayedOwners.length - 1 || isSavingOrder}
                       aria-label={`${owner.name} ${owner.surname} nach unten verschieben`}
                       className="rounded-sm p-1.5 text-base-content/50 transition-all hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-25 dark:text-navy-400 dark:hover:bg-navy-700 dark:hover:text-white"
                     >

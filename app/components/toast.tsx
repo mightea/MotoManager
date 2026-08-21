@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from "lucide-react";
 import clsx from "clsx";
@@ -94,13 +94,14 @@ function ToastItem({ toast }: { toast: Toast }) {
   );
 }
 
+// Hydration probe: the server snapshot is false, any client snapshot is true,
+// and nothing ever notifies — the canonical way to know we can portal into
+// `document.body` without a mount flag in state.
+const emptySubscribe = () => () => {};
+
 export function Toaster() {
   const toasts = useToasts();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   if (!mounted || typeof document === "undefined") return null;
   if (toasts.length === 0) return null;

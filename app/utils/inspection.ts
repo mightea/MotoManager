@@ -69,6 +69,8 @@ export type NextInspectionInfo = {
   dueDateLabel: string;
   relativeLabel: string;
   isOverdue: boolean;
+  /** Whole days until the due date; negative when overdue. */
+  daysUntilDue: number;
 };
 
 export const getNextInspectionInfo = ({
@@ -137,5 +139,6 @@ export const getNextInspectionInfo = ({
     dueDateLabel: dateFormatter.format(dueDate),
     relativeLabel: formatRelative(diffDays),
     isOverdue: diffDays < 0,
+    daysUntilDue: diffDays,
   };
 };
