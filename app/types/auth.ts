@@ -11,4 +11,7 @@ export type PublicUser = {
   createdAt: string;
   updatedAt: string;
   lastLoginAt?: string | null;
+  /** Last iOS app version/build seen by the backend; null for webapp-only users. */
+  appVersion?: string | null;
+  appBuild?: number | null;
 };

@@ -337,6 +337,7 @@ export default function AdminSettings() {
                 <th className="px-4 py-3 font-semibold">Benutzername</th>
                 <th className="px-4 py-3 font-semibold">E-Mail</th>
                 <th className="px-4 py-3 font-semibold">Letzter Login</th>
+                <th className="px-4 py-3 font-semibold">App-Version</th>
                 <th className="px-4 py-3 font-semibold">Rolle</th>
                 <th className="px-4 py-3 font-semibold text-right">Aktionen</th>
               </tr>
@@ -352,6 +353,9 @@ export default function AdminSettings() {
                   </td>
                   <td suppressHydrationWarning className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
                     {u.lastLoginAt ? dateFormatter.format(new Date(u.lastLoginAt)) : "Nie"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
+                    {u.appVersion ? `${u.appVersion} (${u.appBuild ?? "?"})` : "–"}
                   </td>
                   <td className="px-4 py-3 text-xs font-medium text-foreground dark:text-white capitalize">
                     {u.role}
