@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.8.4](https://github.com/mightea/MotoManager/compare/2026.8.3...2026.8.4) (2026-08-23)
+
+
+### 🐛 Bug Fixes
+
+* show the reported ios app version in the admin user list ([f569aa7](https://github.com/mightea/MotoManager/commit/f569aa7deffc7552052d263c5a549f3b2ad9db64))
+
 ## [2026.8.3](https://github.com/mightea/MotoManager/compare/2026.8.2...2026.8.3) (2026-08-23)
 
 
