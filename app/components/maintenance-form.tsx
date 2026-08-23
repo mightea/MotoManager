@@ -90,6 +90,7 @@ function isChainHiddenByDrive(driveType?: DriveType | null): boolean {
 const EMPTY_CURRENCIES: CurrencySetting[] = [];
 const EMPTY_BUNDLED_ITEMS: string[] = [];
 const EMPTY_LOCATIONS: Location[] = [];
+const EMPTY_LOCATION_TYPES: LocationType[] = [];
 const EMPTY_PARTS: Part[] = [];
 const EMPTY_CONSUMPTIONS: PartConsumption[] = [];
 
@@ -100,7 +101,10 @@ interface UsedPartEntry {
 
 interface LocationPickerFieldProps {
     userLocations: Location[];
+    /** The type used when this field creates a new location. */
     locationType: LocationType;
+    /** Existing locations of these additional types are selectable too. */
+    additionalLocationTypes?: LocationType[];
     initialLocationId: number | null;
     label: string;
     selectPlaceholder: string;
@@ -119,6 +123,7 @@ interface LocationPickerFieldProps {
 function LocationPickerField({
     userLocations,
     locationType,
+    additionalLocationTypes = EMPTY_LOCATION_TYPES,
     initialLocationId,
     label,
     selectPlaceholder,
@@ -126,7 +131,9 @@ function LocationPickerField({
     enableNearMe = false,
     nearMeLabel = "In der Nähe",
 }: LocationPickerFieldProps) {
-    const options = userLocations.filter(l => l.type === locationType);
+    const options = userLocations.filter(
+        l => l.type === locationType || additionalLocationTypes.includes(l.type),
+    );
     const hasOptions = options.length > 0;
     const [isNewLocation, setIsNewLocation] = useState(!hasOptions);
     const [locationId, setLocationId] = useState<string>(
@@ -680,9 +687,10 @@ export function MaintenanceForm({
                     <LocationPickerField
                         userLocations={userLocations}
                         locationType="storage"
+                        additionalLocationTypes={["maintenanceShop"]}
                         initialLocationId={initialData?.locationId ?? null}
-                        label="Standort"
-                        selectPlaceholder="Wähle einen Standort..."
+                        label="Standort / Werkstatt"
+                        selectPlaceholder="Wähle einen Standort oder eine Werkstatt..."
                         newPlaceholder="Neuer Standort (z.B. Garage)"
                     />
                 )}

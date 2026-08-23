@@ -67,6 +67,7 @@ import type { PartConsumption } from "~/types/parts";
 import { parseUsedParts, planConsumptionChanges } from "~/utils/part-consumptions";
 import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
+import { getCurrentLocationName } from "~/utils/motorcycle-header-stats";
 
 /** Slice of the `/motorcycles/:id` payload this route consumes. */
 interface MotorcycleDetailResponse {
@@ -154,21 +155,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   // Get maintenance insights
   const insights = getMaintenanceInsights(maintenanceRecords, lastKnownOdo, settings);
 
-  // "Where the bike lives" → only Storage-typed locations qualify. Workshop / fuel /
-  // inspection visits do not change the current location.
-  const storageLocationIds = new Set(
-    userLocations.filter((l: Location) => l.type === "storage").map((l: Location) => l.id),
-  );
-  const currentLocationId =
-    maintenanceRecords
-      .filter(
-        (r) =>
-          r.type === "location" && r.locationId && storageLocationIds.has(r.locationId),
-      )
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
-      ?.locationId ?? null;
-  const currentLocationName =
-    userLocations.find((l: Location) => l.id === currentLocationId)?.name ?? null;
+  const currentLocationName = getCurrentLocationName(maintenanceRecords, userLocations);
 
   // Fuel stats
   const fuelRecords = maintenanceRecords.filter((r) => r.type === "fuel" && r.fuelAmount && r.tripDistance);
