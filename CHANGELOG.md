@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.8.2](https://github.com/mightea/MotoManager/compare/2026.8.1...2026.8.2) (2026-08-23)
+
+
+### ✨ Features
+
+* manage ios app upgrade requirements in the admin area ([b0bffba](https://github.com/mightea/MotoManager/commit/b0bffbaa5a0d925c5af627fa388dcf036b8ba24b))
+* show each user's last ios app version in the admin panel ([012dc32](https://github.com/mightea/MotoManager/commit/012dc329079695dde7e4c6985bdbb092a7dc00b0))
+
+
+### ✅ Tests
+
+* cover storage location workshop selection ([39d8d8b](https://github.com/mightea/MotoManager/commit/39d8d8b791477eefe787218cf16b5725094b73bf))
+
 ## [2026.8.1](https://github.com/mightea/MotoManager/compare/2026.8.0...2026.8.1) (2026-08-21)
 
 
