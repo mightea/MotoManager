@@ -20,6 +20,8 @@ const authUserSchema = z
     createdAt: z.string().nullish(),
     updatedAt: z.string().nullish(),
     lastLoginAt: z.string().nullish(),
+    appVersion: z.string().nullish(),
+    appBuild: z.number().nullish(),
   })
   .passthrough();
 
@@ -41,6 +43,8 @@ export function toPublicUser(user: AuthUser): PublicUser {
     createdAt: user.createdAt as string,
     updatedAt: user.updatedAt as string,
     lastLoginAt: user.lastLoginAt,
+    appVersion: user.appVersion ?? null,
+    appBuild: user.appBuild ?? null,
   } satisfies PublicUser;
 }
 

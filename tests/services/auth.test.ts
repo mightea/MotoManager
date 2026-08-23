@@ -23,6 +23,7 @@ import {
   getCurrentSession,
   registerFirstUser,
   setSessionToken,
+  toPublicUser,
 } from "~/services/auth";
 
 const backendUser = {
@@ -139,5 +140,19 @@ describe("auth account endpoints", () => {
       { method: "POST", body: JSON.stringify(input) },
       "admin-token",
     );
+  });
+});
+
+describe("toPublicUser", () => {
+  it("preserves the reported iOS app version and build", () => {
+    const user = toPublicUser({ ...backendUser, appVersion: "0.7.1", appBuild: 1021 });
+    expect(user.appVersion).toBe("0.7.1");
+    expect(user.appBuild).toBe(1021);
+  });
+
+  it("maps missing app version fields to null (webapp-only users)", () => {
+    const user = toPublicUser(backendUser);
+    expect(user.appVersion).toBeNull();
+    expect(user.appBuild).toBeNull();
   });
 });
