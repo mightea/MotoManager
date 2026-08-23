@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.8.3](https://github.com/mightea/MotoManager/compare/2026.8.2...2026.8.3) (2026-08-23)
+
+
+### 🐛 Bug Fixes
+
+* allow workshops as motorcycle locations ([16a1e1a](https://github.com/mightea/MotoManager/commit/16a1e1a19c01258b3a014cd0b905d12c90834201))
+
 ## [2026.8.2](https://github.com/mightea/MotoManager/compare/2026.8.1...2026.8.2) (2026-08-23)
 
 
