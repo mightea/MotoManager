@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.8.5](https://github.com/mightea/MotoManager/compare/2026.8.4...2026.8.5) (2026-08-31)
+
+
+### ✨ Features
+
+* admin impersonation (support mode) ([2a69c67](https://github.com/mightea/MotoManager/commit/2a69c6770e682d07140b6a7abe0768505a5c37f4))
+
 ## [2026.8.4](https://github.com/mightea/MotoManager/compare/2026.8.3...2026.8.4) (2026-08-23)
 
 
