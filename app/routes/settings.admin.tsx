@@ -19,6 +19,7 @@ import {
   listUsers,
   requireAdmin,
   requireUser,
+  startImpersonation,
   updateUser,
   updateUserPassword,
 } from "~/services/auth";
@@ -27,7 +28,7 @@ import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
 import { useConfirm } from "~/components/confirm-provider";
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server, DatabaseBackup, Smartphone } from "lucide-react";
+import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server, DatabaseBackup, Smartphone, UserCog } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
 import { fetchFromBackend } from "~/utils/backend";
@@ -107,6 +108,22 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     } catch (e) {
       return { error: (e instanceof Error && e.message) || "Fehler beim Aktualisieren des Benutzers." };
     }
+  }
+
+  if (intent === "impersonate") {
+    const userId = Number(formData.get("userId"));
+    if (!userId || userId === currentUser.id) {
+      return { error: "Ungültige ID." };
+    }
+
+    try {
+      await startImpersonation(userId, token);
+    } catch (e) {
+      return { error: (e instanceof Error && e.message) || "Impersonation fehlgeschlagen." };
+    }
+    // Full reload as the impersonated user - drops all admin loader state.
+    window.location.assign("/");
+    return { success: "Support-Modus gestartet." };
   }
 
   if (intent === "deleteUser") {
@@ -362,6 +379,22 @@ export default function AdminSettings() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      {u.id !== currentUser.id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-secondary hover:text-primary dark:text-navy-400 dark:hover:text-white"
+                          onClick={() => {
+                            submit(
+                              { intent: "impersonate", userId: String(u.id) },
+                              { method: "post" },
+                            );
+                          }}
+                          title={`Als ${u.username} anzeigen (Support-Modus)`}
+                        >
+                          <UserCog className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"

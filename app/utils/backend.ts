@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import { getBackendUrl } from "~/config";
-import { clearSessionToken, getSessionToken } from "~/services/auth";
+import { clearSessionToken, consumeStashedAdminToken, getSessionToken } from "~/services/auth";
 
 /** Default per-request timeout so a hung backend fails fast instead of blocking a
  *  loader indefinitely. Callers can override by passing their own `signal`. */
@@ -60,6 +60,11 @@ export async function fetchFromBackend<T>(
   }
 
   if (response.status === 401) {
+    // An expired impersonation session falls back to the stashed admin token
+    // instead of logging the admin out entirely.
+    if (consumeStashedAdminToken()) {
+      throw redirect("/settings/admin");
+    }
     clearSessionToken();
     throw redirect("/auth/login");
   }

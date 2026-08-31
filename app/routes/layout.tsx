@@ -2,17 +2,26 @@ import { Outlet, data, useLocation } from "react-router";
 import type { Route } from "./+types/layout";
 import { Header } from "~/components/header";
 import { Toaster } from "~/components/toast";
-import { requireUser } from "~/services/auth";
+import { endImpersonation, requireUser } from "~/services/auth";
 import { useUmami } from "~/components/umami-provider";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { UserCog } from "lucide-react";
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-  const { user } = await requireUser(request);
-  return data({ user });
+  const { user, impersonatedBy } = await requireUser(request);
+  return data({ user, impersonatedBy });
 }
 
 export default function Layout({ loaderData }: Route.ComponentProps) {
-  const { user } = loaderData;
+  const { user, impersonatedBy } = loaderData;
+  const [isEndingImpersonation, setIsEndingImpersonation] = useState(false);
+
+  const handleEndImpersonation = async () => {
+    setIsEndingImpersonation(true);
+    await endImpersonation();
+    // Full reload: flushes every cache and loader state built as the other user.
+    window.location.assign("/settings/admin");
+  };
   const { identifyUser } = useUmami();
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
@@ -59,6 +68,23 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
       >
         Zum Inhalt springen
       </a>
+      {impersonatedBy && (
+        <div className="sticky top-0 z-50 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-amber-500 px-4 py-2 text-sm font-medium text-amber-950">
+          <UserCog className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>
+            Support-Modus: Du siehst die App als{" "}
+            <strong>{user?.name || user?.username}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={handleEndImpersonation}
+            disabled={isEndingImpersonation}
+            className="rounded-sm border border-amber-900/40 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide hover:bg-amber-400 disabled:opacity-60"
+          >
+            {isEndingImpersonation ? "Beende…" : "Beenden"}
+          </button>
+        </div>
+      )}
       <Header user={user} />
       <main
         id="main-content"

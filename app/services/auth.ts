@@ -4,6 +4,9 @@ import { fetchFromBackend } from "~/utils/backend";
 import { cachedFetch, clearRequestCache } from "~/utils/request-cache";
 
 const STORAGE_KEY = "moto_auth_token";
+// While impersonating, the admin's own token is stashed here so it can be
+// restored when impersonation ends (or its 1h session expires with a 401).
+const ADMIN_STASH_KEY = "moto_admin_token";
 const SESSION_TTL_MS = 60_000;
 
 // Lenient runtime validation of the auth boundary: require only the essential
@@ -25,7 +28,13 @@ const authUserSchema = z
   })
   .passthrough();
 
-const meResponseSchema = z.object({ user: authUserSchema }).passthrough();
+const impersonatorSchema = z
+  .object({ id: z.number(), username: z.string(), name: z.string().nullish() })
+  .passthrough();
+
+const meResponseSchema = z
+  .object({ user: authUserSchema, impersonatedBy: impersonatorSchema.nullish() })
+  .passthrough();
 const loginResponseSchema = z
   .object({ user: authUserSchema, token: z.string().min(1) })
   .passthrough();
@@ -48,10 +57,14 @@ export function toPublicUser(user: AuthUser): PublicUser {
   } satisfies PublicUser;
 }
 
+export type Impersonator = z.infer<typeof impersonatorSchema>;
+
 export type AuthSession = {
   user: PublicUser | null;
   token: string | null;
   status: "anonymous" | "authenticated" | "unavailable";
+  /** Set when this session is an admin impersonating `user` (support mode). */
+  impersonatedBy?: Impersonator | null;
 };
 
 export function getSessionToken(): string | null {
@@ -70,6 +83,55 @@ export function clearSessionToken() {
   if (typeof window === "undefined") return;
   clearRequestCache();
   localStorage.removeItem(STORAGE_KEY);
+  // A full sign-out ends any impersonation too - a stale stashed admin token
+  // must not resurrect a session after the next 401.
+  localStorage.removeItem(ADMIN_STASH_KEY);
+}
+
+/**
+ * If an admin token was stashed for impersonation, promote it back to the
+ * active session and return true. Called from the 401 handler: when the
+ * short-lived impersonation session expires, the admin should land back in
+ * their own account instead of being logged out.
+ */
+export function consumeStashedAdminToken(): boolean {
+  if (typeof window === "undefined") return false;
+  const adminToken = localStorage.getItem(ADMIN_STASH_KEY);
+  if (!adminToken) return false;
+  localStorage.removeItem(ADMIN_STASH_KEY);
+  setSessionToken(adminToken);
+  return true;
+}
+
+/** Start impersonating a user: mint the support session and swap tokens. */
+export async function startImpersonation(userId: number, adminToken?: string | null) {
+  const token = adminToken ?? getSessionToken();
+  if (!token) throw new Error("Nicht angemeldet.");
+  const response = await fetchFromBackend<{ token: string }>(
+    `/admin/users/${userId}/impersonate`,
+    { method: "POST" },
+    token,
+  );
+  if (typeof window !== "undefined") {
+    localStorage.setItem(ADMIN_STASH_KEY, token);
+  }
+  setSessionToken(response.token);
+}
+
+/** End impersonation: kill the support session, restore the admin's own. */
+export async function endImpersonation() {
+  const current = getSessionToken();
+  if (current) {
+    try {
+      await fetchFromBackend("/auth/logout", { method: "POST" }, current);
+    } catch {
+      // The session dies on its own within the hour; restoring the admin
+      // token matters more than a clean server-side delete.
+    }
+  }
+  if (!consumeStashedAdminToken()) {
+    clearSessionToken();
+  }
 }
 
 export async function getCurrentSession(): Promise<AuthSession> {
@@ -94,10 +156,16 @@ export async function getCurrentSession(): Promise<AuthSession> {
       user: toPublicUser(parsed.data.user),
       token,
       status: "authenticated",
+      impersonatedBy: parsed.data.impersonatedBy ?? null,
     };
   } catch (error) {
     // If it's a redirect response (likely 401 from fetchFromBackend), let it bubble up or handle it
     if (error instanceof Response) {
+      // The 401 handler may have swapped in the stashed admin token (expired
+      // impersonation). Follow its redirect instead of wiping the session.
+      if (getSessionToken() !== token) {
+        throw error;
+      }
       clearSessionToken();
       return { user: null, token: null, status: "anonymous" };
     }
@@ -228,7 +296,7 @@ export async function verifyLogin(
 }
 
 export async function requireUser(request: Request) {
-  const { user, token, status } = await getCurrentSession();
+  const { user, token, status, impersonatedBy } = await getCurrentSession();
 
   if (status === "unavailable" && token) {
     throw new Response("Deine Sitzung ist gespeichert, aber der Server ist momentan nicht erreichbar.", {
@@ -251,7 +319,7 @@ export async function requireUser(request: Request) {
     throw redirect(`/auth/login?redirectTo=${redirectTo}`);
   }
 
-  return { user, token };
+  return { user, token, impersonatedBy: impersonatedBy ?? null };
 }
 
 export function requireAdmin(user: PublicUser) {
