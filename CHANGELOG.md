@@ -1,5 +1,25 @@
 # Changelog
 
+## [2026.9.0](https://github.com/mightea/MotoManager/compare/2026.8.5...2026.9.0) (2026-09-02)
+
+
+### ✨ Features
+
+* API-token settings page for the MCP server (KI-Zugriff) ([91c62c4](https://github.com/mightea/MotoManager/commit/91c62c44af46fdb5cb8b9887deea4c749b69f3bf))
+* consent page for OAuth connector clients (MCP) ([3469fab](https://github.com/mightea/MotoManager/commit/3469fabe41500995e1748b0f67d9b056e2b793d5))
+
+
+### 🐛 Bug Fixes
+
+* bump transitive browserslist to 4.28.7 (Dependabot high alert) ([6247fa5](https://github.com/mightea/MotoManager/commit/6247fa59820b27b54852f47590a2b139513e3f9b))
+* override transitive browserslist to 4.28.7+ (Dependabot high alert) ([0368ef2](https://github.com/mightea/MotoManager/commit/0368ef2df5e635bb1f35952638d1245bcf39d63f))
+
+
+### ✏️ Miscellaneous Chores
+
+* roll calver to 2026.9.0 ([531cb1b](https://github.com/mightea/MotoManager/commit/531cb1b759b771bf5fe5c105761b56d82cbdee9c))
+* update dependencies to latest compatible versions ([c4a53c3](https://github.com/mightea/MotoManager/commit/c4a53c33da127547ca73c63c0643aa2f49ab3867))
+
 ## [2026.8.5](https://github.com/mightea/MotoManager/compare/2026.8.4...2026.8.5) (2026-08-31)
 
 
