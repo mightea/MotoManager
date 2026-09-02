@@ -6,6 +6,8 @@ packages:
 overrides:
   'undici@<7.28.0': '^7.28.0'
   'esbuild@<0.28.1': '^0.28.1'
+  # browserslist < 4.28.7 (via @babel/core).
+  'browserslist@<4.28.7': '^4.28.7'
 
 # Allow specific dependencies to execute their install scripts. pnpm 11
 # blocks all build scripts by default; only the entries listed here will run.
