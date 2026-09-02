@@ -434,6 +434,38 @@ export interface ApiToken {
   lastUsedAt: string | null;
   expiresAt: string | null;
   revokedAt: string | null;
+  /** `"personal"` for tokens minted under Settings, `"oauth"` for connections
+   *  established through the OAuth consent flow. Absent on older backends. */
+  kind?: "personal" | "oauth";
+}
+
+/** The verified OAuth client shown on the consent page (`GET /api/oauth/consent`). */
+export interface OauthConsentClient {
+  clientId: string;
+  clientName: string;
+  redirectHost: string;
+}
+
+export interface OauthConsentInfo {
+  client: OauthConsentClient;
+  scopes: ApiTokenScope[];
+}
+
+/** `POST /api/oauth/consent` — the user's decision on an authorization request. */
+export interface OauthConsentRequest {
+  clientId: string;
+  redirectUri: string;
+  scope: ApiTokenScope;
+  state: string | null;
+  codeChallenge: string;
+  codeChallengeMethod: "S256";
+  resource: string | null;
+  decision: "allow" | "deny";
+}
+
+export interface OauthConsentResponse {
+  /** Where to send the browser next (the client's redirect URI, with code or error). */
+  redirectUrl: string;
 }
 
 export type McpAuditOutcome = "ok" | "error" | "denied";

@@ -19,6 +19,7 @@ export default [
     route("model-series", "routes/model-series.tsx"),
     route("settings", "routes/settings.tsx"),
     route("settings/api-tokens", "routes/settings.api-tokens.tsx"),
+    route("oauth/consent", "routes/oauth.consent.tsx"),
     route("settings/admin", "routes/settings.admin.tsx"),
     route("settings/server-stats", "routes/settings.server-stats.tsx"),
     route("settings/backups", "routes/settings.backups.tsx"),

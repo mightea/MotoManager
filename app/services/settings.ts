@@ -11,6 +11,9 @@ import {
   type NewCurrencySetting,
   type NewLocation,
   type NewUserSettings,
+  type OauthConsentInfo,
+  type OauthConsentRequest,
+  type OauthConsentResponse,
   type UserSettings,
 } from "~/types/db";
 
@@ -234,4 +237,27 @@ export async function getMcpAuditLog(token: string, limit = 50): Promise<McpAudi
     token,
   );
   return response.entries;
+}
+
+/** Verified client details for the OAuth consent page. 404 when the client is
+ *  unknown or the redirect URI is not registered for it. */
+export async function getOauthConsent(
+  token: string,
+  clientId: string,
+  redirectUri: string,
+): Promise<OauthConsentInfo> {
+  const params = new URLSearchParams({ clientId, redirectUri });
+  return fetchFromBackend<OauthConsentInfo>(`/oauth/consent?${params.toString()}`, {}, token);
+}
+
+/** Records the user's allow/deny decision; the backend builds the redirect. */
+export async function submitOauthConsent(
+  token: string,
+  body: OauthConsentRequest,
+): Promise<OauthConsentResponse> {
+  return fetchFromBackend<OauthConsentResponse>(
+    "/oauth/consent",
+    { method: "POST", body: JSON.stringify(body) },
+    token,
+  );
 }

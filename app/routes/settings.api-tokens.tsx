@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Copy,
   KeyRound,
+  Link2,
   Plus,
   ScrollText,
   TerminalSquare,
@@ -635,6 +636,15 @@ function TokenRow({
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-medium text-foreground dark:text-white">{apiToken.name}</p>
             <ScopeBadge scope={apiToken.scope} />
+            {apiToken.kind === "oauth" && (
+              <span
+                title="Über den OAuth-Anmeldedialog verbunden"
+                className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
+              >
+                <Link2 className="h-3 w-3" aria-hidden="true" />
+                Verbunden
+              </span>
+            )}
             {expired && (
               <span className="inline-flex items-center rounded-full bg-error/10 px-2.5 py-0.5 text-[11px] font-medium text-error">
                 Abgelaufen
