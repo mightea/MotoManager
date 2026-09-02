@@ -419,3 +419,33 @@ export interface Expense {
 }
 
 export type NewExpense = Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">;
+
+export type ApiTokenScope = "read" | "write";
+
+/** Personal API token for the MCP server (`<backend>/mcp`). The secret itself
+ *  is only ever returned once, on creation, and is not part of this shape. */
+export interface ApiToken {
+  id: number;
+  userId: number;
+  name: string;
+  tokenPrefix: string;
+  scope: ApiTokenScope;
+  createdAt: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+}
+
+export type McpAuditOutcome = "ok" | "error" | "denied";
+
+/** One MCP tool invocation as recorded by the backend audit log. */
+export interface McpAuditEntry {
+  id: number;
+  tokenId: number;
+  tokenName: string | null;
+  tool: string;
+  arguments: string | null;
+  outcome: McpAuditOutcome;
+  detail: string | null;
+  createdAt: string;
+}

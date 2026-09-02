@@ -1,8 +1,11 @@
 import { fetchFromBackend } from "~/utils/backend";
 import { cachedFetch, invalidate, invalidatePrefix } from "~/utils/request-cache";
 import {
+  type ApiToken,
+  type ApiTokenScope,
   type AppUpgradeSettings,
   type CurrencySetting,
+  type McpAuditEntry,
   type Location,
   type LocationType,
   type NewCurrencySetting,
@@ -183,4 +186,52 @@ export async function deleteCurrencySetting(
   }, token);
   invalidate("currencies");
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Personal API tokens (MCP). Intentionally NOT request-cached: the list must
+// reflect a creation/revocation immediately, and the audit log is live data.
+// ---------------------------------------------------------------------------
+
+/** Active (non-revoked) API tokens of the current user. */
+export async function getApiTokens(token: string): Promise<ApiToken[]> {
+  const response = await fetchFromBackend<{ apiTokens: ApiToken[] }>(
+    "/settings/api-tokens",
+    {},
+    token,
+  );
+  return response.apiTokens;
+}
+
+/**
+ * Create a token. The returned `token` secret is shown exactly once — the
+ * backend never returns it again.
+ */
+export async function createApiToken(
+  token: string,
+  values: { name: string; scope?: ApiTokenScope; expiresInDays?: number },
+): Promise<{ apiToken: ApiToken; token: string }> {
+  return fetchFromBackend<{ apiToken: ApiToken; token: string }>(
+    "/settings/api-tokens",
+    { method: "POST", body: JSON.stringify(values) },
+    token,
+  );
+}
+
+export async function revokeApiToken(token: string, id: number): Promise<{ message: string }> {
+  return fetchFromBackend<{ message: string }>(
+    `/settings/api-tokens/${id}`,
+    { method: "DELETE" },
+    token,
+  );
+}
+
+/** Newest-first MCP tool invocations of the current user (max 200). */
+export async function getMcpAuditLog(token: string, limit = 50): Promise<McpAuditEntry[]> {
+  const response = await fetchFromBackend<{ entries: McpAuditEntry[] }>(
+    `/settings/mcp-audit?limit=${limit}`,
+    {},
+    token,
+  );
+  return response.entries;
 }

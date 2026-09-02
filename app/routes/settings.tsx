@@ -1,5 +1,6 @@
 import {
   Form,
+  Link,
   useActionData,
   useLoaderData,
   useNavigation,
@@ -28,6 +29,8 @@ import { LocationEditDialog } from "~/components/location-edit-dialog";
 import { Modal } from "~/components/modal";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Bot,
+  ChevronRight,
   Trash2,
   Plus,
   Fingerprint,
@@ -718,6 +721,26 @@ export default function Settings() {
           )}
         </div>
       </section>
+
+      {/* AI access (MCP) link */}
+      <div className="rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
+        <Link to="/settings/api-tokens" className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
+                KI-Zugriff (MCP)
+              </h2>
+              <p className="text-sm text-secondary dark:text-navy-300">
+                API-Tokens für KI-Assistenten wie Claude verwalten und Zugriffe einsehen.
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-secondary dark:text-navy-400" />
+        </Link>
+      </div>
 
       {/* Locations Section */}
       <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
