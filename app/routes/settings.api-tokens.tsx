@@ -264,12 +264,36 @@ export default function ApiTokensSettings() {
               <CopyField value={buildClaudeMcpAddCommand(mcpUrl)} label="Claude-Code-Befehl" multiline />
             </div>
             <div className="space-y-1.5">
-              <p className="font-medium text-base-content dark:text-white">Claude Desktop / claude.ai</p>
+              <p className="font-medium text-base-content dark:text-white">
+                Claude Desktop, claude.ai und die Claude-App
+              </p>
               <p className="text-secondary dark:text-navy-300">
-                Benutzerdefinierte Connectors in Claude Desktop und auf claude.ai benötigen OAuth,
-                das aktuell noch nicht unterstützt wird. Die Anbindung über die Claude-API
-                (MCP-Connector mit <code className="font-mono">authorization_token</code>) funktioniert
-                mit demselben Token.
+                Kein Token nötig — die Verbindung läuft über einen Connector mit Anmeldung
+                in dieser Garage. Einmal verbunden gilt sie für claude.ai, Claude Desktop und
+                die Mobile-Apps desselben Claude-Kontos:
+              </p>
+              <ol className="list-decimal space-y-1 pl-5 text-secondary dark:text-navy-300">
+                <li>
+                  In Claude <span className="font-medium text-base-content dark:text-white">Einstellungen → Connectors</span> öffnen
+                  und <span className="font-medium text-base-content dark:text-white">Benutzerdefinierten Connector hinzufügen</span> wählen.
+                </li>
+                <li>
+                  Als Name z.&nbsp;B. „MotoManager“ eintragen und als URL den MCP-Endpunkt oben
+                  einfügen. OAuth-Client-ID und -Secret leer lassen.
+                </li>
+                <li>
+                  Auf <span className="font-medium text-base-content dark:text-white">Verbinden</span> klicken. Es öffnet sich die
+                  Anmeldung dieser Garage: einloggen, Berechtigung (Lesen oder Lesen &amp; Schreiben)
+                  wählen und <span className="font-medium text-base-content dark:text-white">Zugriff erlauben</span>.
+                </li>
+                <li>
+                  Zurück in Claude den Connector im Chat aktivieren (Werkzeug-Menü). Die Verbindung
+                  erscheint unten in der Token-Liste als „Verbunden“ und lässt sich dort widerrufen.
+                </li>
+              </ol>
+              <p className="text-secondary dark:text-navy-300">
+                Die Claude-API (MCP-Connector mit <code className="font-mono">authorization_token</code>)
+                nutzt weiterhin einen persönlichen Token.
               </p>
             </div>
           </div>
