@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.9.1](https://github.com/mightea/MotoManager/compare/2026.9.0...2026.9.1) (2026-09-03)
+
+
+### 📝 Documentation
+
+* connector setup steps for Claude Desktop, claude.ai and the app ([b539324](https://github.com/mightea/MotoManager/commit/b539324fd1dc2adb5b7b5ccfc4307fd47ab19e33))
+
 ## [2026.9.0](https://github.com/mightea/MotoManager/compare/2026.8.5...2026.9.0) (2026-09-02)
 
 
