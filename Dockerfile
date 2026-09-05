@@ -7,7 +7,7 @@
 # and 25 falls in that gap. It also matches the local devshell and CI.
 # Alpine 3.24 is the latest Alpine with node image variants (checked 2026-08);
 # pinned explicitly so base-OS bumps are deliberate rather than surprise rebuilds.
-FROM node:24-alpine3.24 AS builder
+FROM node:26-alpine3.24 AS builder
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest --force && corepack enable && corepack prepare pnpm@11.20.0 --activate
