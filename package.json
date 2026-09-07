@@ -52,7 +52,7 @@
     "@types/react-dom": "^19.2.5",
     "@vitest/coverage-v8": "^4.1.11",
     "babel-plugin-react-compiler": "^1.0.0",
-    "daisyui": "^5.7.25",
+    "daisyui": "^5.7.28",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "oxlint": "^1.81.0",
