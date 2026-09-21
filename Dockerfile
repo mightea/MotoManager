@@ -10,7 +10,7 @@
 FROM node:24-alpine3.24 AS builder
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest --force && corepack enable && corepack prepare pnpm@11.20.0 --activate
+RUN mkdir -p $PNPM_HOME && npm install -g corepack@latest --force && corepack enable && corepack prepare pnpm@12.5.1 --activate
 WORKDIR /app
 ARG APP_VERSION=0.0.0
 ENV APP_VERSION=$APP_VERSION
