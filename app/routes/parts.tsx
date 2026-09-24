@@ -312,7 +312,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
               onSelect={() => setIsInvoiceImportOpen(true)}
               icon={<Package className="h-3.5 w-3.5" aria-hidden="true" />}
             >
-              Rechnung / Bestellung (PDF)
+              Rechnung / Bestellung (PDF, Scan)
             </DropdownMenu.Item>
           </DropdownMenu>
           <button

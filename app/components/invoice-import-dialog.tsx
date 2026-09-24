@@ -6,6 +6,7 @@ import {
   FileText,
   Loader2,
   Package,
+  ScanText,
   TriangleAlert,
 } from "lucide-react";
 import { Modal } from "./modal";
@@ -110,8 +111,9 @@ function defaultManufacturer(supplierKey: ImportSupplierKey | null): string {
   return supplierKey === "boxxerparts" ? "Boxxerparts" : "BMW";
 }
 
-/** Import parts + stock from a supplier-document PDF (invoice or order
- *  confirmation). The backend parses the PDF (layout parser per supplier,
+/** Import parts + stock from a supplier document (invoice or order
+ *  confirmation) as PDF, or as a raw scan/photo the backend OCRs. The backend
+ *  parses the text (layout parser per supplier,
  *  local LLM with deterministic fallback for the rest); new parts are enriched
  *  from the supplier's catalog. NOTHING is written until "Importieren" is
  *  confirmed — this dialog is review-first by design. */
@@ -153,8 +155,13 @@ export function InvoiceImportDialog({
   };
 
   const handleFile = async (file: File) => {
-    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setParseError("Nur PDF-Dateien werden unterstützt.");
+    const name = file.name.toLowerCase();
+    const isPdf = file.type === "application/pdf" || name.endsWith(".pdf");
+    const isImage =
+      ["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+      /\.(jpe?g|png|webp)$/.test(name);
+    if (!isPdf && !isImage) {
+      setParseError("Unterstützt werden PDF-Dateien sowie Scans/Fotos als JPEG, PNG oder WebP.");
       return;
     }
     const token = getSessionToken();
@@ -371,7 +378,7 @@ export function InvoiceImportDialog({
   const documentLabel = parsed?.invoice.documentKind === "order" ? "Bestellung" : "Rechnung";
   const invoiceNote = parsed?.invoice.invoiceNumber
     ? `${parsed.invoice.supplier ?? "Import"} · ${documentLabel} ${parsed.invoice.invoiceNumber}`
-    : `${parsed?.invoice.supplier ?? "Import"} · PDF-Import`;
+    : `${parsed?.invoice.supplier ?? "Import"} · ${parsed?.textSource === "ocr" ? "Scan-Import" : "PDF-Import"}`;
 
   const handleImport = async () => {
     const token = getSessionToken();
@@ -455,7 +462,7 @@ export function InvoiceImportDialog({
       isOpen={isOpen}
       onClose={handleClose}
       title="Rechnung / Bestellung importieren"
-      description="Bestellte Teile und Bestand aus einer Lieferanten-Rechnung oder Auftragsbestätigung (PDF) übernehmen."
+      description="Bestellte Teile und Bestand aus einer Lieferanten-Rechnung oder Auftragsbestätigung (PDF, Scan oder Foto) übernehmen."
       size="lg"
     >
       {!parsed ? (
@@ -464,9 +471,9 @@ export function InvoiceImportDialog({
           <input
             ref={fileInputRef}
             type="file"
-            accept="application/pdf"
+            accept="application/pdf,image/jpeg,image/png,image/webp"
             className="hidden"
-            aria-label="Rechnungs-PDF auswählen"
+            aria-label="Rechnung als PDF, Scan oder Foto auswählen"
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) handleFile(file);
@@ -509,12 +516,15 @@ export function InvoiceImportDialog({
                   aria-hidden="true"
                 />
                 <span className="text-sm font-semibold text-base-content dark:text-white">
-                  {isDragging ? "PDF hier ablegen" : "PDF auswählen oder hierhin ziehen"}
+                  {isDragging
+                    ? "Datei hier ablegen"
+                    : "PDF, Scan oder Foto auswählen oder hierhin ziehen"}
                 </span>
                 <span className="max-w-[40ch] text-xs text-base-content/55">
                   Rechnungen von Mark Huggett GmbH (bmwbike.com) und Auftragsbestätigungen von
                   boxxerparts.de werden am besten erkannt; andere Formate werden per KI
-                  ausgelesen.
+                  ausgelesen. Papierrechnungen einfach scannen oder fotografieren — die
+                  Schrift wird auf dem Server erkannt.
                 </span>
               </>
             )}
@@ -538,7 +548,23 @@ export function InvoiceImportDialog({
                 Layout-Parser
               </span>
             )}
+            {parsed.textSource === "ocr" && (
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-base-content/45">
+                Texterkennung
+              </span>
+            )}
           </div>
+
+          {parsed.textSource === "ocr" && (
+            <div className="flex items-start gap-2 rounded-sm border border-info/40 bg-info/10 px-3 py-2 text-xs text-base-content/80">
+              <ScanText className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>
+                Aus einem Scan gelesen — Teilenummern, Mengen und Preise bitte mit der
+                Papierrechnung vergleichen. Bezeichnungen werden wo möglich aus dem Katalog
+                übernommen.
+              </span>
+            </div>
+          )}
 
           {parsed.alreadyImported && (
             <div className="flex items-start gap-2 rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-content dark:text-warning">

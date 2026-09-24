@@ -220,6 +220,9 @@ export interface ParsedInvoice {
   /** "llm" when the local model structured the text, "fallback"/"layout" for
    *  the deterministic layout parser. */
   source: "llm" | "fallback" | "layout";
+  /** "ocr" when the backend had to recognize the text (raw scan or photo) —
+   *  optional: older backends don't send it. */
+  textSource?: "pdf" | "ocr";
   /** Stock entries referencing this document number already exist. */
   alreadyImported: boolean;
 }
