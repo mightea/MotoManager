@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.9.3](https://github.com/mightea/MotoManager/compare/2026.9.2...2026.9.3) (2026-09-24)
+
+
+### ✨ Features
+
+* import invoices from raw scans and photos ([5f2aa32](https://github.com/mightea/MotoManager/commit/5f2aa3288da5b3fd82147fd9621c1d36f891b9a5))
+* link parts to a BMW part number and fill missing data from BMWBike ([74ecb68](https://github.com/mightea/MotoManager/commit/74ecb684a2313249610d3d9a2c55c14c24d3d3a5))
+
 ## [2026.9.2](https://github.com/mightea/MotoManager/compare/2026.9.1...2026.9.2) (2026-09-24)
 
 
