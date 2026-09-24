@@ -309,7 +309,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
               onSelect={() => setIsInvoiceImportOpen(true)}
               icon={<Package className="h-3.5 w-3.5" aria-hidden="true" />}
             >
-              Huggett-Rechnung (PDF)
+              Rechnung / Bestellung (PDF)
             </DropdownMenu.Item>
           </DropdownMenu>
           <button

@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { fetchFromBackend, rethrowRedirect } from "~/utils/backend";
+import type { BoxxerpartsProduct } from "~/utils/boxxerparts";
 import type {
   ModelSeries,
   NewPart,
@@ -255,6 +256,21 @@ export async function parsePartsInvoice(token: string, file: File): Promise<Pars
     },
     token,
   );
+}
+
+/** Look up a boxxerparts.de article in the shop catalog via the backend
+ *  proxy (the shop has no API and no CORS). Resolves to null when the shop
+ *  does not carry the number. */
+export async function fetchBoxxerpartsProduct(
+  token: string,
+  articleNo: string,
+): Promise<BoxxerpartsProduct | null> {
+  const response = await fetchFromBackend<{ product: BoxxerpartsProduct | null }>(
+    `/part-imports/boxxerparts/${encodeURIComponent(articleNo)}`,
+    {},
+    token,
+  );
+  return response.product;
 }
 
 // MARK: Part stocks

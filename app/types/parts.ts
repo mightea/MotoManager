@@ -173,30 +173,47 @@ export interface PublicStockEntry {
 // MARK: Invoice import (`POST /api/part-imports/parse`)
 
 /** One parsed invoice line, annotated with the user's inventory match. */
+export type ImportSupplierKey = "huggett" | "boxxerparts";
+
 export interface ParsedInvoiceItem {
   quantity: number;
-  /** As printed on the invoice, e.g. "61 31 2 300 383". */
+  /** As printed on the invoice, e.g. "61 31 2 300 383" — or namespaced for
+   *  suppliers with their own numbering ("BXP-44555"). */
   partNumber: string;
   name: string;
   unitPrice: number | null;
   lineTotal: number | null;
+  /** Description printed under the line (order confirmations). */
+  description: string | null;
+  /** The supplier's own article number without prefix ("44555"). */
+  supplierArticleNo: string | null;
+  /** BMW part numbers cited in the description ("12 32 1 244 409"). */
+  oemPartNumbers: string[];
   matchedPartId: number | null;
   matchedPartName: string | null;
+  /** How the existing part was found: by part number or via an OEM number
+   *  in the description. */
+  matchedVia: "partNumber" | "oemPartNumber" | null;
   warnings: string[];
 }
 
 export interface ParsedInvoice {
   invoice: {
     supplier: string | null;
+    /** Recognized supplier layout — decides the catalog used for enrichment. */
+    supplierKey: ImportSupplierKey | null;
+    /** Invoices carry "Rechnung", order confirmations "Bestellung" in the
+     *  stock note. */
+    documentKind: "invoice" | "order";
     invoiceNumber: string | null;
     /** ISO date (YYYY-MM-DD). */
     invoiceDate: string | null;
     currency: string;
   };
   items: ParsedInvoiceItem[];
-  /** "llm" when the local model structured the text, "fallback" for the
-   *  deterministic layout parser. */
-  source: "llm" | "fallback";
-  /** Stock entries referencing this invoice number already exist. */
+  /** "llm" when the local model structured the text, "fallback"/"layout" for
+   *  the deterministic layout parser. */
+  source: "llm" | "fallback" | "layout";
+  /** Stock entries referencing this document number already exist. */
   alreadyImported: boolean;
 }

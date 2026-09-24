@@ -1,24 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { useRevalidator } from "react-router";
-import { CircleCheck, FileText, Loader2, Package, TriangleAlert } from "lucide-react";
+import {
+  CircleCheck,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Package,
+  TriangleAlert,
+} from "lucide-react";
 import { Modal } from "./modal";
 import { Button } from "./button";
 import { getSessionToken } from "~/services/auth";
 import {
   createPart,
   createPartStock,
+  fetchBoxxerpartsProduct,
   importPartImageFromUrl,
   parsePartsInvoice,
 } from "~/services/parts";
-import {
-  fetchBmwbikePart,
-  findBmwbikeSlugByPartNumber,
-  mapCompatibility,
-  type BmwbikePart,
-} from "~/utils/bmwbike";
+import { fetchBmwbikePart, findBmwbikeSlugByPartNumber, mapCompatibility } from "~/utils/bmwbike";
+import { inferBoxxerpartsFitment, type FitmentMatch } from "~/utils/boxxerparts";
 import { storageLocationPath } from "~/utils/parts";
 import { toast } from "~/hooks/use-toast";
-import type { ModelSeries, ParsedInvoice, StorageLocation } from "~/types/parts";
+import type {
+  ImportSupplierKey,
+  ModelSeries,
+  ParsedInvoice,
+  StorageLocation,
+} from "~/types/parts";
 
 interface InvoiceImportDialogProps {
   isOpen: boolean;
@@ -27,19 +36,38 @@ interface InvoiceImportDialogProps {
   onClose: () => void;
 }
 
-/** BMWBike catalog enrichment for a line that would create a new part. */
+/** Catalog data for a line that would create a new part, normalized across
+ *  the supplier catalogs (BMWBike API, boxxerparts.de via backend proxy). */
+interface CatalogPart {
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  productUrl: string | null;
+}
+
 type Enrichment =
   | { status: "loading" }
-  | { status: "found"; part: BmwbikePart; seriesIds: number[] }
+  | { status: "found"; source: ImportSupplierKey | "bmwbike"; part: CatalogPart }
   | { status: "none" };
+
+interface FitmentChoice {
+  id: number;
+  selected: boolean;
+}
 
 interface ReviewRow {
   key: number;
   include: boolean;
   partNumber: string;
-  /** Editable name — prefilled from BMWBike when found, else the invoice. */
+  supplierArticleNo: string | null;
+  /** Editable name — prefilled from the catalog when found, else the invoice. */
   name: string;
   invoiceName: string;
+  /** Description printed on the document (order confirmations). */
+  invoiceDescription: string | null;
+  oemPartNumbers: string[];
+  /** Editable manufacturer for new parts. */
+  manufacturer: string;
   quantity: number;
   /** Total price for the stock entry (invoice Betrag), as input text. */
   priceTotal: string;
@@ -48,8 +76,13 @@ interface ReviewRow {
   locationId: string;
   matchedPartId: number | null;
   matchedPartName: string | null;
+  matchedVia: "partNumber" | "oemPartNumber" | null;
   warnings: string[];
   enrichment: Enrichment | null;
+  /** Proposed fitment for a new part; each node can be switched off. */
+  fitment: FitmentChoice[];
+  /** Phrases the fitment rules fired on — shown so the proposal is explainable. */
+  fitmentMatches: FitmentMatch[];
 }
 
 const inputClass =
@@ -58,10 +91,24 @@ const inputClass =
 const labelClass =
   "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
 
-/** Import parts + stock from a supplier-invoice PDF. The backend parses the
- *  PDF (local LLM with deterministic fallback); new parts are enriched from
- *  the BMWBike catalog. NOTHING is written until "Importieren" is confirmed —
- *  this dialog is review-first by design. */
+const CATALOG_LABEL: Record<ImportSupplierKey | "bmwbike", string> = {
+  huggett: "BMWBike",
+  bmwbike: "BMWBike",
+  boxxerparts: "Boxxerparts",
+};
+
+function defaultManufacturer(supplierKey: ImportSupplierKey | null): string {
+  // Boxxerparts sells mostly aftermarket parts under its own numbering; the
+  // shop's "Hersteller" field names the bike make, not the maker, so it is
+  // deliberately NOT used here.
+  return supplierKey === "boxxerparts" ? "Boxxerparts" : "BMW";
+}
+
+/** Import parts + stock from a supplier-document PDF (invoice or order
+ *  confirmation). The backend parses the PDF (layout parser per supplier,
+ *  local LLM with deterministic fallback for the rest); new parts are enriched
+ *  from the supplier's catalog. NOTHING is written until "Importieren" is
+ *  confirmed — this dialog is review-first by design. */
 export function InvoiceImportDialog({
   isOpen,
   modelSeries,
@@ -115,19 +162,30 @@ export function InvoiceImportDialog({
       setRows(
         result.items.map((item, index) => ({
           key: index,
-          // Rows of an already-imported invoice start unchecked so a stray
-          // re-upload can't silently double the stock.
-          include: !result.alreadyImported,
+          // Rows of an already-imported document start unchecked so a stray
+          // re-upload can't silently double the stock; a line without a
+          // recognized number can't be created at all.
+          include: !result.alreadyImported && item.partNumber.trim() !== "",
           partNumber: item.partNumber,
+          supplierArticleNo: item.supplierArticleNo ?? null,
           name: item.name,
           invoiceName: item.name,
+          invoiceDescription: item.description ?? null,
+          oemPartNumbers: item.oemPartNumbers ?? [],
+          manufacturer: defaultManufacturer(result.invoice.supplierKey),
           quantity: item.quantity,
           priceTotal: item.lineTotal != null ? item.lineTotal.toFixed(2) : "",
           locationId: "",
           matchedPartId: item.matchedPartId,
           matchedPartName: item.matchedPartName,
+          matchedVia: item.matchedVia ?? null,
           warnings: item.warnings,
-          enrichment: item.matchedPartId == null ? { status: "loading" } : null,
+          enrichment:
+            item.matchedPartId == null && item.partNumber.trim() !== ""
+              ? { status: "loading" }
+              : null,
+          fitment: [],
+          fitmentMatches: [],
         })),
       );
     } catch (e) {
@@ -139,23 +197,64 @@ export function InvoiceImportDialog({
     }
   };
 
-  // Enrich new-part rows from the BMWBike catalog (name, image, fitment).
-  // Failures degrade to a plain create from invoice data.
+  // Enrich new-part rows from the supplier catalog (name, image, description,
+  // fitment). Failures degrade to a plain create from document data.
   useEffect(() => {
     if (!parsed) return;
     let active = true;
+    const supplierKey = parsed.invoice.supplierKey;
+    const token = getSessionToken();
     const pending = rows.filter((row) => row.enrichment?.status === "loading");
     for (const row of pending) {
       (async () => {
         let enrichment: Enrichment = { status: "none" };
-        let bmwbikeName: string | null = null;
+        let catalogName: string | null = null;
+        let fitment: FitmentChoice[] = [];
+        let fitmentMatches: FitmentMatch[] = [];
         try {
-          const slug = await findBmwbikeSlugByPartNumber(row.partNumber);
-          if (slug) {
-            const part = await fetchBmwbikePart(slug);
-            const mapping = mapCompatibility(part.compatNames, modelSeries);
-            enrichment = { status: "found", part, seriesIds: mapping.seriesIds };
-            bmwbikeName = part.name;
+          if (supplierKey === "boxxerparts") {
+            const product = token
+              ? await fetchBoxxerpartsProduct(token, row.supplierArticleNo ?? row.partNumber)
+              : null;
+            if (product) {
+              enrichment = {
+                status: "found",
+                source: "boxxerparts",
+                part: {
+                  name: product.name,
+                  description: product.description,
+                  imageUrl: product.imageUrl,
+                  productUrl: product.productUrl,
+                },
+              };
+              catalogName = product.name;
+            }
+            // Fitment comes from the product prose — the document's own
+            // description works as the source when the shop is unreachable.
+            const suggestion = inferBoxxerpartsFitment(
+              `${product?.name ?? row.invoiceName} ${product?.description ?? row.invoiceDescription ?? ""}`,
+              modelSeries,
+            );
+            fitment = suggestion.seriesIds.map((id) => ({ id, selected: true }));
+            fitmentMatches = suggestion.matches;
+          } else {
+            const slug = await findBmwbikeSlugByPartNumber(row.partNumber);
+            if (slug) {
+              const part = await fetchBmwbikePart(slug);
+              const mapping = mapCompatibility(part.compatNames, modelSeries);
+              enrichment = {
+                status: "found",
+                source: "bmwbike",
+                part: {
+                  name: part.name,
+                  description: part.description,
+                  imageUrl: part.imageUrl,
+                  productUrl: null,
+                },
+              };
+              catalogName = part.name;
+              fitment = mapping.seriesIds.map((id) => ({ id, selected: true }));
+            }
           }
         } catch {
           enrichment = { status: "none" };
@@ -167,9 +266,11 @@ export function InvoiceImportDialog({
               ? {
                   ...candidate,
                   enrichment,
+                  fitment,
+                  fitmentMatches,
                   // Catalog names are complete where invoice names truncate
                   // ("Schalter Warnblinke") — prefill, keep editable.
-                  name: bmwbikeName ?? candidate.name,
+                  name: catalogName ?? candidate.name,
                 }
               : candidate,
           ),
@@ -190,12 +291,30 @@ export function InvoiceImportDialog({
     );
   };
 
+  const toggleFitment = (key: number, id: number) => {
+    setRows((current) =>
+      current.map((row) =>
+        row.key === key
+          ? {
+              ...row,
+              fitment: row.fitment.map((choice) =>
+                choice.id === id ? { ...choice, selected: !choice.selected } : choice,
+              ),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const seriesName = (id: number) => modelSeries.find((node) => node.id === id)?.name ?? `#${id}`;
+
   const includedRows = rows.filter((row) => row.include);
   const isEnriching = rows.some(
     (row) => row.include && row.enrichment?.status === "loading",
   );
+  const documentLabel = parsed?.invoice.documentKind === "order" ? "Bestellung" : "Rechnung";
   const invoiceNote = parsed?.invoice.invoiceNumber
-    ? `${parsed.invoice.supplier ?? "Import"} · Rechnung ${parsed.invoice.invoiceNumber}`
+    ? `${parsed.invoice.supplier ?? "Import"} · ${documentLabel} ${parsed.invoice.invoiceNumber}`
     : `${parsed?.invoice.supplier ?? "Import"} · PDF-Import`;
 
   const handleImport = async () => {
@@ -218,9 +337,9 @@ export function InvoiceImportDialog({
           const created = await createPart(token, {
             partNumber: row.partNumber,
             name: row.name.trim() || row.invoiceName,
-            manufacturer: "BMW",
-            description: enriched?.part.description ?? undefined,
-            seriesIds: enriched?.seriesIds ?? [],
+            manufacturer: row.manufacturer.trim() || undefined,
+            description: enriched?.part.description ?? row.invoiceDescription ?? undefined,
+            seriesIds: row.fitment.filter((choice) => choice.selected).map((choice) => choice.id),
           });
           partId = created.id;
           if (enriched?.part.imageUrl) {
@@ -251,7 +370,7 @@ export function InvoiceImportDialog({
       } catch (e) {
         if (e instanceof Response) throw e;
         errors.push(
-          `${row.partNumber}: ${e instanceof Error ? e.message : "Import fehlgeschlagen"}`,
+          `${row.partNumber || row.invoiceName}: ${e instanceof Error ? e.message : "Import fehlgeschlagen"}`,
         );
       }
     }
@@ -278,8 +397,8 @@ export function InvoiceImportDialog({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Rechnung importieren"
-      description="Bestellte Teile und Bestand aus einer Lieferanten-Rechnung (PDF) übernehmen."
+      title="Rechnung / Bestellung importieren"
+      description="Bestellte Teile und Bestand aus einer Lieferanten-Rechnung oder Auftragsbestätigung (PDF) übernehmen."
       size="lg"
     >
       {!parsed ? (
@@ -323,7 +442,7 @@ export function InvoiceImportDialog({
               <>
                 <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
                 <span className="text-sm text-base-content/70">
-                  Rechnung wird gelesen — Positionen, Teilenummern und Preise …
+                  Dokument wird gelesen — Positionen, Teilenummern und Preise …
                 </span>
               </>
             ) : (
@@ -335,9 +454,10 @@ export function InvoiceImportDialog({
                 <span className="text-sm font-semibold text-base-content dark:text-white">
                   {isDragging ? "PDF hier ablegen" : "PDF auswählen oder hierhin ziehen"}
                 </span>
-                <span className="max-w-[36ch] text-xs text-base-content/55">
-                  Rechnungen von Mark Huggett GmbH (bmwbike.com) werden am besten erkannt;
-                  andere Formate werden per KI ausgelesen.
+                <span className="max-w-[40ch] text-xs text-base-content/55">
+                  Rechnungen von Mark Huggett GmbH (bmwbike.com) und Auftragsbestätigungen von
+                  boxxerparts.de werden am besten erkannt; andere Formate werden per KI
+                  ausgelesen.
                 </span>
               </>
             )}
@@ -349,12 +469,14 @@ export function InvoiceImportDialog({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-base-content/65">
             <span className="font-semibold text-base-content dark:text-white">
-              {parsed.invoice.supplier ?? "Rechnung"}
+              {parsed.invoice.supplier ?? documentLabel}
             </span>
             {parsed.invoice.invoiceNumber && (
-              <span className="font-mono">Rechnung {parsed.invoice.invoiceNumber}</span>
+              <span className="font-mono">
+                {documentLabel} {parsed.invoice.invoiceNumber}
+              </span>
             )}
-            {parsed.source === "fallback" && (
+            {parsed.source !== "llm" && (
               <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-base-content/45">
                 Layout-Parser
               </span>
@@ -365,13 +487,13 @@ export function InvoiceImportDialog({
             <div className="flex items-start gap-2 rounded-sm border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-content dark:text-warning">
               <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>
-                Zu dieser Rechnungsnummer existiert bereits Bestand — Positionen sind
-                deshalb abgewählt. Nur importieren, was wirklich fehlt.
+                Zu dieser {documentLabel} existiert bereits Bestand — Positionen sind deshalb
+                abgewählt. Nur importieren, was wirklich fehlt.
               </span>
             </div>
           )}
 
-          <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
+          <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
             {rows.map((row) => (
               <li
                 key={row.key}
@@ -380,19 +502,21 @@ export function InvoiceImportDialog({
                 <input
                   type="checkbox"
                   checked={row.include}
+                  disabled={row.partNumber.trim() === ""}
                   onChange={(event) => updateRow(row.key, { include: event.target.checked })}
-                  aria-label={`${row.partNumber} importieren`}
+                  aria-label={`${row.partNumber || row.invoiceName} importieren`}
                   className="checkbox checkbox-sm checkbox-primary mt-1"
                 />
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-mono text-xs font-semibold text-base-content/75 dark:text-navy-200">
-                      {row.partNumber}
+                      {row.partNumber || "—"}
                     </span>
                     {row.matchedPartId != null ? (
                       <span className="inline-flex items-center gap-1 rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-primary dark:bg-primary/15 dark:text-primary-light">
                         <Package className="h-2.5 w-2.5" aria-hidden="true" />
                         Bestand zu «{row.matchedPartName}»
+                        {row.matchedVia === "oemPartNumber" && " · über BMW-Nr."}
                       </span>
                     ) : (
                       <span className="stamp !py-0.5 !text-[9px]">Neues Teil</span>
@@ -400,18 +524,32 @@ export function InvoiceImportDialog({
                     {row.enrichment?.status === "loading" && (
                       <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-base-content/45">
                         <Loader2 className="h-2.5 w-2.5 animate-spin" aria-hidden="true" />
-                        BMWBike…
+                        {CATALOG_LABEL[parsed.invoice.supplierKey ?? "bmwbike"]}…
                       </span>
                     )}
                     {row.enrichment?.status === "found" && (
                       <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-success">
                         <CircleCheck className="h-2.5 w-2.5" aria-hidden="true" />
-                        BMWBike: Bild + Kompatibilität
+                        {CATALOG_LABEL[row.enrichment.source]}:{" "}
+                        {row.enrichment.source === "boxxerparts"
+                          ? "Bild + Beschreibung"
+                          : "Bild + Kompatibilität"}
+                        {row.enrichment.part.productUrl && (
+                          <a
+                            href={row.enrichment.part.productUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label="Produktseite öffnen"
+                            className="text-base-content/50 hover:text-primary"
+                          >
+                            <ExternalLink className="h-2.5 w-2.5" aria-hidden="true" />
+                          </a>
+                        )}
                       </span>
                     )}
                     {row.enrichment?.status === "none" && (
                       <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-base-content/45">
-                        Nicht im BMWBike-Katalog
+                        Nicht im {CATALOG_LABEL[parsed.invoice.supplierKey ?? "bmwbike"]}-Katalog
                       </span>
                     )}
                   </div>
@@ -429,12 +567,53 @@ export function InvoiceImportDialog({
                         type="text"
                         value={row.name}
                         onChange={(event) => updateRow(row.key, { name: event.target.value })}
-                        aria-label={`Bezeichnung für ${row.partNumber}`}
+                        aria-label={`Bezeichnung für ${row.partNumber || row.invoiceName}`}
                         className={inputClass}
+                      />
+                      <input
+                        type="text"
+                        value={row.manufacturer}
+                        onChange={(event) =>
+                          updateRow(row.key, { manufacturer: event.target.value })
+                        }
+                        aria-label={`Hersteller für ${row.partNumber || row.invoiceName}`}
+                        placeholder="Hersteller"
+                        className={`${inputClass} !w-32 shrink-0`}
                       />
                     </div>
                   ) : (
                     <p className="truncate text-sm text-base-content/70">{row.invoiceName}</p>
+                  )}
+
+                  {row.matchedPartId == null && row.oemPartNumbers.length > 0 && (
+                    <p className="font-mono text-[11px] text-base-content/55">
+                      BMW-Nr. in Beschreibung: {row.oemPartNumbers.join(", ")}
+                    </p>
+                  )}
+
+                  {row.matchedPartId == null && row.fitment.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={labelClass}>Passend für</span>
+                      {row.fitment.map((choice) => (
+                        <button
+                          key={choice.id}
+                          type="button"
+                          onClick={() => toggleFitment(row.key, choice.id)}
+                          aria-pressed={choice.selected}
+                          title={row.fitmentMatches
+                            .filter((match) => match.names.includes(seriesName(choice.id)))
+                            .map((match) => `«${match.phrase}»`)
+                            .join(", ")}
+                          className={`rounded-sm border px-1.5 py-0.5 font-mono text-[10px] transition-colors ${
+                            choice.selected
+                              ? "border-primary/50 bg-primary/10 text-primary dark:text-primary-light"
+                              : "border-base-300 text-base-content/40 line-through dark:border-navy-700"
+                          }`}
+                        >
+                          {seriesName(choice.id)}
+                        </button>
+                      ))}
+                    </div>
                   )}
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -448,7 +627,7 @@ export function InvoiceImportDialog({
                           quantity: Math.max(1, Number(event.target.value) || 1),
                         })
                       }
-                      aria-label={`Menge für ${row.partNumber}`}
+                      aria-label={`Menge für ${row.partNumber || row.invoiceName}`}
                       className={`${inputClass} !w-16 shrink-0`}
                     />
                     <span className="text-xs text-base-content/45">×</span>
@@ -459,7 +638,7 @@ export function InvoiceImportDialog({
                       onChange={(event) =>
                         updateRow(row.key, { priceTotal: event.target.value })
                       }
-                      aria-label={`Preis gesamt für ${row.partNumber}`}
+                      aria-label={`Preis gesamt für ${row.partNumber || row.invoiceName}`}
                       placeholder="Preis gesamt"
                       className={`${inputClass} !w-28 shrink-0`}
                     />
@@ -471,7 +650,7 @@ export function InvoiceImportDialog({
                       onChange={(event) =>
                         updateRow(row.key, { locationId: event.target.value })
                       }
-                      aria-label={`Lagerort für ${row.partNumber}`}
+                      aria-label={`Lagerort für ${row.partNumber || row.invoiceName}`}
                       className={`${inputClass} !w-auto min-w-[11rem] flex-1`}
                     >
                       <option value="">Kein Lagerort</option>
