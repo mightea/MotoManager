@@ -1,10 +1,12 @@
 import { Form, useNavigation, useSubmit } from "react-router";
 import { useState } from "react";
-import { Trash2, Globe, Lock, Recycle } from "lucide-react";
+import { Trash2, Globe, Lock, Recycle, PackageSearch, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import { Button } from "./button";
 import { StorageLocationPickerField } from "./storage-location-picker-field";
 import { AVAILABLE_CURRENCY_PRESETS, DEFAULT_CURRENCY_CODE } from "~/constants";
+import { getSessionToken } from "~/services/auth";
+import { lookupBmwbikePart } from "~/services/parts";
 import { seriesLevelLabel, seriesPath, seriesTree } from "~/utils/series";
 import {
   modelSeriesDisplayName,
@@ -24,7 +26,14 @@ export interface PartFormPrefill {
   stockPrice?: number;
   stockCurrency?: string;
   imageUrl?: string;
+  oemPartNumber?: string;
 }
+
+type EnrichState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "done"; message: string; productUrl: string | null }
+  | { status: "error"; message: string };
 
 interface PartFormProps {
   initialValues?: Part | null;
@@ -68,6 +77,73 @@ export function PartForm({
     new Set(initialValues?.seriesIds ?? prefill?.seriesIds ?? []),
   );
   const [seriesFilter, setSeriesFilter] = useState("");
+  const [name, setName] = useState(initialValues?.name ?? prefill?.name ?? "");
+  const [description, setDescription] = useState(
+    initialValues?.description ?? prefill?.description ?? "",
+  );
+  const [oemPartNumber, setOemPartNumber] = useState(
+    initialValues?.oemPartNumber ?? prefill?.oemPartNumber ?? "",
+  );
+  // Remote image the action imports after saving (BMWBike). Only ever set
+  // when the part has no image yet — enrichment never replaces a photo.
+  const [importImageUrl, setImportImageUrl] = useState(prefill?.imageUrl ?? "");
+  const [enrich, setEnrich] = useState<EnrichState>({ status: "idle" });
+
+  /** Fill what is missing from BMWBike's data for the OEM number: name and
+   *  description only when empty, fitment as a union with the current
+   *  selection, the image only when the part has none. Nothing is saved
+   *  until the form is submitted. */
+  const handleEnrich = async () => {
+    const token = getSessionToken();
+    const number = oemPartNumber.trim();
+    if (!token || !number) return;
+    setEnrich({ status: "loading" });
+    try {
+      const found = await lookupBmwbikePart(token, number);
+      if (!found) {
+        setEnrich({ status: "error", message: "BMWBike führt diese Teilenummer nicht." });
+        return;
+      }
+      const added: string[] = [];
+      if (!name.trim()) {
+        setName(found.name);
+        added.push("Bezeichnung");
+      }
+      if (!description.trim()) {
+        const text = [found.name !== name.trim() ? found.name : null, found.description]
+          .filter(Boolean)
+          .join(" — ");
+        if (text) {
+          setDescription(text);
+          added.push("Beschreibung");
+        }
+      }
+      const newSeries = found.seriesIds.filter((id) => !selectedSeriesIds.has(id));
+      if (newSeries.length > 0) {
+        setSelectedSeriesIds((current) => new Set([...current, ...newSeries]));
+        added.push(`${newSeries.length} ${newSeries.length === 1 ? "Baureihe" : "Baureihen"}`);
+      }
+      if (found.imageUrl && !initialValues?.image && !importImageUrl) {
+        setImportImageUrl(found.imageUrl);
+        added.push("Bild (wird beim Speichern übernommen)");
+      }
+      setOemPartNumber(found.partNumber.replace(/\.\d+$/, ""));
+      setEnrich({
+        status: "done",
+        message:
+          added.length > 0
+            ? `Ergänzt: ${added.join(", ")}.`
+            : "Nichts zu ergänzen — alle Daten sind bereits vorhanden.",
+        productUrl: found.productUrl,
+      });
+    } catch (error) {
+      setEnrich({
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "BMWBike konnte nicht abgefragt werden.",
+      });
+    }
+  };
 
   const toggleSeries = (id: number) => {
     setSelectedSeriesIds((current) => {
@@ -108,9 +184,7 @@ export function PartForm({
     <Form method="post" className="space-y-5" onSubmit={handleSubmit}>
       <input type="hidden" name="intent" value={initialValues ? "updatePart" : "createPart"} />
       {initialValues && <input type="hidden" name="partId" value={initialValues.id} />}
-      {!initialValues && prefill?.imageUrl && (
-        <input type="hidden" name="importImageUrl" value={prefill.imageUrl} />
-      )}
+      {importImageUrl && <input type="hidden" name="importImageUrl" value={importImageUrl} />}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -137,7 +211,8 @@ export function PartForm({
             id="name"
             required
             placeholder="z.B. Ölfilter"
-            defaultValue={initialValues?.name ?? prefill?.name}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
             className={inputClass}
           />
         </div>
@@ -161,6 +236,67 @@ export function PartForm({
             <option key={name} value={name} />
           ))}
         </datalist>
+      </div>
+
+      <div className="space-y-1.5">
+        <label htmlFor="oemPartNumber" className={labelClass}>
+          BMW-Teilenummer (Optional)
+        </label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            type="text"
+            name="oemPartNumber"
+            id="oemPartNumber"
+            placeholder="z.B. 12 32 1 244 409"
+            value={oemPartNumber}
+            onChange={(event) => {
+              setOemPartNumber(event.target.value);
+              setEnrich({ status: "idle" });
+            }}
+            className={clsx(inputClass, "font-mono")}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleEnrich}
+            disabled={!oemPartNumber.trim() || enrich.status === "loading"}
+            className="shrink-0"
+            leftIcon={
+              enrich.status === "loading" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PackageSearch className="h-4 w-4" />
+              )
+            }
+          >
+            Von BMWBike ergänzen
+          </Button>
+        </div>
+        {enrich.status === "done" ? (
+          <p className="text-xs text-success">
+            {enrich.message}
+            {enrich.productUrl && (
+              <>
+                {" "}
+                <a
+                  href={enrich.productUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  Auf BMWBike ansehen
+                </a>
+              </>
+            )}
+          </p>
+        ) : enrich.status === "error" ? (
+          <p className="text-xs text-error">{enrich.message}</p>
+        ) : (
+          <p className="text-xs text-base-content/60">
+            Für Nachbau- oder Fremdteile: die originale BMW-Nummer verknüpft das Teil mit dem
+            BMW-Katalog. Ergänzen übernimmt fehlende Beschreibung, Kompatibilität und Bild.
+          </p>
+        )}
       </div>
 
       <div className="space-y-1.5">
@@ -223,7 +359,8 @@ export function PartForm({
           id="description"
           rows={2}
           placeholder="z.B. passt auch für Ölkühler-Variante"
-          defaultValue={initialValues?.description ?? prefill?.description ?? ""}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
           className={inputClass}
         />
       </div>

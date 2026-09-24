@@ -98,6 +98,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         name,
         manufacturer: optionalString("manufacturer") ?? "BMW",
         description: optionalString("description"),
+        oemPartNumber: optionalString("oemPartNumber"),
         isPublic: formData.get("isPublic") === "true",
         seriesIds: formData.getAll("seriesIds").map(Number).filter(Number.isFinite),
       };
@@ -148,8 +149,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
           });
         }
 
-        // BMWBike import: the backend downloads the image from the source
-        // URL. The part is complete without it, so a failure only warns.
+        // BMWBike import/enrichment: the backend downloads the image from
+        // the source URL. The part is complete without it, so a failure only warns.
         const importImageUrl = optionalString("importImageUrl");
         if (importImageUrl) {
           try {
@@ -244,7 +245,8 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
     if (
       query &&
       !part.name.toLowerCase().includes(query) &&
-      !part.partNumber.toLowerCase().includes(query)
+      !part.partNumber.toLowerCase().includes(query) &&
+      !part.oemPartNumber?.toLowerCase().includes(query)
     ) {
       return false;
     }
@@ -257,7 +259,8 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
     ? publicParts.filter(
         (part) =>
           part.name.toLowerCase().includes(query) ||
-          part.partNumber.toLowerCase().includes(query),
+          part.partNumber.toLowerCase().includes(query) ||
+          part.oemPartNumber?.toLowerCase().includes(query),
       )
     : publicParts;
 
@@ -494,6 +497,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                   </h3>
                   <p className="truncate font-mono text-[11px] text-base-content/60 dark:text-navy-400">
                     {part.partNumber}
+                    {part.oemPartNumber && ` · BMW ${part.oemPartNumber}`}
                   </p>
                   <p className="truncate text-[11px] text-base-content/50">
                     von {part.ownerName}

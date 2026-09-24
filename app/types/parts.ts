@@ -64,6 +64,9 @@ export interface Part {
   /** Image URL path (e.g. "/images/<uuid>.jpg"), server-managed via the
    *  upload endpoint; append `?width=` for resized thumbnails. */
   image: string | null;
+  /** BMW part number an aftermarket/other-vendor part corresponds to —
+   *  the key for BMWBike enrichment. Normalized to "12 32 1 244 409". */
+  oemPartNumber: string | null;
   createdAt: string;
   seriesIds: number[];
   /** Derived on the server: live stock minus live consumption. */
@@ -81,6 +84,8 @@ export interface NewPart {
   description?: string | null;
   isPublic?: boolean;
   seriesIds?: number[];
+  /** On update: omitted keeps the stored value, "" clears it. */
+  oemPartNumber?: string | null;
 }
 
 export type EditorPart = Partial<NewPart>;
@@ -153,6 +158,7 @@ export interface PublicPart {
   manufacturer: string;
   description: string | null;
   image: string | null;
+  oemPartNumber: string | null;
   seriesIds: number[];
   ownerName: string;
   isPublic: boolean;

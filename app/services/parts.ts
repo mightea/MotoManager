@@ -273,6 +273,34 @@ export async function fetchBoxxerpartsProduct(
   return response.product;
 }
 
+/** BMWBike catalog data for a BMW part number, resolved and fitment-mapped
+ *  by the backend (`seriesIds` are catalog node ids). */
+export interface BmwbikeLookup {
+  partNumber: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  productUrl: string;
+  price: number | null;
+  currency: string | null;
+  seriesIds: number[];
+  unmatchedCompat: string[];
+}
+
+/** Look up a BMW part number on BMWBike via the backend. Resolves to null
+ *  when BMWBike does not carry the number. */
+export async function lookupBmwbikePart(
+  token: string,
+  partNumber: string,
+): Promise<BmwbikeLookup | null> {
+  const response = await fetchFromBackend<{ part: BmwbikeLookup | null }>(
+    `/part-imports/bmwbike/${encodeURIComponent(partNumber)}`,
+    {},
+    token,
+  );
+  return response.part;
+}
+
 // MARK: Part stocks
 
 export async function fetchPartStocks(token: string, partId?: number): Promise<PartStock[]> {

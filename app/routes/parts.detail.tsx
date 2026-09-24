@@ -31,6 +31,7 @@ import {
   fetchParts,
   fetchPartStocks,
   fetchStorageLocations,
+  importPartImageFromUrl,
   updatePart,
   updatePartStock,
   uploadPartImage,
@@ -114,9 +115,25 @@ export async function clientAction({ request, params }: Route.ClientActionArgs) 
         name,
         manufacturer: optionalString("manufacturer") ?? "BMW",
         description: optionalString("description"),
+        // Blank clears the link; the backend treats an absent key as "keep".
+        oemPartNumber: optionalString("oemPartNumber") ?? "",
         isPublic: formData.get("isPublic") === "true",
         seriesIds: formData.getAll("seriesIds").map(Number).filter(Number.isFinite),
       });
+      // BMWBike enrichment proposes an image only when the part has none.
+      const importImageUrl = optionalString("importImageUrl");
+      if (importImageUrl) {
+        try {
+          await importPartImageFromUrl(token, partId, importImageUrl);
+        } catch (imageError) {
+          if (imageError instanceof Response) throw imageError;
+          return data({
+            success: true,
+            intent,
+            error: "Teil aktualisiert, aber das Bild konnte nicht übernommen werden.",
+          });
+        }
+      }
       return data({ success: true, intent });
     }
 
@@ -464,6 +481,18 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                     <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
                       {part.manufacturer}
                     </span>
+                    {part.oemPartNumber && (
+                      <>
+                        <span aria-hidden="true" className="h-3 w-px bg-base-content/20" />
+                        <span
+                          className="font-mono text-[10px] font-semibold tracking-[0.06em] text-base-content/55"
+                          title="Originale BMW-Teilenummer"
+                        >
+                          <span className="uppercase tracking-[0.14em]">BMW-Nr.</span>{" "}
+                          {part.oemPartNumber}
+                        </span>
+                      </>
+                    )}
                     <span
                       className={clsx(
                         "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em]",

@@ -16,6 +16,7 @@ import {
   createPartStock,
   fetchBoxxerpartsProduct,
   importPartImageFromUrl,
+  lookupBmwbikePart,
   parsePartsInvoice,
 } from "~/services/parts";
 import { fetchBmwbikePart, findBmwbikeSlugByPartNumber, mapCompatibility } from "~/utils/bmwbike";
@@ -66,6 +67,11 @@ interface ReviewRow {
   /** Description printed on the document (order confirmations). */
   invoiceDescription: string | null;
   oemPartNumbers: string[];
+  /** BMW number the new part gets linked to (editable; "" = no link) —
+   *  first cited OEM number, preferring one BMWBike knows. */
+  oemPartNumber: string;
+  /** Metadata BMWBike contributed on top of the supplier catalog. */
+  oemEnrichment: string[];
   /** Editable manufacturer for new parts. */
   manufacturer: string;
   quantity: number;
@@ -172,6 +178,8 @@ export function InvoiceImportDialog({
           invoiceName: item.name,
           invoiceDescription: item.description ?? null,
           oemPartNumbers: item.oemPartNumbers ?? [],
+          oemPartNumber: item.oemPartNumbers?.[0] ?? "",
+          oemEnrichment: [],
           manufacturer: defaultManufacturer(result.invoice.supplierKey),
           quantity: item.quantity,
           priceTotal: item.lineTotal != null ? item.lineTotal.toFixed(2) : "",
@@ -211,6 +219,8 @@ export function InvoiceImportDialog({
         let catalogName: string | null = null;
         let fitment: FitmentChoice[] = [];
         let fitmentMatches: FitmentMatch[] = [];
+        let oemPartNumber = row.oemPartNumber;
+        const oemEnrichment: string[] = [];
         try {
           if (supplierKey === "boxxerparts") {
             const product = token
@@ -237,6 +247,50 @@ export function InvoiceImportDialog({
             );
             fitment = suggestion.seriesIds.map((id) => ({ id, selected: true }));
             fitmentMatches = suggestion.matches;
+
+            // Aftermarket part citing its BMW original: link it and fill
+            // what the shop lacks from BMWBike — fitment as a union with the
+            // prose rules, image and description only when missing.
+            const oemCandidates = [
+              ...new Set([...row.oemPartNumbers, ...(product?.oemPartNumbers ?? [])]),
+            ];
+            for (const candidate of token ? oemCandidates : []) {
+              // Sequential on purpose: the first number BMWBike knows wins.
+              // eslint-disable-next-line no-await-in-loop
+              const bmw = await lookupBmwbikePart(token as string, candidate).catch(() => null);
+              if (!bmw) continue;
+              oemPartNumber = candidate;
+              const proposed = new Set(fitment.map((choice) => choice.id));
+              const extraSeries = bmw.seriesIds.filter((id) => !proposed.has(id));
+              if (extraSeries.length > 0) {
+                fitment = [...fitment, ...extraSeries.map((id) => ({ id, selected: true }))];
+                oemEnrichment.push(`${extraSeries.length} Baureihen`);
+              }
+              if (enrichment.status === "found") {
+                if (!enrichment.part.imageUrl && bmw.imageUrl) {
+                  enrichment.part.imageUrl = bmw.imageUrl;
+                  oemEnrichment.push("Bild");
+                }
+                if (!enrichment.part.description && bmw.description) {
+                  enrichment.part.description = bmw.description;
+                  oemEnrichment.push("Beschreibung");
+                }
+              } else {
+                enrichment = {
+                  status: "found",
+                  source: "bmwbike",
+                  part: {
+                    name: row.invoiceName,
+                    description: row.invoiceDescription ?? bmw.description,
+                    imageUrl: bmw.imageUrl,
+                    productUrl: bmw.productUrl,
+                  },
+                };
+                if (bmw.imageUrl) oemEnrichment.push("Bild");
+              }
+              break;
+            }
+            if (!oemPartNumber && oemCandidates.length > 0) oemPartNumber = oemCandidates[0];
           } else {
             const slug = await findBmwbikeSlugByPartNumber(row.partNumber);
             if (slug) {
@@ -268,6 +322,8 @@ export function InvoiceImportDialog({
                   enrichment,
                   fitment,
                   fitmentMatches,
+                  oemPartNumber,
+                  oemEnrichment,
                   // Catalog names are complete where invoice names truncate
                   // ("Schalter Warnblinke") — prefill, keep editable.
                   name: catalogName ?? candidate.name,
@@ -340,6 +396,7 @@ export function InvoiceImportDialog({
             manufacturer: row.manufacturer.trim() || undefined,
             description: enriched?.part.description ?? row.invoiceDescription ?? undefined,
             seriesIds: row.fitment.filter((choice) => choice.selected).map((choice) => choice.id),
+            oemPartNumber: row.oemPartNumber.trim() || undefined,
           });
           partId = created.id;
           if (enriched?.part.imageUrl) {
@@ -585,11 +642,37 @@ export function InvoiceImportDialog({
                     <p className="truncate text-sm text-base-content/70">{row.invoiceName}</p>
                   )}
 
-                  {row.matchedPartId == null && row.oemPartNumbers.length > 0 && (
-                    <p className="font-mono text-[11px] text-base-content/55">
-                      BMW-Nr. in Beschreibung: {row.oemPartNumbers.join(", ")}
-                    </p>
-                  )}
+                  {row.matchedPartId == null &&
+                    (row.oemPartNumbers.length > 0 || row.oemPartNumber !== "") && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label
+                          htmlFor={`oem-${row.key}`}
+                          className={labelClass}
+                          title={
+                            row.oemPartNumbers.length > 0
+                              ? `In der Beschreibung genannt: ${row.oemPartNumbers.join(", ")}`
+                              : undefined
+                          }
+                        >
+                          Verknüpfen mit BMW-Nr.
+                        </label>
+                        <input
+                          id={`oem-${row.key}`}
+                          type="text"
+                          value={row.oemPartNumber}
+                          onChange={(event) =>
+                            updateRow(row.key, { oemPartNumber: event.target.value })
+                          }
+                          placeholder="keine"
+                          className={`${inputClass} !w-40 !py-1 font-mono text-xs`}
+                        />
+                        {row.oemEnrichment.length > 0 && (
+                          <span className="text-[11px] text-success">
+                            + {row.oemEnrichment.join(", ")} von BMWBike
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                   {row.matchedPartId == null && row.fitment.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5">
