@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.9.2](https://github.com/mightea/MotoManager/compare/2026.9.1...2026.9.2) (2026-09-24)
+
+
+### ✨ Features
+
+* import boxxerparts.de order confirmations with fitment proposals ([6171520](https://github.com/mightea/MotoManager/commit/6171520edf0072b080b36408e5b821da0234e12f))
+
+
+### ✏️ Miscellaneous Chores
+
+* update frontend dependencies and pnpm ([5e04e9e](https://github.com/mightea/MotoManager/commit/5e04e9ef9b0517b1b6b92fee15ab8cd4925f721d))
+
 ## [2026.9.1](https://github.com/mightea/MotoManager/compare/2026.9.0...2026.9.1) (2026-09-03)
 
 
