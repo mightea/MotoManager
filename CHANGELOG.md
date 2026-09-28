@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026.9.3](https://github.com/mightea/MotoManager/compare/2026.9.2...2026.9.3) (2026-09-28)
+
+
+### ✨ Features
+
+* import invoices from raw scans and photos ([5f2aa32](https://github.com/mightea/MotoManager/commit/5f2aa3288da5b3fd82147fd9621c1d36f891b9a5))
+* link parts to a BMW part number and fill missing data from BMWBike ([74ecb68](https://github.com/mightea/MotoManager/commit/74ecb684a2313249610d3d9a2c55c14c24d3d3a5))
+
+
+### 🐛 Bug Fixes
+
+* save the oil type on maintenance entries ([6826317](https://github.com/mightea/MotoManager/commit/68263174a1d9754b83c2af7ac9403f2850ce16bb)), closes [#153](https://github.com/mightea/MotoManager/issues/153)
+
+
+### ✏️ Miscellaneous Chores
+
+* update dependencies ([7caf48a](https://github.com/mightea/MotoManager/commit/7caf48ad186ce961f8130278f0648ab77365943c))
+
 ## [2026.9.2](https://github.com/mightea/MotoManager/compare/2026.9.1...2026.9.2) (2026-09-24)
 
 
