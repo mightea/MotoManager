@@ -1,0 +1,23 @@
+{
+  "$comment": "Shared parse/serialize fixture for the inline note markup. Mirrored in MotoManagerApp/MotoManagerTests/Fixtures/formatted-text.json — keep both in sync. `canonical` is the expected serialization of `spans` (null = same as `markup`).",
+  "cases": [
+    { "name": "plain", "markup": "nur kalt anziehen", "spans": [["nur kalt anziehen", "", null]], "canonical": null },
+    { "name": "bold", "markup": "**Achtung**", "spans": [["Achtung", "b", null]], "canonical": null },
+    { "name": "italic", "markup": "nur *kalt* anziehen", "spans": [["nur ", "", null], ["kalt", "i", null], [" anziehen", "", null]], "canonical": null },
+    { "name": "bold italic nested", "markup": "***beides***", "spans": [["beides", "bi", null]], "canonical": null },
+    { "name": "red", "markup": "[red]Achtung[/red] Rest", "spans": [["Achtung", "", "red"], [" Rest", "", null]], "canonical": null },
+    { "name": "yellow and blue", "markup": "[yellow]gelb[/yellow] [blue]blau[/blue]", "spans": [["gelb", "", "yellow"], [" ", "", null], ["blau", "", "blue"]], "canonical": null },
+    { "name": "color wrapping bold", "markup": "[red]**Achtung:**[/red] nur *kalt* anziehen", "spans": [["Achtung:", "b", "red"], [" nur ", "", null], ["kalt", "i", null], [" anziehen", "", null]], "canonical": null },
+    { "name": "bold wrapping color is canonicalized", "markup": "**[red]Achtung[/red] Rest**", "spans": [["Achtung", "b", "red"], [" Rest", "b", null]], "canonical": "[red]**Achtung[/red] Rest**" },
+    { "name": "overlapping styles flatten", "markup": "**a *b** c*", "spans": [["a ", "b", null], ["b", "bi", null], [" c", "i", null]], "canonical": null },
+    { "name": "nested colors", "markup": "[red]a[blue]b[/blue]c[/red]", "spans": [["a", "", "red"], ["b", "", "blue"], ["c", "", "red"]], "canonical": "[red]a[/red][blue]b[/blue][red]c[/red]" },
+    { "name": "lone asterisk is literal", "markup": "M8*1.25", "spans": [["M8*1.25", "", null]], "canonical": "M8\\*1.25" },
+    { "name": "unclosed bold is literal", "markup": "**offen", "spans": [["**offen", "", null]], "canonical": "\\*\\*offen" },
+    { "name": "unknown tag is literal", "markup": "[green]x[/green]", "spans": [["[green]x[/green]", "", null]], "canonical": "\\[green]x\\[/green]" },
+    { "name": "stray close tag is literal", "markup": "x[/red]", "spans": [["x[/red]", "", null]], "canonical": "x\\[/red]" },
+    { "name": "escapes", "markup": "\\*\\*nicht fett\\*\\* \\[red] \\\\", "spans": [["**nicht fett** [red] \\", "", null]], "canonical": "\\*\\*nicht fett\\*\\* \\[red] \\\\" },
+    { "name": "newline inside style", "markup": "**a\nb**", "spans": [["a\nb", "b", null]], "canonical": null },
+    { "name": "empty", "markup": "", "spans": [], "canonical": null },
+    { "name": "adjacent identical spans merge", "markup": "**a****b**", "spans": [["ab", "b", null]], "canonical": "**ab**" }
+  ]
+}

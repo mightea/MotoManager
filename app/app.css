@@ -498,3 +498,13 @@ input[type="datetime-local"] {
   );
   opacity: 0.6;
 }
+
+/* Note editor (Tiptap) — placeholder for the empty paragraph. */
+.note-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--color-base-content);
+  opacity: 0.4;
+}

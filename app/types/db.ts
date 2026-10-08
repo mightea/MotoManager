@@ -288,15 +288,23 @@ export interface TorqueSpecification {
   variation: number | null;
   toolSize: string | null;
   description: string | null;
+  /**
+   * Formatted twin of `description` (see `~/utils/formatted-text`). Plain
+   * `description` is what older iOS builds read; the markup is only honoured
+   * while it strips to it.
+   */
+  descriptionMarkup: string | null;
   unverified: boolean;
   createdAt: string;
 }
 
-export type NewTorqueSpecification = Omit<TorqueSpecification, "id" | "createdAt" | "torqueEnd" | "variation" | "toolSize" | "description" | "unverified"> & {
+export type NewTorqueSpecification = Omit<TorqueSpecification, "id" | "createdAt" | "torqueEnd" | "variation" | "toolSize" | "description" | "descriptionMarkup" | "unverified"> & {
   torqueEnd?: number | null;
   variation?: number | null;
   toolSize?: string | null;
   description?: string | null;
+  /** Absent = keep, null/"" = clear, value = replace (update only). */
+  descriptionMarkup?: string | null;
   unverified?: boolean;
 };
 

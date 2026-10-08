@@ -19,6 +19,7 @@ import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { LinkifiedText } from "~/components/linkified-text";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { Gauge, Wrench, Plus, Pencil, Import, Printer, AlertTriangle } from "lucide-react";
+import { FormattedText } from "~/components/formatted-text";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { Modal } from "~/components/modal";
@@ -272,6 +273,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     const toolSize = formData.get("toolSize") as string | undefined;
     const description = formData.get("description") as string | undefined;
+    // "" clears the formatting server-side; absent would keep stale markup.
+    const descriptionMarkup = (formData.get("descriptionMarkup") as string | null) ?? "";
     const unverified = formData.get("unverified") === "true";
 
     if (!motorcycleId || !category || !name || isNaN(torque)) {
@@ -288,6 +291,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         variation,
         toolSize,
         description,
+        descriptionMarkup,
         unverified,
       });
     } else {
@@ -303,6 +307,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         variation: variation ?? null,
         toolSize: toolSize ?? null,
         description: description ?? null,
+        descriptionMarkup,
         unverified,
       });
     }
@@ -722,7 +727,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           </div>
                           {spec.description && (
                             <p className="mt-0.5 text-xs leading-snug text-base-content/65 dark:text-navy-400 max-w-xl truncate sm:whitespace-normal print:text-[8.5pt] print:!text-gray-700 print:mt-0 print:block print:overflow-visible print:whitespace-normal print:leading-tight">
-                              {spec.description}
+                              <FormattedText description={spec.description} markup={spec.descriptionMarkup} />
                             </p>
                           )}
                         </div>
