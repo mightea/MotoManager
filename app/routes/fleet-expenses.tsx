@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FormattedText } from "~/components/formatted-text";
 import { useActionData, useLoaderData } from "react-router";
 import { toast } from "~/hooks/use-toast";
 import type { Route } from "./+types/fleet-expenses";
@@ -43,6 +44,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       currency: formData.get("currency") as string,
       category: formData.get("category") as string,
       description: formData.get("description") as string || null,
+      // Always sent: "" clears stale formatting, an absent key would keep it.
+      descriptionMarkup: (formData.get("descriptionMarkup") as string | null) ?? "",
       motorcycleIds,
       intervalMonths: null, // Future use
     };
@@ -143,7 +146,11 @@ export default function FleetExpenses() {
           />
         ) : (
           expenses.map(expense => {
-            const heading = expense.description || expense.category;
+            const heading = expense.description ? (
+              <FormattedText description={expense.description} markup={expense.descriptionMarkup} />
+            ) : (
+              expense.category
+            );
             const showCategoryBadge = Boolean(expense.description);
             return (
               <div

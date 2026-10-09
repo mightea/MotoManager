@@ -28,6 +28,7 @@ import {
   Trash2,
   FlaskConical,
 } from "lucide-react";
+import { FormattedText } from "~/components/formatted-text";
 import { useState } from "react";
 import type { MaintenanceRecord, MaintenanceType, Location, FluidType, BatteryType } from "~/types/db";
 import clsx from "clsx";
@@ -715,7 +716,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                         </span>
                                       </div>
                                       <p className="whitespace-pre-wrap break-words text-[13px] font-medium text-foreground dark:text-gray-100">
-                                        {record.description}
+                                        <FormattedText description={record.description} markup={record.descriptionMarkup} />
                                       </p>
                                     </div>
                                   )}

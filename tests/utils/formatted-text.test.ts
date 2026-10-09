@@ -6,6 +6,7 @@ import {
   plainTextOf,
   resolveFormattedText,
   serializeFormattedText,
+  trimSpans,
   type FormattedSpan,
 } from "~/utils/formatted-text";
 import { docToSpans, spansToDoc } from "~/utils/formatted-text-prosemirror";
@@ -95,5 +96,28 @@ describe("ProseMirror conversion", () => {
       ],
     });
     expect(spans).toEqual([{ text: "x", bold: false, italic: false, color: null }]);
+  });
+});
+
+describe("trimSpans", () => {
+  const span = (text: string, bold = false): FormattedSpan => ({ text, bold, italic: false, color: null });
+
+  it("trims outer whitespace across spans and drops emptied ones", () => {
+    expect(trimSpans([span("  "), span(" Achtung", true), span(" kalt \n")])).toEqual([
+      span("Achtung", true),
+      span(" kalt"),
+    ]);
+  });
+
+  it("keeps inner whitespace and returns nothing for blank input", () => {
+    expect(trimSpans([span("a "), span(" b")])).toEqual([span("a "), span(" b")]);
+    expect(trimSpans([span(" \n ")])).toEqual([]);
+    expect(trimSpans([])).toEqual([]);
+  });
+
+  it("keeps the stored markup consistent with a server-trimmed description", () => {
+    const spans = trimSpans([span("  "), span("Achtung ", true), span("kalt  ")]);
+    expect(plainTextOf(spans)).toBe("Achtung kalt");
+    expect(resolveFormattedText("Achtung kalt", serializeFormattedText(spans))).toEqual(spans);
   });
 });

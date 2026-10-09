@@ -134,6 +134,9 @@ export interface MaintenanceRecord {
   partsCost: number | null;
   currency: string | null;
   description: string | null;
+  /** Formatted twin of `description` (bold, italic, brand colors); only honoured
+   *  while it strips to `description`. See `~/utils/formatted-text`. */
+  descriptionMarkup: string | null;
   type: MaintenanceType;
   brand: string | null;
   model: string | null;
@@ -166,6 +169,9 @@ export interface Issue {
   odo: number;
   title: string;
   description: string | null;
+  /** Formatted twin of `description` (bold, italic, brand colors); only honoured
+   *  while it strips to `description`. See `~/utils/formatted-text`. */
+  descriptionMarkup: string | null;
   priority: "low" | "medium" | "high";
   status: "new" | "in_progress" | "done";
   date: string | null;
@@ -393,6 +399,9 @@ export interface PreviousOwner {
   phoneNumber: string | null;
   email: string | null;
   comments: string | null;
+  /** Formatted twin of `comments` (bold, italic, brand colors); only honoured
+   *  while it strips to `comments`. See `~/utils/formatted-text`. */
+  commentsMarkup: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -420,6 +429,9 @@ export interface Expense {
   currency: string;
   category: string;
   description: string | null;
+  /** Formatted twin of `description` (bold, italic, brand colors); only honoured
+   *  while it strips to `description`. See `~/utils/formatted-text`. */
+  descriptionMarkup: string | null;
   intervalMonths: number | null;
   createdAt: string;
   updatedAt: string;

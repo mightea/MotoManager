@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Trash2, Globe, Lock, Recycle, PackageSearch, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import { Button } from "./button";
+import { FormattedTextEditor, type FormattedValue } from "./formatted-text-editor";
 import { StorageLocationPickerField } from "./storage-location-picker-field";
 import { AVAILABLE_CURRENCY_PRESETS, DEFAULT_CURRENCY_CODE } from "~/constants";
 import { getSessionToken } from "~/services/auth";
@@ -78,9 +79,12 @@ export function PartForm({
   );
   const [seriesFilter, setSeriesFilter] = useState("");
   const [name, setName] = useState(initialValues?.name ?? prefill?.name ?? "");
-  const [description, setDescription] = useState(
-    initialValues?.description ?? prefill?.description ?? "",
-  );
+  const [description, setDescription] = useState<FormattedValue>({
+    plain: initialValues?.description ?? prefill?.description ?? "",
+    markup: initialValues?.descriptionMarkup ?? "",
+  });
+  // Bumped when enrichment replaces the text, remounting the editor with it.
+  const [descriptionEditorKey, setDescriptionEditorKey] = useState(0);
   const [oemPartNumber, setOemPartNumber] = useState(
     initialValues?.oemPartNumber ?? prefill?.oemPartNumber ?? "",
   );
@@ -109,12 +113,13 @@ export function PartForm({
         setName(found.name);
         added.push("Bezeichnung");
       }
-      if (!description.trim()) {
+      if (!description.plain.trim()) {
         const text = [found.name !== name.trim() ? found.name : null, found.description]
           .filter(Boolean)
           .join(" — ");
         if (text) {
-          setDescription(text);
+          setDescription({ plain: text, markup: "" });
+          setDescriptionEditorKey((key) => key + 1);
           added.push("Beschreibung");
         }
       }
@@ -354,14 +359,13 @@ export function PartForm({
         <label htmlFor="description" className={labelClass}>
           Beschreibung (Optional)
         </label>
-        <textarea
-          name="description"
+        <FormattedTextEditor
+          key={descriptionEditorKey}
           id="description"
-          rows={2}
+          initialDescription={description.plain}
+          initialMarkup={description.markup}
           placeholder="z.B. passt auch für Ölkühler-Variante"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          className={inputClass}
+          onChange={setDescription}
         />
       </div>
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Form, useNavigation, useSubmit } from "react-router";
 import { Recycle, Trash2 } from "lucide-react";
 import { Button } from "./button";
+import { FormattedTextEditor } from "./formatted-text-editor";
 import { StorageLocationPickerField } from "./storage-location-picker-field";
 import { AVAILABLE_CURRENCY_PRESETS, DEFAULT_CURRENCY_CODE } from "~/constants";
 import type { Part, PartStock, StorageLocation } from "~/types/parts";
@@ -127,13 +128,13 @@ export function PartStockForm({
         <label htmlFor="notes" className={labelClass}>
           Notizen (Optional)
         </label>
-        <textarea
-          name="notes"
+        <FormattedTextEditor
           id="notes"
-          rows={2}
+          name="notes"
+          markupName="notesMarkup"
+          initialDescription={initialValues?.notes}
+          initialMarkup={initialValues?.notesMarkup}
           placeholder="z.B. Kauf bei Motorradteile Meyer"
-          defaultValue={initialValues?.notes ?? ""}
-          className={inputClass}
         />
       </div>
 

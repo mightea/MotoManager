@@ -1,4 +1,5 @@
 import { data, Link, useActionData } from "react-router";
+import { FormattedText } from "~/components/formatted-text";
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import {
@@ -98,6 +99,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         name,
         manufacturer: optionalString("manufacturer") ?? "BMW",
         description: optionalString("description"),
+        descriptionMarkup: optionalString("descriptionMarkup") ?? "",
         oemPartNumber: optionalString("oemPartNumber"),
         isPublic: formData.get("isPublic") === "true",
         seriesIds: formData.getAll("seriesIds").map(Number).filter(Number.isFinite),
@@ -505,7 +507,9 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                       ` · ${seriesNames(part.seriesIds, modelSeries).slice(0, 2).join(", ")}`}
                   </p>
                   {part.description && (
-                    <p className="truncate text-[11px] text-base-content/50">{part.description}</p>
+                    <p className="truncate text-[11px] text-base-content/50">
+                      <FormattedText description={part.description} markup={part.descriptionMarkup} />
+                    </p>
                   )}
                 </div>
                 <span

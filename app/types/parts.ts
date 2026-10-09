@@ -60,6 +60,9 @@ export interface Part {
   name: string;
   manufacturer: string;
   description: string | null;
+  /** Formatted twin of `description` (bold, italic, brand colors); only honoured
+   *  while it strips to `description`. See `~/utils/formatted-text`. */
+  descriptionMarkup: string | null;
   isPublic: boolean;
   /** Image URL path (e.g. "/images/<uuid>.jpg"), server-managed via the
    *  upload endpoint; append `?width=` for resized thumbnails. */
@@ -82,6 +85,8 @@ export interface NewPart {
   name: string;
   manufacturer?: string;
   description?: string | null;
+  /** Always sent by the web client: "" clears formatting, absent keeps it. */
+  descriptionMarkup?: string | null;
   isPublic?: boolean;
   seriesIds?: number[];
   /** On update: omitted keeps the stored value, "" clears it. */
@@ -100,6 +105,9 @@ export interface PartStock {
   purchaseDate: string | null;
   storageLocationId: number | null;
   notes: string | null;
+  /** Formatted twin of `notes` (bold, italic, brand colors); only honoured
+   *  while it strips to `notes`. See `~/utils/formatted-text`. */
+  notesMarkup: string | null;
   /** Used/salvaged piece (e.g. pulled from a donor motorcycle). */
   isUsed: boolean;
   createdAt: string;
@@ -116,6 +124,7 @@ export interface NewPartStock {
   purchaseDate?: string | null;
   storageLocationId?: number | null;
   notes?: string | null;
+  notesMarkup?: string | null;
   isUsed?: boolean;
 }
 
@@ -157,6 +166,7 @@ export interface PublicPart {
   name: string;
   manufacturer: string;
   description: string | null;
+  descriptionMarkup: string | null;
   image: string | null;
   oemPartNumber: string | null;
   seriesIds: number[];

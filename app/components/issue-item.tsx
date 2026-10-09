@@ -1,4 +1,5 @@
 import { AlertTriangle, CircleAlert, Info, ChevronRight } from "lucide-react";
+import { FormattedText } from "~/components/formatted-text";
 import clsx from "clsx";
 import type { Issue } from "~/types/db";
 
@@ -65,7 +66,7 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
           {issue.date ? dateFormatter.format(new Date(issue.date)) : "Datum unbekannt"}
           {issue.description && (
             <span className="ml-1.5 normal-case tracking-normal text-base-content/45 dark:text-navy-500">
-              · {issue.description}
+              · <FormattedText description={issue.description} markup={issue.descriptionMarkup} />
             </span>
           )}
         </p>

@@ -1,4 +1,5 @@
 import { data, Link, redirect, useActionData, useSubmit } from "react-router";
+import { FormattedText } from "~/components/formatted-text";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import {
@@ -115,6 +116,8 @@ export async function clientAction({ request, params }: Route.ClientActionArgs) 
         name,
         manufacturer: optionalString("manufacturer") ?? "BMW",
         description: optionalString("description"),
+        // Always sent: "" clears stale formatting, an absent key would keep it.
+        descriptionMarkup: optionalString("descriptionMarkup") ?? "",
         // Blank clears the link; the backend treats an absent key as "keep".
         oemPartNumber: optionalString("oemPartNumber") ?? "",
         isPublic: formData.get("isPublic") === "true",
@@ -173,6 +176,7 @@ export async function clientAction({ request, params }: Route.ClientActionArgs) 
         purchaseDate: optionalString("purchaseDate"),
         storageLocationId,
         notes: optionalString("notes"),
+        notesMarkup: optionalString("notesMarkup") ?? "",
         isUsed: formData.get("isUsed") === "true",
       };
       if (intent === "createStock") {
@@ -510,7 +514,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                   </h1>
                   {part.description ? (
                     <p className="mt-3 max-w-prose text-sm leading-relaxed text-base-content/75">
-                      {part.description}
+                      <FormattedText description={part.description} markup={part.descriptionMarkup} />
                     </p>
                   ) : (
                     <p className="mt-3 text-sm text-base-content/45">
@@ -624,7 +628,12 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                       </p>
                       <p className="truncate text-[11px] text-base-content/50">
                         {location ? storageLocationPath(location, storageLocations) : "Kein Lagerort"}
-                        {stock.notes ? ` · ${stock.notes}` : ""}
+                        {stock.notes && (
+                          <>
+                            {" · "}
+                            <FormattedText description={stock.notes} markup={stock.notesMarkup} />
+                          </>
+                        )}
                       </p>
                     </div>
                     <button

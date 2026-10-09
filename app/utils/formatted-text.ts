@@ -218,6 +218,27 @@ export function hasFormatting(spans: readonly FormattedSpan[]): boolean {
 }
 
 /**
+ * Strip leading/trailing whitespace the way a server trims the plain text, so
+ * the stored markup still strips to the stored description. Empty spans are
+ * dropped; inner whitespace is untouched.
+ */
+export function trimSpans(spans: readonly FormattedSpan[]): FormattedSpan[] {
+  const out = spans.map((s) => ({ ...s }));
+  while (out.length > 0) {
+    out[0].text = out[0].text.replace(/^\s+/, "");
+    if (out[0].text) break;
+    out.shift();
+  }
+  while (out.length > 0) {
+    const last = out[out.length - 1];
+    last.text = last.text.replace(/\s+$/, "");
+    if (last.text) break;
+    out.pop();
+  }
+  return out;
+}
+
+/**
  * Spans to display for a record: the markup when it is consistent with the
  * plain description (an older client may have edited the text since), else
  * the plain text as a single unstyled span.

@@ -1,5 +1,6 @@
 import { Form, useNavigation, useSubmit } from "react-router";
 import { Button } from "./button";
+import { FormattedTextEditor } from "./formatted-text-editor";
 import { useConfirm } from "./confirm-provider";
 import type { Expense, Motorcycle, CurrencySetting } from "~/types/db";
 import { useState } from "react";
@@ -106,12 +107,10 @@ export function ExpenseForm({ initialData, motorcycles, currencies, defaultCurre
         <label htmlFor="expense-description" className="text-xs font-semibold uppercase text-secondary dark:text-navy-300">
           Beschreibung
         </label>
-        <textarea
+        <FormattedTextEditor
           id="expense-description"
-          name="description"
-          defaultValue={initialData?.description || ""}
-          className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
-          rows={2}
+          initialDescription={initialData?.description}
+          initialMarkup={initialData?.descriptionMarkup}
           placeholder="Optionale Notizen..."
         />
       </div>

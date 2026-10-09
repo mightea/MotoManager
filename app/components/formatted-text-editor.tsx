@@ -10,6 +10,7 @@ import {
   plainTextOf,
   resolveFormattedText,
   serializeFormattedText,
+  trimSpans,
   type BrandColor,
 } from "~/utils/formatted-text";
 import { BRAND_COLOR_MARK, docToSpans, spansToDoc } from "~/utils/formatted-text-prosemirror";
@@ -24,9 +25,11 @@ interface FormattedTextEditorProps {
   initialDescription?: string | null;
   initialMarkup?: string | null;
   placeholder?: string;
+  /** Reports every change, for forms that keep the text in React state. */
+  onChange?: (value: FormattedValue) => void;
 }
 
-interface Value {
+export interface FormattedValue {
   plain: string;
   markup: string;
 }
@@ -43,10 +46,11 @@ const COLOR_SWATCH: Record<BrandColor, string> = {
   blue: "bg-primary",
 };
 
-function valueFrom(editor: Editor): Value {
-  const spans = docToSpans(editor.getJSON());
+// Trimmed like the server trims plain text, so markup and description agree.
+function valueFrom(editor: Editor): FormattedValue {
+  const spans = trimSpans(docToSpans(editor.getJSON()));
   const plain = plainTextOf(spans);
-  if (!plain.trim()) return { plain: "", markup: "" };
+  if (!plain) return { plain: "", markup: "" };
   return { plain, markup: hasFormatting(spans) ? serializeFormattedText(spans) : "" };
 }
 
@@ -62,9 +66,10 @@ export function FormattedTextEditor({
   initialDescription,
   initialMarkup,
   placeholder = "Optionale Details",
+  onChange,
 }: FormattedTextEditorProps) {
   const initialSpans = resolveFormattedText(initialDescription, initialMarkup);
-  const [value, setValue] = useState<Value>(() => ({
+  const [value, setValue] = useState<FormattedValue>(() => ({
     plain: plainTextOf(initialSpans),
     markup: hasFormatting(initialSpans) ? serializeFormattedText(initialSpans) : "",
   }));
@@ -102,7 +107,11 @@ export function FormattedTextEditor({
           "note-editor min-h-[3.25rem] w-full p-3 text-sm text-base-content outline-none dark:text-white",
       },
     },
-    onUpdate: ({ editor }) => setValue(valueFrom(editor)),
+    onUpdate: ({ editor }) => {
+      const next = valueFrom(editor);
+      setValue(next);
+      onChange?.(next);
+    },
   });
 
   const active = useEditorState({

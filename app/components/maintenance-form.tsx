@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
+import { FormattedTextEditor } from "./formatted-text-editor";
 import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting, BrakeType, TirePosition, FluidType, DriveType } from "~/types/db";
 import { fluidTypeLabels, tirePositionLabels } from "~/utils/maintenance";
 import type { Part, PartConsumption } from "~/types/parts";
@@ -895,13 +896,11 @@ export function MaintenanceForm({
 
             <div className="space-y-1.5">
                 <label htmlFor="description" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Beschreibung</label>
-                <textarea
-                    name="description"
+                <FormattedTextEditor
                     id="description"
-                    rows={4}
+                    initialDescription={initialData?.description}
+                    initialMarkup={initialData?.descriptionMarkup}
                     placeholder="Optionale Notizen..."
-                    defaultValue={initialData?.description || ""}
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
                 />
             </div>
 

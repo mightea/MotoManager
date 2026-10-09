@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Form } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
+import { FormattedTextEditor } from "./formatted-text-editor";
 import type { PreviousOwner } from "~/types/db";
 import { previousOwnerSchema } from "~/validations";
 
@@ -209,12 +210,13 @@ export function PreviousOwnerForm({
         <label htmlFor="comments" className="text-sm font-medium text-foreground dark:text-gray-200">
           Bemerkungen
         </label>
-        <textarea
+        <FormattedTextEditor
           id="comments"
           name="comments"
-          defaultValue={initialValues?.comments ?? ""}
-          rows={3}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+          markupName="commentsMarkup"
+          initialDescription={initialValues?.comments}
+          initialMarkup={initialValues?.commentsMarkup}
+          placeholder="Optionale Bemerkungen"
         />
       </div>
 

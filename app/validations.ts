@@ -74,6 +74,7 @@ export const previousOwnerSchema = z.object({
   phoneNumber: z.preprocess(emptyStringToUndefined, z.string().optional()),
   email: z.preprocess(emptyStringToUndefined, z.string().email("Ungültige E-Mail-Adresse.").optional()),
   comments: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  commentsMarkup: z.preprocess(emptyStringToUndefined, z.string().optional()),
 });
 
 export type PreviousOwnerFormValues = z.infer<typeof previousOwnerSchema>;

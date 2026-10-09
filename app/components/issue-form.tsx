@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/button";
+import { FormattedTextEditor } from "~/components/formatted-text-editor";
 import type { Issue } from "~/types/db";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 
@@ -171,13 +172,11 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
           <span>Beschreibung</span>
           <span className="font-mono text-[9px] font-normal normal-case tracking-normal text-base-content/45 dark:text-navy-500">optional</span>
         </label>
-        <textarea
+        <FormattedTextEditor
           id="description"
-          name="description"
-          rows={4}
+          initialDescription={initialIssue?.description}
+          initialMarkup={initialIssue?.descriptionMarkup}
           placeholder="Weitere Details (optional)..."
-          defaultValue={initialIssue?.description ?? ""}
-          className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
         />
       </div>
 

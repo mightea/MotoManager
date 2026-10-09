@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useRef } from "react";
+import { FormattedText } from "~/components/formatted-text";
 import {
   data,
   redirect,
@@ -310,6 +311,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   const parseString = (value: FormDataEntryValue | null | undefined) =>
     typeof value === "string" && value.length > 0 ? value : null;
+  // Markup twins are always sent: "" clears stale formatting on the server,
+  // an absent key would keep it.
+  const parseMarkup = (value: FormDataEntryValue | null | undefined) =>
+    typeof value === "string" ? value : "";
 
   const parseNumber = (value: FormDataEntryValue | null | undefined) => {
     if (!value) return null;
@@ -441,6 +446,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       odo,
       title,
       description,
+      descriptionMarkup: parseMarkup(formData.get("descriptionMarkup")),
       priority: isValidPriority(formData.get("priority")),
       status: isValidStatus(formData.get("status")),
       date: parseString(formData.get("date")),
@@ -471,6 +477,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       odo,
       title,
       description,
+      descriptionMarkup: parseMarkup(formData.get("descriptionMarkup")),
       priority: isValidPriority(formData.get("priority")),
       status: isValidStatus(formData.get("status")),
       date: parseString(formData.get("date")),
@@ -540,6 +547,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       cost: parseNumber(formData.get("cost")),
       currency: parseString(formData.get("currency")),
       description: parseString(formData.get("description")),
+      descriptionMarkup: parseMarkup(formData.get("descriptionMarkup")),
       brand: parseString(formData.get("brand")),
       model: parseString(formData.get("model")),
       tirePosition: parseString(formData.get("tirePosition")) as TirePosition | undefined,
@@ -669,6 +677,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       phoneNumber: validationResult.data.phoneNumber ?? null,
       email: (validationResult.data.email as string | null) ?? null,
       comments: validationResult.data.comments ?? null,
+      commentsMarkup: validationResult.data.commentsMarkup ?? null,
     };
 
     if (intent === "createPreviousOwner") {
@@ -1174,7 +1183,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
                           </div>
                           {expense.description && (
                             <p className="mt-0.5 line-clamp-1 text-xs text-base-content/65 dark:text-navy-400">
-                              {expense.description}
+                              <FormattedText description={expense.description} markup={expense.descriptionMarkup} />
                             </p>
                           )}
                         </div>
