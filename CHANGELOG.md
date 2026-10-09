@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.10.0](https://github.com/mightea/MotoManager/compare/2026.9.3...2026.10.0) (2026-10-09)
+
+
+### ✨ Features
+
+* formatted notes for maintenance, issues, expenses, parts and owners ([f169e21](https://github.com/mightea/MotoManager/commit/f169e217a582d2f8a8e4802685813b39feacabe0))
+* formatted torque spec notes with a WYSIWYG editor ([a7df63f](https://github.com/mightea/MotoManager/commit/a7df63ff1bb80b06ef73d135ee20f8a5e2f3e3e6))
+
+
+### ✏️ Miscellaneous Chores
+
+* roll calver to 2026.10.0 ([a5b0d88](https://github.com/mightea/MotoManager/commit/a5b0d88c8a9eab3f8557f3ab55e80c7a77b5ec05))
+
 ## [2026.9.3](https://github.com/mightea/MotoManager/compare/2026.9.2...2026.9.3) (2026-09-28)
 
 

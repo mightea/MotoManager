@@ -66,5 +66,5 @@
     "vite-plugin-babel": "^1.7.3",
     "vitest": "^5.0.2"
   },
-  "version": "2026.9.3"
+  "version": "2026.10.0"
 }
