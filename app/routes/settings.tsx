@@ -16,6 +16,7 @@ import {
   updateUserSettings,
 } from "~/services/settings";
 import { haversineMeters, normalizeLocationName } from "~/utils/geo";
+import { resolveCountryCode } from "~/services/map";
 import { fluidTypeLabels } from "~/utils/maintenance";
 import {
   requireUser,
@@ -182,7 +183,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     if (!name) return { error: "Name ist erforderlich." };
     const latitude = parseCoord(formData.get("latitude"));
     const longitude = parseCoord(formData.get("longitude"));
-    await createLocation(token, { name, type, userId: user.id, latitude, longitude });
+    const countryCode = await resolveCountryCode(latitude, longitude);
+    await createLocation(token, { name, type, userId: user.id, latitude, longitude, countryCode });
     return { success: "Standort erstellt." };
   }
 
@@ -193,11 +195,13 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const type = parseLocationType(formData.get("type"), "fuelStation");
     const latitude = parseCoord(formData.get("latitude"));
     const longitude = parseCoord(formData.get("longitude"));
+    const countryCode = await resolveCountryCode(latitude, longitude);
     await updateLocation(token, id, user.id, {
       name,
       type,
       latitude,
       longitude,
+      countryCode,
     });
     return { success: "Standort aktualisiert." };
   }

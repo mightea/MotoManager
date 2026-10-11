@@ -1,10 +1,6 @@
 import { useEffect, useId, useRef } from "react";
 import type L from "leaflet";
-// Self-hosted marker assets (bundled by Vite) instead of the unpkg CDN, so the
-// picker works offline and under a strict CSP.
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { addOsmTiles, loadLeaflet } from "~/utils/leaflet.client";
 
 interface MapPickerProps {
   latitude: number | null;
@@ -40,17 +36,9 @@ export function MapPicker({ latitude, longitude, onSelect, className }: MapPicke
     async function initMap() {
       if (!mapRef.current || leafletMap.current) return;
 
-      const Leaflet = (await import("leaflet")).default;
+      const Leaflet = await loadLeaflet();
       if (!isMounted || !mapRef.current) return;
       leafletLib.current = Leaflet;
-
-      // @ts-ignore — private Leaflet internal; removing it lets mergeOptions win.
-      delete Leaflet.Icon.Default.prototype._getIconUrl;
-      Leaflet.Icon.Default.mergeOptions({
-        iconRetinaUrl: markerIcon2x,
-        iconUrl: markerIcon,
-        shadowUrl: markerShadow,
-      });
 
       const { lat: curLat, lng: curLng } = coordsRef.current;
       const hasCoords = curLat !== null && curLng !== null;
@@ -58,9 +46,7 @@ export function MapPicker({ latitude, longitude, onSelect, className }: MapPicke
       const map = Leaflet.map(mapRef.current).setView(start, hasCoords ? 16 : 13);
       leafletMap.current = map;
 
-      Leaflet.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
+      addOsmTiles(Leaflet, map);
 
       if (hasCoords) {
         markerRef.current = Leaflet.marker(start).addTo(map);

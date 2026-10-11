@@ -193,6 +193,8 @@ export interface Location {
   type: LocationType;
   latitude: number | null;
   longitude: number | null;
+  /** ISO 3166-1 alpha-2 (uppercase); filled by reverse geocoding, `null` when unknown. */
+  countryCode: string | null;
   userId: number;
   createdAt: string;
   updatedAt: string | null;
@@ -200,10 +202,11 @@ export interface Location {
 
 export type NewLocation = Omit<
   Location,
-  "id" | "createdAt" | "updatedAt" | "latitude" | "longitude"
+  "id" | "createdAt" | "updatedAt" | "latitude" | "longitude" | "countryCode"
 > & {
   latitude?: number | null;
   longitude?: number | null;
+  countryCode?: string | null;
 };
 
 export interface CurrencySetting {

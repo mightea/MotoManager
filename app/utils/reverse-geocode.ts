@@ -12,6 +12,17 @@ export interface ReverseGeocoder {
   (latitude: number, longitude: number): Promise<string | null>;
 }
 
+export interface ReverseGeocodeResult {
+  /** Best-effort place name (POI, street, town…), see `pickName`. */
+  name: string | null;
+  /** ISO 3166-1 alpha-2, uppercase — `null` when Nominatim has no country. */
+  countryCode: string | null;
+}
+
+export interface DetailedReverseGeocoder {
+  (latitude: number, longitude: number): Promise<ReverseGeocodeResult | null>;
+}
+
 interface NominatimAddress {
   fuel?: string;
   amenity?: string;
@@ -22,6 +33,7 @@ interface NominatimAddress {
   town?: string;
   city?: string;
   county?: string;
+  country_code?: string;
 }
 
 interface NominatimResponse {
@@ -55,17 +67,24 @@ function pickName(data: NominatimResponse): string | null {
   return null;
 }
 
+function pickCountryCode(data: NominatimResponse): string | null {
+  const raw = data.address?.country_code;
+  if (typeof raw !== "string") return null;
+  const code = raw.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
 async function callNominatim(
   latitude: number,
   longitude: number,
   fetchImpl: typeof fetch,
-): Promise<string | null> {
+): Promise<ReverseGeocodeResult | null> {
   const url = `${NOMINATIM_REVERSE_URL}?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
   try {
     const res = await fetchImpl(url, { headers: { "Accept-Language": "de" } });
     if (!res.ok) return null;
     const data = (await res.json()) as NominatimResponse;
-    return pickName(data);
+    return { name: pickName(data), countryCode: pickCountryCode(data) };
   } catch {
     return null;
   }
@@ -85,10 +104,21 @@ export interface ReverseGeocoderOptions {
  * results and throttling are scoped to that single user action.
  */
 export function createReverseGeocoder(opts: ReverseGeocoderOptions = {}): ReverseGeocoder {
+  const detailed = createDetailedReverseGeocoder(opts);
+  return (latitude, longitude) => detailed(latitude, longitude).then((r) => r?.name ?? null);
+}
+
+/**
+ * Same throttle + cache as `createReverseGeocoder`, but returns the place name
+ * together with the country code (used by the map page's country backfill).
+ */
+export function createDetailedReverseGeocoder(
+  opts: ReverseGeocoderOptions = {},
+): DetailedReverseGeocoder {
   const fetchImpl = opts.fetchImpl ?? fetch;
   const minIntervalMs = opts.minIntervalMs ?? MIN_INTERVAL_MS;
   const now = opts.now ?? Date.now;
-  const cache = new Map<string, Promise<string | null>>();
+  const cache = new Map<string, Promise<ReverseGeocodeResult | null>>();
   const key = (lat: number, lon: number) => `${lat.toFixed(5)},${lon.toFixed(5)}`;
   let chain: Promise<void> = Promise.resolve();
   let lastCallAt = 0;

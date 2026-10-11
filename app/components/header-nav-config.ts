@@ -9,4 +9,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Dokumente", href: "/documents" },
   { label: "Ausgaben", href: "/fleet-expenses" },
   { label: "Statistiken", href: "/fleet-stats" },
+  { label: "Karte", href: "/map" },
 ];

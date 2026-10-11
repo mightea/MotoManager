@@ -10,6 +10,8 @@ export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
     route("fleet-stats", "routes/fleet-stats.tsx"),
+    route("map", "routes/map.tsx"),
+    route("map/:year", "routes/map.year.tsx"),
     route("fleet-expenses", "routes/fleet-expenses.tsx"),
     route("documents", "routes/documents.tsx"),
     route("parts", "routes/parts.tsx"),

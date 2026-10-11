@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { createReverseGeocoder } from "~/utils/reverse-geocode";
+import { createDetailedReverseGeocoder, createReverseGeocoder } from "~/utils/reverse-geocode";
 
 function makeFetch(response: unknown, status = 200) {
   return vi.fn(async () =>
@@ -94,5 +94,26 @@ describe("createReverseGeocoder", () => {
     // The second call should have queued a wait of ~ (1000 - 50) ms.
     expect(callTimes.some((ms) => ms > 800)).toBe(true);
     vi.restoreAllMocks();
+  });
+});
+
+describe("createDetailedReverseGeocoder", () => {
+  it("returns the name together with an uppercased country code", async () => {
+    const fetchImpl = makeFetch({ name: "Agip Como", address: { country_code: "it" } });
+    const geocode = createDetailedReverseGeocoder({ fetchImpl, minIntervalMs: 0 });
+    await expect(geocode(45.8, 9.08)).resolves.toEqual({ name: "Agip Como", countryCode: "IT" });
+  });
+
+  it("yields a null country when Nominatim has none or it is malformed", async () => {
+    const geocode = createDetailedReverseGeocoder({
+      fetchImpl: makeFetch({ name: "Somewhere", address: { country_code: "ita" } }),
+      minIntervalMs: 0,
+    });
+    await expect(geocode(45.8, 9.08)).resolves.toEqual({ name: "Somewhere", countryCode: null });
+  });
+
+  it("returns null on HTTP failure like the plain geocoder", async () => {
+    const geocode = createDetailedReverseGeocoder({ fetchImpl: makeFetch({}, 500), minIntervalMs: 0 });
+    await expect(geocode(1, 1)).resolves.toBeNull();
   });
 });

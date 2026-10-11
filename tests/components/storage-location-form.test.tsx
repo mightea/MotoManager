@@ -26,6 +26,7 @@ function place(id: number, name: string, type: Location["type"]): Location {
     type,
     latitude: null,
     longitude: null,
+    countryCode: null,
     userId: 1,
     createdAt: "2026-08-23T00:00:00Z",
     updatedAt: null,
