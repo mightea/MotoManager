@@ -134,14 +134,14 @@ function ChartSection({
           ref={scrollRef}
           className="hidden sm:block overflow-x-auto pb-2 -mx-2 px-2"
         >
-          <div className="relative flex h-32 items-end gap-1.5 sm:gap-3 min-w-[max-content]">
+          <div className="relative flex h-32 items-end justify-start gap-1.5 sm:gap-3 min-w-[max-content]">
             {reversedData.map((year, idx) => {
               const value = year[valueKey] || 0;
               const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
               const showLabel = (year.year % showEveryNthYear === 0) || idx === 0 || idx === reversedData.length - 1;
 
               return (
-                <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end min-w-[2rem] sm:min-w-[3.5rem]">
+                <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end min-w-[2rem] max-w-[4.5rem] sm:min-w-[3.5rem]">
                   <div
                     className={clsx("w-full rounded-t-sm transition-all relative z-10", colorClass)}
                     style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
