@@ -31,7 +31,7 @@
     "isbot": "^5.2.2",
     "leaflet": "^1.9.4",
     "leaflet.heat": "^0.2.0",
-    "lucide-react": "^1.48.0",
+    "lucide-react": "^1.53.0",
     "qrcode": "^1.5.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
