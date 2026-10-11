@@ -26,6 +26,7 @@ import {
   filterLegs,
   filterLocations,
   filterTours,
+  formatDate,
   formatDateShort,
   geoJsonFileName,
   LOCATION_TYPE_LABELS,
@@ -527,9 +528,9 @@ function MapDashboard({
                     <tr key={w.id} className="transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/40">
                       <Td strong>{w.name}</Td>
                       <Td hide>{LOCATION_TYPE_LABELS[w.type]}</Td>
-                      <Td align="right">{w.maintenanceVisits}</Td>
+                      <Td align="right">{w.maintenanceVisits + w.parkedVisits}</Td>
                       <Td align="right" strong>{w.maintenanceCost > 0 ? formatCurrency(w.maintenanceCost) : "–"}</Td>
-                      <Td align="right" hide>{formatDateShort(w.lastVisit)}</Td>
+                      <Td align="right" hide>{formatDate(w.lastVisit)}</Td>
                       <Td align="right" hide>
                         {w.distanceFromHomeKm === null ? "–" : `${formatNumber(round1(w.distanceFromHomeKm), 1)} km`}
                       </Td>

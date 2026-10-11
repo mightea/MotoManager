@@ -109,7 +109,7 @@ export default function YearReviewPage() {
           {stats.distanceKm > 0
             ? `${formatNumber(stats.distanceKm)} Kilometer an ${stats.ridingDays} Fahrtagen${
                 stats.countries.length > 0 ? ` durch ${stats.countries.length} ${stats.countries.length === 1 ? "Land" : "Länder"}` : ""
-              }${stats.seasonStart && stats.seasonEnd ? `, vom ${formatDateShort(stats.seasonStart)} bis ${formatDateShort(stats.seasonEnd)}` : ""}.`
+              }${stats.seasonStart && stats.seasonEnd ? `, vom ${formatDateShort(stats.seasonStart)} bis ${formatDateShort(stats.seasonEnd)}` : ""}`
             : "In diesem Jahr wurden keine Etappen erfasst."}
         </p>
 
