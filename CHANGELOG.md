@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.10.1](https://github.com/mightea/MotoManager/compare/2026.10.0...2026.10.1) (2026-10-11)
+
+
+### ✨ Features
+
+* add fleet map with fuel heatmap, legs, tours and year in review ([d7195a9](https://github.com/mightea/MotoManager/commit/d7195a9c45fc3e1d1ae358bfc51bc6f069bbfa50))
+
+
+### 🐛 Bug Fixes
+
+* statistics charts no longer stretch a single year across the card ([b57cfdd](https://github.com/mightea/MotoManager/commit/b57cfdd8eea3f7b12668f5fba1f6646aea783759))
+* workshop table shows full dates and all visits on the map page ([21ff362](https://github.com/mightea/MotoManager/commit/21ff362ec04858f473b6ed01cc4c2a5b4b69ac18))
+
 ## [2026.10.0](https://github.com/mightea/MotoManager/compare/2026.9.3...2026.10.0) (2026-10-09)
 
 
