@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.10.2](https://github.com/mightea/MotoManager/compare/2026.10.1...2026.10.2) (2026-10-21)
+
+
+### ✏️ Miscellaneous Chores
+
+* update dependencies to latest and patch vite and source-map-js vulnerabilities ([ac1105c](https://github.com/mightea/MotoManager/commit/ac1105c589efdd501652e87b571057f7a5e4057a))
+* update Node to 26 in CI and the Docker image ([8374095](https://github.com/mightea/MotoManager/commit/8374095b7e959072afd0477f6c134c087478876c))
+
 ## [2026.10.1](https://github.com/mightea/MotoManager/compare/2026.10.0...2026.10.1) (2026-10-11)
 
 
