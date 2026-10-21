@@ -74,6 +74,7 @@ export function PartForm({
 
   const [isPublic, setIsPublic] = useState(initialValues?.isPublic ?? false);
   const [stockIsUsed, setStockIsUsed] = useState(false);
+  const [today] = useState(() => new Date().toISOString().slice(0, 10));
   const [selectedSeriesIds, setSelectedSeriesIds] = useState<Set<number>>(
     new Set(initialValues?.seriesIds ?? prefill?.seriesIds ?? []),
   );
@@ -421,7 +422,7 @@ export function PartForm({
                 type="date"
                 name="purchaseDate"
                 id="initial-purchaseDate"
-                defaultValue={new Date().toISOString().slice(0, 10)}
+                defaultValue={today}
                 className={`${inputClass} dark:[color-scheme:dark]`}
               />
             </div>

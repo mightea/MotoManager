@@ -26,7 +26,7 @@ const statusOptions: { value: Issue["status"]; label: string }[] = [
 
 export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, onCancel }: IssueFormProps) {
   const fetcher = useFetcher<{ success?: boolean }>();
-  const today = new Date().toISOString().split("T")[0];
+  const [today] = useState(() => new Date().toISOString().split("T")[0]);
   const isSubmitting = fetcher.state !== "idle";
   const hasHandledSuccessRef = useRef(false);
   const intent = initialIssue ? "updateIssue" : "createIssue";

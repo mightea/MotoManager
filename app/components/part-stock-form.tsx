@@ -37,7 +37,7 @@ export function PartStockForm({
     navigation.state === "submitting" &&
     (pendingIntent === "createStock" || pendingIntent === "updateStock");
 
-  const today = new Date().toISOString().slice(0, 10);
+  const [today] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [isUsed, setIsUsed] = useState(initialValues?.isUsed ?? false);
 

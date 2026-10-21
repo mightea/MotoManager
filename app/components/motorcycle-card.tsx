@@ -44,7 +44,7 @@ interface MotorcycleCardProps {
 export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
   const [imageError, setImageError] = useState(false);
   const slug = createMotorcycleSlug(moto.make, moto.model);
-  const currentYear = new Date().getFullYear();
+  const [currentYear] = useState(() => new Date().getFullYear());
   const imageUrl = getBackendAssetUrl(moto.image);
   const hasImage = Boolean(!imageError && imageUrl);
 

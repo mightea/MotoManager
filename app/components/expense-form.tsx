@@ -22,6 +22,7 @@ export function ExpenseForm({ initialData, motorcycles, currencies, defaultCurre
   const navigation = useNavigation();
   const submit = useSubmit();
   const confirmDialog = useConfirm();
+  const [today] = useState(() => new Date().toISOString().split('T')[0]);
   const isSubmitting = navigation.state === "submitting";
   const [selectedMotorcycleIds, setSelectedMotorcycleIds] = useState<number[]>(initialData?.motorcycleIds || []);
 
@@ -48,7 +49,7 @@ export function ExpenseForm({ initialData, motorcycles, currencies, defaultCurre
             id="expense-date"
             name="date"
             type="date"
-            defaultValue={initialData?.date || new Date().toISOString().split('T')[0]}
+            defaultValue={initialData?.date || today}
             required
             className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
           />

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Form, useNavigation, useSubmit } from "react-router";
 import { Button } from "./button";
 import type { Part } from "~/types/parts";
@@ -22,7 +23,7 @@ export function PartConsumptionForm({ part, onClose }: PartConsumptionFormProps)
   const isSubmitting =
     navigation.state === "submitting" && navigation.formData?.get("intent") === "createConsumption";
 
-  const today = new Date().toISOString().slice(0, 10);
+  const [today] = useState(() => new Date().toISOString().slice(0, 10));
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

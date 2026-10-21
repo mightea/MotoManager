@@ -400,7 +400,7 @@ export function MaintenanceForm({
         }
     };
 
-    const today = new Date().toISOString().split('T')[0];
+    const [today] = useState(() => new Date().toISOString().split('T')[0]);
 
     // Parts consumed by this entry, serialized as a JSON hidden field. On an
     // existing entry this is seeded from the record's live consumptions; the

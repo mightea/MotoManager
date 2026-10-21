@@ -225,6 +225,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [currentYear] = useState(() => new Date().getFullYear());
   const actionData = useActionData<{ success?: boolean }>();
   const navigation = useNavigation();
 
@@ -429,7 +430,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <div className="order-4 sm:order-2 flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <span className="label-tag">
-              <span>Flotten-Telemetrie · {new Date().getFullYear()}</span>
+              <span>Flotten-Telemetrie · {currentYear}</span>
             </span>
           </div>
           <DashboardStats stats={stats} />

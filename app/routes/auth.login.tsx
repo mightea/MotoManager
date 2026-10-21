@@ -197,6 +197,7 @@ export default function Login() {
   const isRegisterSubmitting = navigation.state === "submitting" && submittingIntent === "register";
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
   const [identifier, setIdentifier] = useState("");
+  const [currentYear] = useState(() => new Date().getFullYear());
 
   const loginError =
     actionData && !actionData.success && actionData.form === "login" && "message" in actionData
@@ -612,7 +613,7 @@ export default function Login() {
 
           <div className="border-t border-base-300 bg-base-200/50 px-6 py-4 text-center dark:border-navy-700 dark:bg-navy-950/40">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 dark:text-navy-400">
-              © {new Date().getFullYear()} · MotoManager · v{version}
+              © {currentYear} · MotoManager · v{version}
             </p>
           </div>
         </div>
