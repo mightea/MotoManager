@@ -25,7 +25,6 @@ import {
   MONTH_LABELS,
   type BikePeriodStats,
   type SeasonRow,
-  type StatsPeriod,
   type TimelineRow,
 } from "~/utils/fleet-stats";
 import { SERIES_COLORS } from "~/utils/map-analysis";
@@ -203,14 +202,15 @@ export function DistanceByYearChart({
   bikes,
   colors,
   mode,
-  period,
+  highlight,
   onSelectYear,
 }: {
   years: FleetYear[];
   bikes: FleetMotorcycle[];
   colors: Map<number, string>;
   mode: ChartMode;
-  period: StatsPeriod;
+  /** Years inside the selected period stay solid; the rest fade. */
+  highlight: (year: number) => boolean;
   onSelectYear: (year: number) => void;
 }) {
   const shownBikes = bikes.filter((b) => years.some((y) => y.bikes.some((yb) => yb.motorcycleId === b.id && yb.distance > 0)));
@@ -268,7 +268,7 @@ export function DistanceByYearChart({
                 }}
               >
                 {rows.map((r) => (
-                  <Cell key={r.year} fillOpacity={period === "all" || period === r.year ? 1 : 0.3} />
+                  <Cell key={r.year} fillOpacity={highlight(r.year) ? 1 : 0.3} />
                 ))}
               </Bar>
             ))}
@@ -285,12 +285,13 @@ export function SeasonChart({
   rows,
   referenceYears,
   mode,
-  period,
+  selectedYear,
 }: {
   rows: SeasonRow[];
   referenceYears: number[];
   mode: ChartMode;
-  period: StatsPeriod;
+  /** The single selected year, drawn as bars; null for "all" or a range. */
+  selectedYear: number | null;
 }) {
   const barColor = SERIES_COLORS[0][mode];
   const lineColor = mode === "light" ? "#52514e" : "#c3c2b7";
@@ -300,10 +301,10 @@ export function SeasonChart({
       : referenceYears.length === 1
         ? `${referenceYears[0]}`
         : `Ø ${referenceYears[0]}–${referenceYears[referenceYears.length - 1]}`;
-  const showBars = period !== "all";
+  const showBars = selectedYear !== null;
 
   const legend = [
-    ...(showBars ? [{ key: "y", label: String(period), color: barColor }] : []),
+    ...(showBars ? [{ key: "y", label: String(selectedYear), color: barColor }] : []),
     ...(refLabel ? [{ key: "avg", label: refLabel, color: showBars ? lineColor : barColor, line: showBars }] : []),
   ];
 
@@ -322,7 +323,7 @@ export function SeasonChart({
                 if (!active || !payload?.length) return null;
                 const row = (payload[0] as TooltipEntry).payload as unknown as SeasonRow;
                 const items = [];
-                if (showBars && row.value !== null) items.push({ label: String(period), value: `${formatNumber(row.value)} km`, color: barColor });
+                if (showBars && row.value !== null) items.push({ label: String(selectedYear), value: `${formatNumber(row.value)} km`, color: barColor });
                 if (refLabel && row.average !== null) items.push({ label: refLabel, value: `${formatNumber(row.average)} km`, color: showBars ? lineColor : barColor });
                 return <TooltipBox title={String(label)} rows={items} />;
               }}
@@ -357,12 +358,12 @@ export function SeasonChart({
 export function CostByYearChart({
   years,
   mode,
-  period,
+  highlight,
   onSelectYear,
 }: {
   years: FleetYear[];
   mode: ChartMode;
-  period: StatsPeriod;
+  highlight: (year: number) => boolean;
   onSelectYear: (year: number) => void;
 }) {
   const used = COST_CATEGORIES.filter((k) => years.some((y) => y.costs[k] > 0));
@@ -419,7 +420,7 @@ export function CostByYearChart({
                 }}
               >
                 {rows.map((r) => (
-                  <Cell key={r.year} fillOpacity={period === "all" || period === r.year ? 1 : 0.3} />
+                  <Cell key={r.year} fillOpacity={highlight(r.year) ? 1 : 0.3} />
                 ))}
               </Bar>
             ))}
@@ -645,7 +646,12 @@ export function ConsumptionChart({
   if (rows.length === 0) {
     return <p className="text-sm text-base-content/60 dark:text-navy-300">Keine Verbrauchswerte in diesem Zeitraum.</p>;
   }
-  const fmtTick = (t: number) => (granularity === "year" ? String(t) : MONTH_LABELS[t - 1] ?? "");
+  const fmtTick = (t: number) => {
+    if (granularity === "year") return String(t);
+    const year = Math.floor(t);
+    const month = Math.min(11, Math.max(0, Math.floor((t - year) * 12)));
+    return `${MONTH_LABELS[month]} ${String(year).slice(2)}`;
+  };
   const fmtTitle = (key: string) => (granularity === "year" ? key : `${MONTH_LABELS[Number(key.slice(5, 7)) - 1]} ${key.slice(0, 4)}`);
   const sparse = rows.length <= 24;
   return (
@@ -657,7 +663,7 @@ export function ConsumptionChart({
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
             <CartesianGrid vertical={false} stroke={CHROME[mode].grid} />
-            <XAxis dataKey="t" type="number" domain={["dataMin", "dataMax"]} {...axisProps(mode)} tickFormatter={fmtTick} allowDecimals={false} minTickGap={16} />
+            <XAxis dataKey="t" type="number" domain={["dataMin", "dataMax"]} {...axisProps(mode)} tickFormatter={fmtTick} allowDecimals={granularity === "month"} minTickGap={24} />
             <YAxis {...axisProps(mode)} axisLine={false} width={40} domain={["auto", "auto"]} tickFormatter={(v: number) => formatNumber(v, 1)} />
             <Tooltip
               cursor={{ stroke: CHROME[mode].axis, strokeWidth: 1 }}

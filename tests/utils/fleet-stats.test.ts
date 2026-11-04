@@ -4,9 +4,15 @@ import {
   activeYears,
   consumptionRows,
   decimalYear,
+  elapsedYears,
   emptyCosts,
+  fuelPricesInPeriod,
+  isYearInPeriod,
   parsePeriod,
   percentChange,
+  periodLabel,
+  periodRange,
+  recentYearOptions,
   seasonRows,
   summarizePeriod,
   timelineRows,
@@ -149,7 +155,8 @@ describe("fleet stats helpers", () => {
     expect(r.bikeIds).toEqual([1, 2]);
     expect(r.granularity).toBe("month");
     expect(r.rows).toHaveLength(2);
-    expect(r.rows[0]).toMatchObject({ key: "2025-05", t: 5, "1": 5.5 });
+    expect(r.rows[0]).toMatchObject({ key: "2025-05", "1": 5.5 });
+    expect(r.rows[0].t).toBeCloseTo(2025 + 4.5 / 12);
     const all = consumptionRows(p, "all");
     expect(all.granularity).toBe("year");
     expect(all.rows.map((row) => row.key)).toEqual(["2024", "2025"]);
@@ -165,5 +172,78 @@ describe("fleet stats helpers", () => {
     const all = consumptionRows(p, "all");
     expect(all.rows.map((row) => row.key)).toEqual(["2020", "2021", "2022", "2023"]);
     expect(all.rows[1]["1"]).toBeUndefined();
+  });
+
+  describe("last N years", () => {
+    // 12 years of data, 2014–2025, running year 2025.
+    const many = () =>
+      payload({
+        years: Array.from({ length: 12 }, (_, i) => year(2014 + i, 1000, 100)),
+      });
+
+    it("spans the running year and the years before it", () => {
+      expect(periodRange({ lastYears: 3 }, 2025)).toEqual({ from: 2023, to: 2025 });
+      expect(periodLabel({ lastYears: 3 }, 2025)).toBe("2023–2025");
+      expect(isYearInPeriod(2022, { lastYears: 3 }, 2025)).toBe(false);
+      expect(isYearInPeriod(2023, { lastYears: 3 }, 2025)).toBe(true);
+    });
+
+    it("only offers ranges shorter than the data", () => {
+      expect(recentYearOptions(many().years)).toEqual([3, 5, 10]);
+      expect(recentYearOptions(payload().years)).toEqual([3]);
+      expect(parsePeriod(null, payload().years, "5")).toBe("all");
+      expect(parsePeriod(null, many().years, "5")).toEqual({ lastYears: 5 });
+      expect(parsePeriod("2024", many().years, "7")).toBe(2024);
+    });
+
+    it("sums the years in the range and has no year-over-year comparison", () => {
+      const s = summarizePeriod(many(), { lastYears: 3 });
+      expect(s.distance).toBe(3000);
+      expect(s.totalCost).toBe(300);
+      expect(s.previous).toBeNull();
+      expect(s.bikes).toHaveLength(1);
+      expect(s.bikes[0].distance).toBe(3000);
+      expect(s.bikes[0].costPerKm).toBeCloseTo(0.1);
+    });
+
+    it("counts the running year pro rata for per-year averages", () => {
+      // 2 full years + 2025 up to 2 July (half the year).
+      expect(elapsedYears({ lastYears: 3 }, { today: "2025-07-02", currentYear: 2025 })).toBeCloseTo(2.5, 1);
+      expect(elapsedYears(2020, { today: "2025-07-02", currentYear: 2025 })).toBe(1);
+    });
+
+    it("averages the season over the completed years in the range", () => {
+      const months = (v: number) => Array(12).fill(0).map((_, i) => (i === 5 ? v : 0));
+      const p = payload({
+        years: [year(2022, 900, 0, months(900)), year(2023, 100, 0, months(100)), year(2024, 300, 0, months(300)), year(2025, 50, 0, months(50))],
+      });
+      const r = seasonRows(p, { lastYears: 3 });
+      expect(r.referenceYears).toEqual([2023, 2024]);
+      expect(r.rows[5]).toEqual({ month: "Jun", value: null, average: 200 });
+    });
+
+    it("buckets consumption by month across years, filling gaps", () => {
+      const p = payload({
+        consumption: [
+          { motorcycleId: 1, date: "2024-11-01", value: 5 },
+          { motorcycleId: 1, date: "2025-02-01", value: 6 },
+          { motorcycleId: 1, date: "2021-02-01", value: 9 },
+        ],
+      });
+      const r = consumptionRows(p, { lastYears: 3 });
+      expect(r.granularity).toBe("month");
+      expect(r.rows.map((row) => row.key)).toEqual(["2024-11", "2024-12", "2025-01", "2025-02"]);
+      expect(consumptionRows(p, { lastYears: 5 }).granularity).toBe("year");
+    });
+
+    it("filters fuel prices to the range", () => {
+      const p = payload({
+        fuelPrices: [
+          { month: "2022-12", avgPricePerLiter: 2, liters: 10 },
+          { month: "2023-01", avgPricePerLiter: 2.1, liters: 10 },
+        ],
+      });
+      expect(fuelPricesInPeriod(p, { lastYears: 3 }).map((m) => m.month)).toEqual(["2023-01"]);
+    });
   });
 });

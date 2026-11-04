@@ -27,8 +27,14 @@ import {
   activeYears,
   bikeName,
   consumptionRows,
+  elapsedYears,
+  fuelPricesInPeriod,
+  isSamePeriod,
+  isYearInPeriod,
   parsePeriod,
   percentChange,
+  periodLabel as formatPeriodLabel,
+  recentYearOptions,
   seasonRows,
   summarizePeriod,
   timelineRows,
@@ -73,8 +79,10 @@ function PeriodPicker({
   period: StatsPeriod;
   onChange: (p: StatsPeriod) => void;
 }) {
+  const ranges = recentYearOptions(years);
   const recent = years.slice(-3).reverse();
   const older = years.slice(0, -3).reverse();
+  const olderSelected = typeof period === "number" && older.some((y) => y.year === period);
   const pill = (active: boolean) =>
     clsx(
       "rounded-sm px-3 py-1.5 font-numeric text-xs font-semibold tabular-nums transition-colors",
@@ -82,27 +90,39 @@ function PeriodPicker({
         ? "bg-primary text-primary-content"
         : "text-base-content/70 hover:bg-base-200 dark:text-navy-300 dark:hover:bg-navy-700",
     );
+  const option = (p: StatsPeriod, label: string, title?: string) => {
+    const active = isSamePeriod(period, p);
+    return (
+      <button
+        key={typeof p === "object" ? `last-${p.lastYears}` : String(p)}
+        type="button"
+        aria-pressed={active}
+        title={title}
+        className={pill(active)}
+        onClick={() => onChange(p)}
+      >
+        {label}
+      </button>
+    );
+  };
   return (
     <fieldset className="flex flex-wrap items-center gap-1.5">
       <legend className="sr-only">Zeitraum</legend>
-      <button type="button" aria-pressed={period === "all"} className={pill(period === "all")} onClick={() => onChange("all")}>
-        Gesamt
-      </button>
-      {recent.map((y) => (
-        <button key={y.year} type="button" aria-pressed={period === y.year} className={pill(period === y.year)} onClick={() => onChange(y.year)}>
-          {y.year}
-        </button>
-      ))}
+      {option("all", "Gesamt")}
+      {ranges
+        .slice()
+        .reverse()
+        .map((n) => option({ lastYears: n }, `${n} J.`, `Letzte ${n} Jahre`))}
+      <span aria-hidden="true" className="mx-1 h-4 w-px bg-base-300 dark:bg-navy-700" />
+      {recent.map((y) => option(y.year, String(y.year)))}
       {older.length > 0 && (
         <select
           aria-label="Älteres Jahr"
           className={clsx(
             "rounded-sm border-0 bg-transparent py-1.5 pl-2 pr-7 font-numeric text-xs font-semibold tabular-nums focus:ring-2 focus:ring-primary",
-            older.some((y) => y.year === period)
-              ? "bg-primary text-primary-content"
-              : "text-base-content/70 dark:text-navy-300",
+            olderSelected ? "bg-primary text-primary-content" : "text-base-content/70 dark:text-navy-300",
           )}
-          value={older.some((y) => y.year === period) ? String(period) : ""}
+          value={olderSelected ? String(period) : ""}
           onChange={(e) => e.target.value && onChange(Number(e.target.value))}
         >
           <option value="">Früher …</option>
@@ -121,13 +141,13 @@ function YearTable({
   years,
   bikes,
   colors,
-  period,
+  highlight,
   onSelectYear,
 }: {
   years: FleetYear[];
   bikes: FleetStatsPayload["motorcycles"];
   colors: Map<number, string>;
-  period: StatsPeriod;
+  highlight: (year: number) => boolean;
   onSelectYear: (y: number) => void;
 }) {
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -158,7 +178,7 @@ function YearTable({
                   <tr
                     className={clsx(
                       "cursor-pointer transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/40",
-                      (isExpanded || period === y.year) && "bg-base-200/40 dark:bg-navy-700/30",
+                      (isExpanded || highlight(y.year)) && "bg-base-200/40 dark:bg-navy-700/30",
                     )}
                     onClick={() => setExpanded(isExpanded ? null : y.year)}
                   >
@@ -258,14 +278,17 @@ export default function FleetStatsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const years = useMemo(() => activeYears(stats.years), [stats.years]);
-  const period = parsePeriod(searchParams.get("jahr"), years);
+  const period = parsePeriod(searchParams.get("jahr"), years, searchParams.get("jahre"));
   const setPeriod = (p: StatsPeriod) => {
     const next = new URLSearchParams(searchParams);
-    if (p === "all") next.delete("jahr");
-    else next.set("jahr", String(p));
+    next.delete("jahr");
+    next.delete("jahre");
+    if (typeof p === "number") next.set("jahr", String(p));
+    else if (typeof p === "object") next.set("jahre", String(p.lastYears));
     setSearchParams(next, { replace: true, preventScrollReset: true });
   };
   const toggleYear = (y: number) => setPeriod(period === y ? "all" : y);
+  const highlight = (year: number) => isYearInPeriod(year, period, stats.currentYear);
 
   // Same colour per bike as on the map page: ascending id, never re-assigned.
   const colors = useMemo(() => {
@@ -280,10 +303,7 @@ export default function FleetStatsPage() {
   const season = useMemo(() => seasonRows(stats, period), [stats, period]);
   const consumption = useMemo(() => consumptionRows(stats, period), [stats, period]);
   const timeline = useMemo(() => timelineRows(stats), [stats]);
-  const fuelPrices = useMemo(
-    () => (period === "all" ? stats.fuelPrices : stats.fuelPrices.filter((m) => m.month.startsWith(`${period}-`))),
-    [stats.fuelPrices, period],
-  );
+  const fuelPrices = useMemo(() => fuelPricesInPeriod(stats, period), [stats, period]);
 
   if (years.length === 0) {
     return (
@@ -308,8 +328,12 @@ export default function FleetStatsPage() {
 
   const prev = summary.previous;
   const prevCostPerKm = prev && prev.distance > 0 ? prev.totalCost / prev.distance : null;
-  const periodLabel = period === "all" ? "Gesamt" : String(period);
+  const periodLabel = formatPeriodLabel(period, stats.currentYear);
   const isRunningYear = period === stats.currentYear;
+  const isRange = typeof period === "object";
+  // Per-year averages for a range, with the running year counted pro rata.
+  const rangeYears = isRange ? elapsedYears(period, stats) : 0;
+  const perYear = (v: number) => (rangeYears > 0 ? v / rangeYears : 0);
   const lifetimeBikes = stats.motorcycles.filter((m) => m.ownedFrom !== null || m.runningCost > 0);
 
   return (
@@ -327,13 +351,14 @@ export default function FleetStatsPage() {
         <KpiTile
           label="Distanz"
           value={`${formatNumber(summary.distance)} km`}
-          sub={isRunningYear ? "bis heute" : undefined}
+          sub={isRunningYear ? "bis heute" : isRange ? `Ø ${formatNumber(perYear(summary.distance))} km pro Jahr` : undefined}
           change={prev ? percentChange(summary.distance, prev.distance) : null}
           changeLabel={prev?.label}
         />
         <KpiTile
           label="Kosten"
           value={formatCurrency(summary.totalCost)}
+          sub={isRange ? `Ø ${formatCurrency(perYear(summary.totalCost))} pro Jahr` : undefined}
           change={prev ? percentChange(summary.totalCost, prev.totalCost) : null}
           upIsGood={false}
           changeLabel={prev?.label}
@@ -363,7 +388,7 @@ export default function FleetStatsPage() {
             bikes={stats.motorcycles}
             colors={colors}
             mode={mode}
-            period={period}
+            highlight={highlight}
             onSelectYear={toggleYear}
           />
         </ChartCard>
@@ -373,7 +398,7 @@ export default function FleetStatsPage() {
           subtitle="Alle Ausgaben inkl. Treibstoff, Teile und Fixkosten."
           icon={Wallet}
         >
-          <CostByYearChart years={years} mode={mode} period={period} onSelectYear={toggleYear} />
+          <CostByYearChart years={years} mode={mode} highlight={highlight} onSelectYear={toggleYear} />
         </ChartCard>
 
         <ChartCard
@@ -381,11 +406,18 @@ export default function FleetStatsPage() {
           subtitle={
             period === "all"
               ? "Durchschnittliche Kilometer pro Monat über alle abgeschlossenen Jahre."
-              : "Kilometer pro Monat im Vergleich zu den Vorjahren (geschätzt aus Kilometerständen)."
+              : isRange
+                ? "Durchschnittliche Kilometer pro Monat über die abgeschlossenen Jahre im Zeitraum."
+                : "Kilometer pro Monat im Vergleich zu den Vorjahren (geschätzt aus Kilometerständen)."
           }
           icon={Sun}
         >
-          <SeasonChart rows={season.rows} referenceYears={season.referenceYears} mode={mode} period={period} />
+          <SeasonChart
+            rows={season.rows}
+            referenceYears={season.referenceYears}
+            mode={mode}
+            selectedYear={typeof period === "number" ? period : null}
+          />
         </ChartCard>
 
         <ChartCard title={`Kostenverteilung · ${periodLabel}`} subtitle="Wohin das Geld geflossen ist." icon={PieChart}>
@@ -400,7 +432,7 @@ export default function FleetStatsPage() {
           <BikeComparison bikes={summary.bikes} colors={colors} />
         </ChartCard>
 
-        <ChartCard title={`Verbrauch · ${periodLabel}`} subtitle={`${period === "all" ? "Jahresmittel" : "Monatsmittel"} in l/100 km, Ausreisser entfernt.`} icon={Fuel}>
+        <ChartCard title={`Verbrauch · ${periodLabel}`} subtitle={`${consumption.granularity === "year" ? "Jahresmittel" : "Monatsmittel"} in l/100 km, Ausreisser entfernt.`} icon={Fuel}>
           <ConsumptionChart
             rows={consumption.rows}
             bikeIds={consumption.bikeIds}
@@ -430,7 +462,13 @@ export default function FleetStatsPage() {
       </ChartCard>
 
       <ChartCard title="Jahresübersicht" icon={Table2}>
-        <YearTable years={years} bikes={stats.motorcycles} colors={colors} period={period} onSelectYear={setPeriod} />
+        <YearTable
+          years={years}
+          bikes={stats.motorcycles}
+          colors={colors}
+          highlight={(y) => period !== "all" && highlight(y)}
+          onSelectYear={setPeriod}
+        />
       </ChartCard>
 
       <p className="flex items-center gap-2 text-xs text-base-content/50 dark:text-navy-400">
