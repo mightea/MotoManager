@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRoadTripCsv, isDuplicate, type RoadTripFuelEntry } from "~/utils/roadtrip-import";
+import { parseRoadTripCsv, isDuplicate, roadTripNormalizedCost, type RoadTripFuelEntry } from "~/utils/roadtrip-import";
 
 describe("RoadTrip Import Utility", () => {
   describe("parseRoadTripCsv", () => {
@@ -149,6 +149,23 @@ Odometer (km),Trip Distance,Date,Fill Amount,Fill Units,Price per Unit,Total Pri
         { type: "service", date: "2025-05-01", odo: 5000 }
       ];
       expect(isDuplicate(entry, existing)).toBe(false);
+    });
+  });
+
+  describe("roadTripNormalizedCost", () => {
+    it("divides by Road Trip's rate (foreign units per CHF)", () => {
+      // SEK 231.02 at SEK 7.080938 per CHF
+      expect(roadTripNormalizedCost(231.02, 7.080938, 1)).toBeCloseTo(32.63, 2);
+      expect(roadTripNormalizedCost(22.82, 0.748298, 1)).toBeCloseTo(30.5, 2);
+    });
+
+    it("keeps home-currency rows unchanged", () => {
+      expect(roadTripNormalizedCost(30, 1, 1)).toBe(30);
+    });
+
+    it("falls back to the app's conversion factor (CHF per unit)", () => {
+      expect(roadTripNormalizedCost(100, null, 0.9)).toBeCloseTo(90);
+      expect(roadTripNormalizedCost(null, null, 0.9)).toBe(0);
     });
   });
 });

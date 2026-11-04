@@ -70,6 +70,7 @@ import { parseUsedParts, planConsumptionChanges } from "~/utils/part-consumption
 import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
 import { getCurrentLocationName } from "~/utils/motorcycle-header-stats";
+import { roadTripNormalizedCost } from "~/utils/roadtrip-import";
 
 /** Slice of the `/motorcycles/:id` payload this route consumes. */
 interface MotorcycleDetailResponse {
@@ -849,7 +850,6 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
         const stopPerf = startPerfMark("fuel_import");
         for (const record of records) {
           const currency = record.currency || "CHF";
-          const rate = record.currencyRate || getCurrencyFactor(currency);
           // eslint-disable-next-line no-await-in-loop
           const locationId = await resolveLocationId(record);
           const payload = {
@@ -862,7 +862,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
             fuelType: record.fuelType,
             fuelAmount: record.fuelAmount,
             pricePerUnit: record.pricePerUnit,
-            normalizedCost: (record.cost || 0) * rate,
+            normalizedCost: roadTripNormalizedCost(record.cost, record.currencyRate, getCurrencyFactor(currency)),
             locationId,
             description: null,
           };

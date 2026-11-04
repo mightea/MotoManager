@@ -16,6 +16,23 @@ export interface RoadTripFuelEntry {
 /**
  * Parses a RoadTrip CSV file content and extracts fuel records.
  */
+/**
+ * Amount in the base currency (CHF) for an imported fuel record.
+ *
+ * Road Trip's "Currency Rate" is foreign units per CHF (SEK 7.08 = CHF 1), so
+ * the amount is divided by it. Without a Road Trip rate the app's own
+ * currency factor (CHF per unit) applies and is multiplied.
+ */
+export function roadTripNormalizedCost(
+  cost: number | null | undefined,
+  roadTripRate: number | null | undefined,
+  conversionFactor: number,
+): number {
+  const amount = cost || 0;
+  if (roadTripRate && roadTripRate > 0) return amount / roadTripRate;
+  return amount * conversionFactor;
+}
+
 export function parseRoadTripCsv(content: string): RoadTripFuelEntry[] {
   const lines = content.split(/\r?\n/);
   const fuelRecords: RoadTripFuelEntry[] = [];
