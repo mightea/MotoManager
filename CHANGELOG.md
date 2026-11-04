@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.11.1](https://github.com/mightea/MotoManager/compare/2026.11.0...2026.11.1) (2026-11-04)
+
+
+### ✨ Features
+
+* rebuild stats page with charts, cost breakdown and total cost of ownership ([8ceddbf](https://github.com/mightea/MotoManager/commit/8ceddbfc6144483c9200377b4218d316ebbec43f))
+
+
+### 🐛 Bug Fixes
+
+* divide by Road Trip's currency rate when importing fuel records ([37a91de](https://github.com/mightea/MotoManager/commit/37a91de9d536c906dbaa38b15da1a75488fbe88e))
+
 ## [2026.11.0](https://github.com/mightea/MotoManager/compare/2026.10.2...2026.11.0) (2026-11-04)
 
 
