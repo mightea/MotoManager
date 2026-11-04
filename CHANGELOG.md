@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.11.0](https://github.com/mightea/MotoManager/compare/2026.10.2...2026.11.0) (2026-11-04)
+
+
+### 🐛 Bug Fixes
+
+* load documents with a Bearer header instead of ?token= URLs ([732b46d](https://github.com/mightea/MotoManager/commit/732b46de40f0da7a16c885ad45b651fa72312d97))
+
+
+### ✏️ Miscellaneous Chores
+
+* roll calver to 2026.11.0 ([c4a8c16](https://github.com/mightea/MotoManager/commit/c4a8c165dd91ab05153976385857c40567d3740f))
+
 ## [2026.10.2](https://github.com/mightea/MotoManager/compare/2026.10.1...2026.10.2) (2026-10-21)
 
 
