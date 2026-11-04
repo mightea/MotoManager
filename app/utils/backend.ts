@@ -108,19 +108,75 @@ export function getBackendAssetUrl(path: string | null | undefined): string | nu
 }
 
 /**
- * Asset URL for the auth-gated file routes (/documents, /previews) with the
- * session token as a query parameter. Browser-initiated loads (`window.open`,
- * `<img src>`) can't carry an Authorization header, so these routes accept
- * `?token=` instead.
+ * Content types that may be opened in a new tab via a `blob:` URL. A blob URL
+ * shares the webapp's origin, so anything that can run script (HTML, SVG, XML,
+ * …) must never be navigated to — only downloaded.
  */
-export function getAuthenticatedAssetUrl(path: string | null | undefined): string | null {
-  const assetUrl = getBackendAssetUrl(path);
-  if (!assetUrl) return null;
+const INLINE_SAFE_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "text/plain",
+]);
+
+/**
+ * Fetch a file from the auth-gated file routes (/documents, /previews) with
+ * the session token in the Authorization header. The token never goes into a
+ * URL, where it would leak into logs, history and Referer headers.
+ */
+export async function fetchAuthenticatedAsset(path: string | null | undefined): Promise<Blob> {
+  const url = getBackendAssetUrl(path);
+  if (!url) throw new Error("Keine Datei vorhanden");
 
   const token = getSessionToken();
-  if (!token) return assetUrl;
+  const response = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) {
+    throw new Error(`Datei konnte nicht geladen werden (${response.status})`);
+  }
+  return response.blob();
+}
 
-  const url = new URL(assetUrl);
-  url.searchParams.set("token", token);
-  return url.toString();
+function downloadBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(new Blob([blob], { type: "application/octet-stream" }));
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * Open an auth-gated document in a new tab. Must be called from a click
+ * handler: the tab is opened synchronously (so popup blockers allow it) and
+ * pointed at the fetched file once it arrives. Types that aren't known to be
+ * inert are downloaded instead of rendered.
+ */
+export async function openAuthenticatedAsset(path: string | null | undefined): Promise<void> {
+  const tab = window.open("", "_blank");
+  if (tab) tab.opener = null;
+  try {
+    const blob = await fetchAuthenticatedAsset(path);
+    const type = blob.type.split(";")[0].trim().toLowerCase();
+    if (tab && INLINE_SAFE_TYPES.has(type)) {
+      const url = URL.createObjectURL(new Blob([blob], { type }));
+      tab.location.href = url;
+      // Give the tab time to load before releasing the blob.
+      setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+    } else {
+      tab?.close();
+      downloadBlob(blob, path?.split("/").pop() || "dokument");
+    }
+  } catch (error) {
+    tab?.close();
+    throw error;
+  }
 }

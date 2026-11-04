@@ -5,7 +5,7 @@ import clsx from "clsx";
 import type { Document, Motorcycle } from "~/types/db";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone, type FileRejection } from "react-dropzone";
-import { getAuthenticatedAssetUrl } from "~/utils/backend";
+import { useAuthenticatedAssetUrl } from "~/hooks/use-authenticated-asset";
 
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -39,6 +39,7 @@ export function AddDocumentForm({
   const [isPrivate, setIsPrivate] = useState(document?.isPrivate ?? false);
   const [selectedMotorcycles, setSelectedMotorcycles] = useState<number[]>(assignedMotorcycleIds);
   const [file, setFile] = useState<File | null>(null);
+  const { url: previewUrl } = useAuthenticatedAssetUrl(document?.previewPath);
   const [error, setError] = useState<string | null>(null);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
 
@@ -164,8 +165,8 @@ export function AddDocumentForm({
             <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-navy-700 dark:bg-navy-800">
                 <div className="flex p-4 gap-4 items-center">
                     <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-navy-900 border border-gray-100 dark:border-navy-600">
-                        {document.previewPath ? (
-                            <img src={getAuthenticatedAssetUrl(document.previewPath) ?? ""} alt="Preview" className="h-full w-full object-cover" />
+                        {previewUrl ? (
+                            <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
                         ) : (
                             <div className="flex h-full w-full items-center justify-center">
                                 <FileText className="h-8 w-8 text-gray-400" />
