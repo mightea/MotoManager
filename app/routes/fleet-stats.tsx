@@ -1,253 +1,291 @@
-import { data, useLoaderData, Link } from "react-router";
+import { data, useLoaderData, Link, useSearchParams } from "react-router";
 import type { Route } from "./+types/fleet-stats";
 import { requireUser } from "~/services/auth";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
-import { BarChart3, TrendingUp, Wallet, Bike, ChevronDown, type LucideIcon } from "lucide-react";
+import {
+  BarChart3,
+  CalendarRange,
+  ChevronDown,
+  Fuel,
+  Gauge,
+  PieChart,
+  Route as RouteIcon,
+  Sun,
+  Table2,
+  Wallet,
+  Bike,
+  Landmark,
+} from "lucide-react";
 import clsx from "clsx";
-import { useState, Fragment, useRef, useEffect } from "react";
+import { useMemo, useState, Fragment } from "react";
 import { fetchFromBackend } from "~/utils/backend";
 import { EmptyState } from "~/components/empty-state";
-
-/** Per-bike slice of one year in the `/stats` payload. */
-interface FleetYearMotorcycle {
-  id: number;
-  make: string;
-  model: string;
-  distance: number;
-  cost: number;
-}
-
-/** One year of aggregated fleet stats in the `/stats` payload. */
-interface FleetYearlyStats {
-  year: number;
-  distance: number;
-  cost: number;
-  motorcycleCount: number;
-  motorcycles: FleetYearMotorcycle[];
-}
-
-interface FleetStats {
-  yearly: FleetYearlyStats[];
-  overall: {
-    totalDistance: number;
-    totalCost: number;
-    maxYearlyDistance: number;
-    maxYearlyCost: number;
-    maxYearlyCount: number;
-  };
-}
+import { useTheme } from "~/components/theme-provider";
+import { SERIES_COLORS } from "~/utils/map-analysis";
+import type { FleetStatsPayload, FleetYear } from "~/types/fleet-stats";
+import {
+  activeYears,
+  bikeName,
+  consumptionRows,
+  parsePeriod,
+  percentChange,
+  seasonRows,
+  summarizePeriod,
+  timelineRows,
+  type StatsPeriod,
+} from "~/utils/fleet-stats";
+import {
+  BikeComparison,
+  ChartCard,
+  ConsumptionChart,
+  CostBreakdownList,
+  CostByYearChart,
+  DistanceByYearChart,
+  FuelPriceChart,
+  KpiTile,
+  OwnershipCostChart,
+  OwnershipCostTable,
+  OwnershipTimeline,
+  SeasonChart,
+} from "~/components/fleet-stats-charts";
 
 export function meta() {
   return [
     { title: "Statistiken - Moto Manager" },
-    { name: "description", content: "Detaillierte Statistiken über deine Motorrad-Flotte über die Jahre." },
+    { name: "description", content: "Fahrleistung, Kosten, Verbrauch und Gesamtkosten deiner Motorrad-Flotte." },
   ];
 }
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { token } = await requireUser(request);
-  const response = await fetchFromBackend<{ stats: FleetStats }>("/stats", {}, token);
-
-  return data({ stats: response.stats });
+  const stats = await fetchFromBackend<FleetStatsPayload>("/stats/fleet", {}, token);
+  return data({ stats });
 }
 
-type ChartTone = "primary" | "secondary" | "workshop";
+const CAPTION = "font-mono text-[10px] font-semibold uppercase tracking-[0.14em]";
 
-const TONE_TEXT: Record<ChartTone, string> = {
-  primary: "text-primary",
-  secondary: "text-secondary",
-  workshop: "text-[var(--color-workshop)]",
-};
-
-function ChartSection({
-  title,
-  icon: Icon,
-  data,
-  maxValue,
-  valueKey,
-  unit,
-  isCurrency = false,
-  colorClass,
-  tone,
+function PeriodPicker({
+  years,
+  period,
+  onChange,
 }: {
-  title: string;
-  icon: LucideIcon;
-  data: FleetYearlyStats[];
-  maxValue: number;
-  valueKey: "motorcycleCount" | "distance" | "cost";
-  unit: string;
-  isCurrency?: boolean;
-  colorClass: string;
-  tone: ChartTone;
+  years: FleetYear[];
+  period: StatsPeriod;
+  onChange: (p: StatsPeriod) => void;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const reversedData = [...data].reverse();
-  const showEveryNthYear = data.length > 15 ? 5 : (data.length > 8 ? 2 : 1);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-    }
-  }, []);
-
+  const recent = years.slice(-3).reverse();
+  const older = years.slice(0, -3).reverse();
+  const pill = (active: boolean) =>
+    clsx(
+      "rounded-sm px-3 py-1.5 font-numeric text-xs font-semibold tabular-nums transition-colors",
+      active
+        ? "bg-primary text-primary-content"
+        : "text-base-content/70 hover:bg-base-200 dark:text-navy-300 dark:hover:bg-navy-700",
+    );
   return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-2.5">
-        <Icon className={clsx("h-4 w-4 shrink-0", TONE_TEXT[tone])} aria-hidden="true" />
-        <h2 className="font-subdisplay text-sm text-base-content dark:text-white">{title}</h2>
-      </div>
-
-      <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-3 sm:p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-        {/* Grid Lines (desktop bar chart only) */}
-        <div className="absolute inset-x-3 sm:inset-x-6 bottom-14 top-6 hidden sm:flex flex-col justify-between pointer-events-none">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="w-full border-t border-base-200 dark:border-navy-700/50" />
-          ))}
-        </div>
-
-        {/* Mobile: horizontal meter rows — readable without scrolling or tooltips */}
-        <div className="space-y-2.5 sm:hidden">
-          {data.map((year) => {
-            const value = year[valueKey] || 0;
-            const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
-            return (
-              <div key={year.year} className="flex items-center gap-3">
-                <span className="w-10 shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums text-base-content/55 dark:text-navy-400">
-                  {year.year}
-                </span>
-                <div className="h-2 flex-1 overflow-hidden rounded-sm bg-base-200 dark:bg-navy-700/50">
-                  <div
-                    className={clsx("h-full rounded-sm", colorClass)}
-                    style={{ width: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
-                  />
-                </div>
-                <span className="w-20 shrink-0 text-right font-numeric text-[11px] font-semibold tabular-nums text-base-content/70 dark:text-navy-300">
-                  {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Desktop: scrollable vertical bar chart */}
-        <div
-          ref={scrollRef}
-          className="hidden sm:block overflow-x-auto pb-2 -mx-2 px-2"
+    <fieldset className="flex flex-wrap items-center gap-1.5">
+      <legend className="sr-only">Zeitraum</legend>
+      <button type="button" aria-pressed={period === "all"} className={pill(period === "all")} onClick={() => onChange("all")}>
+        Gesamt
+      </button>
+      {recent.map((y) => (
+        <button key={y.year} type="button" aria-pressed={period === y.year} className={pill(period === y.year)} onClick={() => onChange(y.year)}>
+          {y.year}
+        </button>
+      ))}
+      {older.length > 0 && (
+        <select
+          aria-label="Älteres Jahr"
+          className={clsx(
+            "rounded-sm border-0 bg-transparent py-1.5 pl-2 pr-7 font-numeric text-xs font-semibold tabular-nums focus:ring-2 focus:ring-primary",
+            older.some((y) => y.year === period)
+              ? "bg-primary text-primary-content"
+              : "text-base-content/70 dark:text-navy-300",
+          )}
+          value={older.some((y) => y.year === period) ? String(period) : ""}
+          onChange={(e) => e.target.value && onChange(Number(e.target.value))}
         >
-          <div className="relative flex h-32 items-end justify-start gap-1.5 sm:gap-3 min-w-[max-content]">
-            {reversedData.map((year, idx) => {
-              const value = year[valueKey] || 0;
-              const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
-              const showLabel = (year.year % showEveryNthYear === 0) || idx === 0 || idx === reversedData.length - 1;
+          <option value="">Früher …</option>
+          {older.map((y) => (
+            <option key={y.year} value={y.year}>
+              {y.year}
+            </option>
+          ))}
+        </select>
+      )}
+    </fieldset>
+  );
+}
 
+function YearTable({
+  years,
+  bikes,
+  colors,
+  period,
+  onSelectYear,
+}: {
+  years: FleetYear[];
+  bikes: FleetStatsPayload["motorcycles"];
+  colors: Map<number, string>;
+  period: StatsPeriod;
+  onSelectYear: (y: number) => void;
+}) {
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const byId = new Map(bikes.map((b) => [b.id, b]));
+  const th = clsx(CAPTION, "px-4 py-3 text-base-content/55 dark:text-navy-300");
+  return (
+    <div className="-mx-4 overflow-x-auto sm:-mx-5">
+      <table className="w-full text-left text-sm">
+        <thead className="border-b border-base-200 dark:border-navy-700">
+          <tr>
+            <th className={clsx(th, "text-left")}>Jahr</th>
+            <th className={clsx(th, "hidden text-right sm:table-cell")}>Motorräder</th>
+            <th className={clsx(th, "text-right")}>Distanz</th>
+            <th className={clsx(th, "text-right")}>Kosten</th>
+            <th className={clsx(th, "hidden text-right sm:table-cell")}>Kosten/km</th>
+            <th className={clsx(th, "hidden text-right md:table-cell")}>Liter</th>
+            <th className="w-10 px-2 py-3" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-base-200 dark:divide-navy-700">
+          {years
+            .slice()
+            .reverse()
+            .map((y) => {
+              const isExpanded = expanded === y.year;
               return (
-                <div key={year.year} className="group relative flex-1 flex flex-col items-center h-full justify-end min-w-[2rem] max-w-[4.5rem] sm:min-w-[3.5rem]">
-                  <div
-                    className={clsx("w-full rounded-t-sm transition-all relative z-10", colorClass)}
-                    style={{ height: `${Math.max(percentage, value > 0 ? 2 : 0)}%` }}
+                <Fragment key={y.year}>
+                  <tr
+                    className={clsx(
+                      "cursor-pointer transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/40",
+                      (isExpanded || period === y.year) && "bg-base-200/40 dark:bg-navy-700/30",
+                    )}
+                    onClick={() => setExpanded(isExpanded ? null : y.year)}
                   >
-                    {/* Tooltip — workshop tag style */}
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform rounded-sm bg-base-content px-2 py-1 font-numeric text-[10px] font-semibold tabular-nums text-base-100 whitespace-nowrap z-20 shadow-[0_8px_18px_-10px_rgba(15,23,42,0.5)]">
-                      {isCurrency ? formatCurrency(value) : `${formatNumber(value)}${unit}`}
-                    </div>
-                  </div>
-                  <div className={clsx(
-                    "mt-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums transition-colors",
-                    showLabel ? "text-base-content/55 dark:text-navy-400" : "text-transparent",
-                  )}>
-                    {year.year}
-                  </div>
-                </div>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        className="font-numeric font-semibold tabular-nums text-primary hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectYear(y.year);
+                        }}
+                      >
+                        {y.year}
+                      </button>
+                    </td>
+                    <td className="hidden px-4 py-3 text-right font-numeric tabular-nums text-base-content/70 sm:table-cell dark:text-navy-300">
+                      {y.motorcycleCount}
+                    </td>
+                    <td className="px-4 py-3 text-right font-numeric font-semibold tabular-nums text-base-content dark:text-white">
+                      {formatNumber(y.distance)} km
+                    </td>
+                    <td className="px-4 py-3 text-right font-numeric font-semibold tabular-nums text-base-content dark:text-white">
+                      {formatCurrency(y.totalCost)}
+                    </td>
+                    <td className="hidden px-4 py-3 text-right font-numeric tabular-nums text-base-content/65 sm:table-cell dark:text-navy-400">
+                      {y.distance > 0 ? formatCurrency(y.totalCost / y.distance) : "–"}
+                    </td>
+                    <td className="hidden px-4 py-3 text-right font-numeric tabular-nums text-base-content/65 md:table-cell dark:text-navy-400">
+                      {y.liters > 0 ? `${formatNumber(y.liters)} l` : "–"}
+                    </td>
+                    <td className="px-2 py-3 text-right">
+                      <ChevronDown
+                        className={clsx("h-4 w-4 text-base-content/45 transition-transform", isExpanded && "rotate-180")}
+                        aria-hidden="true"
+                      />
+                    </td>
+                  </tr>
+                  {isExpanded && (
+                    <tr>
+                      <td colSpan={7} className="bg-base-200/40 p-4 dark:bg-navy-900/30">
+                        {y.bikes.length === 0 ? (
+                          <p className="text-sm text-base-content/60 dark:text-navy-300">Keine Einträge.</p>
+                        ) : (
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {y.bikes.map((b) => {
+                              const bike = byId.get(b.motorcycleId);
+                              return (
+                                <div
+                                  key={b.motorcycleId}
+                                  className="rounded-sm border border-base-300/70 bg-base-100 p-3 dark:border-navy-700 dark:bg-navy-800"
+                                >
+                                  <div className="mb-2 flex items-center gap-2">
+                                    <span
+                                      className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
+                                      style={{ backgroundColor: colors.get(b.motorcycleId) }}
+                                      aria-hidden="true"
+                                    />
+                                    <span className="truncate font-subdisplay text-sm text-base-content dark:text-white">
+                                      {bike ? bikeName(bike) : `#${b.motorcycleId}`}
+                                    </span>
+                                  </div>
+                                  <dl className="grid grid-cols-3 gap-2">
+                                    {[
+                                      ["Distanz", `${formatNumber(b.distance)} km`],
+                                      ["Kosten", formatCurrency(b.totalCost)],
+                                      ["Verbrauch", b.avgConsumption !== null ? `${formatNumber(b.avgConsumption, 1)} l` : "–"],
+                                    ].map(([label, value]) => (
+                                      <div key={label}>
+                                        <dt className={clsx(CAPTION, "text-base-content/55 dark:text-navy-500")}>{label}</dt>
+                                        <dd className="font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-gray-100">
+                                          {value}
+                                        </dd>
+                                      </div>
+                                    ))}
+                                  </dl>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               );
             })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SummaryCard({
-  icon: Icon,
-  tone,
-  label,
-  value,
-  subline,
-}: {
-  icon: LucideIcon;
-  tone: ChartTone;
-  label: string;
-  value: string;
-  subline?: string;
-}) {
-  return (
-    <div className="relative rounded-sm border border-base-300/70 bg-base-100 p-5 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-      <div className={clsx("flex items-center gap-2 mb-2", TONE_TEXT[tone])}>
-        <Icon className="h-4 w-4" aria-hidden="true" />
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
-          {label}
-        </span>
-      </div>
-      <div className="font-numeric text-3xl font-semibold tabular-nums leading-none text-base-content dark:text-white">
-        {value}
-      </div>
-      {subline && (
-        <p className="mt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
-          {subline}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function YearlyDetails({ yearStats }: { yearStats: FleetYearlyStats }) {
-  return (
-    <div className="space-y-3 border-t border-base-200 bg-base-200/40 p-5 animate-fade-in dark:border-navy-700 dark:bg-navy-900/30">
-      <h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
-        Fahrzeuge in {yearStats.year}
-      </h4>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {yearStats.motorcycles.map((m) => (
-          <div key={m.id} className="rounded-sm border border-base-300/70 bg-base-100 p-3 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] dark:border-navy-700 dark:bg-navy-800">
-            <div className="font-subdisplay text-sm text-base-content dark:text-white mb-2 truncate">
-              {m.make} {m.model}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-500">
-                  Distanz
-                </div>
-                <div className="font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-gray-100">
-                  {formatNumber(m.distance)} km
-                </div>
-              </div>
-              <div>
-                <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-500">
-                  Kosten
-                </div>
-                <div className="font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-gray-100">
-                  {formatCurrency(m.cost)}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+        </tbody>
+      </table>
     </div>
   );
 }
 
 export default function FleetStatsPage() {
   const { stats } = useLoaderData<typeof clientLoader>();
-  const [expandedYear, setExpandedYear] = useState<number | null>(null);
+  const { theme } = useTheme();
+  const mode = theme === "dark" ? "dark" : "light";
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const toggleYear = (year: number) => {
-    setExpandedYear(expandedYear === year ? null : year);
+  const years = useMemo(() => activeYears(stats.years), [stats.years]);
+  const period = parsePeriod(searchParams.get("jahr"), years);
+  const setPeriod = (p: StatsPeriod) => {
+    const next = new URLSearchParams(searchParams);
+    if (p === "all") next.delete("jahr");
+    else next.set("jahr", String(p));
+    setSearchParams(next, { replace: true, preventScrollReset: true });
   };
+  const toggleYear = (y: number) => setPeriod(period === y ? "all" : y);
 
-  const activeYearlyStats = (Array.isArray(stats?.yearly) ? stats.yearly : []).filter((y) => y.distance > 0 || y.cost > 0);
+  // Same colour per bike as on the map page: ascending id, never re-assigned.
+  const colors = useMemo(() => {
+    const map = new Map<number, string>();
+    [...stats.motorcycles]
+      .sort((a, b) => a.id - b.id)
+      .forEach((m, i) => map.set(m.id, SERIES_COLORS[Math.min(i, SERIES_COLORS.length - 1)][mode]));
+    return map;
+  }, [stats.motorcycles, mode]);
 
-  if (activeYearlyStats.length === 0) {
+  const summary = useMemo(() => summarizePeriod(stats, period), [stats, period]);
+  const season = useMemo(() => seasonRows(stats, period), [stats, period]);
+  const consumption = useMemo(() => consumptionRows(stats, period), [stats, period]);
+  const timeline = useMemo(() => timelineRows(stats), [stats]);
+  const fuelPrices = useMemo(
+    () => (period === "all" ? stats.fuelPrices : stats.fuelPrices.filter((m) => m.month.startsWith(`${period}-`))),
+    [stats.fuelPrices, period],
+  );
+
+  if (years.length === 0) {
     return (
       <div className="container mx-auto px-4 pt-3 pb-24">
         <EmptyState
@@ -268,138 +306,137 @@ export default function FleetStatsPage() {
     );
   }
 
+  const prev = summary.previous;
+  const prevCostPerKm = prev && prev.distance > 0 ? prev.totalCost / prev.distance : null;
+  const periodLabel = period === "all" ? "Gesamt" : String(period);
+  const isRunningYear = period === stats.currentYear;
+  const lifetimeBikes = stats.motorcycles.filter((m) => m.ownedFrom !== null || m.runningCost > 0);
+
   return (
-    <div className="container mx-auto space-y-6 px-4 pt-3 pb-24 animate-fade-in md:p-6 md:space-y-8">
-      {/* Overall Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <SummaryCard
-          icon={TrendingUp}
-          tone="primary"
-          label="Gesamtdistanz"
-          value={`${formatNumber(stats.overall.totalDistance)} km`}
+    <div className="container mx-auto space-y-6 px-4 pt-3 pb-24 animate-fade-in md:space-y-8 md:p-6">
+      {/* Period filter — one row above everything it drives */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-subdisplay text-lg text-base-content dark:text-white">
+          Statistiken <span className="text-base-content/50 dark:text-navy-400">· {periodLabel}</span>
+        </h1>
+        <PeriodPicker years={years} period={period} onChange={setPeriod} />
+      </div>
+
+      {/* KPI row */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <KpiTile
+          label="Distanz"
+          value={`${formatNumber(summary.distance)} km`}
+          sub={isRunningYear ? "bis heute" : undefined}
+          change={prev ? percentChange(summary.distance, prev.distance) : null}
+          changeLabel={prev?.label}
         />
-        <SummaryCard
+        <KpiTile
+          label="Kosten"
+          value={formatCurrency(summary.totalCost)}
+          change={prev ? percentChange(summary.totalCost, prev.totalCost) : null}
+          upIsGood={false}
+          changeLabel={prev?.label}
+        />
+        <KpiTile
+          label="Kosten pro km"
+          value={summary.costPerKm !== null ? formatCurrency(summary.costPerKm) : "–"}
+          change={summary.costPerKm !== null && prevCostPerKm ? percentChange(summary.costPerKm, prevCostPerKm) : null}
+          upIsGood={false}
+          changeLabel={prev?.label}
+        />
+        <KpiTile
+          label="Treibstoff"
+          value={`${formatNumber(summary.liters)} l`}
+          sub={summary.avgConsumption !== null ? `Ø ${formatNumber(summary.avgConsumption, 1)} l/100 km` : undefined}
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ChartCard
+          title="Fahrleistung pro Jahr"
+          subtitle="Kilometer je Motorrad. Auf ein Jahr tippen, um es auszuwählen."
+          icon={RouteIcon}
+        >
+          <DistanceByYearChart
+            years={years}
+            bikes={stats.motorcycles}
+            colors={colors}
+            mode={mode}
+            period={period}
+            onSelectYear={toggleYear}
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Kosten pro Jahr"
+          subtitle="Alle Ausgaben inkl. Treibstoff, Teile und Fixkosten."
           icon={Wallet}
-          tone="secondary"
-          label="Gesamtkosten"
-          value={formatCurrency(stats.overall.totalCost)}
-          subline={
-            stats.yearly[0]?.motorcycleCount > 0
-              ? `Ø ${formatCurrency(stats.overall.totalCost / stats.yearly[0].motorcycleCount)} pro Motorrad`
-              : undefined
+        >
+          <CostByYearChart years={years} mode={mode} period={period} onSelectYear={toggleYear} />
+        </ChartCard>
+
+        <ChartCard
+          title="Fahrsaison"
+          subtitle={
+            period === "all"
+              ? "Durchschnittliche Kilometer pro Monat über alle abgeschlossenen Jahre."
+              : "Kilometer pro Monat im Vergleich zu den Vorjahren (geschätzt aus Kilometerständen)."
           }
-        />
-        <SummaryCard
-          icon={Bike}
-          tone="workshop"
-          label="Aktueller Fuhrpark"
-          value={`${stats.yearly[0]?.motorcycleCount || 0} Bikes`}
-        />
+          icon={Sun}
+        >
+          <SeasonChart rows={season.rows} referenceYears={season.referenceYears} mode={mode} period={period} />
+        </ChartCard>
+
+        <ChartCard title={`Kostenverteilung · ${periodLabel}`} subtitle="Wohin das Geld geflossen ist." icon={PieChart}>
+          <CostBreakdownList costs={summary.costs} total={summary.totalCost} mode={mode} />
+        </ChartCard>
+
+        <ChartCard
+          title={`Motorräder im Vergleich · ${periodLabel}`}
+          subtitle="Balken = gefahrene Kilometer, rechts die Kosten pro Kilometer."
+          icon={Gauge}
+        >
+          <BikeComparison bikes={summary.bikes} colors={colors} />
+        </ChartCard>
+
+        <ChartCard title={`Verbrauch · ${periodLabel}`} subtitle={`${period === "all" ? "Jahresmittel" : "Monatsmittel"} in l/100 km, Ausreisser entfernt.`} icon={Fuel}>
+          <ConsumptionChart
+            rows={consumption.rows}
+            bikeIds={consumption.bikeIds}
+            granularity={consumption.granularity}
+            bikes={stats.motorcycles}
+            colors={colors}
+            mode={mode}
+          />
+        </ChartCard>
+
+        <ChartCard title={`Treibstoffpreis · ${periodLabel}`} subtitle="Durchschnittlich bezahlter Preis pro Liter." icon={Fuel}>
+          <FuelPriceChart months={fuelPrices} mode={mode} />
+        </ChartCard>
+
+        <ChartCard title="Fuhrpark-Zeitachse" subtitle="Wann welches Motorrad in der Garage stand." icon={CalendarRange}>
+          <OwnershipTimeline rows={timeline} colors={colors} mode={mode} />
+        </ChartCard>
       </div>
 
-      {/* Detailed Stats Table & Charts */}
-      <div className="space-y-8">
-        <ChartSection
-          title="Anzahl Motorräder"
-          icon={Bike}
-          data={stats.yearly}
-          maxValue={stats.overall.maxYearlyCount}
-          valueKey="motorcycleCount"
-          unit=""
-          colorClass="bg-[var(--color-workshop)] hover:bg-[var(--color-workshop)]/85"
-          tone="workshop"
-        />
+      <ChartCard
+        title="Gesamtkosten (Total Cost of Ownership)"
+        subtitle="Kaufpreis minus Verkaufserlös plus alle Betriebskosten. Bei Motorrädern im Besitz ohne Restwert — also das bisher investierte Geld."
+        icon={Landmark}
+      >
+        <OwnershipCostChart bikes={lifetimeBikes} mode={mode} />
+        <OwnershipCostTable bikes={lifetimeBikes} colors={colors} />
+      </ChartCard>
 
-        <ChartSection
-          title="Fahrleistung"
-          icon={BarChart3}
-          data={stats.yearly}
-          maxValue={stats.overall.maxYearlyDistance}
-          valueKey="distance"
-          unit=" km"
-          colorClass="bg-primary hover:bg-primary/85"
-          tone="primary"
-        />
+      <ChartCard title="Jahresübersicht" icon={Table2}>
+        <YearTable years={years} bikes={stats.motorcycles} colors={colors} period={period} onSelectYear={setPeriod} />
+      </ChartCard>
 
-        <ChartSection
-          title="Unterhaltskosten"
-          icon={Wallet}
-          data={stats.yearly}
-          maxValue={stats.overall.maxYearlyCost}
-          valueKey="cost"
-          unit=""
-          isCurrency
-          colorClass="bg-secondary hover:bg-secondary/85"
-          tone="secondary"
-        />
-
-        {/* Yearly Data Table */}
-        <section className="space-y-3 pb-6">
-          <h2 className="font-subdisplay text-sm text-base-content dark:text-white">Jahresübersicht</h2>
-          <div className="overflow-hidden rounded-sm border border-base-300/70 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-base-200 bg-base-200/50 dark:border-navy-700 dark:bg-navy-900/50">
-                  <tr>
-                    <th className="px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300">Jahr</th>
-                    <th className="hidden sm:table-cell px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Motorräder</th>
-                    <th className="px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Distanz</th>
-                    <th className="px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Kosten</th>
-                    <th className="hidden sm:table-cell px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300 text-right">Ø Kosten/km</th>
-                    <th className="px-2 py-3 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-base-200 dark:divide-navy-700">
-                  {activeYearlyStats.map((year) => {
-                    const avgCostPerKm = year.distance > 0 ? year.cost / year.distance : 0;
-                    const isExpanded = expandedYear === year.year;
-                    return (
-                      <Fragment key={year.year}>
-                        <tr
-                          className={clsx(
-                            "group cursor-pointer transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/40",
-                            isExpanded && "bg-base-200/40 dark:bg-navy-700/30",
-                          )}
-                          onClick={() => toggleYear(year.year)}
-                        >
-                          <td className="px-4 py-3 font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">
-                            {year.year}
-                          </td>
-                          <td className="hidden sm:table-cell px-4 py-3 text-right font-numeric text-sm tabular-nums text-base-content/70 dark:text-navy-300">
-                            {year.motorcycleCount}
-                          </td>
-                          <td className="px-4 py-3 text-right font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">
-                            {formatNumber(year.distance)} km
-                          </td>
-                          <td className="px-4 py-3 text-right font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">
-                            {formatCurrency(year.cost)}
-                          </td>
-                          <td className="hidden sm:table-cell px-4 py-3 text-right font-numeric text-sm tabular-nums text-base-content/65 dark:text-navy-400">
-                            {year.distance > 0 ? formatCurrency(avgCostPerKm) : '–'}
-                          </td>
-                          <td className="px-2 py-3 text-right">
-                            <ChevronDown className={clsx(
-                              "h-4 w-4 text-base-content/45 transition-transform",
-                              isExpanded && "rotate-180",
-                            )} aria-hidden="true" />
-                          </td>
-                        </tr>
-                        {isExpanded && (
-                          <tr>
-                            <td colSpan={6} className="p-0">
-                              <YearlyDetails yearStats={year} />
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-      </div>
+      <p className="flex items-center gap-2 text-xs text-base-content/50 dark:text-navy-400">
+        <Bike className="h-3.5 w-3.5" aria-hidden="true" />
+        Distanzen werden zwischen zwei Kilometerständen gleichmässig auf die Tage verteilt. Einträge von Vorbesitzern zählen nicht.
+      </p>
     </div>
   );
 }
