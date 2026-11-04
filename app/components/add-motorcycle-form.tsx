@@ -5,6 +5,7 @@ import { seriesPath, seriesTree } from "~/utils/series";
 import { decodeVin } from "~/services/parts";
 import { getSessionToken } from "~/services/auth";
 import { useState } from "react";
+import { formatNumber } from "~/utils/numberUtils";
 import Cropper, { type Area } from "react-easy-crop";
 import getCroppedImg from "~/utils/cropImage";
 import { toast } from "~/hooks/use-toast";
@@ -64,6 +65,15 @@ export function AddMotorcycleForm({
   const [hasSidecar, setHasSidecar] = useState<boolean>(Boolean(initialValues?.hasSidecar));
   // Status drives the conditional "Verkauf" (sale) block.
   const [status, setStatus] = useState<MotorcycleStatus>(initialValues?.status ?? "active");
+  const [saleOdo, setSaleOdo] = useState<string>(
+    typeof initialValues?.saleOdo === "number" ? String(initialValues.saleOdo) : "",
+  );
+  // Highest odometer reading logged for this bike — the sale can't be below it.
+  const lastKnownOdo = existingMaintenance.reduce(
+    (max, r) => (typeof r.odo === "number" && r.odo > max ? r.odo : max),
+    typeof initialValues?.initialOdo === "number" ? initialValues.initialOdo : 0,
+  );
+  const saleOdoBelowLast = saleOdo !== "" && Number(saleOdo) < lastKnownOdo;
 
   const isSubmitting = navigation.state === "submitting" &&
                       (navigation.formData?.get("intent") === intent ||
@@ -552,6 +562,46 @@ export function AddMotorcycleForm({
                     </select>
                   </div>
                 </div>
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="saleOdo" className="text-xs font-medium text-secondary dark:text-navy-300">Kilometerstand beim Verkauf</label>
+                <div className="flex rounded-sm">
+                  <input
+                    type="number"
+                    name="saleOdo"
+                    id="saleOdo"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder={lastKnownOdo > 0 ? String(lastKnownOdo) : "0"}
+                    value={saleOdo}
+                    onChange={(e) => {
+                      setSaleOdo(e.target.value);
+                      clearClientError("saleOdo");
+                    }}
+                    onBlur={(e) => validateField("saleOdo", e.currentTarget.value)}
+                    aria-invalid={Boolean(fieldError("saleOdo"))}
+                    aria-describedby="saleOdo-hint"
+                    className="block w-full rounded-l-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                  />
+                  <span className="flex shrink-0 items-center rounded-r-sm border border-l-0 border-base-300 bg-base-200 px-3 text-sm text-secondary dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300">
+                    km
+                  </span>
+                </div>
+                {fieldError("saleOdo") ? (
+                  <p id="saleOdo-hint" className="text-xs text-error">{fieldError("saleOdo")}</p>
+                ) : (
+                  <p
+                    id="saleOdo-hint"
+                    className={saleOdoBelowLast ? "text-xs text-warning" : "text-xs text-base-content/55 dark:text-navy-400"}
+                  >
+                    {saleOdoBelowLast
+                      ? `Tiefer als der letzte erfasste Stand (${formatNumber(lastKnownOdo)} km).`
+                      : lastKnownOdo > 0
+                        ? `Letzter erfasster Stand: ${formatNumber(lastKnownOdo)} km`
+                        : "Zählt als letzter Kilometerstand in den Statistiken."}
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <label htmlFor="buyerName" className="text-xs font-medium text-secondary dark:text-navy-300">Käufer</label>

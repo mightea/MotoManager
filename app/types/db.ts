@@ -77,6 +77,8 @@ export interface Motorcycle {
   normalizedSalePrice: number | null;
   saleCurrencyCode: string | null;
   buyerName: string | null;
+  /** Odometer at the sale (migration 059); null when unknown. */
+  saleOdo: number | null;
   latestOdo?: number | null;
   openIssues?: number;
   maintenanceCount?: number;

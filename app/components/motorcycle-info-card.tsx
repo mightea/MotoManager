@@ -259,6 +259,11 @@ export function MotorcycleInfoCard({
                       : null
                   }
                 />
+                <StatisticEntry
+                  icon={Gauge}
+                  label="Kilometerstand"
+                  value={typeof motorcycle.saleOdo === "number" ? `${formatNumber(motorcycle.saleOdo)} km` : null}
+                />
                 <StatisticEntry icon={Info} label="Käufer" value={motorcycle.buyerName || null} />
               </div>
             </div>

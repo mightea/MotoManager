@@ -55,6 +55,7 @@ export const motorcycleSchema = z.object({
   salePrice: z.preprocess(preprocessNumber, z.number().min(0, "Verkaufspreis muss grösser oder gleich 0 sein.").optional()),
   saleCurrencyCode: z.preprocess(emptyStringToUndefined, z.string().optional()),
   buyerName: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  saleOdo: z.preprocess(preprocessInteger, z.number().int().min(0, "Kilometerstand muss grösser oder gleich 0 sein.").optional()),
   // Per-wheel brake type; empty string clears the value on the backend.
   frontBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
   rearBrakeType: z.preprocess(emptyStringToUndefined, z.enum(["disc", "drum"]).optional()),
