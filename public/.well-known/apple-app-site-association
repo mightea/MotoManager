@@ -1,5 +1,16 @@
 {
   "webcredentials": {
     "apps": ["L23768TC7X.ltd.herrmann.MotoManager"]
+  },
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["L23768TC7X.ltd.herrmann.MotoManager"],
+        "components": [
+          { "/": "/parts/*", "comment": "Printed part labels open the part in the iOS app" },
+          { "/": "/storage-locations/*", "comment": "Printed storage-location labels open the location in the iOS app" }
+        ]
+      }
+    ]
   }
 }
