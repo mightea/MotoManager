@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026.11.2](https://github.com/mightea/MotoManager/compare/2026.11.1...2026.11.2) (2026-11-07)
+
+
+### ✨ Features
+
+* declare universal links for part and storage-location labels ([466d689](https://github.com/mightea/MotoManager/commit/466d689e511c699c54184a9ae9af5a9fabdb430c))
+* enter the odometer reading when selling a motorcycle ([b237045](https://github.com/mightea/MotoManager/commit/b237045aedfe005022e5c4fb1b6ebcbd3acd74b9))
+* select the last 3, 5 or 10 years on the stats page ([c0fbcb0](https://github.com/mightea/MotoManager/commit/c0fbcb08cbbdb2824c9b0f0a719be20694b79155))
+
 ## [2026.11.1](https://github.com/mightea/MotoManager/compare/2026.11.0...2026.11.1) (2026-11-04)
 
 
