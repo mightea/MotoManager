@@ -335,7 +335,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
     <div className="space-y-6">
       <div
         className={clsx(
-          "sticky z-20 -mx-4 flex items-center justify-between gap-3 border-b px-4 pb-3 pt-3",
+          "sticky z-20 -mx-4 flex flex-wrap items-center justify-between gap-3 border-b px-4 pb-3 pt-3",
           selectionMode
             ? "border-primary/30 bg-primary/10 dark:bg-primary/15"
             : "border-gray-100 bg-white dark:border-navy-700 dark:bg-navy-800",
@@ -384,7 +384,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
           </>
         ) : (
           <>
-            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-fit flex-1 flex-wrap items-center gap-2">
               <FilterChip
                 label="Alle"
                 icon={Layers}

@@ -38,7 +38,7 @@ const PRIORITY_CONFIG: Record<
 /**
  * IssueItem — a service-manual defect line.
  *
- *  █ [icon]  Description, truncated at one line ........... HOCH    ›
+ *  █ [icon]  Description, up to two lines ................. HOCH    ›
  *           [Datum · 12'500 km]
  */
 export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
@@ -56,7 +56,7 @@ export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
       <PriorityIcon className={clsx("h-4 w-4 shrink-0 ml-1", cfg.tone)} aria-hidden="true" />
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium leading-tight text-base-content dark:text-gray-100">
+        <p className="line-clamp-2 text-sm font-medium leading-tight text-base-content dark:text-gray-100">
           {issue.title}
         </p>
         <p

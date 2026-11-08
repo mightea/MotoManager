@@ -631,8 +631,12 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                           </span>
                         )}
                       </p>
-                      <p className="truncate text-[11px] text-base-content/50">
-                        {location ? storageLocationPath(location, storageLocations) : "Kein Lagerort"}
+                      <p className="truncate text-xs text-base-content/70">
+                        {location ? (
+                          storageLocationPath(location, storageLocations)
+                        ) : (
+                          <span className="font-semibold text-warning">Kein Lagerort — beim Bearbeiten zuordnen</span>
+                        )}
                         {stock.notes && (
                           <>
                             {" · "}

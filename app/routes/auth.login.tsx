@@ -1,4 +1,4 @@
-import { Mail, User, Lock, ArrowRight, Fingerprint } from "lucide-react";
+import { Mail, User, Lock, ArrowRight, Fingerprint, Eye, EyeOff } from "lucide-react";
 import {
   Form,
   data,
@@ -197,6 +197,7 @@ export default function Login() {
   const isRegisterSubmitting = navigation.state === "submitting" && submittingIntent === "register";
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
   const [identifier, setIdentifier] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [currentYear] = useState(() => new Date().getFullYear());
 
   const loginError =
@@ -328,7 +329,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="name"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
                       >
                         Vollständiger Name
                       </label>
@@ -356,7 +357,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="email"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
                       >
                         E-Mail Adresse
                       </label>
@@ -385,7 +386,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="username"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
                       >
                         Benutzername
                       </label>
@@ -416,7 +417,7 @@ export default function Login() {
                       <div className="group relative">
                         <label
                           htmlFor="new-password"
-                          className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+                          className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
                         >
                           Passwort
                         </label>
@@ -443,7 +444,7 @@ export default function Login() {
                       <div className="group relative">
                         <label
                           htmlFor="confirm-password"
-                          className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+                          className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
                         >
                           Bestätigen
                         </label>
@@ -504,7 +505,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="identifier"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
                       >
                         E-Mail oder Benutzername
                       </label>
@@ -534,7 +535,7 @@ export default function Login() {
                     <div className="group relative">
                       <label
                         htmlFor="password"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
                       >
                         Passwort
                       </label>
@@ -543,15 +544,24 @@ export default function Login() {
                         <input
                           id="password"
                           name="password"
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           autoComplete="current-password"
                           placeholder="••••••••"
                           className={clsx(
-                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3.5 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
+                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3.5 pl-11 pr-12 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
                             fieldErrors?.password &&
                               "border-error focus:border-error focus:ring-error/30 dark:border-error",
                           )}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                          aria-pressed={showPassword}
+                          className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-sm text-base-content/55 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                        </button>
                       </div>
                       {fieldErrors?.password && (
                         <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">

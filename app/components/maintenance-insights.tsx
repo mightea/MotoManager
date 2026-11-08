@@ -46,6 +46,25 @@ function formatRelativeDuration(dateStr: string): string {
   return `vor ${diffDays} Tag${diffDays > 1 ? "en" : ""}`;
 }
 
+/**
+ * Share of the service interval already used (0–1+), from time and — when a
+ * km interval is set — distance, whichever is further along. Null when the
+ * insight has no interval to measure against.
+ */
+function intervalUsed(insight: MaintenanceInsight): number | null {
+  const shares: number[] = [];
+  if (insight.lastDate && insight.nextDate) {
+    const last = new Date(insight.lastDate).getTime();
+    const next = new Date(insight.nextDate).getTime();
+    if (next > last) shares.push((Date.now() - last) / (next - last));
+  }
+  if (insight.kmsSinceLast !== undefined && insight.kmsRemaining !== undefined) {
+    const total = insight.kmsSinceLast + insight.kmsRemaining;
+    if (total > 0) shares.push(insight.kmsSinceLast / total);
+  }
+  return shares.length > 0 ? Math.max(0, ...shares) : null;
+}
+
 export function MaintenanceInsightsCard({
   insights,
   className,
@@ -90,7 +109,7 @@ export function MaintenanceInsightsCard({
                 </span>
               )}
               {tally.due > 0 && (
-                <span className="inline-flex items-center gap-1 text-[var(--color-workshop)]" aria-label={`${tally.due} fällig`}>
+                <span className="inline-flex items-center gap-1 text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]" aria-label={`${tally.due} fällig`}>
                   <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                   {tally.due}
                 </span>
@@ -161,10 +180,37 @@ export function MaintenanceInsightsCard({
                             </p>
                             <p
                               suppressHydrationWarning
-                              className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] leading-snug text-base-content/70 dark:text-navy-400"
+                              className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] leading-snug text-base-content/70 dark:text-navy-400"
                             >
                               {meta || "Keine Daten"}
                             </p>
+                            {(() => {
+                              const used = intervalUsed(insight);
+                              if (used === null) return null;
+                              return (
+                                <>
+                                <span suppressHydrationWarning className="sr-only">
+                                  {`${Math.round(used * 100)} % des Intervalls verbraucht`}
+                                </span>
+                                <div
+                                  aria-hidden="true"
+                                  className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-base-200 dark:bg-navy-700"
+                                >
+                                  <div
+                                    className={clsx(
+                                      "h-full rounded-full",
+                                      insight.status === "overdue"
+                                        ? "bg-error"
+                                        : insight.status === "due"
+                                          ? "bg-[var(--color-workshop)]"
+                                          : "bg-success",
+                                    )}
+                                    style={{ width: `${Math.min(100, Math.round(used * 100))}%` }}
+                                  />
+                                </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </li>
                       );
