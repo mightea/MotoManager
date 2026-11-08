@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026.11.3](https://github.com/mightea/MotoManager/compare/2026.11.2...2026.11.3) (2026-11-08)
+
+
+### ✨ Features
+
+* record whether a fuel fill filled the tank and show partial fills ([5d4303c](https://github.com/mightea/MotoManager/commit/5d4303c6d8c70bcc8157d10fa0ba459d3158be35))
+* show a QR code and link in settings to connect the iPhone app ([76a3dd1](https://github.com/mightea/MotoManager/commit/76a3dd1517e8c3797727fabc827e14016741e5f3))
+
 ## [2026.11.2](https://github.com/mightea/MotoManager/compare/2026.11.1...2026.11.2) (2026-11-07)
 
 
