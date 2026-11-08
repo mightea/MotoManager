@@ -868,6 +868,19 @@ export function MaintenanceForm({
                             <div className="flex items-center gap-3">
                                 <input
                                     type="checkbox"
+                                    name="fullTank"
+                                    id="fullTank"
+                                    value="true"
+                                    defaultChecked={initialData?.fullTank !== false}
+                                    className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-navy-500 dark:bg-navy-900 dark:checked:bg-primary" />
+                                <label htmlFor="fullTank" className="text-sm font-medium text-foreground dark:text-white">
+                                    Voll getankt
+                                    <span className="block text-xs font-normal text-base-content/60 dark:text-navy-400">Verbrauch wird von Volltank zu Volltank berechnet</span>
+                                </label>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
                                     name="fuelAdditiveAdded"
                                     id="fuelAdditiveAdded"
                                     value="true"

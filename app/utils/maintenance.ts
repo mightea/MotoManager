@@ -117,6 +117,9 @@ export function summarizeMaintenanceRecord(record: MaintenanceRecord, userLocati
       }
 
       const stats = [];
+      if (record.fullTank === false) {
+        stats.push("Teilfüllung");
+      }
       if (record.fuelConsumption) {
         stats.push(`${record.fuelConsumption.toFixed(2)} L/100km`);
       }

@@ -161,7 +161,8 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const currentLocationName = getCurrentLocationName(maintenanceRecords, userLocations);
 
   // Fuel stats
-  const fuelRecords = maintenanceRecords.filter((r) => r.type === "fuel" && r.fuelAmount && r.tripDistance);
+  // Partial fills carry no consumption of their own (it lands on the next full tank).
+  const fuelRecords = maintenanceRecords.filter((r) => r.type === "fuel" && r.fuelAmount && r.tripDistance && r.fuelConsumption != null);
   const avgFuelConsumption = fuelRecords.length > 0
     ? fuelRecords.reduce((sum, r) => sum + (r.fuelConsumption || 0), 0) / fuelRecords.length
     : null;
@@ -564,6 +565,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       pricePerUnit: parseNumber(formData.get("pricePerUnit")),
       fuelAdditiveAdded: formData.get("fuelAdditiveAdded") === "true",
       leadSubstituteAdded: formData.get("leadSubstituteAdded") === "true",
+      fullTank: type !== "fuel" || formData.get("fullTank") === "true",
       normalizedCost: (parseNumber(formData.get("cost")) || 0) * getCurrencyFactor(parseString(formData.get("currency"))),
       bundledItems: formData.getAll("bundledItems[]") as string[],
     };

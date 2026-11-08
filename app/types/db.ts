@@ -157,6 +157,8 @@ export interface MaintenanceRecord {
   tripDistance: number | null;
   fuelAdditiveAdded: boolean;
   leadSubstituteAdded: boolean;
+  /** Fuel only: the tank was filled up. Consumption runs full tank to full tank. */
+  fullTank: boolean;
   parentId: number | null;
 }
 
