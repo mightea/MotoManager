@@ -47,6 +47,7 @@ import {
   Combine,
 } from "lucide-react";
 import { registerPasskey } from "~/utils/webauthn";
+import { AppConnectCard } from "~/components/app-connect-card";
 import type { Authenticator, FluidType, Location, LocationType, UserSettings } from "~/types/db";
 
 export function meta() {
@@ -465,7 +466,7 @@ const LOCATION_SECTIONS: LocationSection[] = [
 ];
 
 export default function Settings() {
-  const { locations, userAuthenticators, settings } = useLoaderData<typeof clientLoader>();
+  const { locations, user, userAuthenticators, settings } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
   type DialogState =
@@ -575,6 +576,8 @@ export default function Settings() {
           <span>{actionData.success}</span>
         </div>
       )}
+
+      <AppConnectCard username={user.username} />
 
       {/* Password Change Section */}
       <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
