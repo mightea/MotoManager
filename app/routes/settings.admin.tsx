@@ -26,6 +26,7 @@ import {
 import { USER_ROLES, type UserRole } from "~/types/auth";
 import type { Route } from "./+types/settings.admin";
 import { Button } from "~/components/button";
+import { PageHeader } from "~/components/page-header";
 import { useConfirm } from "~/components/confirm-provider";
 import { useState } from "react";
 import { Pencil, Trash2, Plus, Shield, Coins, ArrowLeft, UserPlus, Server, DatabaseBackup, Smartphone, UserCog } from "lucide-react";
@@ -205,6 +206,18 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   return null;
 }
 
+function describeUsers(list: PublicUser[]): string {
+  if (list.length === 0) return "niemanden";
+  return list.map((u) => u.username).join(", ");
+}
+
+function relativeDays(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "heute";
+  if (days === 1) return "gestern";
+  return `vor ${days} Tagen`;
+}
+
 export default function AdminSettings() {
   const { users = [], currencies = [], appUpgrade, user: currentUser } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
@@ -212,6 +225,12 @@ export default function AdminSettings() {
   const submit = useSubmit();
   const confirmDialog = useConfirm();
   const [editingCurrencyId, setEditingCurrencyId] = useState<number | null>(null);
+  const [softBuild, setSoftBuild] = useState(String(appUpgrade.softUpgradeBuild));
+  const [hardBuild, setHardBuild] = useState(String(appUpgrade.hardUpgradeBuild));
+  const latestBuild = users.reduce<number | null>(
+    (max, u) => (u.appBuild != null && (max === null || u.appBuild > max) ? u.appBuild : max),
+    null,
+  );
 
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<PublicUser | null>(null);
@@ -235,81 +254,28 @@ export default function AdminSettings() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-4 sm:pt-28 pb-20">
-      <div className="flex items-center gap-4">
-        <Link
-          to="/settings"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-secondary transition-colors hover:border-primary hover:text-primary dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="space-y-1">
-          <h1 className="font-display text-4xl uppercase tracking-wide leading-none text-base-content dark:text-white">
-            Admin-Bereich
-          </h1>
-          <p className="text-secondary dark:text-navy-300">
-            Benutzer verwalten und Währungseinstellungen konfigurieren.
-          </p>
-        </div>
-      </div>
-
-      {/* Server Stats Link */}
-      <div className="rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
-        <Link to="/settings/server-stats" className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-purple-100 p-2 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
-              <Server className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground dark:text-white">Server Statistiken</h3>
-              <p className="text-sm text-secondary dark:text-navy-300">
-                Globale Kennzahlen und Systemstatus einsehen.
-              </p>
-            </div>
-          </div>
-          <div className="text-secondary dark:text-navy-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="h-5 w-5"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          </div>
-        </Link>
-      </div>
-
-      {/* Backups Link */}
-      <div className="rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
-        <Link to="/settings/backups" className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-              <DatabaseBackup className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground dark:text-white">Backups</h3>
-              <p className="text-sm text-secondary dark:text-navy-300">
-                Datenbank-Backups überwachen und manuell auslösen.
-              </p>
-            </div>
-          </div>
-          <div className="text-secondary dark:text-navy-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="h-5 w-5"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          </div>
-        </Link>
-      </div>
+    <div className="mx-auto w-full max-w-5xl space-y-8 p-4 pt-4 sm:pt-10 pb-20">
+      <PageHeader
+        eyebrow="Konfiguration · Admin"
+        title="Admin-Bereich"
+        description={`${users.length} Benutzer · Währungen · iOS-App-Updates · Wartung`}
+        actions={
+          <>
+            <Link to="/settings" className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white">
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              Einstellungen
+            </Link>
+            <Link to="/settings/backups" className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white">
+              <DatabaseBackup className="h-3.5 w-3.5" aria-hidden="true" />
+              Backups
+            </Link>
+            <Link to="/settings/server-stats" className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white">
+              <Server className="h-3.5 w-3.5" aria-hidden="true" />
+              Server-Statistiken
+            </Link>
+          </>
+        }
+      />
 
       {actionData && "error" in actionData && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
@@ -368,11 +334,31 @@ export default function AdminSettings() {
                   <td className="px-4 py-3 text-secondary dark:text-navy-300">
                     {u.email}
                   </td>
-                  <td suppressHydrationWarning className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
-                    {u.lastLoginAt ? dateFormatter.format(new Date(u.lastLoginAt)) : "Nie"}
+                  <td suppressHydrationWarning className="px-4 py-3">
+                    {u.lastLoginAt ? (
+                      <span className="flex flex-col">
+                        <span className="text-sm text-foreground dark:text-white">{relativeDays(u.lastLoginAt)}</span>
+                        <span className="font-mono text-[11px] text-base-content/70 dark:text-navy-400">
+                          {dateFormatter.format(new Date(u.lastLoginAt))}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-base-content/70">Nie</span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-xs text-secondary dark:text-navy-400">
-                    {u.appVersion ? `${u.appVersion} (${u.appBuild ?? "?"})` : "–"}
+                  <td className="px-4 py-3 text-xs text-base-content/70 dark:text-navy-400">
+                    {u.appVersion ? (
+                      <span className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-mono">{`${u.appVersion} (${u.appBuild ?? "?"})`}</span>
+                        {u.appBuild != null && latestBuild != null && u.appBuild < latestBuild && (
+                          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
+                            Veraltet
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      "Keine App"
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs font-medium text-foreground dark:text-white capitalize">
                     {u.role}
@@ -604,7 +590,8 @@ export default function AdminSettings() {
                 name="softUpgradeBuild"
                 min="0"
                 step="1"
-                defaultValue={appUpgrade.softUpgradeBuild}
+                value={softBuild}
+                onChange={(event) => setSoftBuild(event.target.value)}
                 required
                 className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
               />
@@ -619,12 +606,24 @@ export default function AdminSettings() {
                 name="hardUpgradeBuild"
                 min="0"
                 step="1"
-                defaultValue={appUpgrade.hardUpgradeBuild}
+                value={hardBuild}
+                onChange={(event) => setHardBuild(event.target.value)}
                 required
                 className="block w-full rounded-lg border-gray-200 bg-white p-2 text-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-800 dark:text-white"
               />
             </div>
           </div>
+          <p className="rounded-sm border border-base-300 bg-base-200/50 px-3 py-2 text-sm text-base-content dark:border-navy-700 dark:bg-navy-900">
+            <strong>Vorschau:</strong>{" "}
+            {Number(softBuild) > 0
+              ? `Erinnerung trifft ${describeUsers(users.filter((u) => u.appBuild != null && u.appBuild <= Number(softBuild)))}`
+              : "Keine Erinnerung"}
+            {" · "}
+            {Number(hardBuild) > 0
+              ? `Sperre trifft ${describeUsers(users.filter((u) => u.appBuild != null && u.appBuild < Number(hardBuild)))}`
+              : "keine Sperre"}
+            {latestBuild != null && ` · neuester Build im Einsatz: ${latestBuild}`}
+          </p>
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting}>
               Speichern
