@@ -14,6 +14,7 @@ import { getDocumentsPayload, invalidateDocuments } from "~/services/documents";
 import clsx from "clsx";
 import { toast } from "~/hooks/use-toast";
 import { EmptyState } from "~/components/empty-state";
+import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/button";
 
 export function meta() {
@@ -265,7 +266,13 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   ];
 
   return (
-    <div className="container mx-auto space-y-4 px-4 pt-3 pb-24">
+    <div className="container mx-auto max-w-7xl space-y-4 px-4 pt-4 pb-24 md:p-6">
+      <PageHeader
+        eyebrow="Archiv"
+        title="Dokumente"
+        description={`${docs.length} ${docs.length === 1 ? "Dokument" : "Dokumente"} · ${counts.assigned} deinen Motorrädern zugeordnet`}
+        className="pb-2"
+      />
       {/* Filter Tabs + Upload — single row so the button has a real
           neighbor instead of floating in a separate band of whitespace. */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-3 dark:border-navy-700">

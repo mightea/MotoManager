@@ -10,9 +10,13 @@ import { fetchFromBackend } from "~/utils/backend";
 import { Plus, Receipt, Calendar, Pencil, Car } from "lucide-react";
 import { ExpenseDialog } from "~/components/expense-dialog";
 import { EmptyState } from "~/components/empty-state";
+import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/button";
 import { formatCurrency } from "~/utils/numberUtils";
 import type { Expense, Motorcycle } from "~/types/db";
+
+// One date format across the app: 01.07.2026, not 1.7.2026.
+const DATE_FORMAT = new Intl.DateTimeFormat("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" });
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
@@ -111,20 +115,37 @@ export default function FleetExpenses() {
     setIsDialogOpen(true);
   };
 
+  // A total only makes sense when every amount is in the same currency.
+  const currenciesUsed = new Set(expenses.map((expense) => expense.currency));
+  const summary =
+    expenses.length === 0
+      ? "Versicherungen, Steuern und andere Ausgaben, die mehrere Motorräder gemeinsam betreffen."
+      : [
+          `${expenses.length} ${expenses.length === 1 ? "Ausgabe" : "Ausgaben"}`,
+          currenciesUsed.size === 1
+            ? formatCurrency(
+                expenses.reduce((sum, expense) => sum + expense.amount, 0),
+                expenses[0].currency,
+              )
+            : null,
+          "für mehrere Motorräder gemeinsam",
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
   return (
-    <div className="container mx-auto space-y-4 px-4 pt-3 pb-24">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 pb-3 dark:border-navy-700">
-        <p className="min-w-0 flex-1 text-sm text-base-content/65 dark:text-navy-400">
-          Versicherungen, Steuern und andere Ausgaben, die mehrere Motorräder gemeinsam betreffen.
-        </p>
-        <Button
-          onClick={openAddDialog}
-          leftIcon={<Plus className="h-4 w-4" />}
-          className="shrink-0"
-        >
-          Neue Ausgabe
-        </Button>
-      </div>
+    <div className="container mx-auto max-w-7xl space-y-4 px-4 pt-4 pb-24 md:p-6">
+      <PageHeader
+        eyebrow="Flotte"
+        title="Ausgaben"
+        description={summary}
+        className="pb-2"
+        actions={
+          <Button onClick={openAddDialog} leftIcon={<Plus className="h-4 w-4" />} className="shrink-0">
+            Neue Ausgabe
+          </Button>
+        }
+      />
 
       <div className="space-y-3">
         {expenses.length === 0 ? (
@@ -156,18 +177,23 @@ export default function FleetExpenses() {
                 className="group relative flex items-start justify-between gap-4 rounded-sm border border-base-300/70 bg-base-100 px-4 py-3 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-colors hover:border-base-content/25 dark:border-navy-700 dark:bg-navy-800"
               >
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold leading-snug text-foreground dark:text-white truncate">
+                  <h3 className="text-sm font-semibold leading-snug text-foreground dark:text-white">
                     {heading}
                   </h3>
 
                   <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
                       <Calendar className="h-3 w-3" aria-hidden="true" />
-                      {new Date(expense.date).toLocaleDateString("de-CH")}
+                      {DATE_FORMAT.format(new Date(expense.date))}
                     </span>
-                    {showCategoryBadge && (
+                    {showCategoryBadge && expense.category && (
                       <span className="inline-flex items-center rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:bg-navy-900 dark:text-navy-300">
                         {expense.category}
+                      </span>
+                    )}
+                    {!expense.category && (
+                      <span className="inline-flex items-center rounded-sm border border-warning/40 bg-warning/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
+                        Kategorie fehlt
                       </span>
                     )}
                     {expense.motorcycleIds?.map(mid => {
