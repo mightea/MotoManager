@@ -51,7 +51,7 @@ export function RidingCalendar({ year, days, seasonStart, seasonEnd, hideCaption
       {!hideCaption && (
         <figcaption className="flex flex-wrap items-baseline justify-between gap-2">
           <span className="font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">{year}</span>
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
             {grid.ridingDays} Fahrtage · {formatNumber(grid.totalKm)} km
           </span>
         </figcaption>
@@ -125,7 +125,7 @@ export function RidingCalendar({ year, days, seasonStart, seasonEnd, hideCaption
           })}
         </svg>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+      <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
         <span>
           {seasonStartDay && seasonEndDay
             ? `Saison ${formatDateShort(seasonStartDay)} – ${formatDateShort(seasonEndDay)}`

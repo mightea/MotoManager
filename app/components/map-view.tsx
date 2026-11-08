@@ -25,7 +25,7 @@ export function MapView({ latitude, longitude, title = "Standort Karte", zoom = 
         src={src}
         className="block"
       ></iframe>
-      <div className="bg-gray-50 px-3 py-1.5 text-[10px] text-secondary dark:bg-navy-900 dark:text-navy-400">
+      <div className="bg-gray-50 px-3 py-1.5 text-[11px] text-secondary dark:bg-navy-900 dark:text-navy-400">
         <a 
           href={`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=${zoom}/${latitude}/${longitude}`}
           target="_blank"

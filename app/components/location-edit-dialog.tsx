@@ -113,7 +113,7 @@ export function LocationEditDialog({ isOpen, onClose, location, defaultType }: L
         <input type="hidden" name="longitude" value={lng ?? ""} />
 
         <div className="space-y-1.5">
-          <label htmlFor="locationName" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+          <label htmlFor="locationName" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
             Name
           </label>
           <input
@@ -128,7 +128,7 @@ export function LocationEditDialog({ isOpen, onClose, location, defaultType }: L
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="locationType" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+          <label htmlFor="locationType" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
             Typ
           </label>
           <select
@@ -147,7 +147,7 @@ export function LocationEditDialog({ isOpen, onClose, location, defaultType }: L
         <div className="space-y-2">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+              <span className="block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
                 Koordinaten
               </span>
               <p className="mt-0.5 text-xs text-secondary/80 dark:text-navy-400">

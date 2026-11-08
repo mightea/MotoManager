@@ -456,7 +456,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-sm border border-base-300 bg-base-100 px-3 py-2 text-sm font-medium text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-800"
               >
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                   Sort
                 </span>
                 <span className="h-3 w-px bg-base-300 dark:bg-navy-600" aria-hidden="true" />
@@ -509,7 +509,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               <span className="hidden font-semibold sm:inline">Verkaufte</span>
               <span
                 className={clsx(
-                  "font-mono text-[10px] font-semibold tabular-nums",
+                  "font-mono text-[11px] font-semibold tabular-nums",
                   showInactive ? "text-primary/70" : "text-base-content/50",
                 )}
               >
@@ -522,7 +522,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           <Button
             type="button"
             onClick={() => setIsAddOpen(true)}
-            stripe
             leftIcon={<Plus className="h-4 w-4" />}
             className="h-auto shrink-0"
           >

@@ -119,7 +119,6 @@ export default function FleetExpenses() {
         </p>
         <Button
           onClick={openAddDialog}
-          stripe
           leftIcon={<Plus className="h-4 w-4" />}
           className="shrink-0"
         >
@@ -137,7 +136,6 @@ export default function FleetExpenses() {
               <Button
                 type="button"
                 onClick={openAddDialog}
-                stripe
                 leftIcon={<Plus className="h-4 w-4" />}
               >
                 Ausgabe hinzufügen
@@ -163,12 +161,12 @@ export default function FleetExpenses() {
                   </h3>
 
                   <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+                    <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
                       <Calendar className="h-3 w-3" aria-hidden="true" />
                       {new Date(expense.date).toLocaleDateString("de-CH")}
                     </span>
                     {showCategoryBadge && (
-                      <span className="inline-flex items-center rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 dark:bg-navy-900 dark:text-navy-300">
+                      <span className="inline-flex items-center rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:bg-navy-900 dark:text-navy-300">
                         {expense.category}
                       </span>
                     )}
@@ -177,7 +175,7 @@ export default function FleetExpenses() {
                       return m ? (
                         <span
                           key={mid}
-                          className="inline-flex items-center gap-1 rounded-sm border border-base-300 bg-base-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/65 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300"
+                          className="inline-flex items-center gap-1 rounded-sm border border-base-300 bg-base-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/65 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300"
                         >
                           <Car className="h-3 w-3" aria-hidden="true" />
                           {m.make} {m.model}
@@ -192,7 +190,7 @@ export default function FleetExpenses() {
                     type="button"
                     onClick={() => openEditDialog(expense)}
                     aria-label="Ausgabe bearbeiten"
-                    className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
+                    className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
                   >
                     <Pencil className="h-3 w-3" aria-hidden="true" />
                     Bearbeiten

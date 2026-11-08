@@ -27,7 +27,7 @@ export function RouteErrorBoundary() {
   return (
     <div className="container mx-auto flex flex-col items-center px-4 py-16 text-center">
       <div className="w-full max-w-lg rounded-sm border border-base-300 bg-base-100 p-8 dark:bg-navy-800">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
           Fehler
         </p>
         <h1 className="mt-1 font-display text-2xl uppercase tracking-wide text-base-content">

@@ -72,7 +72,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
         <div className="space-y-1.5">
           <label
             htmlFor="date"
-            className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+            className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
           >
             Datum
           </label>
@@ -88,7 +88,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
         <div className="space-y-1.5">
           <label
             htmlFor="odo"
-            className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+            className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
           >
             Kilometerstand
           </label>
@@ -106,7 +106,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="status"
-          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+          className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
         >
           Status
         </label>
@@ -127,7 +127,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="priority"
-          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+          className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
         >
           Priorität
         </label>
@@ -148,7 +148,7 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="title"
-          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+          className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
         >
           Titel
         </label>
@@ -167,10 +167,10 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
       <div className="space-y-1.5">
         <label
           htmlFor="description"
-          className="flex items-baseline justify-between gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+          className="flex items-baseline justify-between gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
         >
           <span>Beschreibung</span>
-          <span className="font-mono text-[9px] font-normal normal-case tracking-normal text-base-content/45 dark:text-navy-500">optional</span>
+          <span className="font-mono text-[11px] font-normal normal-case tracking-normal text-base-content/70 dark:text-navy-500">optional</span>
         </label>
         <FormattedTextEditor
           id="description"

@@ -140,7 +140,7 @@ export function ExpenseForm({ initialData, motorcycles, currencies, defaultCurre
               )}
               <div>
                 <div className="text-sm font-bold text-foreground dark:text-white">{m.make} {m.model}</div>
-                {m.numberPlate && <div className="text-[10px] text-secondary/70">{m.numberPlate}</div>}
+                {m.numberPlate && <div className="text-[11px] text-secondary/70">{m.numberPlate}</div>}
               </div>
             </button>
           ))}

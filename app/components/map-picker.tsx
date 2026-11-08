@@ -135,7 +135,7 @@ export function MapPicker({ latitude, longitude, onSelect, className }: MapPicke
       {/* Keyboard-accessible alternative to clicking the map. */}
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
-          <label htmlFor={latId} className="text-[10px] font-semibold uppercase tracking-wider text-base-content/60">
+          <label htmlFor={latId} className="text-[11px] font-semibold uppercase tracking-wider text-base-content/60">
             Breitengrad
           </label>
           <input
@@ -149,7 +149,7 @@ export function MapPicker({ latitude, longitude, onSelect, className }: MapPicke
           />
         </div>
         <div className="space-y-1">
-          <label htmlFor={lngId} className="text-[10px] font-semibold uppercase tracking-wider text-base-content/60">
+          <label htmlFor={lngId} className="text-[11px] font-semibold uppercase tracking-wider text-base-content/60">
             Längengrad
           </label>
           <input

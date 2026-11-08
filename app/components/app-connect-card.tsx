@@ -63,11 +63,11 @@ export function AppConnectCard({ username }: { username: string }) {
 
         <div className="min-w-0 flex-1 space-y-4">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-            <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] leading-5 text-base-content/60 dark:text-navy-400">
+            <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] leading-5 text-base-content/60 dark:text-navy-400">
               Server
             </dt>
             <dd className="truncate text-base-content dark:text-white">{server}</dd>
-            <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] leading-5 text-base-content/60 dark:text-navy-400">
+            <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] leading-5 text-base-content/60 dark:text-navy-400">
               Benutzer
             </dt>
             <dd className="truncate text-base-content dark:text-white">{username}</dd>

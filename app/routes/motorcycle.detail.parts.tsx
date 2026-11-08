@@ -131,7 +131,7 @@ export default function MotorcyclePartsPage({ loaderData }: Route.ComponentProps
           <div className="flex flex-wrap items-center gap-2">
             {assignedNode && (
               <span
-                className="inline-flex items-center gap-1.5 rounded-sm bg-base-200 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/60 dark:bg-navy-800 dark:text-navy-300"
+                className="inline-flex items-center gap-1.5 rounded-sm bg-base-200 px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/60 dark:bg-navy-800 dark:text-navy-300"
                 title={seriesPath(assignedNode, modelSeries)}
               >
                 <Layers className="h-3 w-3" aria-hidden="true" />
@@ -140,7 +140,7 @@ export default function MotorcyclePartsPage({ loaderData }: Route.ComponentProps
             )}
             <Link
               to="/parts"
-              className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
             >
               Alle Teile verwalten
             </Link>
@@ -184,7 +184,7 @@ export default function MotorcyclePartsPage({ loaderData }: Route.ComponentProps
                     <p className="truncate text-sm font-semibold text-base-content dark:text-white">
                       {part.name}
                     </p>
-                    <p className="truncate font-mono text-[11px] text-base-content/55 dark:text-navy-400">
+                    <p className="truncate font-mono text-[11px] text-base-content/70 dark:text-navy-400">
                       {part.partNumber}
                       {part.seriesIds.length > 0 &&
                         ` · ${seriesNames(part.seriesIds, modelSeries).slice(0, 2).join(", ")}`}
@@ -203,7 +203,7 @@ export default function MotorcyclePartsPage({ loaderData }: Route.ComponentProps
                     >
                       {part.onHand}
                     </p>
-                    <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-base-content/45">
+                    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                       Bestand
                     </p>
                   </div>

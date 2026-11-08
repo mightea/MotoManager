@@ -57,7 +57,7 @@ function formatAxis(value: number): string {
 const CARD =
   "relative rounded-sm border border-base-300/70 bg-base-100 p-4 sm:p-5 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800";
 
-const CAPTION = "font-mono text-[10px] font-semibold uppercase tracking-[0.14em]";
+const CAPTION = "font-mono text-[11px] font-semibold uppercase tracking-[0.08em]";
 
 export function ChartCard({
   title,

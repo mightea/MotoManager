@@ -86,7 +86,7 @@ export function BmwbikeImportDialog({
           <div className="space-y-1.5">
             <label
               htmlFor="bmwbike-url"
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+              className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
             >
               BMWBike-URL
             </label>

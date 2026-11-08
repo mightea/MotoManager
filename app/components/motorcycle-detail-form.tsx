@@ -30,7 +30,7 @@ export function MotorcycleDetailForm({
       {initialValues && <input type="hidden" name="detailId" value={initialValues.id} />}
 
       <div className="space-y-1.5">
-        <label htmlFor="title" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+        <label htmlFor="title" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
           Titel
         </label>
         <input
@@ -45,7 +45,7 @@ export function MotorcycleDetailForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="value" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+        <label htmlFor="value" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
           Wert
         </label>
         <input

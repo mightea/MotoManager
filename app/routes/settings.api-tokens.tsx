@@ -194,14 +194,14 @@ export default function ApiTokensSettings() {
       {pageError && (
         <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-          <span className="pt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">ERR</span>
+          <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">ERR</span>
           <span>{pageError}</span>
         </div>
       )}
       {pageSuccess && (
         <div className="relative flex items-start gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3 text-sm text-success dark:border-success/40 dark:bg-success/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-success" />
-          <span className="pt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">OK</span>
+          <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">OK</span>
           <span>{pageSuccess}</span>
         </div>
       )}
@@ -242,7 +242,7 @@ export default function ApiTokensSettings() {
         </div>
 
         <div className="mt-5 space-y-1.5">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
             MCP-Endpunkt
           </span>
           <CopyField value={mcpUrl} label="MCP-URL" />
@@ -426,7 +426,7 @@ const SCOPE_OPTIONS: { value: ApiTokenScope; description: string }[] = [
 ];
 
 const fieldLabelClass =
-  "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400";
 
 function CreateTokenForm({
   error,
@@ -678,7 +678,7 @@ function TokenRow({
           <p className="mt-0.5 font-mono text-xs text-base-content/70 dark:text-navy-300">
             {apiToken.tokenPrefix}…
           </p>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-secondary/60 dark:text-navy-500">
+          <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-secondary/60 dark:text-navy-500">
             Erstellt am {formatDate(apiToken.createdAt)} • Zuletzt verwendet:{" "}
             <span title={apiToken.lastUsedAt ? formatDateTime(apiToken.lastUsedAt) : undefined}>
               {formatRelativeTime(apiToken.lastUsedAt)}

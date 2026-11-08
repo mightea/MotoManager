@@ -20,7 +20,7 @@ const inputClass =
   "block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500";
 
 const labelClass =
-  "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400";
 
 /** Create/edit a part storage location. Root-level entries can anchor to a
  *  workshop/garage place; nested entries inherit the place from their root. */

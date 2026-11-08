@@ -39,7 +39,7 @@ export default function OpenIssuesCard({
               <p className="font-subdisplay text-sm text-base-content">
                 Keine Mängel
               </p>
-              <p className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55">
+              <p className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70">
                 Fahrzeug ist fahrbereit
               </p>
             </div>

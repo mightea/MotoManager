@@ -263,7 +263,7 @@ export function AddMotorcycleForm({
           )}
           {/* Image Upload Field */}
           <div className="space-y-1.5 sm:col-span-2">
-            <label htmlFor="image-upload" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">Bild</label>
+            <label htmlFor="image-upload" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">Bild</label>
             <div className="flex items-start gap-4">
               {initialValues?.image && !croppedImageUrl && (
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-navy-700">
@@ -507,7 +507,7 @@ export function AddMotorcycleForm({
             </label>
           </div>
           <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-navy-700">
-            <label htmlFor="status" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+            <label htmlFor="status" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
               Status
             </label>
             <select
@@ -525,7 +525,7 @@ export function AddMotorcycleForm({
           {/* Sale details — shown when the bike is sold. */}
           {status === "sold" && (
             <div className="space-y-3 rounded-sm border border-base-300/70 bg-base-100 p-3 dark:border-navy-700 dark:bg-navy-900">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
                 Verkauf
               </span>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -620,7 +620,7 @@ export function AddMotorcycleForm({
           {/* Drivetrain — filters chain- vs shaft-drive maintenance options.
               "—" keeps every option available. */}
           <div className="space-y-1 border-t border-gray-100 pt-3 dark:border-navy-700">
-            <label htmlFor="driveType" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+            <label htmlFor="driveType" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
               Antrieb
             </label>
             <select
@@ -638,7 +638,7 @@ export function AddMotorcycleForm({
           {/* Per-wheel brake type — drives the brake options in the maintenance
               dialog. Leave a wheel on "—" to keep every option available. */}
           <div className="space-y-2 pt-1">
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
               Bremsen
             </span>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -680,7 +680,7 @@ export function AddMotorcycleForm({
               >
                 Vorbesitzer verwalten{previousOwnersCount > 0 ? ` (${previousOwnersCount})` : ""}
               </Button>
-              <p className="mt-1.5 text-[10px] text-secondary/70 dark:text-navy-400">
+              <p className="mt-1.5 text-[11px] text-secondary/70 dark:text-navy-400">
                 Erfasse die Besitzerkette oder markiere die Historie als unvollständig.
               </p>
             </div>
@@ -696,7 +696,7 @@ export function AddMotorcycleForm({
               >
                 RoadTrip Import
               </Button>
-              <p className="mt-1.5 text-[10px] text-secondary/70 dark:text-navy-400">
+              <p className="mt-1.5 text-[11px] text-secondary/70 dark:text-navy-400">
                 Importiere historische Tankdaten aus der RoadTrip App (.csv Export).
               </p>
             </div>

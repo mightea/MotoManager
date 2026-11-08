@@ -82,7 +82,7 @@ export function MaintenanceInsightsCard({
         title="Service-Intervalle"
         trailing={
           !isEmpty && (
-            <div className="flex items-center gap-2 font-mono text-[10px] font-semibold tabular-nums">
+            <div className="flex items-center gap-2 font-mono text-[11px] font-semibold tabular-nums">
               {tally.overdue > 0 && (
                 <span className="inline-flex items-center gap-1 text-error" aria-label={`${tally.overdue} überfällig`}>
                   <XCircle className="h-3 w-3" aria-hidden="true" />
@@ -109,7 +109,7 @@ export function MaintenanceInsightsCard({
       <div className="px-4 py-4">
         {isEmpty ? (
           <div className="rounded-sm border border-dashed border-base-300 bg-base-100/40 px-4 py-5 text-center dark:border-navy-600 dark:bg-navy-900/30">
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-base-content/55">
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-base-content/70">
               Keine service-relevanten Daten
             </p>
           </div>
@@ -121,7 +121,7 @@ export function MaintenanceInsightsCard({
 
               return (
                 <div key={category}>
-                  <h3 className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                  <h3 className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                     {category}
                   </h3>
                   <ul className="space-y-2">
@@ -161,7 +161,7 @@ export function MaintenanceInsightsCard({
                             </p>
                             <p
                               suppressHydrationWarning
-                              className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] leading-snug text-base-content/55 dark:text-navy-400"
+                              className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] leading-snug text-base-content/70 dark:text-navy-400"
                             >
                               {meta || "Keine Daten"}
                             </p>

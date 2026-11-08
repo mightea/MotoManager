@@ -347,7 +347,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
                 >
                   <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                   Bearbeiten
@@ -356,7 +356,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-error/50 hover:text-error dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300"
+                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-error/50 hover:text-error dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 Löschen
@@ -367,7 +367,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
         {actionData && "error" in actionData && actionData.error && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
             <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-            <span className="pt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">
+            <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">
               ERR
             </span>
             <span>{actionData.error}</span>
@@ -439,7 +439,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                       <button
                         type="button"
                         onClick={() => imageInputRef.current?.click()}
-                        className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/20 bg-base-100 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-800 dark:text-navy-200"
+                        className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/20 bg-base-100 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-800 dark:text-navy-200"
                       >
                         <Camera className="h-3 w-3" aria-hidden="true" />
                         Foto hochladen
@@ -448,7 +448,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                   </div>
                 )}
                 <figcaption className="flex min-h-9 items-center justify-between gap-2 border-t border-base-200 py-1 pl-3 pr-1.5 dark:border-navy-700">
-                  <span className="truncate font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-base-content/45">
+                  <span className="truncate font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                     Abb. · {part.partNumber}
                   </span>
                   {part.image && (
@@ -482,24 +482,24 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                       {part.partNumber}
                     </span>
                     <span aria-hidden="true" className="h-3 w-px bg-base-content/20" />
-                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                       {part.manufacturer}
                     </span>
                     {part.oemPartNumber && (
                       <>
                         <span aria-hidden="true" className="h-3 w-px bg-base-content/20" />
                         <span
-                          className="font-mono text-[10px] font-semibold tracking-[0.06em] text-base-content/55"
+                          className="font-mono text-[11px] font-semibold tracking-[0.06em] text-base-content/70"
                           title="Originale BMW-Teilenummer"
                         >
-                          <span className="uppercase tracking-[0.14em]">BMW-Nr.</span>{" "}
+                          <span className="uppercase tracking-[0.08em]">BMW-Nr.</span>{" "}
                           {part.oemPartNumber}
                         </span>
                       </>
                     )}
                     <span
                       className={clsx(
-                        "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em]",
+                        "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
                         part.isPublic
                           ? "bg-success/15 text-success"
                           : "bg-base-200 text-base-content/55 dark:bg-navy-800 dark:text-navy-300",
@@ -530,7 +530,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                     <dd className="font-numeric text-xl font-semibold leading-none text-base-content/70">
                       {totalPurchased}
                     </dd>
-                    <dt className="mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-base-content/45">
+                    <dt className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                       Zugekauft
                     </dt>
                   </div>
@@ -538,7 +538,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                     <dd className="font-numeric text-xl font-semibold leading-none text-base-content/70">
                       {totalConsumed > 0 ? `−${totalConsumed}` : "0"}
                     </dd>
-                    <dt className="mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-base-content/45">
+                    <dt className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                       Verbraucht
                     </dt>
                   </div>
@@ -551,7 +551,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                     >
                       {part.onHand}
                     </dd>
-                    <dt className="mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-base-content/45">
+                    <dt className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                       Auf Lager
                     </dt>
                   </div>
@@ -559,7 +559,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                     <dd className="whitespace-nowrap font-numeric text-xl font-semibold leading-none text-base-content/70">
                       {totalStockValue > 0 ? totalStockValue.toFixed(2) : "—"}
                     </dd>
-                    <dt className="mt-1 whitespace-nowrap font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-base-content/45">
+                    <dt className="mt-1 whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                       Einkaufswert CHF
                     </dt>
                   </div>
@@ -620,7 +620,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                         )}
                         <span className="text-base-content/50"> · {formatDate(stock.purchaseDate)}</span>
                         {stock.isUsed && (
-                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-warning/15 px-1.5 py-0.5 align-middle font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-warning">
+                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-warning/15 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-warning">
                             <Recycle className="h-2.5 w-2.5" />
                             Gebraucht
                           </span>
@@ -666,7 +666,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                 type="button"
                 onClick={() => setIsAddConsumptionOpen(true)}
                 disabled={part.onHand < 1}
-                className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary/10 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
+                className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary/10 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
               >
                 <Minus className="h-3 w-3" aria-hidden="true" />
                 Erfassen
@@ -704,7 +704,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                               consumption.motorcycleMake ?? "",
                               consumption.motorcycleModel ?? "",
                             )}/${consumption.motorcycleId}#maintenance`}
-                            className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:bg-base-300 hover:text-base-content dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700"
+                            className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:bg-base-300 hover:text-base-content dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700"
                           >
                             <Wrench className="h-2.5 w-2.5" />
                             {[consumption.motorcycleMake, consumption.motorcycleModel]
@@ -712,7 +712,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                               .join(" ") || "Wartung"}
                           </Link>
                         ) : (
-                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-base-content/55 dark:bg-navy-800 dark:text-navy-300">
+                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 dark:bg-navy-800 dark:text-navy-300">
                             <Wrench className="h-2.5 w-2.5" />
                             Wartung
                           </span>
@@ -737,7 +737,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                         consumptionId: String(consumption.id),
                       })
                     }
-                    className="shrink-0 rounded-sm border border-base-content/15 px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-base-content/55 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:text-navy-300"
+                    className="shrink-0 rounded-sm border border-base-content/15 px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:text-navy-300"
                   >
                     Zurückbuchen
                   </button>
@@ -766,7 +766,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                       <span
                         key={seriesId}
                         title={seriesPath(node, modelSeries)}
-                        className="rounded-sm bg-base-200 px-2 py-1 text-[10px] font-semibold text-base-content/70 dark:bg-navy-800 dark:text-navy-200"
+                        className="rounded-sm bg-base-200 px-2 py-1 text-[11px] font-semibold text-base-content/70 dark:bg-navy-800 dark:text-navy-200"
                       >
                         {node.name}
                       </span>

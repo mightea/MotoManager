@@ -47,9 +47,9 @@
 
   --color-info: #2563eb;
   --color-info-content: #ffffff;
-  --color-success: #16a34a;
+  --color-success: #15803d;          /* 5.0:1 on white — safe for text */
   --color-success-content: #ffffff;
-  --color-warning: #d97706;
+  --color-warning: #b45309;          /* 5.0:1 on white — safe for text */
   --color-warning-content: #ffffff;
   --color-error: #dc2626;
   --color-error-content: #ffffff;
@@ -127,9 +127,9 @@
 
   /* Semantic status tokens — used by toasts, badges, sync indicators.
      Keep these wired up in @theme so dark-mode variants flow through `dark:` classes. */
-  --color-status-success: #16a34a;
+  --color-status-success: #15803d;
   --color-status-success-soft: #4ade80;
-  --color-status-warning: #d97706;
+  --color-status-warning: #b45309;
   --color-status-warning-soft: #fbbf24;
   --color-status-error: #dc2626;
   --color-status-error-soft: #f87171;

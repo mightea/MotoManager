@@ -7,7 +7,7 @@ export function Th({ children, align = "left", hide = false }: { children?: Reac
   return (
     <th
       className={clsx(
-        "px-4 py-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-300",
+        "px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300",
         align === "right" && "text-right",
         hide && "hidden md:table-cell",
       )}

@@ -250,8 +250,7 @@ function DropdownMenuRoot({
           tabIndex={-1}
           onKeyDown={onKeyDown}
           className={clsx(
-            // Service-manual surface: sharp corners, paper-style shadow,
-            // motorsport-stripe signature ribbon at the top.
+            // Service-manual surface: sharp corners, paper-style shadow.
             // Note: do NOT add `relative` — daisyUI's .dropdown-content sets
             // position: absolute, which is what keeps the menu floating over
             // siblings instead of pushing them around.
@@ -264,7 +263,6 @@ function DropdownMenuRoot({
             contentClassName,
           )}
         >
-          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-0 top-0 h-[2px]" />
           <DropdownMenuContext.Provider
             value={{ close, registerItem, setActiveKey, activeKey }}
           >
@@ -351,7 +349,7 @@ function Label({ children, className }: { children: ReactNode; className?: strin
     <li
       role="presentation"
       className={clsx(
-        "mt-1 mb-1 flex items-center gap-2 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400",
+        "mt-1 mb-1 flex items-center gap-2 px-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400",
         className,
       )}
     >

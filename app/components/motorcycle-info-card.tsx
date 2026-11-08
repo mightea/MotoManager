@@ -91,7 +91,7 @@ export function MotorcycleInfoCard({
               <button
                 type="button"
                 onClick={onEdit}
-                className="inline-flex items-center rounded-sm border border-base-content/15 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-200"
+                className="inline-flex items-center rounded-sm border border-base-content/15 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-200"
               >
                 Bearbeiten
               </button>
@@ -101,7 +101,7 @@ export function MotorcycleInfoCard({
 
         <div className="px-4 py-4">
           {summaryItems.length > 0 ? (
-            <ul className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/70 dark:text-navy-300">
+            <ul className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300">
               {summaryItems.map((item, index) => (
                 <li key={item} className="flex min-w-0 items-center gap-3">
                   {index > 0 && (
@@ -112,7 +112,7 @@ export function MotorcycleInfoCard({
               ))}
             </ul>
           ) : (
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/55">
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-base-content/70">
               Keine Daten · Wartungs- oder Tank-Einträge hinzufügen
             </p>
           )}
@@ -288,7 +288,7 @@ export function MotorcycleInfoCard({
                       <p className="font-subdisplay text-sm text-base-content dark:text-white truncate">
                         {owner.name} {owner.surname}
                       </p>
-                      <p className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+                      <p className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                         {owner.purchaseDate ? `Kauf · ${owner.purchaseDate}` : "Kaufdatum unbekannt"}
                       </p>
                     </div>
@@ -296,12 +296,12 @@ export function MotorcycleInfoCard({
                 ))}
               </ul>
             ) : (
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                 {hasUnknownOwners ? "Besitzhistorie unbekannt" : "Keine Vorbesitzer · 1. Hand"}
               </p>
             )}
             {hasUnknownOwners && previousOwnersList.length > 0 && (
-              <p className="mt-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-warning">
+              <p className="mt-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
                 Besitzhistorie unvollständig
               </p>
             )}

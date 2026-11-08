@@ -564,7 +564,7 @@ export default function Settings() {
       {actionData && "error" in actionData && (
         <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] pt-0.5 opacity-70">ERR</span>
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] pt-0.5 opacity-70">ERR</span>
           <span>{actionData.error}</span>
         </div>
       )}
@@ -572,7 +572,7 @@ export default function Settings() {
       {actionData && "success" in actionData && (
         <div className="relative flex items-start gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3 text-sm text-success dark:border-success/40 dark:bg-success/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-success" />
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] pt-0.5 opacity-70">OK</span>
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] pt-0.5 opacity-70">OK</span>
           <span>{actionData.success}</span>
         </div>
       )}
@@ -599,7 +599,7 @@ export default function Settings() {
           <div className="space-y-1.5">
             <label
               htmlFor="currentPassword"
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+              className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
             >
               Aktuelles Passwort
             </label>
@@ -615,7 +615,7 @@ export default function Settings() {
             <div className="space-y-1.5">
               <label
                 htmlFor="newPassword"
-                className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+                className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
               >
                 Neues Passwort
               </label>
@@ -630,7 +630,7 @@ export default function Settings() {
             <div className="space-y-1.5">
               <label
                 htmlFor="confirmPassword"
-                className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+                className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
               >
                 Passwort bestätigen
               </label>
@@ -694,7 +694,7 @@ export default function Settings() {
                   <p className="text-sm font-medium text-foreground dark:text-white">
                     {auth.deviceType === "single_device" ? "Sicherheitsschlüssel / Gerät" : "Multi-Device Passkey"}
                   </p>
-                  <p className="text-[10px] text-secondary/60 dark:text-navy-500 uppercase tracking-wider font-bold">
+                  <p className="text-[11px] text-secondary/60 dark:text-navy-500 uppercase tracking-wider font-bold">
                     ID: {auth.id?.slice(0, 8) ?? "N/A"}... • Registriert am {auth.createdAt ? new Date(auth.createdAt).toLocaleDateString("de-CH") : "Unbekannt"}
                   </p>
                 </div>
@@ -790,7 +790,7 @@ export default function Settings() {
                       {section.description}
                     </p>
                   </div>
-                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums text-base-content/50">
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums text-base-content/70">
                     {items.length}
                   </span>
                   {!isSelecting && duplicateGroups.length > 0 && (
@@ -847,7 +847,7 @@ export default function Settings() {
                     {[...selectedIds].map((id) => (
                       <input key={id} type="hidden" name="ids" value={id} />
                     ))}
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] tabular-nums text-base-content">
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums text-base-content">
                       {selectedIds.size} / {items.length} ausgewählt
                     </span>
                     <Button
@@ -926,7 +926,7 @@ export default function Settings() {
                               {location.name}
                             </p>
                             {location.latitude !== null && location.longitude !== null && (
-                              <p className="font-mono text-[10px] tabular-nums text-secondary/70 dark:text-navy-500">
+                              <p className="font-mono text-[11px] tabular-nums text-secondary/70 dark:text-navy-500">
                                 {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
                               </p>
                             )}
@@ -1014,12 +1014,12 @@ export default function Settings() {
                   className="rounded-sm border border-base-300/70 bg-base-100 p-3 dark:border-navy-700 dark:bg-navy-900"
                 >
                   <p className="flex items-center gap-2 text-sm font-medium text-base-content dark:text-white">
-                    <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-success">
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-success">
                       Behalten
                     </span>
                     <span className="truncate">{g.canonical.name}</span>
                     {formatCoords(g.canonical) && (
-                      <span className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-base-content/45">
+                      <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-base-content/70">
                         {formatCoords(g.canonical)}
                       </span>
                     )}
@@ -1030,12 +1030,12 @@ export default function Settings() {
                         key={d.id}
                         className="flex items-center gap-2 text-xs text-secondary dark:text-navy-400"
                       >
-                        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                           Zusammenführen
                         </span>
                         <span className="truncate">{d.name}</span>
                         {formatCoords(d) && (
-                          <span className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-base-content/40">
+                          <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-base-content/70">
                             {formatCoords(d)}
                           </span>
                         )}

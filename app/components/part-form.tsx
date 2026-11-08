@@ -52,7 +52,7 @@ const inputClass =
   "block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500";
 
 const labelClass =
-  "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400";
 
 /** Create/edit a catalog part: part number + name identity, manufacturer,
  *  fitment (series multi-select) and the public-sharing toggle. Creating a
@@ -341,7 +341,7 @@ export function PartForm({
                 >
                   {query ? seriesPath(node, modelSeries) : modelSeriesDisplayName(node)}
                 </span>
-                <span className="ml-auto shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-base-content/40">
+                <span className="ml-auto shrink-0 font-mono text-[11px] uppercase tracking-[0.12em] text-base-content/70">
                   {seriesLevelLabel(depth)}
                   {node.userId != null && " · Eigene"}
                 </span>
@@ -394,7 +394,7 @@ export function PartForm({
 
       {!initialValues && (
         <fieldset className="space-y-4 rounded-sm border border-base-300 p-4 dark:border-navy-700">
-          <legend className="px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+          <legend className="px-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
             Erster Bestand
           </legend>
 

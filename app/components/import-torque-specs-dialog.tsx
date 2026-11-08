@@ -81,7 +81,7 @@ export function ImportTorqueSpecsDialog({
       <div className="space-y-4">
         {/* Step 1: Select Motorcycle */}
         <div className="space-y-1.5">
-          <label htmlFor="source-motorcycle" className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400">
+          <label htmlFor="source-motorcycle" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">
             Quelle wählen
           </label>
           <select
@@ -152,12 +152,12 @@ export function ImportTorqueSpecsDialog({
                             {spec.torque} Nm
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-secondary dark:text-navy-400">
+                        <div className="flex items-center justify-between text-[11px] text-secondary dark:text-navy-400">
                           <span>{spec.category}</span>
                           <span className="shrink-0">{spec.toolSize}</span>
                         </div>
                         {isOverwrite && (
-                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400">
+                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
                             <AlertTriangle className="h-3 w-3 shrink-0" />
                             <span className="font-bold">Wird überschrieben</span>
                           </div>

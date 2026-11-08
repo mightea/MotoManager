@@ -180,7 +180,7 @@ export function ImportRoadTripDialog({
                           {entry.fuelType}
                         </div>
                         {entry.duplicate && (
-                          <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                          <div className="mt-1 flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
                             <AlertTriangle className="h-3 w-3" />
                             Mögliches Duplikat
                           </div>
@@ -190,7 +190,7 @@ export function ImportRoadTripDialog({
                         <div className="text-foreground dark:text-white font-semibold">
                           {formatCurrency(entry.cost, entry.currency ?? "CHF")}
                         </div>
-                        <div className="text-[10px] text-secondary dark:text-navy-500">
+                        <div className="text-[11px] text-secondary dark:text-navy-500">
                           {entry.pricePerUnit.toFixed(3)} / L
                         </div>
                       </td>

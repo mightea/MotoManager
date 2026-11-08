@@ -278,7 +278,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={clsx(
-                  "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
                   isActive
                     ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
                     : "border-base-300 bg-base-100 text-base-content/65 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800",
@@ -289,7 +289,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
                 {f.count > 0 && (
                   <span
                     className={clsx(
-                      "ml-1 inline-flex h-4 min-w-[1.25rem] items-center justify-center rounded-sm px-1 font-numeric text-[10px] font-semibold tabular-nums",
+                      "ml-1 inline-flex h-4 min-w-[1.25rem] items-center justify-center rounded-sm px-1 font-numeric text-[11px] font-semibold tabular-nums",
                       isActive
                         ? "bg-primary text-primary-content"
                         : "bg-base-200 text-base-content/60 dark:bg-navy-700 dark:text-navy-300",
@@ -305,7 +305,6 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
 
         <Button
           onClick={openCreateDialog}
-          stripe
           leftIcon={<Plus className="h-4 w-4" />}
           className="ml-auto shrink-0"
         >

@@ -112,7 +112,7 @@ export function TourCard({ tour, legs, locationsById, motorcycle, color, home }:
           <h3 id={titleId} className="font-subdisplay text-sm text-base-content dark:text-white">
             {formatDate(tour.startDate)} – {formatDate(tour.endDate)}
           </h3>
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
             {motorcycle ? `${motorcycle.make} ${motorcycle.model}` : "Motorrad"}
           </span>
         </div>
@@ -141,7 +141,7 @@ export function TourCard({ tour, legs, locationsById, motorcycle, color, home }:
                 <span
                   key={c}
                   title={countryName(c)}
-                  className="rounded-sm border border-base-300 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-[0.1em] dark:border-navy-600"
+                  className="rounded-sm border border-base-300 px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-[0.1em] dark:border-navy-600"
                 >
                   {countryFlag(c)} {c}
                 </span>
@@ -180,7 +180,7 @@ function Stat({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+      <dt className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
         <Icon className="h-3 w-3 shrink-0 opacity-70" aria-hidden="true" />
         {label}
       </dt>

@@ -90,7 +90,7 @@ export default function YearReviewPage() {
       <div className="flex items-center justify-between gap-3 print:hidden">
         <Link
           to="/map"
-          className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 hover:text-primary dark:text-navy-400"
+          className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 hover:text-primary dark:text-navy-400"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           Karte
@@ -101,7 +101,7 @@ export default function YearReviewPage() {
       {/* Headline */}
       <header className="relative overflow-hidden rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800 sm:p-8">
         <span aria-hidden="true" className="motorsport-stripe absolute inset-x-0 top-0 h-[4px]" />
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
           Jahresrückblick
         </p>
         <h1 className="font-display text-6xl leading-none text-base-content dark:text-white sm:text-8xl">{year}</h1>
@@ -253,7 +253,7 @@ function Headline({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+      <dt className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
         <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden="true" />
         {label}
       </dt>
@@ -279,7 +279,7 @@ function YearNav({ years, current }: { years: number[]; current: number }) {
   const idx = sorted.indexOf(current);
   const prev = idx > 0 ? sorted[idx - 1] : null;
   const next = idx >= 0 && idx < sorted.length - 1 ? sorted[idx + 1] : null;
-  const cls = "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary hover:underline";
+  const cls = "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:underline";
   return (
     <nav aria-label="Jahr wechseln" className="flex items-center gap-4">
       {prev !== null && <Link to={`/map/${prev}`} className={cls}>← {prev}</Link>}

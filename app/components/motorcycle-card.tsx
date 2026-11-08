@@ -49,9 +49,10 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
   const hasImage = Boolean(!imageError && imageUrl);
 
   const inspectionShort = moto.nextInspection?.dueDateISO
-    ? new Intl.DateTimeFormat("de-CH", { month: "short", year: "2-digit" })
+    ? // "07/2032" — a 2-digit year read as a day ("Juli 32") in the old format.
+      new Intl.DateTimeFormat("de-CH", { month: "2-digit", year: "numeric" })
         .format(new Date(moto.nextInspection.dueDateISO))
-        .replace(".", "")
+        .replace(".", "/")
     : null;
 
   const inspectionTier: InspectionTier = (() => {
@@ -87,13 +88,13 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
       <div className="relative flex min-h-9 items-center justify-between gap-2 border-b border-base-200 px-3 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <span className="motorsport-stripe block h-2 w-7" aria-hidden="true" />
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 tabular-nums">
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 tabular-nums">
             ID · {String(moto.id).padStart(4, "0")}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           {moto.status === "sold" && (
-            <span className="rounded-sm bg-error/10 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-error">
+            <span className="rounded-sm bg-error/10 px-1.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-error">
               Verkauft
             </span>
           )}
@@ -127,7 +128,7 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
           <h3 className="font-display text-[1.35rem] uppercase leading-none tracking-wide text-white drop-shadow-sm line-clamp-1">
             {moto.make} <span className="text-white/85">{moto.model}</span>
           </h3>
-          <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white/65">
+          <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
             {moto.fabricationDate ?? "Fabrikation —"}
           </p>
         </div>
@@ -187,19 +188,19 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
       {showMetaRow && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-base-200 px-3 py-2 dark:border-navy-700">
           {hasMaintenance && (
-            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-error">
+            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
               <Wrench className="h-3 w-3 shrink-0" aria-hidden="true" />
               Wartung fällig
             </span>
           )}
           {hasIssues && (
-            <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
+            <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
               <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
               {moto.numberOfIssues} {moto.numberOfIssues === 1 ? "Mangel" : "Mängel"}
             </span>
           )}
           {hasLocation && (
-            <span className="ml-auto inline-flex min-w-0 max-w-full items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-base-content/55">
+            <span className="ml-auto inline-flex min-w-0 max-w-full items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
               <span className="truncate">{moto.currentLocationName}</span>
             </span>
@@ -243,7 +244,7 @@ function TelemetrySlot({
           {value}
         </span>
       </div>
-      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
         {caption}
       </span>
     </div>

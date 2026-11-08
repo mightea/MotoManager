@@ -117,13 +117,13 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
                 {location.name}
               </span>
               {place && (
-                <span className="inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
+                <span className="inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
                   <MapPin className="h-2.5 w-2.5" aria-hidden="true" />
                   {place}
                 </span>
               )}
               {stats && (
-                <span className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
+                <span className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
                   {stats.partIds.size} {stats.partIds.size === 1 ? "Teil" : "Teile"} ·{" "}
                   {stats.quantity} Stk.
                 </span>
@@ -159,7 +159,7 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
               >
                 <Printer className="h-3.5 w-3.5" aria-hidden="true" />
                 Alle Etiketten drucken
@@ -171,7 +171,6 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               <span>Lagerort hinzufügen</span>
-              <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
             </button>
           </div>
         </div>
@@ -179,7 +178,7 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
         {actionData && "error" in actionData && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
             <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-            <span className="pt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">
+            <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">
               ERR
             </span>
             <span>{actionData.error}</span>
@@ -198,7 +197,6 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 Ersten Lagerort erstellen
-                <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
               </button>
             }
           />

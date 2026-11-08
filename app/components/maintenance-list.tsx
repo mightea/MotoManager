@@ -403,7 +403,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
               />
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500">
                 {groupedRecords.length} {groupedRecords.length === 1 ? 'Eintrag' : 'Einträge'}
               </span>
               {bulkSelectEnabled && groupedRecords.length > 0 && (
@@ -550,7 +550,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                             <span className="font-numeric text-sm font-semibold text-foreground dark:text-white">
                               {formatNumber(group.odo)}
                             </span>
-                            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">km</span>
+                            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">km</span>
                             {!selectionMode && (
                               <ChevronDown className={clsx("h-4 w-4 self-center text-base-content/45 transition-transform dark:text-navy-400", isExpanded && "rotate-180")} aria-hidden="true" />
                             )}
@@ -564,7 +564,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                         <div className="mt-0.5 flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
                           <p className={clsx("min-w-0 break-words text-[13px] font-medium leading-tight", tone.fg)}>
                             {group.count > 1 && (
-                              <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-base-content/8 px-1.5 py-[1px] font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-base-content/60 dark:bg-navy-700 dark:text-navy-300 align-middle">
+                              <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-base-content/8 px-1.5 py-[1px] font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/60 dark:bg-navy-700 dark:text-navy-300 align-middle">
                                 {group.count}×
                               </span>
                             )}
@@ -581,7 +581,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                 <span aria-hidden="true" className="h-2.5 w-px self-center bg-base-content/20" />
                               )}
                               {showTypeTag && (
-                                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                                   {typeLabel}
                                 </span>
                               )}
@@ -660,7 +660,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                     <span className="flex flex-col items-end">
                                       <span>{formatCurrency(record.cost, record.currency)}</span>
                                       {record.normalizedCost !== null && (
-                                        <span className="text-[10px] text-secondary/70">({formatCurrency(record.normalizedCost, currencyCode)})</span>
+                                        <span className="text-[11px] text-secondary/70">({formatCurrency(record.normalizedCost, currencyCode)})</span>
                                       )}
                                     </span>
                                   ) : formatCurrency(record.cost, record.currency || currencyCode || "CHF")
@@ -712,7 +712,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                     <div className="space-y-1 border-b border-base-300/40 pb-2 dark:border-navy-700/40">
                                       <div className="flex items-center gap-2">
                                         <Info className="icon-muted h-3 w-3 shrink-0" aria-hidden="true" />
-                                        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+                                        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
                                           Beschreibung
                                         </span>
                                       </div>
@@ -730,7 +730,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                           <div key={item.label} className="flex items-center justify-between gap-4 border-b border-base-300/40 py-1.5 dark:border-navy-700/40">
                                             <div className="flex items-center gap-2 min-w-0">
                                               <ItemIcon className="icon-muted h-3 w-3 shrink-0" aria-hidden="true" />
-                                              <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 truncate">
+                                              <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400 truncate">
                                                 {item.label}
                                               </dt>
                                             </div>
@@ -745,7 +745,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
 
                                   {childRecords.length > 0 && (
                                     <div className="space-y-2 pt-2 border-t border-base-300/70 dark:border-navy-700">
-                                      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-500">
+                                      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500">
                                         Eingeschlossene Arbeiten
                                       </span>
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -790,7 +790,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                                   })()}
 
                                   {!record.description && metadataItems.length === 0 && childRecords.length === 0 && (
-                                    <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+                                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
                                       Keine weiteren Details
                                     </p>
                                   )}

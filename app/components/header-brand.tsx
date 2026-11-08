@@ -28,7 +28,7 @@ export function HeaderBrand({ onNavigate }: HeaderBrandProps) {
       </div>
 
       <div className="flex min-w-0 flex-col items-start leading-none">
-        <span className="max-w-full truncate font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+        <span className="max-w-full truncate font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
           MM · 01 / Garage
         </span>
         <span className="mt-1 max-w-full truncate font-display text-lg uppercase leading-none tracking-wide text-base-content transition-colors group-hover:text-primary sm:text-[1.35rem]">

@@ -264,7 +264,7 @@ export function TirePressureForm({
               aria-label={`Einheit ${u}`}
               onClick={() => handleUnitChange(u)}
               className={clsx(
-                "btn btn-sm join-item font-mono uppercase tracking-[0.14em]",
+                "btn btn-sm join-item font-mono uppercase tracking-[0.08em]",
                 unit === u ? "btn-primary" : "btn-ghost border-base-300 dark:border-navy-700",
               )}
             >
@@ -320,7 +320,7 @@ export function TirePressureForm({
           <button
             type="button"
             onClick={handleDelete}
-            className="inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-error transition-colors hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40"
+            className="inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-error transition-colors hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/40"
           >
             <Trash2 className="h-3 w-3" aria-hidden="true" />
             {deleteRemovesRecord ? "Eintrag löschen" : `${CONFIG_LABELS[config]} löschen`}
@@ -394,7 +394,7 @@ function PressureField({
             warn && "input-warning",
           )}
         />
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
           {unit}
         </span>
       </div>

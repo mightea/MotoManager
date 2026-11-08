@@ -57,7 +57,7 @@ export function TirePressureCard({ pressure }: TirePressureCardProps) {
                   <th
                     key={v.key}
                     scope="col"
-                    className="pb-2 text-right font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500"
+                    className="pb-2 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500"
                   >
                     {v.label}
                   </th>
@@ -103,7 +103,7 @@ function PositionRow({
     <tr className="border-b border-base-200/70 last:border-b-0 dark:border-navy-700/60">
       <th
         scope="row"
-        className="py-2.5 pr-4 text-left align-baseline font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400"
+        className="py-2.5 pr-4 text-left align-baseline font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
       >
         {label}
       </th>
@@ -131,7 +131,7 @@ function PressureValue({
       <span className="font-numeric text-base font-semibold tabular-nums text-base-content dark:text-white">
         {formatted.primary}
       </span>
-      <span className="whitespace-nowrap font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+      <span className="whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
         ≈ {formatted.secondary}
       </span>
     </span>

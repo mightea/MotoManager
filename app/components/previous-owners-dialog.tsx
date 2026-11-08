@@ -154,7 +154,7 @@ export function PreviousOwnersDialog({
             <h3 className="label-tag">
               <span>Erfasste Vorbesitzer</span>
             </h3>
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
               {displayedOwners.length} {displayedOwners.length === 1 ? "Eintrag" : "Einträge"}
             </span>
           </div>
@@ -201,7 +201,7 @@ export function PreviousOwnersDialog({
                     <p className="truncate font-subdisplay text-sm text-base-content dark:text-white">
                       {owner.name} {owner.surname}
                     </p>
-                    <p className="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+                    <p className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                       {index === 0 ? "Direkter Vorbesitzer" : `Position ${index + 1}`}
                       {owner.purchaseDate ? ` · Kauf ${owner.purchaseDate}` : " · Kaufdatum unbekannt"}
                     </p>
@@ -239,13 +239,13 @@ export function PreviousOwnersDialog({
               ))}
             </ul>
           ) : (
-            <p className="rounded-sm border border-dashed border-base-300 px-3 py-4 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/50 dark:border-navy-700">
+            <p className="rounded-sm border border-dashed border-base-300 px-3 py-4 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:border-navy-700">
               Keine Vorbesitzer erfasst
             </p>
           )}
 
           {isSavingOrder && (
-            <output className="block text-center font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+            <output className="block text-center font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
               Reihenfolge wird gespeichert …
             </output>
           )}

@@ -68,11 +68,11 @@ export function HeaderMobilePanel({
                     )}
                   >
                     {isActive && (
-                      <span aria-hidden="true" className="motorsport-stripe-v absolute inset-y-2 left-0 w-[3px] rounded-r-sm" />
+                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-primary" />
                     )}
                     <span
                       className={clsx(
-                        "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] tabular-nums",
+                        "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums",
                         isActive ? "text-primary" : "text-base-content/40",
                       )}
                     >
@@ -97,7 +97,7 @@ export function HeaderMobilePanel({
                 <span className="font-subdisplay text-sm text-base-content">
                   {user.username}
                 </span>
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                   {user.role}
                 </span>
               </div>
@@ -141,7 +141,6 @@ export function HeaderMobilePanel({
             className="relative mt-4 flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-4 py-3 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)]"
           >
             Login
-            <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
           </Link>
         )}
       </div>

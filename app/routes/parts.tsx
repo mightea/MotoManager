@@ -280,14 +280,14 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
         <div className="flex items-center gap-2">
           <Link
             to="/model-series"
-            className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+            className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
           >
             <Layers className="h-3.5 w-3.5" aria-hidden="true" />
             Modellkatalog
           </Link>
           <Link
             to="/storage-locations"
-            className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+            className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
           >
             <Archive className="h-3.5 w-3.5" aria-hidden="true" />
             Lagerorte
@@ -297,7 +297,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
             trigger={
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 Import
@@ -323,7 +323,6 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             <span>Teil hinzufügen</span>
-            <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
           </button>
         </div>
       </div>
@@ -331,7 +330,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
       {actionData && "error" in actionData && (
         <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-          <span className="pt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">
+          <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">
             ERR
           </span>
           <span>{actionData.error}</span>
@@ -351,7 +350,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
               type="button"
               onClick={() => setTab(segment.value)}
               className={clsx(
-                "rounded-sm px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
+                "rounded-sm px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
                 tab === segment.value
                   ? "bg-primary text-primary-content"
                   : "text-base-content/60 hover:text-base-content dark:text-navy-300",
@@ -413,7 +412,6 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   Erstes Teil erstellen
-                  <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
                 </button>
               ) : undefined
             }
@@ -464,7 +462,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                       >
                         {part.onHand}
                       </p>
-                      <p className="mt-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-base-content/45">
+                      <p className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                         Bestand
                       </p>
                     </div>
@@ -514,7 +512,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                 </div>
                 <span
                   className={clsx(
-                    "shrink-0 rounded-sm px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em]",
+                    "shrink-0 rounded-sm px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
                     !part.isPublic
                       ? "bg-base-200 text-base-content/50 dark:bg-navy-800 dark:text-navy-400"
                       : part.hasStock

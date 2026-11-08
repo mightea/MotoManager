@@ -161,7 +161,6 @@ export default function MapPage() {
               className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
             >
               Standorte verwalten
-              <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
             </Link>
           }
         />
@@ -326,7 +325,7 @@ function MapDashboard({
           <label
             key={key}
             className={clsx(
-              "inline-flex cursor-pointer select-none items-center gap-2 rounded-sm border px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors",
+              "inline-flex cursor-pointer select-none items-center gap-2 rounded-sm border px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
               layers[key]
                 ? "border-primary/50 bg-primary/10 text-primary dark:text-primary"
                 : "border-base-300 text-base-content/55 hover:border-base-content/30 dark:border-navy-700 dark:text-navy-400",
@@ -437,7 +436,7 @@ function MapDashboard({
                           <td className="px-2 py-3 text-right">
                             <Link
                               to={`/map/${y.year}`}
-                              className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary hover:underline"
+                              className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:underline"
                             >
                               Rückblick
                             </Link>
@@ -538,7 +537,7 @@ function MapDashboard({
                         <button
                           type="button"
                           onClick={() => openEditor(w.id)}
-                          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary hover:underline"
+                          className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:underline"
                         >
                           Bearbeiten
                         </button>
@@ -563,7 +562,7 @@ function MapDashboard({
                   <li key={u.id} className="flex items-center justify-between gap-3 py-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-base-content dark:text-white">{u.name}</div>
-                      <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">
+                      <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
                         {LOCATION_TYPE_LABELS[u.type]} · {u.visits} Besuch{u.visits === 1 ? "" : "e"}
                       </div>
                     </div>
@@ -610,7 +609,7 @@ function FilterSelect({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400">{label}</span>
+      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}

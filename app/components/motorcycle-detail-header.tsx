@@ -101,12 +101,12 @@ export function MotorcycleDetailHeader({
               to={backTo}
               prefetch="intent"
               aria-label="Zurück zur Übersicht"
-              className="inline-flex items-center gap-2 rounded-sm border border-white/25 bg-white/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+              className="inline-flex items-center gap-2 rounded-sm border border-white/25 bg-white/10 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white backdrop-blur-sm transition-colors hover:bg-white/20"
             >
               <ArrowLeft className="h-3 w-3" aria-hidden="true" />
               Garage
             </Link>
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55 tabular-nums">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white/55 tabular-nums">
               FILE · {String(motorcycle.id).padStart(4, "0")}
             </span>
           </div>
@@ -123,7 +123,7 @@ export function MotorcycleDetailHeader({
               <h2 className="font-display text-[clamp(1.75rem,4.5vw,3rem)] uppercase leading-[0.95] tracking-wide text-white/80">
                 {motorcycle.model}
               </h2>
-              <p className="mt-3 inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">
+              <p className="mt-3 inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                 <span className="h-px w-6 bg-white/40" aria-hidden="true" />
                 {motorcycle.fabricationDate ?? "Fabrikation unbekannt"}
               </p>
@@ -155,7 +155,7 @@ export function MotorcycleDetailHeader({
               {nextInspection && (
                 <span
                   className={clsx(
-                    "inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]",
+                    "inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
                     nextInspection.isOverdue ? "text-error/90" : "text-white/75"
                   )}
                 >
@@ -164,7 +164,7 @@ export function MotorcycleDetailHeader({
                 </span>
               )}
               {currentLocationName && (
-                <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white/75">
+                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white/75">
                   <MapPin className="h-3 w-3" aria-hidden="true" />
                   {currentLocationName}
                 </span>
@@ -201,7 +201,7 @@ export function MotorcycleDetailHeader({
                   >
                     <span
                       className={clsx(
-                        "font-mono text-[10px] font-semibold tracking-[0.14em] uppercase tabular-nums",
+                        "font-mono text-[11px] font-semibold tracking-[0.08em] uppercase tabular-nums",
                         link.isActive ? "text-primary" : "text-base-content/45 group-hover:text-base-content/65"
                       )}
                     >
@@ -213,7 +213,7 @@ export function MotorcycleDetailHeader({
                     <span
                       aria-hidden="true"
                       className={clsx(
-                        "motorsport-stripe absolute inset-x-2 -bottom-px h-[3px] origin-left transition-transform duration-300",
+                        "absolute inset-x-2 -bottom-px h-[3px] bg-primary origin-left transition-transform duration-300",
                         link.isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-50"
                       )}
                     />
@@ -241,7 +241,7 @@ function DatumLine({
 }) {
   return (
     <div className="flex items-center justify-end gap-3 text-white">
-      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">
+      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white/55">
         {label}
       </span>
       <span className="h-px w-4 bg-white/30" aria-hidden="true" />

@@ -252,7 +252,6 @@ function ConsentForm({
           <Button
             type="button"
             variant="primary"
-            stripe
             disabled={pending !== null}
             isLoading={pending === "allow"}
             leftIcon={<Check className="h-4 w-4" />}
@@ -326,7 +325,7 @@ function ErrorBanner({ message }: { message: string }) {
       className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10"
     >
       <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-      <span className="pt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">
+      <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">
         ERR
       </span>
       <span>{message}</span>
@@ -357,4 +356,4 @@ const cardClass =
   "relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800";
 
 const fieldLabelClass =
-  "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400";

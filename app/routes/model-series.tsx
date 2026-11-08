@@ -158,7 +158,7 @@ function SeriesForm({ allSeries, initialValues, defaultParentId, onClose }: Seri
   const inputClass =
     "block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500";
   const labelClass =
-    "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
+    "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400";
 
   return (
     <Form method="post" className="space-y-5">
@@ -339,14 +339,13 @@ export default function ModelSeriesPage({ loaderData }: Route.ComponentProps) {
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           <span>Eintrag hinzufügen</span>
-          <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
         </button>
       </div>
 
       {actionData && "error" in actionData && (
         <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-          <span className="pt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] opacity-70">
+          <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">
             ERR
           </span>
           <span>{actionData.error}</span>
@@ -381,17 +380,17 @@ export default function ModelSeriesPage({ loaderData }: Route.ComponentProps) {
                   >
                     {modelSeriesDisplayName(node)}
                   </span>
-                  <span className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-base-content/50 dark:bg-navy-800 dark:text-navy-400">
+                  <span className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 dark:bg-navy-800 dark:text-navy-400">
                     {seriesLevelLabel(depth)}
                   </span>
                   {isOwn && (
-                    <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">
+                    <span className="rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
                       Eigene
                     </span>
                   )}
                   {node.typeCodes && (
                     <span
-                      className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] text-base-content/50 dark:bg-navy-800 dark:text-navy-400"
+                      className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] text-base-content/70 dark:bg-navy-800 dark:text-navy-400"
                       title={`VIN-Typcodes: ${node.typeCodes}`}
                     >
                       {node.typeCodes.split(",").length === 1
@@ -401,19 +400,19 @@ export default function ModelSeriesPage({ loaderData }: Route.ComponentProps) {
                   )}
                   {node.frameRanges && (
                     <span
-                      className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] text-base-content/50 dark:bg-navy-800 dark:text-navy-400"
+                      className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] text-base-content/70 dark:bg-navy-800 dark:text-navy-400"
                       title={`Rahmennummern: ${node.frameRanges}`}
                     >
                       RN
                     </span>
                   )}
                   {partCount > 0 && (
-                    <span className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
+                    <span className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
                       {partCount} {partCount === 1 ? "Teil" : "Teile"}
                     </span>
                   )}
                   {bikeCount > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
                       <Bike className="h-2.5 w-2.5" aria-hidden="true" />
                       {bikeCount}
                     </span>

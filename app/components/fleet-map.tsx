@@ -290,7 +290,7 @@ export function FleetMap({
         className="fleet-map h-full w-full"
       />
       {!compact && (
-        <div className="pointer-events-none absolute bottom-7 left-2 z-[400] flex flex-wrap gap-x-3 gap-y-1 rounded-sm bg-base-100/90 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] backdrop-blur dark:bg-navy-900/85 dark:text-navy-300">
+        <div className="pointer-events-none absolute bottom-7 left-2 z-[400] flex flex-wrap gap-x-3 gap-y-1 rounded-sm bg-base-100/90 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] backdrop-blur dark:bg-navy-900/85 dark:text-navy-300">
           {layers.fuelHeat && (
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2.5 w-6 rounded-sm" style={{ background: "linear-gradient(90deg,#F2C277,#E8A341,#FF4124,#8A1A0E)" }} />

@@ -96,7 +96,7 @@ const inputClass =
   "block w-full rounded-sm border border-base-300 bg-base-100 p-2 text-sm text-base-content transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white";
 
 const labelClass =
-  "font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/60 dark:text-navy-400";
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400";
 
 const CATALOG_LABEL: Record<ImportSupplierKey | "bmwbike", string> = {
   huggett: "BMWBike",
@@ -544,12 +544,12 @@ export function InvoiceImportDialog({
               </span>
             )}
             {parsed.source !== "llm" && (
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-base-content/45">
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-base-content/70">
                 Layout-Parser
               </span>
             )}
             {parsed.textSource === "ocr" && (
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-base-content/45">
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-base-content/70">
                 Texterkennung
               </span>
             )}
@@ -596,22 +596,22 @@ export function InvoiceImportDialog({
                       {row.partNumber || "—"}
                     </span>
                     {row.matchedPartId != null ? (
-                      <span className="inline-flex items-center gap-1 rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-primary dark:bg-primary/15 dark:text-primary-light">
+                      <span className="inline-flex items-center gap-1 rounded-sm bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-primary dark:bg-primary/15 dark:text-primary-light">
                         <Package className="h-2.5 w-2.5" aria-hidden="true" />
                         Bestand zu «{row.matchedPartName}»
                         {row.matchedVia === "oemPartNumber" && " · über BMW-Nr."}
                       </span>
                     ) : (
-                      <span className="stamp !py-0.5 !text-[9px]">Neues Teil</span>
+                      <span className="stamp !py-0.5 !text-[11px]">Neues Teil</span>
                     )}
                     {row.enrichment?.status === "loading" && (
-                      <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-base-content/45">
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.12em] text-base-content/70">
                         <Loader2 className="h-2.5 w-2.5 animate-spin" aria-hidden="true" />
                         {CATALOG_LABEL[parsed.invoice.supplierKey ?? "bmwbike"]}…
                       </span>
                     )}
                     {row.enrichment?.status === "found" && (
-                      <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-success">
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.12em] text-success">
                         <CircleCheck className="h-2.5 w-2.5" aria-hidden="true" />
                         {CATALOG_LABEL[row.enrichment.source]}:{" "}
                         {row.enrichment.source === "boxxerparts"
@@ -631,7 +631,7 @@ export function InvoiceImportDialog({
                       </span>
                     )}
                     {row.enrichment?.status === "none" && (
-                      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-base-content/45">
+                      <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-base-content/70">
                         Nicht im {CATALOG_LABEL[parsed.invoice.supplierKey ?? "bmwbike"]}-Katalog
                       </span>
                     )}
@@ -713,7 +713,7 @@ export function InvoiceImportDialog({
                             .filter((match) => match.names.includes(seriesName(choice.id)))
                             .map((match) => `«${match.phrase}»`)
                             .join(", ")}
-                          className={`rounded-sm border px-1.5 py-0.5 font-mono text-[10px] transition-colors ${
+                          className={`rounded-sm border px-1.5 py-0.5 font-mono text-[11px] transition-colors ${
                             choice.selected
                               ? "border-primary/50 bg-primary/10 text-primary dark:text-primary-light"
                               : "border-base-300 text-base-content/40 line-through dark:border-navy-700"

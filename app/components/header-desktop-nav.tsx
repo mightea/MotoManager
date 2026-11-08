@@ -32,7 +32,7 @@ export function HeaderDesktopNav({ items }: { items: NavItem[] }) {
               >
                 <span
                   className={clsx(
-                    "font-mono text-[10px] font-semibold tracking-[0.14em] uppercase tabular-nums transition-colors",
+                    "font-mono text-[11px] font-semibold tracking-[0.08em] uppercase tabular-nums transition-colors",
                     isActive ? "text-primary" : "text-base-content/45 group-hover:text-base-content/65"
                   )}
                 >
@@ -41,11 +41,11 @@ export function HeaderDesktopNav({ items }: { items: NavItem[] }) {
                 <span className="font-subdisplay text-sm leading-none">
                   {item.label}
                 </span>
-                {/* Active marker — the motorsport stripe ribbon */}
+                {/* Active marker — a single primary bar; the 4-band stripe is reserved for the window edge and hero */}
                 <span
                   aria-hidden="true"
                   className={clsx(
-                    "motorsport-stripe absolute inset-x-2 bottom-0 h-[3px] origin-left transition-transform duration-300",
+                    "absolute inset-x-2 bottom-0 h-[3px] bg-primary origin-left transition-transform duration-300",
                     isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-50"
                   )}
                 />

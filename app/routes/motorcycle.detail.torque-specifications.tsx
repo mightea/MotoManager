@@ -468,13 +468,13 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             </h1>
             <p className="text-[11px] font-medium !text-gray-700 mt-0.5">Werkstattdaten</p>
           </div>
-          <div className="text-right text-[9px] !text-gray-600 leading-snug whitespace-nowrap">
+          <div className="text-right text-[11px] !text-gray-600 leading-snug whitespace-nowrap">
             <div suppressHydrationWarning>Gedruckt: {printDate}</div>
             <div>MotoManager v{process.env.APP_VERSION}</div>
           </div>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-0.5 text-[10px]">
+        <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-0.5 text-[11px]">
           {[
             { label: "Fabrikationsdatum", value: motorcycle.fabricationDate || "Unbekannt" },
             { label: "Kennzeichen", value: motorcycle.numberPlate || "-" },
@@ -485,8 +485,8 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
             { label: "Kaufdatum", value: motorcycle.purchaseDate || "-" },
           ].map((item) => (
             <div key={item.label} className="flex justify-between gap-3 py-0.5">
-              <span className="font-bold uppercase !text-gray-600 text-[9px] tracking-wide">{item.label}</span>
-              <span className={clsx("font-semibold !text-black text-[10px]", item.mono && "font-mono")}>{item.value}</span>
+              <span className="font-bold uppercase !text-gray-600 text-[11px] tracking-wide">{item.label}</span>
+              <span className={clsx("font-semibold !text-black text-[11px]", item.mono && "font-mono")}>{item.value}</span>
             </div>
           ))}
         </div>
@@ -518,7 +518,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
         {actionData && "error" in actionData && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10 print:hidden">
             <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] pt-0.5 opacity-70">ERR</span>
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] pt-0.5 opacity-70">ERR</span>
             <span>{actionData.error}</span>
           </div>
         )}
@@ -538,7 +538,6 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 <span>Hinzufügen</span>
-                <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
               </button>
             </div>
           </div>
@@ -551,7 +550,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                   className="group relative flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:block print:rounded-none print:border-0 print:break-inside-avoid print:print-force-white print:shadow-none print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
                 >
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 print:text-[8pt] print:!text-black">
+                    <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400 print:text-[8pt] print:!text-black">
                       {detail.title}
                     </h3>
                     <p className="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground dark:text-white print:text-[10pt] print:!text-black">
@@ -561,7 +560,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                   <button
                     type="button"
                     onClick={() => setEditingDetail(detail)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
                     aria-label={`${detail.title} bearbeiten`}
                   >
                     <Pencil className="h-3 w-3" aria-hidden="true" />
@@ -582,7 +581,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
               <button
                 type="button"
                 onClick={() => setIsPressureModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
               >
                 <Pencil className="h-3 w-3" aria-hidden="true" />
                 <span>Bearbeiten</span>
@@ -608,7 +607,6 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                   >
                     <Plus className="h-4 w-4" aria-hidden="true" />
                     Reifendruck erfassen
-                    <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
                   </button>
                 }
               />
@@ -652,7 +650,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                 {otherMotorcycles.length > 0 && (
                   <button
                     onClick={() => setIsImportModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                    className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
                   >
                     <Import className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>Importieren</span>
@@ -664,7 +662,6 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   <span>Hinzufügen</span>
-                  <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
                 </button>
               </div>
             )}
@@ -681,7 +678,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     {otherMotorcycles.length > 0 && (
                       <button
                         onClick={() => setIsImportModalOpen(true)}
-                        className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                        className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
                       >
                         <Import className="h-3.5 w-3.5" aria-hidden="true" />
                         Importieren
@@ -693,7 +690,6 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                     >
                       <Plus className="h-4 w-4" aria-hidden="true" />
                       Ersten Eintrag erstellen
-                      <span aria-hidden="true" className="motorsport-stripe absolute inset-x-4 -bottom-px h-[3px]" />
                     </button>
                   </div>
                 }
@@ -719,7 +715,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                               {spec.name}
                             </h3>
                             {spec.unverified && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] print:!bg-white print:!text-black print:border print:border-black">
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] print:!bg-white print:!text-black print:border print:border-black">
                                 <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                                 Unverifiziert
                               </span>
@@ -735,7 +731,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                         <div className="flex items-center justify-end gap-2 sm:gap-6 shrink-0 print:flex print:gap-4 print:items-baseline print:text-right print:border-0 print:pt-0">
                           {spec.toolSize && (
                             <div className="flex flex-col items-end sm:gap-0.5">
-                              <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500 print:hidden">Werkzeug</span>
+                              <span className="hidden sm:block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500 print:hidden">Werkzeug</span>
                               <div className="flex items-center gap-1.5 rounded-sm border border-base-300 bg-base-100 px-2.5 py-1 font-numeric text-[11px] sm:text-xs font-semibold text-foreground dark:border-navy-700 dark:bg-navy-900 dark:text-navy-100 print:!bg-white print:border-none print:shadow-none print:p-0 print:text-[10pt] print:!text-black">
                                 <Wrench className="h-3 w-3 text-base-content/55 dark:text-navy-400 print:hidden" aria-hidden="true" />
                                 <span>{spec.toolSize}</span>
@@ -744,20 +740,20 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           )}
 
                           <div className="flex flex-col items-end sm:min-w-[80px]">
-                            <span className="hidden sm:block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/45 dark:text-navy-500 mb-0.5 print:hidden">Drehmoment</span>
+                            <span className="hidden sm:block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500 mb-0.5 print:hidden">Drehmoment</span>
                             <div className="flex items-center gap-1.5 sm:gap-2">
                               <div className="flex items-baseline gap-1">
                                 <span className={`font-numeric text-xl sm:text-2xl font-semibold tracking-tight leading-none print:text-[10pt] print:font-bold print:!text-black ${spec.unverified ? "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]" : "text-foreground dark:text-white"}`}>
                                   {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
                                 </span>
                                 {!spec.variation && (
-                                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/55 dark:text-navy-400 print:!text-black print:text-[9pt]">Nm</span>
+                                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400 print:!text-black print:text-[9pt]">Nm</span>
                                 )}
                               </div>
                               {spec.variation && (
-                                <div className="inline-flex items-baseline gap-0.5 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 sm:px-2 sm:py-1 font-numeric text-[10px] sm:text-[11px] font-semibold text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] whitespace-nowrap print:!bg-white print:!text-black print:border-none print:p-0">
+                                <div className="inline-flex items-baseline gap-0.5 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 sm:px-2 sm:py-1 font-numeric text-[11px] sm:text-[11px] font-semibold text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] whitespace-nowrap print:!bg-white print:!text-black print:border-none print:p-0">
                                   <span className="print:text-[10pt] print:font-bold">± {spec.variation}</span>
-                                  <span className="font-mono text-[9px] uppercase opacity-70 print:text-[9pt] print:opacity-100">Nm</span>
+                                  <span className="font-mono text-[11px] uppercase opacity-70 print:text-[9pt] print:opacity-100">Nm</span>
                                 </div>
                               )}
                             </div>
@@ -766,7 +762,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                           <button
                             type="button"
                             onClick={() => setEditingSpec(spec)}
-                            className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 sm:px-2.5 sm:py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
+                            className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 sm:px-2.5 sm:py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
                             aria-label={`${spec.name} bearbeiten`}
                           >
                             <Pencil className="h-3 w-3" aria-hidden="true" />
