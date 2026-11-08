@@ -43,6 +43,7 @@ import { TourCard } from "~/components/tour-card";
 import { RidingCalendar } from "~/components/riding-calendar";
 import { LocationEditDialog } from "~/components/location-edit-dialog";
 import { EmptyState } from "~/components/empty-state";
+import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/button";
 import { useTheme } from "~/components/theme-provider";
 import { Td, Th } from "~/components/data-table";
@@ -150,11 +151,12 @@ export default function MapPage() {
 
   if (!hasGeocoded && payload.ungeocoded.length === 0) {
     return (
-      <div className="container mx-auto px-4 pt-3 pb-24">
+      <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-24 md:p-6">
+        <PageHeader eyebrow="Flotte" title="Karte" description="Tankstopps, Werkstätten und Garagen auf einen Blick" />
         <EmptyState
           icon={MapIcon}
           title="Noch keine Standorte"
-          description="Sobald Tankstopps, Werkstätten oder Garagen mit Koordinaten erfasst sind, erscheinen sie hier auf der Karte."
+          description="Punkte entstehen aus Tankstopps mit Ort, Werkstätten, Garagen & Lagern und Prüfstellen — sobald einer davon Koordinaten hat, erscheint er hier."
           action={
             <Link
               to="/settings"
@@ -270,7 +272,12 @@ function MapDashboard({
   const years = payload.years.map((y) => y.year);
 
   return (
-    <div className="container mx-auto space-y-6 px-4 pt-3 pb-24 animate-fade-in md:p-6 md:space-y-8">
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-24 animate-fade-in md:p-6 md:space-y-8">
+      <PageHeader
+        eyebrow="Flotte"
+        title="Karte"
+        description={`${payload.locations.length} Orte mit Koordinaten`}
+      />
       {actionData?.error && (
         <div role="alert" className="rounded-sm border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
           {actionData.error}

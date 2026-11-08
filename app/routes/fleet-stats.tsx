@@ -1,4 +1,5 @@
 import { data, useLoaderData, Link, useSearchParams } from "react-router";
+import { PageHeader } from "~/components/page-header";
 import type { Route } from "./+types/fleet-stats";
 import { requireUser } from "~/services/auth";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
@@ -336,14 +337,14 @@ export default function FleetStatsPage() {
   const lifetimeBikes = stats.motorcycles.filter((m) => m.ownedFrom !== null || m.runningCost > 0);
 
   return (
-    <div className="container mx-auto space-y-6 px-4 pt-3 pb-24 animate-fade-in md:space-y-8 md:p-6">
-      {/* Period filter — one row above everything it drives */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-subdisplay text-lg text-base-content dark:text-white">
-          Statistiken <span className="text-base-content/50 dark:text-navy-400">· {periodLabel}</span>
-        </h1>
-        <PeriodPicker years={years} period={period} onChange={setPeriod} />
-      </div>
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-24 animate-fade-in md:space-y-8 md:p-6">
+      {/* Period filter — in the header, above everything it drives */}
+      <PageHeader
+        eyebrow="Flotte"
+        title="Statistiken"
+        description={`${stats.motorcycles.length} Motorräder · Zeitraum: ${periodLabel}`}
+        actions={<PeriodPicker years={years} period={period} onChange={setPeriod} />}
+      />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -357,7 +358,7 @@ export default function FleetStatsPage() {
         <KpiTile
           label="Kosten"
           value={formatCurrency(summary.totalCost)}
-          sub={isRange ? `Ø ${formatCurrency(perYear(summary.totalCost))} pro Jahr` : undefined}
+          sub={isRange ? `Ø ${formatCurrency(perYear(summary.totalCost))} pro Jahr` : "inkl. Treibstoff und Fixkosten"}
           change={prev ? percentChange(summary.totalCost, prev.totalCost) : null}
           upIsGood={false}
           changeLabel={prev?.label}
