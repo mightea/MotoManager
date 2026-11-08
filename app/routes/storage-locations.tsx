@@ -13,6 +13,7 @@ import type { Location } from "~/types/db";
 import type { StorageLocation } from "~/types/parts";
 import { storageLocationPlace } from "~/utils/parts";
 import { Card } from "~/components/card";
+import { PageHeader } from "~/components/page-header";
 import { EmptyState } from "~/components/empty-state";
 import { Modal } from "~/components/modal";
 import { StorageLocationForm } from "~/components/storage-location-form";
@@ -141,20 +142,15 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
   };
 
   return (
-    <div className="container mx-auto max-w-5xl space-y-6 px-4 pt-0 pb-20 md:p-6 md:pb-12 print:m-0 print:max-w-none print:p-0">
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-20 md:p-6 md:pb-12 print:m-0 print:max-w-none print:p-0">
       {/* Screen content */}
       <div className="space-y-6 print:hidden">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl uppercase tracking-wide text-base-content dark:text-white">
-              Lagerorte
-            </h1>
-            <p className="mt-1 text-sm text-base-content/65">
-              Regale, Kisten und Fächer — QR-Etiketten drucken, aufkleben und per Scan direkt den
-              Inhalt sehen. Bearbeiten und Löschen findest du auf der Seite des Lagerorts.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+        <PageHeader
+          eyebrow="Lager"
+          title="Lagerorte"
+          description={`${storageLocations.length} ${storageLocations.length === 1 ? "Lagerort" : "Lagerorte"} · Etiketten drucken, aufkleben und per Scan den Inhalt sehen`}
+          actions={
+          <>
             {storageLocations.length > 0 && (
               <button
                 type="button"
@@ -172,8 +168,9 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
               <Plus className="h-4 w-4" aria-hidden="true" />
               <span>Lagerort hinzufügen</span>
             </button>
-          </div>
-        </div>
+          </>
+          }
+        />
 
         {actionData && "error" in actionData && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">

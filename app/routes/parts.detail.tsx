@@ -411,10 +411,17 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
               event.target.value = "";
             }}
           />
-          <Card topStripe="flag">
+          <Card>
             <div className="flex flex-col md:flex-row">
               {/* Abbildung — catalog plate on workshop paper */}
-              <figure className="flex flex-col border-b border-base-200 md:w-[38%] md:shrink-0 md:border-b-0 md:border-r dark:border-navy-700">
+              <figure
+                className={clsx(
+                  "flex flex-col border-b border-base-200 md:shrink-0 md:border-b-0 md:border-r dark:border-navy-700",
+                  // Without a photo the plate shrinks to a small upload slot
+                  // instead of taking a third of the sheet.
+                  part.image ? "md:w-[38%]" : "md:w-44",
+                )}
+              >
                 {part.image ? (
                   <a
                     href={getBackendAssetUrl(part.image) ?? undefined}
@@ -430,12 +437,10 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                     />
                   </a>
                 ) : (
-                  <div className="paper corner-ticks grid flex-1 place-items-center px-6 py-10">
-                    <div className="flex max-w-[24ch] flex-col items-center gap-3 text-center">
-                      <Package className="h-8 w-8 text-base-content/25" aria-hidden="true" />
-                      <p className="text-xs leading-relaxed text-base-content/55">
-                        Noch kein Bild — ein Foto hilft beim Wiederfinden im Regal.
-                      </p>
+                  <div className="paper corner-ticks grid flex-1 place-items-center px-4 py-5">
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <Package className="h-6 w-6 text-base-content/30" aria-hidden="true" />
+                      <p className="text-xs leading-snug text-base-content/70">Noch kein Bild</p>
                       <button
                         type="button"
                         onClick={() => imageInputRef.current?.click()}

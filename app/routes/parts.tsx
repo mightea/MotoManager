@@ -30,6 +30,7 @@ import { getBackendAssetUrl } from "~/utils/backend";
 import type { PublicPart, PublicStockEntry } from "~/types/parts";
 import { seriesNames, storageLocationRoot } from "~/utils/parts";
 import { Card } from "~/components/card";
+import { PageHeader } from "~/components/page-header";
 import { DropdownMenu } from "~/components/dropdown-menu";
 import { EmptyState } from "~/components/empty-state";
 import { Modal } from "~/components/modal";
@@ -266,18 +267,25 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
       )
     : publicParts;
 
+  const totalStock = parts.reduce((sum, part) => sum + Math.max(0, part.onHand), 0);
+  const emptyCount = parts.filter((part) => part.onHand <= 0).length;
+  const lowCount = parts.filter((part) => part.onHand === 1).length;
+  const stockSummary = [
+    `${parts.length} ${parts.length === 1 ? "Teil" : "Teile"} · ${totalStock} Stück auf Lager`,
+    emptyCount > 0 ? `${emptyCount} leer` : null,
+    lowCount > 0 ? `${lowCount} knapp` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-0 pb-20 md:p-6 md:pb-12">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl uppercase tracking-wide text-base-content dark:text-white">
-            Teile
-          </h1>
-          <p className="mt-1 text-sm text-base-content/65">
-            Ersatzteil-Katalog mit Bestand, Verbrauch und öffentlichen Teilen anderer Nutzer.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-20 md:p-6 md:pb-12">
+      <PageHeader
+        eyebrow="Lager"
+        title="Teile"
+        description={stockSummary}
+        actions={
+        <>
           <Link
             to="/model-series"
             className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
@@ -324,8 +332,9 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
             <Plus className="h-4 w-4" aria-hidden="true" />
             <span>Teil hinzufügen</span>
           </button>
-        </div>
-      </div>
+        </>
+        }
+      />
 
       {actionData && "error" in actionData && (
         <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
@@ -420,7 +429,10 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {filteredParts.map((part) => (
               <Link key={part.id} to={`/parts/${part.id}`} className="block text-left">
-                <Card className="h-full px-4 py-3.5 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30">
+                <Card
+                  accent={part.onHand <= 0 ? "error" : part.onHand === 1 ? "warning" : undefined}
+                  className="h-full px-4 py-3.5 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30"
+                >
                   <div className="flex items-start justify-between gap-3">
                     {part.image && (
                       <img
@@ -432,7 +444,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                     )}
                     <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="flex items-center gap-1.5">
-                        <h3 className="truncate text-sm font-semibold text-base-content dark:text-white">
+                        <h3 className="line-clamp-2 text-sm font-semibold text-base-content dark:text-white">
                           {part.name}
                         </h3>
                         {part.isPublic ? (
@@ -462,8 +474,13 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                       >
                         {part.onHand}
                       </p>
-                      <p className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                        Bestand
+                      <p
+                        className={clsx(
+                          "mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
+                          part.onHand <= 0 ? "text-error" : part.onHand === 1 ? "text-warning" : "text-base-content/70",
+                        )}
+                      >
+                        {part.onHand <= 0 ? "Leer" : part.onHand === 1 ? "Knapp" : "Bestand"}
                       </p>
                     </div>
                   </div>
