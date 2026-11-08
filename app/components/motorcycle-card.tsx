@@ -164,14 +164,8 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
         />
         <TelemetrySlot
           icon={CalendarDays}
-          value={
-            moto.nextInspection
-              ? inspectionTier === "overdue"
-                ? "Überfällig"
-                : inspectionShort ?? "—"
-              : "—"
-          }
-          caption="MFK"
+          value={moto.nextInspection ? inspectionShort ?? "—" : "—"}
+          caption={inspectionTier === "overdue" ? "MFK überfällig" : "MFK"}
           tone={
             inspectionTier === "overdue"
               ? "alert"
@@ -191,6 +185,11 @@ export function MotorcycleCard({ moto, minKmPerYear }: MotorcycleCardProps) {
             <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
               <Wrench className="h-3 w-3 shrink-0" aria-hidden="true" />
               Wartung fällig
+              {(moto.overdueMaintenanceItems?.length ?? 0) > 0 && (
+                <span className="font-sans text-xs font-medium normal-case tracking-normal text-base-content">
+                  {moto.overdueMaintenanceItems.join(", ")}
+                </span>
+              )}
             </span>
           )}
           {hasIssues && (
@@ -225,7 +224,7 @@ function TelemetrySlot({
   const valueColor = {
     default: "text-base-content",
     muted: "text-base-content/30",
-    warn: "text-[var(--color-workshop)]",
+    warn: "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]",
     alert: "text-error",
   }[tone];
 
@@ -244,7 +243,12 @@ function TelemetrySlot({
           {value}
         </span>
       </div>
-      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+      <span
+        className={clsx(
+          "font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
+          tone === "alert" ? "text-error" : "text-base-content/70",
+        )}
+      >
         {caption}
       </span>
     </div>

@@ -270,6 +270,14 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     openIssues: cards.reduce((sum: number, c: MotorcycleDashboardItem) => sum + (c.numberOfIssues || 0), 0),
   }), [cards]);
 
+  const overdueInspectionNames = useMemo(
+    () =>
+      cards
+        .filter((c: MotorcycleDashboardItem) => c.nextInspection?.isOverdue)
+        .map((c: MotorcycleDashboardItem) => `${c.make} ${c.model}`),
+    [cards],
+  );
+
   // Inactive = sold. Hidden by default; a toggle (?show=all) reveals them.
   const showInactive = searchParams.get("show") === "all";
   const inactiveCount = useMemo(
@@ -370,23 +378,21 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           screens so wrap behavior never reflows when something else (a
           popover, a scrollbar) shifts the available width. */}
       {(counts.overdueInspection + counts.overdueMaintenance + counts.openIssues) > 0 && (
-        <div className="order-1 flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <span className="label-tag" aria-hidden="true">
-              <span>Aktion erforderlich</span>
-            </span>
-          </div>
+        <div className="order-1">
           <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <span className="sr-only">
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-            Aktion erforderlich:
+          <span className="label-tag mr-1 shrink-0">
+            <span>Aktion erforderlich</span>
           </span>
           {counts.overdueInspection > 0 && (
             <AttentionChip
               tone="critical"
               icon={CalendarDays}
               count={counts.overdueInspection}
-              label="überfällige MFK"
+              label={
+                overdueInspectionNames.length === 1
+                  ? `überfällige MFK · ${overdueInspectionNames[0]}`
+                  : "überfällige MFK"
+              }
               active={currentFilter === "overdue-inspection"}
               onClick={() => toggleFilter("overdue-inspection")}
             />

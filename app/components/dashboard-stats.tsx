@@ -123,15 +123,15 @@ function Gauge({
     <div className="group relative flex gap-2.5 rounded-sm border border-base-300/70 bg-base-100 px-2.5 py-2 shadow-[0_1px_0_0_rgba(0,0,0,0.02)] transition-colors hover:border-base-content/20 dark:bg-navy-800">
       <div className={clsx("w-[3px] shrink-0 rounded-full", railClass)} aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <dt className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+        <dt className="flex items-start gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
           <span className="text-base-content/30 tabular-nums">{code}</span>
-          <span className="h-px w-1.5 bg-base-content/30" aria-hidden="true" />
-          <span className="truncate">{label}</span>
+          <span className="mt-[0.55em] h-px w-1.5 shrink-0 bg-base-content/30" aria-hidden="true" />
+          <span className="leading-snug">{label}</span>
         </dt>
         <dd
           className={clsx(
-            "mt-0.5 leading-tight truncate",
-            variant === "number" ? "text-[15px]" : "text-xs",
+            "mt-0.5 leading-tight",
+            variant === "number" ? "text-lg" : "text-sm",
           )}
           title={variant === "text" ? value : undefined}
         >
