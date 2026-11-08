@@ -255,13 +255,9 @@ export default function Login() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-base-200 p-4 dark:bg-navy-950">
-      {/* Atmospheric backdrop — soft Motorsport colored light pools, subtle
-          paper-like carbon weave. The motorsport flag at the top is the
-          structural anchor, drawn from the design system. */}
+      {/* Plain backdrop with a subtle paper grain. The motorsport flag at the
+          top is the structural anchor, drawn from the design system. */}
       <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl dark:bg-primary/15" />
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/10 blur-3xl dark:bg-accent/15" />
-        <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/8 blur-3xl dark:bg-secondary/20" />
         {/* Subtle paper grain */}
         <div
           className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]"

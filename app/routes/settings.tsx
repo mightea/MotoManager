@@ -465,6 +465,9 @@ const LOCATION_SECTIONS: LocationSection[] = [
   },
 ];
 
+/** Location groups longer than this start collapsed (fuel stations can run into the hundreds). */
+const COLLAPSED_LOCATIONS = 8;
+
 export default function Settings() {
   const { locations, user, userAuthenticators, settings } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
@@ -478,6 +481,7 @@ export default function Settings() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkType, setBulkType] = useState<LocationType>("fuelStation");
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<LocationType>>(new Set());
   const [mergePreview, setMergePreview] = useState<
     { section: LocationSection; groups: DuplicateGroup[] } | null
   >(null);
@@ -577,10 +581,31 @@ export default function Settings() {
         </div>
       )}
 
-      <AppConnectCard username={user.username} />
+      <nav aria-label="Bereiche" className="flex flex-wrap gap-2">
+        {[
+          { href: "#app", label: "iPhone-App" },
+          { href: "#konto", label: "Passwort" },
+          { href: "#passkeys", label: "Passkeys" },
+          { href: "#ki", label: "KI-Zugriff" },
+          { href: "#standorte", label: "Standorte" },
+          { href: "#intervalle", label: "Service-Intervalle" },
+        ].map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            className="rounded-sm border border-base-content/15 bg-base-100 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300"
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+
+      <div id="app" className="scroll-mt-24">
+        <AppConnectCard username={user.username} />
+      </div>
 
       {/* Password Change Section */}
-      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+      <section id="konto" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-center gap-3 mb-6">
           <div className="rounded-lg bg-orange-100 p-2 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
             <Lock className="h-5 w-5" />
@@ -652,7 +677,7 @@ export default function Settings() {
       </section>
 
       {/* Passkeys Section */}
-      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+      <section id="passkeys" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
@@ -730,7 +755,7 @@ export default function Settings() {
       </section>
 
       {/* AI access (MCP) link */}
-      <div className="rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
+      <div id="ki" className="scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
         <Link to="/settings/api-tokens" className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
@@ -750,7 +775,7 @@ export default function Settings() {
       </div>
 
       {/* Locations Section */}
-      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+      <section id="standorte" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-start gap-3 mb-6">
           <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
             <MapPin className="h-5 w-5" />
@@ -899,13 +924,13 @@ export default function Settings() {
                     Noch keine Einträge.
                   </p>
                 ) : (
-                  <div className="space-y-2">
-                    {items.map((location) => {
+                  <div className="divide-y divide-base-200 rounded-sm border border-base-200 dark:divide-navy-700 dark:border-navy-700">
+                    {(isSelecting || expandedSections.has(section.type) ? items : items.slice(0, COLLAPSED_LOCATIONS)).map((location) => {
                       const isSelected = selectedIds.has(location.id);
-                      const cardClass = `flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors text-left w-full ${
+                      const cardClass = `flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-left w-full ${
                         isSelected
-                          ? "border-primary/60 bg-primary/5"
-                          : "border-gray-100 bg-gray-50 hover:border-gray-200 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-navy-600"
+                          ? "bg-primary/5"
+                          : "hover:bg-base-200/60 dark:hover:bg-navy-900"
                       }`;
                       const body = (
                         <>
@@ -922,15 +947,15 @@ export default function Settings() {
                             </span>
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium text-foreground dark:text-white">
+                            <p className="truncate text-sm font-medium text-foreground dark:text-white">
                               {location.name}
                             </p>
-                            {location.latitude !== null && location.longitude !== null && (
-                              <p className="font-mono text-[11px] tabular-nums text-secondary/70 dark:text-navy-500">
-                                {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
-                              </p>
-                            )}
                           </div>
+                          {(location.latitude === null || location.longitude === null) && (
+                            <span className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
+                              Ohne Koordinaten
+                            </span>
+                          )}
                         </>
                       );
                       return (
@@ -954,6 +979,24 @@ export default function Settings() {
                         </button>
                       );
                     })}
+                    {!isSelecting && items.length > COLLAPSED_LOCATIONS && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedSections((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(section.type)) next.delete(section.type);
+                            else next.add(section.type);
+                            return next;
+                          })
+                        }
+                        className="w-full px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:bg-base-200/60 dark:text-primary-light dark:hover:bg-navy-900"
+                      >
+                        {expandedSections.has(section.type)
+                          ? "Weniger anzeigen"
+                          : `Alle ${items.length} anzeigen`}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1059,7 +1102,7 @@ export default function Settings() {
       </Modal>
 
       {/* Maintenance Intervals Section */}
-      <section className="relative rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+      <section id="intervalle" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
         <div className="flex items-center gap-3 mb-6">
           <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
             <Activity className="h-5 w-5" />
