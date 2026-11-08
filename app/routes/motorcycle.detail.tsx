@@ -48,7 +48,7 @@ import { getCurrencies, getLocations, getUserSettings } from "~/services/setting
 import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { listExpenses } from "~/services/expenses";
-import { formatCurrency } from "~/utils/numberUtils";
+import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
@@ -981,7 +981,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const basePath = `/motorcycle/${slug}/${motorcycleIdParam}`;
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: location.pathname.includes("/documents") },
-    { label: "Werkstattdaten", to: `${basePath}/torque-specs`, isActive: location.pathname.includes("/torque-specs") },
+    { label: "Werkstattdaten", shortLabel: "Werkstatt", to: `${basePath}/torque-specs`, isActive: location.pathname.includes("/torque-specs") },
     { label: "Teile", to: `${basePath}/parts`, isActive: location.pathname.includes("/parts") },
   ];
   const normalizePath = (path: string) => path.replace(/\/+$/, "");
@@ -1081,6 +1081,24 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         navLinks={navLinks}
         overviewLink={overviewLink}
         ownerCount={ownerCount}
+        stats={[
+          ...(lastKnownOdo > 0
+            ? [{ label: "km · Tacho", value: formatNumber(lastKnownOdo) }]
+            : []),
+          ...(avgFuelConsumption
+            ? [{ label: "Ø L/100 km", value: avgFuelConsumption.toFixed(2) }]
+            : []),
+          ...(nextInspection
+            ? [{
+                label: nextInspection.isOverdue ? "MFK überfällig" : "Nächste MFK",
+                value: new Intl.DateTimeFormat("de-CH", { month: "2-digit", year: "numeric" })
+                  .format(new Date(nextInspection.dueDateISO))
+                  .replace(".", "/"),
+                tone: nextInspection.isOverdue ? ("alert" as const) : ("default" as const),
+              }]
+            : []),
+          ...(currentLocationName ? [{ label: "Standort", value: currentLocationName }] : []),
+        ]}
       />
 
       <div className="grid gap-5 grid-cols-1 md:grid-cols-3 items-start">

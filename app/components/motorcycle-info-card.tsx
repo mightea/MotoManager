@@ -71,11 +71,11 @@ export function MotorcycleInfoCard({
       : null;
 
   const summaryItems = [
-    hasPurchaseDate && kmDriven > 0 ? `${formatNumber(kmDriven)} km gefahren` : null,
-    handLabel,
-    ownershipLabel ? `${ownershipLabel} im Besitz` : null,
-    avgFuelConsumption ? `${avgFuelConsumption.toFixed(2)} L/100km` : null,
-  ].filter((item): item is string => Boolean(item));
+    hasPurchaseDate && kmDriven > 0 ? { label: "Seit Kauf", value: `${formatNumber(kmDriven)} km` } : null,
+    handLabel ? { label: "Besitz", value: handLabel } : null,
+    ownershipLabel ? { label: "Im Besitz seit", value: ownershipLabel } : null,
+    avgFuelConsumption ? { label: "Ø Verbrauch", value: `${avgFuelConsumption.toFixed(2)} L/100 km` } : null,
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   if (variant === "summary") {
     return (
@@ -101,16 +101,16 @@ export function MotorcycleInfoCard({
 
         <div className="px-4 py-4">
           {summaryItems.length > 0 ? (
-            <ul className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px] uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300">
-              {summaryItems.map((item, index) => (
-                <li key={item} className="flex min-w-0 items-center gap-3">
-                  {index > 0 && (
-                    <span aria-hidden="true" className="h-3 w-px shrink-0 bg-base-content/20" />
-                  )}
-                  <span className="truncate">{item}</span>
-                </li>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+              {summaryItems.map((item) => (
+                <div key={item.label} className="min-w-0">
+                  <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300">
+                    {item.label}
+                  </dt>
+                  <dd className="font-numeric text-[15px] font-semibold text-base-content">{item.value}</dd>
+                </div>
               ))}
-            </ul>
+            </dl>
           ) : (
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-base-content/70">
               Keine Daten · Wartungs- oder Tank-Einträge hinzufügen

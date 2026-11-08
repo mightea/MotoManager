@@ -91,7 +91,7 @@ export default function MotorcyclePartsPage({ loaderData }: Route.ComponentProps
   };
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: false },
-    { label: "Werkstattdaten", to: `${basePath}/torque-specs`, isActive: false },
+    { label: "Werkstattdaten", shortLabel: "Werkstatt", to: `${basePath}/torque-specs`, isActive: false },
     { label: "Teile", to: `${basePath}/parts`, isActive: true },
   ];
 

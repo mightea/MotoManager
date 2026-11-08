@@ -196,7 +196,9 @@ function groupMaintenanceRecords(records: MaintenanceRecord[], userLocations?: L
 }
 
 function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: string | null): string | null {
-  if (group.type === "fuel") {
+  // A single fill's summary already states litres, L/100 km and trip — repeating
+  // them on the right says the same thing twice, so show its cost instead.
+  if (group.type === "fuel" && group.originalRecords.length > 1) {
     const totalLiters = group.originalRecords.reduce((sum, r) => sum + (r.fuelAmount || 0), 0);
     const consumptionValues = group.originalRecords
       .map(r => r.fuelConsumption)

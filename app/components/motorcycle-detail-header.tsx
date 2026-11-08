@@ -12,6 +12,8 @@ type NextInspectionInfo = {
 
 type NavLink = {
   label: string;
+  /** Shorter label used on phone widths, e.g. "Werkstatt" for "Werkstattdaten". */
+  shortLabel?: string;
   to: string;
   isActive?: boolean;
   disabled?: boolean;
@@ -31,7 +33,11 @@ interface MotorcycleDetailHeaderProps {
   backTo?: string;
   overviewLink?: OverviewLink;
   ownerCount?: number;
+  /** Key numbers shown in the hero, e.g. Tacho, Ø Verbrauch, MFK. */
+  stats?: HeroStat[];
 }
+
+export type HeroStat = { label: string; value: string; tone?: "default" | "alert" };
 
 /**
  * Race-program cover header.
@@ -53,6 +59,7 @@ export function MotorcycleDetailHeader({
   navLinks,
   backTo = "/",
   overviewLink,
+  stats = [],
 }: MotorcycleDetailHeaderProps) {
   const [imageError, setImageError] = useState(false);
   const imageUrl = getBackendAssetUrl(motorcycle.image);
@@ -94,7 +101,7 @@ export function MotorcycleDetailHeader({
           />
         </div>
 
-        <div className="relative px-4 pb-6 pt-4 text-white md:px-8 md:pb-8 md:pt-6">
+        <div className="relative px-4 pb-5 pt-4 text-white md:px-8 md:pb-6 md:pt-5">
           {/* Top utility row: back arrow + section code */}
           <div className="flex items-center justify-between">
             <Link
@@ -112,25 +119,22 @@ export function MotorcycleDetailHeader({
           </div>
 
           {/* Title block */}
-          <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="mt-4 grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               {motorcycle.isVeteran && (
                 <span className="stamp mb-3">Veteran · Historisch</span>
               )}
-              <h1 className="font-display text-[clamp(2.25rem,6vw,4rem)] uppercase leading-[0.95] tracking-wide text-white">
-                {motorcycle.make}
+              <h1 className="font-display text-[clamp(2.25rem,5.5vw,3.75rem)] uppercase leading-[0.95] tracking-wide text-white">
+                {motorcycle.make} <span className="text-white/80">{motorcycle.model}</span>
               </h1>
-              <h2 className="font-display text-[clamp(1.75rem,4.5vw,3rem)] uppercase leading-[0.95] tracking-wide text-white/80">
-                {motorcycle.model}
-              </h2>
               <p className="mt-3 inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                 <span className="h-px w-6 bg-white/40" aria-hidden="true" />
                 {motorcycle.fabricationDate ?? "Fabrikation unbekannt"}
               </p>
             </div>
 
-            {/* Right stats column — desktop only */}
-            <div className="hidden md:grid md:gap-2 md:text-right md:font-mono md:text-xs">
+            {/* Right stats column — desktop only, when no stats strip is shown */}
+            <div className={stats.length > 0 ? "hidden" : "hidden md:grid md:gap-2 md:text-right md:font-mono md:text-xs"}>
               {nextInspection && (
                 <DatumLine
                   icon={CalendarDays}
@@ -150,7 +154,7 @@ export function MotorcycleDetailHeader({
           </div>
 
           {/* Mobile stats row */}
-          {(nextInspection || currentLocationName) && (
+          {stats.length === 0 && (nextInspection || currentLocationName) && (
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 md:hidden">
               {nextInspection && (
                 <span
@@ -173,6 +177,23 @@ export function MotorcycleDetailHeader({
           )}
         </div>
 
+        {stats.length > 0 && (
+          <dl className="relative grid grid-cols-2 border-t border-white/15 bg-black/30 text-white backdrop-blur-sm sm:auto-cols-fr sm:grid-flow-col sm:grid-cols-none">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className={clsx(
+                  "border-white/15 px-4 py-2.5 md:px-8 [&:not(:first-child)]:border-l",
+                  stat.tone === "alert" && "bg-error/85",
+                )}
+              >
+                <dd className="font-numeric text-lg font-semibold leading-tight">{stat.value}</dd>
+                <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-white/75">{stat.label}</dt>
+              </div>
+            ))}
+          </dl>
+        )}
+
         {/* Signature stripe at the bottom of the hero */}
         <div className="motorsport-stripe relative h-[4px]" aria-hidden="true" />
       </div>
@@ -181,7 +202,7 @@ export function MotorcycleDetailHeader({
       {allNavLinks.length > 0 && (
         <nav
           aria-label="Fahrzeug-Unterseiten"
-          className="relative -mt-px overflow-x-auto border-b border-base-300 bg-base-100 px-4 dark:border-navy-700 dark:bg-navy-900 md:px-8"
+          className="relative -mt-px overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-b border-base-300 bg-base-100 px-4 dark:border-navy-700 dark:bg-navy-900 md:px-8"
         >
           <ul className="flex items-stretch gap-1 py-0">
             {allNavLinks.map((link, index) => {
@@ -208,7 +229,14 @@ export function MotorcycleDetailHeader({
                       {code}
                     </span>
                     <span className="font-subdisplay text-sm leading-none whitespace-nowrap">
-                      {link.label}
+                      {link.shortLabel ? (
+                        <>
+                          <span className="sm:hidden">{link.shortLabel}</span>
+                          <span className="hidden sm:inline">{link.label}</span>
+                        </>
+                      ) : (
+                        link.label
+                      )}
                     </span>
                     <span
                       aria-hidden="true"

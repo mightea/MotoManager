@@ -349,7 +349,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
   };
   const navLinks = [
     { label: "Dokumente", to: `${basePath}/documents`, isActive: false },
-    { label: "Werkstattdaten", to: `${basePath}/torque-specs`, isActive: true },
+    { label: "Werkstattdaten", shortLabel: "Werkstatt", to: `${basePath}/torque-specs`, isActive: true },
     { label: "Teile", to: `${basePath}/parts`, isActive: false },
   ];
 
@@ -543,19 +543,20 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           </div>
 
           {details.length > 0 && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 print:grid-cols-2 print:gap-1">
+            <Card className="print:rounded-none print:border-0 print:shadow-none print:!bg-white">
+            <dl className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 print:grid-cols-2 print:gap-1">
               {details.map((detail) => (
-                <Card
+                <div
                   key={detail.id}
-                  className="group relative flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:block print:rounded-none print:border-0 print:break-inside-avoid print:print-force-white print:shadow-none print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
+                  className="group relative flex items-center justify-between gap-3 border-base-200 px-4 py-3 transition-colors hover:bg-base-200/50 dark:border-navy-700 dark:hover:bg-navy-700/30 [&:not(:first-child)]:border-t sm:[&:nth-child(-n+2)]:border-t-0 xl:[&:nth-child(-n+3)]:border-t-0 print:block print:border-0 print:break-inside-avoid print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
                 >
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400 print:text-[8pt] print:!text-black">
+                    <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400 print:text-[8pt] print:!text-black">
                       {detail.title}
-                    </h3>
-                    <p className="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground dark:text-white print:text-[10pt] print:!text-black">
+                    </dt>
+                    <dd className="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground dark:text-white print:text-[10pt] print:!text-black">
                       <LinkifiedText text={detail.value} />
-                    </p>
+                    </dd>
                   </div>
                   <button
                     type="button"
@@ -565,9 +566,10 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                   >
                     <Pencil className="h-3 w-3" aria-hidden="true" />
                   </button>
-                </Card>
+                </div>
               ))}
-            </div>
+            </dl>
+            </Card>
           )}
         </section>
 
@@ -711,7 +713,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                       <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5 sm:py-4 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-0 print:py-0 print:!bg-white print:!text-black print:border-0 print-row">
                         <div className="flex-1 min-w-0 space-y-0.5">
                           <div className="flex items-center gap-2 min-w-0">
-                            <h3 className="text-sm font-semibold leading-tight truncate text-foreground dark:text-white print:text-[10pt] print:font-semibold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
+                            <h3 className="text-sm font-semibold leading-tight text-foreground dark:text-white print:text-[10pt] print:font-semibold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
                               {spec.name}
                             </h3>
                             {spec.unverified && (
