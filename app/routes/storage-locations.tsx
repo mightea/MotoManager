@@ -1,17 +1,20 @@
 import { data, Link, useActionData } from "react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Archive, ChevronRight, MapPin, Plus, Printer } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import clsx from "clsx";
+import { Archive, ChevronRight, Inbox, MapPin, Package, Plus, Printer } from "lucide-react";
 import type { Route } from "./+types/storage-locations";
 import { requireUser } from "~/services/auth";
 import {
   createStorageLocation,
+  fetchParts,
   fetchPartStocks,
   fetchStorageLocations,
 } from "~/services/parts";
 import { getLocations } from "~/services/settings";
 import type { Location } from "~/types/db";
 import type { StorageLocation } from "~/types/parts";
-import { storageLocationPlace } from "~/utils/parts";
+import { storageLocationPath, storageLocationPlace } from "~/utils/parts";
+import { getBackendAssetUrl } from "~/utils/backend";
 import { Card } from "~/components/card";
 import { PageHeader } from "~/components/page-header";
 import { EmptyState } from "~/components/empty-state";
@@ -29,12 +32,13 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { user, token } = await requireUser(request);
-  const [storageLocations, stocks, places] = await Promise.all([
+  const [storageLocations, stocks, places, parts] = await Promise.all([
     fetchStorageLocations(token),
     fetchPartStocks(token),
     getLocations(token, user.id).catch(() => [] as Location[]),
+    fetchParts(token),
   ]);
-  return data({ storageLocations, stocks, places: places as Location[] });
+  return data({ storageLocations, stocks, places: places as Location[], parts });
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -60,10 +64,14 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function StorageLocationsPage({ loaderData }: Route.ComponentProps) {
-  const { storageLocations, stocks, places } = loaderData;
+  const { storageLocations, stocks, places, parts } = loaderData;
   const actionData = useActionData<typeof clientAction>();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  // Split view (lg+): the location whose contents the right panel shows;
+  // "none" = stock without a Lagerort. Defaults to the first root.
+  const [selected, setSelected] = useState<number | "none" | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
@@ -95,6 +103,45 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
     return map;
   }, [storageLocations]);
 
+  const unassigned = stocks.filter((stock) => stock.storageLocationId == null && stock.quantity > 0);
+
+  const rootLocations = childrenByParent.get(null) ?? [];
+  const activeSelection = selected ?? rootLocations[0]?.id ?? null;
+
+  // Contents of the selection, including nested locations: part -> quantity.
+  const panelItems = useMemo(() => {
+    let locationIds: Set<number | null>;
+    if (activeSelection === "none") {
+      locationIds = new Set([null]);
+    } else if (activeSelection == null) {
+      return [];
+    } else {
+      locationIds = new Set<number | null>([activeSelection]);
+      let frontier = [activeSelection];
+      for (let depth = 0; depth < 6 && frontier.length > 0; depth++) {
+        frontier = frontier.flatMap((id) => (childrenByParent.get(id) ?? []).map((child) => child.id));
+        for (const id of frontier) locationIds.add(id);
+      }
+    }
+    const quantities = new Map<number, number>();
+    for (const stock of stocks) {
+      if (!locationIds.has(stock.storageLocationId ?? null) || stock.quantity <= 0) continue;
+      quantities.set(stock.partId, (quantities.get(stock.partId) ?? 0) + stock.quantity);
+    }
+    return [...quantities.entries()]
+      .map(([partId, quantity]) => ({ part: parts.find((part) => part.id === partId), quantity }))
+      .filter((item): item is { part: (typeof parts)[number]; quantity: number } => item.part != null)
+      .sort((a, b) => a.part.name.localeCompare(b.part.name, "de"));
+  }, [activeSelection, childrenByParent, stocks, parts]);
+
+  const selectedLocation =
+    typeof activeSelection === "number"
+      ? storageLocations.find((location) => location.id === activeSelection) ?? null
+      : null;
+
+  const isSplitView = () =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+
   const placeName = (location: StorageLocation) =>
     location.locationId != null
       ? places.find((place) => place.id === location.locationId)?.name ?? null
@@ -109,7 +156,18 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
         <div key={location.id}>
           <Link
             to={`/storage-locations/${location.id}`}
-            className="flex items-center justify-between gap-3 border-b border-base-200 px-3 py-2.5 transition-colors hover:bg-base-200/50 dark:border-navy-700 dark:hover:bg-navy-700/30"
+            onClick={(event) => {
+              // Wide screens select into the side panel; phones open the detail page.
+              if (!isSplitView()) return;
+              event.preventDefault();
+              setSelected(location.id);
+            }}
+            aria-current={activeSelection === location.id ? "true" : undefined}
+            className={clsx(
+              "flex items-center justify-between gap-3 border-b border-base-200 px-3 py-2.5 transition-colors hover:bg-base-200/50 dark:border-navy-700 dark:hover:bg-navy-700/30",
+              activeSelection === location.id &&
+                "lg:bg-primary/8 lg:shadow-[inset_3px_0_0_var(--color-primary)] dark:lg:bg-primary/15",
+            )}
             style={{ paddingLeft: `${12 + depth * 24}px` }}
           >
             <span className="flex min-w-0 flex-1 items-center gap-2">
@@ -198,16 +256,118 @@ export default function StorageLocationsPage({ loaderData }: Route.ComponentProp
             }
           />
         ) : (
-          <Card className="overflow-hidden">{renderTree(null, 0)}</Card>
-        )}
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <Card className="overflow-hidden">
+              {renderTree(null, 0)}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelected("none");
+                  if (!isSplitView()) {
+                    requestAnimationFrame(() => panelRef.current?.scrollIntoView({ behavior: "smooth" }));
+                  }
+                }}
+                aria-current={activeSelection === "none" ? "true" : undefined}
+                className={clsx(
+                  "flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30",
+                  activeSelection === "none" &&
+                    "bg-primary/8 shadow-[inset_3px_0_0_var(--color-primary)] dark:bg-primary/15",
+                )}
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <Inbox className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                  <span className="text-sm font-semibold text-base-content dark:text-white">Ohne Lagerort</span>
+                  <span
+                    className={clsx(
+                      "rounded-sm px-1.5 py-0.5 font-mono text-[11px] font-semibold",
+                      unassigned.length > 0
+                        ? "bg-warning/15 text-warning"
+                        : "bg-base-200 text-base-content/60 dark:bg-navy-800 dark:text-navy-300",
+                    )}
+                  >
+                    {new Set(unassigned.map((stock) => stock.partId)).size} Teile
+                  </span>
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-base-content/30" aria-hidden="true" />
+              </button>
+            </Card>
 
-        <p className="text-xs text-base-content/50">
-          Teile ohne Lagerort findest du auf der{" "}
-          <Link to="/parts" className="underline">
-            Teile-Seite
-          </Link>
-          .
-        </p>
+            <div
+              ref={panelRef}
+              className={clsx("scroll-mt-20", activeSelection === "none" ? "block" : "hidden lg:block")}
+            >
+              <Card className="overflow-hidden">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-base-200 px-4 py-3 dark:border-navy-700">
+                  <div className="min-w-0">
+                    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+                      {selectedLocation
+                        ? storageLocationPath(selectedLocation, storageLocations)
+                        : "Bestand ohne Zuordnung"}
+                    </p>
+                    <h2 className="font-subdisplay text-lg text-base-content dark:text-white">
+                      {selectedLocation ? selectedLocation.name : "Ohne Lagerort"}
+                    </h2>
+                    <p className="text-xs text-base-content/70 dark:text-navy-400">
+                      {panelItems.length} {panelItems.length === 1 ? "Teil" : "Teile"} ·{" "}
+                      {panelItems.reduce((sum, item) => sum + item.quantity, 0)} Stk.
+                      {selectedLocation && " inkl. Unterfächer"}
+                    </p>
+                  </div>
+                  {selectedLocation && (
+                    <Link
+                      to={`/storage-locations/${selectedLocation.id}`}
+                      className="inline-flex items-center gap-1 rounded-sm border border-base-content/15 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:text-navy-300"
+                    >
+                      Öffnen · Etikett
+                      <ChevronRight className="h-3 w-3" aria-hidden="true" />
+                    </Link>
+                  )}
+                </div>
+                {panelItems.length === 0 ? (
+                  <p className="px-4 py-6 text-sm text-base-content/60 dark:text-navy-400">
+                    {selectedLocation ? "Hier liegt noch nichts." : "Alle Teile sind einem Lagerort zugeordnet."}
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-base-200 dark:divide-navy-700">
+                    {panelItems.map(({ part, quantity }) => (
+                      <li key={part.id}>
+                        <Link
+                          to={`/parts/${part.id}`}
+                          className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30"
+                        >
+                          {part.image ? (
+                            <img
+                              src={`${getBackendAssetUrl(part.image)}?width=80`}
+                              alt=""
+                              loading="lazy"
+                              className="h-10 w-10 shrink-0 rounded-sm border border-base-300 object-cover dark:border-navy-700"
+                            />
+                          ) : (
+                            <span
+                              aria-hidden="true"
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-dashed border-base-300 text-base-content/30 dark:border-navy-700"
+                            >
+                              <Package className="h-4 w-4" />
+                            </span>
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="line-clamp-2 text-sm font-semibold text-base-content dark:text-white">
+                              {part.name}
+                            </span>
+                            <span className="block font-mono text-[11px] text-base-content/60 dark:text-navy-400">
+                              {part.partNumber}
+                            </span>
+                          </span>
+                          <span className="font-numeric text-lg font-semibold text-primary">{quantity}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Print: label sheet with every location */}

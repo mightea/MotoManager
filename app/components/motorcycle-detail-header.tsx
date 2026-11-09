@@ -52,6 +52,8 @@ export type HeroStat = { label: string; value: string; tone?: "default" | "alert
  * - Sub-nav (Übersicht / Dokumente / Anzugsmomente) sits below the hero as
  *   a tabular row of file tabs, NOT pills on the photo.
  */
+const NO_STATS: HeroStat[] = [];
+
 export function MotorcycleDetailHeader({
   motorcycle,
   nextInspection,
@@ -59,7 +61,7 @@ export function MotorcycleDetailHeader({
   navLinks,
   backTo = "/",
   overviewLink,
-  stats = [],
+  stats = NO_STATS,
 }: MotorcycleDetailHeaderProps) {
   const [imageError, setImageError] = useState(false);
   const imageUrl = getBackendAssetUrl(motorcycle.image);

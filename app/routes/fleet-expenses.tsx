@@ -12,6 +12,7 @@ import { ExpenseDialog } from "~/components/expense-dialog";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
 import { Button } from "~/components/button";
+import { Card, CardHeading } from "~/components/card";
 import { formatCurrency } from "~/utils/numberUtils";
 import type { Expense, Motorcycle } from "~/types/db";
 
@@ -133,6 +134,29 @@ export default function FleetExpenses() {
           .filter(Boolean)
           .join(" · ");
 
+  // Per-bike share, split equally across linked bikes — the same rule the
+  // backend's fleet statistics use. Only meaningful in a single currency.
+  const bikeShares = (() => {
+    if (currenciesUsed.size !== 1) return [];
+    const totals = new Map<number | null, number>();
+    for (const expense of expenses) {
+      const ids = expense.motorcycleIds?.length ? expense.motorcycleIds : [null];
+      for (const id of ids) totals.set(id, (totals.get(id) ?? 0) + expense.amount / ids.length);
+    }
+    return [...totals.entries()]
+      .map(([id, amount]) => {
+        const bike = id == null ? null : motorcycles.find((candidate) => candidate.id === id);
+        return {
+          key: id ?? "none",
+          label: id == null ? "Ohne Motorrad" : bike ? `${bike.make} ${bike.model}` : "Unbekanntes Motorrad",
+          unassigned: id == null,
+          amount,
+        };
+      })
+      .sort((a, b) => Number(a.unassigned) - Number(b.unassigned) || b.amount - a.amount);
+  })();
+  const maxShare = Math.max(...bikeShares.map((share) => share.amount), 1);
+
   return (
     <div className="container mx-auto max-w-7xl space-y-4 px-4 pt-4 pb-24 md:p-6">
       <PageHeader
@@ -146,6 +170,36 @@ export default function FleetExpenses() {
           </Button>
         }
       />
+
+      {bikeShares.length > 1 && (
+        <Card>
+          <CardHeading title="Anteil pro Motorrad" meta="geteilte Ausgaben zu gleichen Teilen" />
+          <ul className="space-y-2.5 px-4 py-4">
+            {bikeShares.map((share) => (
+              <li key={share.key} className="grid grid-cols-[minmax(0,10rem)_1fr_auto] items-center gap-3 sm:grid-cols-[minmax(0,14rem)_1fr_auto]">
+                <span
+                  className={
+                    share.unassigned
+                      ? "truncate text-sm text-base-content/60 dark:text-navy-400"
+                      : "truncate text-sm font-semibold text-base-content dark:text-white"
+                  }
+                >
+                  {share.label}
+                </span>
+                <span className="h-2.5 overflow-hidden rounded-sm bg-base-200 dark:bg-navy-700" aria-hidden="true">
+                  <span
+                    className={share.unassigned ? "block h-full bg-base-content/25" : "block h-full bg-primary"}
+                    style={{ width: `${(share.amount / maxShare) * 100}%` }}
+                  />
+                </span>
+                <span className="font-numeric text-sm font-semibold tabular-nums text-base-content dark:text-white">
+                  {formatCurrency(share.amount, expenses[0].currency)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="space-y-3">
         {expenses.length === 0 ? (
