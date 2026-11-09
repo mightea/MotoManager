@@ -20,7 +20,7 @@ import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { buildMotorcycleHero } from "~/components/motorcycle-hero-stats";
 import { LinkifiedText } from "~/components/linkified-text";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Plus, Pencil, Import, Printer, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Import, Printer, AlertTriangle, Share2 } from "lucide-react";
 import { FormattedText } from "~/components/formatted-text";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
@@ -29,7 +29,10 @@ import { TorqueSpecForm } from "~/components/torque-spec-form";
 import { MotorcycleDetailForm } from "~/components/motorcycle-detail-form";
 import { TirePressureForm } from "~/components/tire-pressure-form";
 import { TirePressureCard } from "~/components/tire-pressure-card";
-import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
+import {
+  ImportTorqueSpecsDialog,
+  type TorqueImportSource,
+} from "~/components/import-torque-specs-dialog";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { Card } from "~/components/card";
 import { Button } from "~/components/button";
@@ -46,6 +49,17 @@ import {
   upsertTirePressure,
 } from "~/services/motorcycles";
 import { fetchFromBackend } from "~/utils/backend";
+import {
+  fetchCatalogTorqueSpecs,
+  importCatalogTorqueSpecs,
+  removeCatalogContribution,
+  shareTorqueSpecsToCatalog,
+  translateCatalogTorqueError,
+} from "~/services/catalog-torque-specs";
+import { fetchModelSeries } from "~/services/parts";
+import { modelSeriesDisplayName } from "~/types/parts";
+import { formatShareDate, ownContribution } from "~/utils/catalog-torque-specs";
+import { toast } from "~/hooks/use-toast";
 import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
 import { formatPressure } from "~/utils/pressure";
 
@@ -106,8 +120,10 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
       fabricationDate: m.fabricationDate ?? m.modelYear ?? null,
     }));
 
-  // The per-motorcycle spec fetches and the header stats are independent — run them together.
-  const [otherSpecsResponses, headerStats] = await Promise.all([
+  // The per-motorcycle spec fetches, the catalog lookups and the header stats
+  // are independent — run them together.
+  const seriesId = response.motorcycle.seriesId ?? null;
+  const [otherSpecsResponses, headerStats, catalog, modelSeries] = await Promise.all([
     Promise.all(
       otherMotorcycles.map((m) =>
         fetchFromBackend<{ torqueSpecs: TorqueSpecification[] }>(
@@ -118,7 +134,11 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
       ),
     ),
     computeMotorcycleHeaderStats(response, token, user.id),
+    // null = API without catalog torque values (older server) → feature hidden.
+    seriesId != null ? fetchCatalogTorqueSpecs(token, seriesId) : Promise.resolve(null),
+    seriesId != null ? fetchModelSeries(token).catch(() => []) : Promise.resolve([]),
   ]);
+  const seriesNode = seriesId != null ? modelSeries.find((node) => node.id === seriesId) : undefined;
   const otherSpecs = otherSpecsResponses.flatMap((r) => r.torqueSpecs ?? []);
   const hero = buildMotorcycleHero({
     motorcycle: response.motorcycle,
@@ -136,6 +156,8 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     motorcycleDetails,
     allMotorcycles: otherMotorcycles,
     otherSpecs,
+    catalog,
+    seriesName: seriesNode ? modelSeriesDisplayName(seriesNode) : null,
     printDate: new Date().toLocaleDateString("de-CH"),
   });
 }
@@ -208,6 +230,40 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       return data({ error: "Reifendruck konnte nicht gelöscht werden." }, { status: 404 });
     }
     return data({ success: true });
+  }
+
+  if (
+    intent === "importCatalogTorqueSpecs" ||
+    intent === "shareTorqueSpecsToCatalog" ||
+    intent === "removeCatalogContribution"
+  ) {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    try {
+      if (intent === "importCatalogTorqueSpecs") {
+        const catalogSpecIds = formData.getAll("catalogSpecIds").map(Number).filter(Boolean);
+        if (!motorcycleId || catalogSpecIds.length === 0) return data({ success: true });
+        const { count, skipped } = await importCatalogTorqueSpecs(token, motorcycleId, catalogSpecIds);
+        const message =
+          `${count} ${count === 1 ? "Wert" : "Werte"} übernommen` +
+          (skipped > 0 ? ` · ${skipped} bereits vorhanden` : "");
+        return data({ success: true, message });
+      }
+      if (intent === "shareTorqueSpecsToCatalog") {
+        if (!motorcycleId) return data({ error: "Motorrad-ID fehlt." }, { status: 400 });
+        const { count } = await shareTorqueSpecsToCatalog(token, motorcycleId);
+        return data({
+          success: true,
+          message: `${count} ${count === 1 ? "Wert" : "Werte"} im Modellkatalog geteilt`,
+        });
+      }
+      const seriesId = Number(formData.get("seriesId"));
+      if (!seriesId) return data({ error: "Katalog-Eintrag fehlt." }, { status: 400 });
+      await removeCatalogContribution(token, seriesId);
+      return data({ success: true, message: "Aus dem Modellkatalog entfernt" });
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      return data({ error: translateCatalogTorqueError(error) }, { status: 400 });
+    }
   }
 
   if (intent === "createDetail" || intent === "updateDetail" || intent === "deleteDetail") {
@@ -348,6 +404,8 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
     motorcycleDetails: detailsRaw = [],
     allMotorcycles: otherMotorcycles = [],
     otherSpecs = [],
+    catalog,
+    seriesName,
     printDate,
   } = loaderData;
   const pressure = (tirePressure ?? null) as TirePressure | null;
@@ -375,6 +433,34 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importSource, setImportSource] = useState<TorqueImportSource>("own");
+  const [importDialogKey, setImportDialogKey] = useState(0);
+  const [isShareConfirmOpen, setIsShareConfirmOpen] = useState(false);
+  const [isRemoveShareOpen, setIsRemoveShareOpen] = useState(false);
+
+  // Model catalog (API migration 064): null when the server predates it.
+  const seriesId = motorcycle.seriesId ?? null;
+  const catalogSpecs = catalog?.torqueSpecs ?? [];
+  const hasCatalogSpecs = catalogSpecs.length > 0;
+  const catalogLabel = seriesName ?? catalogSpecs[0]?.seriesName ?? "";
+  const myContribution =
+    catalog && seriesId != null ? ownContribution(catalog.contributions, seriesId) : null;
+  const canShare = catalog != null && seriesId != null && specs.length > 0;
+  const canImport = otherMotorcycles.length > 0 || hasCatalogSpecs;
+
+  const openImport = (source: TorqueImportSource) => {
+    setImportSource(source);
+    setImportDialogKey((key) => key + 1);
+    setIsImportModalOpen(true);
+  };
+
+  const submitCatalogIntent = (intent: "shareTorqueSpecsToCatalog" | "removeCatalogContribution") => {
+    const formData = new FormData();
+    formData.append("intent", intent);
+    formData.append("motorcycleId", motorcycle.id.toString());
+    if (seriesId != null) formData.append("seriesId", seriesId.toString());
+    submit(formData, { method: "post" });
+  };
   const [editingSpec, setEditingSpec] = useState<TorqueSpecification | null>(null);
   const [deletingSpec, setDeletingSpec] = useState<TorqueSpecification | null>(null);
   const [isPressureModalOpen, setIsPressureModalOpen] = useState(false);
@@ -393,6 +479,11 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       setIsAddDetailOpen(false);
       setEditingDetail(null);
       setDeletingDetail(null);
+      setIsShareConfirmOpen(false);
+      setIsRemoveShareOpen(false);
+      if ("message" in actionData && typeof actionData.message === "string") {
+        toast.success(actionData.message);
+      }
     }
   }, [actionData]);
 
@@ -664,12 +755,44 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2 print:hidden">
-                  {specs.length > 0 && otherMotorcycles.length > 0 && (
+                  {canShare &&
+                    (myContribution ? (
+                      <span className="inline-flex h-8 items-center gap-2 rounded-sm border border-base-content/15 pl-2.5 pr-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:border-navy-700 dark:text-navy-300">
+                        <Share2 className="h-3 w-3" aria-hidden="true" />
+                        <span>Im Katalog geteilt · {formatShareDate(myContribution.sharedAt)}</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsShareConfirmOpen(true)}
+                          className="rounded-sm px-1.5 py-1 text-primary hover:bg-primary/10"
+                          title="Aktuelle Werte erneut teilen (ersetzt deinen Beitrag)"
+                        >
+                          Aktualisieren
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsRemoveShareOpen(true)}
+                          className="rounded-sm px-1.5 py-1 text-error hover:bg-error/10"
+                        >
+                          Entfernen
+                        </button>
+                      </span>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsShareConfirmOpen(true)}
+                        leftIcon={<Share2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                      >
+                        Im Modellkatalog teilen
+                      </Button>
+                    ))}
+                  {specs.length > 0 && canImport && (
                     <Button
                       type="button"
                       variant="secondary"
                       size="sm"
-                      onClick={() => setIsImportModalOpen(true)}
+                      onClick={() => openImport(hasCatalogSpecs ? "catalog" : "own")}
                       leftIcon={<Import className="h-3.5 w-3.5" aria-hidden="true" />}
                     >
                       Importieren
@@ -725,23 +848,35 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
                       Noch keine Anzugsmomente
                     </span>
                     <span className="text-sm text-base-content/70 dark:text-navy-300">
-                      {otherMotorcycles.length > 0
-                        ? "Werte von einem anderen Motorrad übernehmen oder selbst erfassen — mit Werkzeug und Drehmoment pro Bauteil."
-                        : "Erfasse Werkzeug und Drehmoment pro Bauteil."}
+                      {hasCatalogSpecs
+                        ? "Werte aus dem Modellkatalog übernehmen oder selbst erfassen — mit Werkzeug und Drehmoment pro Bauteil."
+                        : otherMotorcycles.length > 0
+                          ? "Werte von einem anderen Motorrad übernehmen oder selbst erfassen — mit Werkzeug und Drehmoment pro Bauteil."
+                          : "Erfasse Werkzeug und Drehmoment pro Bauteil."}
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {otherMotorcycles.length > 0 && (
+                      {hasCatalogSpecs ? (
                         <Button
                           type="button"
-                          onClick={() => setIsImportModalOpen(true)}
+                          onClick={() => openImport("catalog")}
                           leftIcon={<Import className="h-4 w-4" aria-hidden="true" />}
                         >
-                          Importieren
+                          Importieren · Modellkatalog {catalogLabel}
                         </Button>
+                      ) : (
+                        otherMotorcycles.length > 0 && (
+                          <Button
+                            type="button"
+                            onClick={() => openImport("own")}
+                            leftIcon={<Import className="h-4 w-4" aria-hidden="true" />}
+                          >
+                            Importieren
+                          </Button>
+                        )
                       )}
                       <Button
                         type="button"
-                        variant={otherMotorcycles.length > 0 ? "secondary" : "primary"}
+                        variant={canImport ? "secondary" : "primary"}
                         onClick={() => setIsAddModalOpen(true)}
                         leftIcon={<Plus className="h-4 w-4" aria-hidden="true" />}
                       >
@@ -909,12 +1044,53 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
       />
 
       <ImportTorqueSpecsDialog
+        key={importDialogKey}
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         targetMotorcycleId={motorcycle.id}
         otherMotorcycles={otherMotorcycles}
         otherSpecs={otherSpecs}
         existingSpecs={specs}
+        catalogSpecs={catalogSpecs}
+        initialSource={importSource}
+      />
+
+      <Modal
+        isOpen={isShareConfirmOpen}
+        onClose={() => setIsShareConfirmOpen(false)}
+        title="Im Modellkatalog teilen"
+        description={`${specs.length} ${specs.length === 1 ? "Anzugsmoment wird" : "Anzugsmomente werden"} unter «${catalogLabel}» in den Modellkatalog kopiert.`}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-base-content/80 dark:text-navy-200">
+            Die Werte sind danach für <strong>alle Nutzer dieses Servers</strong> sichtbar und
+            importierbar — zusammen mit deinem Benutzernamen.
+            {myContribution
+              ? " Dein bisheriger Beitrag für dieses Modell wird ersetzt."
+              : " Teilst du später erneut, wird dein Beitrag ersetzt."}
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="ghost" onClick={() => setIsShareConfirmOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              onClick={() => submitCatalogIntent("shareTorqueSpecsToCatalog")}
+              leftIcon={<Share2 className="h-4 w-4" aria-hidden="true" />}
+            >
+              Teilen
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <DeleteConfirmationDialog
+        isOpen={isRemoveShareOpen}
+        title="Aus dem Modellkatalog entfernen"
+        description={`Deine ${myContribution?.count ?? ""} geteilten Werte für «${catalogLabel}» werden aus dem Katalog entfernt. Die Werte an deinem Motorrad bleiben erhalten.`}
+        confirmLabel="Entfernen"
+        onConfirm={() => submitCatalogIntent("removeCatalogContribution")}
+        onCancel={() => setIsRemoveShareOpen(false)}
       />
 
       <Modal

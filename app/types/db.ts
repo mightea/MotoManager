@@ -324,6 +324,44 @@ export interface TorqueSpecification {
   createdAt: string;
 }
 
+/** A torque value shared into the model catalog (`GET /model-series/:id/torque-specs`).
+ *  Visible to every user of the server; contributors are named by username only. */
+export interface CatalogTorqueSpec {
+  id: number;
+  seriesId: number;
+  seriesName: string;
+  seriesManufacturer: string;
+  userId: number;
+  contributorUsername: string;
+  category: string;
+  name: string;
+  torque: number;
+  torqueEnd: number | null;
+  variation: number | null;
+  toolSize: string | null;
+  description: string | null;
+  descriptionMarkup: string | null;
+  unverified: boolean;
+  createdAt: string;
+}
+
+/** One user's shared list on one catalog node. */
+export interface CatalogTorqueContribution {
+  seriesId: number;
+  seriesName: string;
+  seriesManufacturer: string;
+  userId: number;
+  contributorUsername: string;
+  count: number;
+  sharedAt: string;
+  isOwn: boolean;
+}
+
+export interface CatalogTorqueSpecs {
+  torqueSpecs: CatalogTorqueSpec[];
+  contributions: CatalogTorqueContribution[];
+}
+
 export type NewTorqueSpecification = Omit<TorqueSpecification, "id" | "createdAt" | "torqueEnd" | "variation" | "toolSize" | "description" | "descriptionMarkup" | "unverified"> & {
   torqueEnd?: number | null;
   variation?: number | null;
