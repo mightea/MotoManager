@@ -1,5 +1,40 @@
 # Changelog
 
+## [2026.11.4](https://github.com/mightea/MotoManager/compare/2026.11.3...2026.11.4) (2026-11-09)
+
+
+### ✨ Features
+
+* admin area flags outdated apps and server stats show system health ([e103b1f](https://github.com/mightea/MotoManager/commit/e103b1f40b25a1ac7d9d7bac6c2e9066ff65f5d1))
+* bike page leads with its key numbers and states each fact once ([8588a92](https://github.com/mightea/MotoManager/commit/8588a92afdd99457804a2473caa64e86751b4a3b))
+* change the server from the login screen ([49a44b6](https://github.com/mightea/MotoManager/commit/49a44b63b747e25e4b7d3a49678ac39a667841d0))
+* flag parts as low only when used in more than three repairs ([e78edf3](https://github.com/mightea/MotoManager/commit/e78edf3d9097baae3a48a4fff32761e79e1748ff))
+* garage shows what is due and keeps telemetry labels whole ([6d4cc85](https://github.com/mightea/MotoManager/commit/6d4cc851fdd7832d4620ba7d6c4686df9a4e6e34))
+* give the documents and expenses pages a title and summary ([1730a2a](https://github.com/mightea/MotoManager/commit/1730a2a96c573238b7ef90e4a0ad27fa2202a1b1))
+* give the stats and map pages the shared page header ([d772747](https://github.com/mightea/MotoManager/commit/d772747cd64a25e79bb0dd3f761c8fa1268e574c))
+* import torque values from the model catalog and share own values there ([6102592](https://github.com/mightea/MotoManager/commit/61025929f1678324b69eaec8b8b3dd6c5eead18a))
+* larger labels, text-safe status colours and a single stripe per screen ([361e5eb](https://github.com/mightea/MotoManager/commit/361e5eb0a63b9faba976611f96271b33d021f796))
+* link parts to open defects ([3b0724d](https://github.com/mightea/MotoManager/commit/3b0724debb65b73024418a2e4307a1979f2244e0))
+* parts pages flag low stock and share the page header ([5e5fb78](https://github.com/mightea/MotoManager/commit/5e5fb782605dd1e3326a64388b61daad6acfcd19))
+* parts table, storage split view and per-bike expense shares ([a59334a](https://github.com/mightea/MotoManager/commit/a59334a7eb48d6233ae88934347d8e25c69bb965))
+* realign admin and server statistics with the design proposal ([59bff8f](https://github.com/mightea/MotoManager/commit/59bff8f8309ebb3fad7708ea42ce4f102037e469))
+* realign documents, expenses, statistics and map with the design proposal ([8b4a4ca](https://github.com/mightea/MotoManager/commit/8b4a4cac85a3b2c5da6a8bd25a5a2e9df65636a5))
+* realign garage, bike pages and workshop data with the design proposal ([2956fa2](https://github.com/mightea/MotoManager/commit/2956fa2089f88a67bf946adb816e916cb1f916ca))
+* realign parts, part detail and storage locations with the design proposal ([3849599](https://github.com/mightea/MotoManager/commit/3849599320c986fa4603c1a224756dffc48f8e89))
+* realign settings and login with the design proposal ([12ca6dd](https://github.com/mightea/MotoManager/commit/12ca6dd00821a4e91dfe67532cc892409acc2333))
+* service intervals show progress and narrow screens stop clipping ([c99f7da](https://github.com/mightea/MotoManager/commit/c99f7dac7a8b29f6ed2adfdcfd9f8e8ce2ef59f4))
+* settings get a section index and compact location lists ([26a580f](https://github.com/mightea/MotoManager/commit/26a580f72c07363608c700fc95bf22edc0eee11d))
+* show and set a type for documents ([139e7b4](https://github.com/mightea/MotoManager/commit/139e7b47047265e26176acdadf1677a5d8795156))
+* show the number of shared torque values per model catalog entry ([9fa6978](https://github.com/mightea/MotoManager/commit/9fa6978779db2988d2ece760b3fd118829a440c4))
+* show when currency rates were last updated and refresh them from the admin page ([fd605a6](https://github.com/mightea/MotoManager/commit/fd605a613544201a5b40a0e92b77f9725caa872a))
+
+
+### 🐛 Bug Fixes
+
+* keep button icons and labels on one line, allow linked page eyebrows ([686b891](https://github.com/mightea/MotoManager/commit/686b8916786e31fd8b120f71e87179ebf5227abc))
+* keep numbers and seasons on one line in the map's year table ([ca75971](https://github.com/mightea/MotoManager/commit/ca75971b1f54e37a9531c0bd7c45d2d9d676eea9))
+* value foreign-currency stock with the server's rates ([6d43025](https://github.com/mightea/MotoManager/commit/6d43025e58c25eb62050e32f09a976b7fea2debb))
+
 ## [2026.11.3](https://github.com/mightea/MotoManager/compare/2026.11.2...2026.11.3) (2026-11-08)
 
 
