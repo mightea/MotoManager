@@ -1,5 +1,7 @@
 export const MIN_KM_PER_YEAR = 100;
 
+/** `conversionFactor` = CHF per one unit (CHF = amount × factor). These are
+ *  rough offline fallbacks; prefer the server's currency list. */
 export type CurrencyPreset = {
   code: string;
   symbol: string;
@@ -24,7 +26,7 @@ export const AVAILABLE_CURRENCY_PRESETS: readonly CurrencyPreset[] = [
     code: "AUD",
     symbol: "A$",
     label: "Australischer Dollar",
-    conversionFactor: 1.45,
+    conversionFactor: 0.56,
   },
 ];
 
@@ -33,4 +35,3 @@ export const findCurrencyPreset = (code: string) =>
 
 export const DEFAULT_CURRENCY_CODE = "CHF";
 
-export const FRANKFURTER_API_URL = "https://api.frankfurter.app/latest";

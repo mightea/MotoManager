@@ -51,7 +51,8 @@ import type {
 import { storageLocationPath } from "~/utils/parts";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { maintenanceTypeLabels } from "~/utils/maintenance";
-import type { Issue, MaintenanceType, Motorcycle } from "~/types/db";
+import type { CurrencySetting, Issue, MaintenanceType, Motorcycle } from "~/types/db";
+import { getCurrencies } from "~/services/settings";
 import { DEFAULT_CURRENCY_CODE, findCurrencyPreset } from "~/constants";
 import { seriesMatchesBike, seriesPath } from "~/utils/series";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
@@ -82,13 +83,15 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Invalid part ID", { status: 400 });
   }
 
-  const [parts, modelSeries, storageLocations, stocks, consumptions] = await Promise.all([
+  const [parts, modelSeries, storageLocations, stocks, consumptions, currencies] = await Promise.all([
     fetchParts(token),
     fetchModelSeries(token).catch(() => [] as ModelSeries[]),
     fetchStorageLocations(token).catch(() => [] as StorageLocation[]),
     fetchPartStocks(token).catch(() => [] as PartStock[]),
     fetchPartConsumptions(token).catch(() => [] as PartConsumption[]),
-  ]);
+      // Live rates for stock entries without a stored CHF price.
+    getCurrencies().catch(() => [] as CurrencySetting[]),
+]);
   const part = parts.find((candidate) => candidate.id === partId);
   if (!part) {
     throw new Response("Teil nicht gefunden.", { status: 404 });
@@ -96,7 +99,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
 
   const { linkedIssues, issueCandidates } = await loadIssueLinks(token, part.id, part.seriesIds, modelSeries);
 
-  return data({ part, modelSeries, storageLocations, stocks, consumptions, linkedIssues, issueCandidates });
+  return data({ part, modelSeries, storageLocations, stocks, consumptions, linkedIssues, issueCandidates, currencies });
 }
 
 /**
@@ -351,7 +354,7 @@ function formatDate(iso: string | null): string {
 }
 
 export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
-  const { part, modelSeries, storageLocations, stocks, consumptions, linkedIssues, issueCandidates } =
+  const { part, modelSeries, storageLocations, stocks, consumptions, linkedIssues, issueCandidates, currencies } =
     loaderData;
   const actionData = useActionData<{ success?: boolean; intent?: string; error?: string }>();
   const submit = useSubmit();
@@ -378,8 +381,11 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
   const totalStockValue = partStocks.reduce((sum, stock) => {
     if (stock.normalizedPrice != null) return sum + stock.normalizedPrice;
     if (stock.price == null) return sum;
+    const code = stock.currency ?? DEFAULT_CURRENCY_CODE;
     const factor =
-      findCurrencyPreset(stock.currency ?? DEFAULT_CURRENCY_CODE)?.conversionFactor ?? 1;
+      currencies.find((currency) => currency.code === code)?.conversionFactor ??
+      findCurrencyPreset(code)?.conversionFactor ??
+      1;
     return sum + stock.price * factor;
   }, 0);
 
