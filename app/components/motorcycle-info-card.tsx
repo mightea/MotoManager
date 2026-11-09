@@ -1,7 +1,8 @@
-import { ChevronRight, Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Fuel, Route, Navigation2 } from "lucide-react";
+import { Hash, FileText, Fingerprint, Calendar, Info, Clock, DollarSign, Gauge, Fuel, Route, Navigation2 } from "lucide-react";
 import type { Motorcycle, PreviousOwner } from "~/types/db";
 import { StatisticEntry } from "./statistic-entry";
-import { Card, CardAction, CardHeading } from "./card";
+import { Card, CardHeading } from "./card";
+import { Button } from "./button";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 
 interface MotorcycleInfoCardProps {
@@ -71,10 +72,10 @@ export function MotorcycleInfoCard({
       : null;
 
   const summaryItems = [
-    hasPurchaseDate && kmDriven > 0 ? { label: "Seit Kauf", value: `${formatNumber(kmDriven)} km` } : null,
+    hasPurchaseDate && kmDriven > 0 ? { label: "Gefahren seit Kauf", value: `${formatNumber(kmDriven)} km` } : null,
     handLabel ? { label: "Besitz", value: handLabel } : null,
-    ownershipLabel ? { label: "Im Besitz seit", value: ownershipLabel } : null,
-    avgFuelConsumption ? { label: "Ø Verbrauch", value: `${avgFuelConsumption.toFixed(2)} L/100 km` } : null,
+    ownershipLabel && yearsOwned > 0 ? { label: "Im Besitz seit", value: `${yearsOwned.toFixed(1)} Jahren` } : null,
+    avgFuelConsumption ? { label: "Ø Verbrauch", value: `${avgFuelConsumption.toFixed(2)} L/100` } : null,
   ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   if (variant === "summary") {
@@ -83,40 +84,38 @@ export function MotorcycleInfoCard({
         <CardHeading
           title="Fahrzeugdaten"
           trailing={
-            <div className="flex items-center gap-1.5">
-              <CardAction onClick={onShowDetails} aria-label="Vollständige Fahrzeugdaten anzeigen">
-                Details
-                <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              </CardAction>
-              <button
-                type="button"
-                onClick={onEdit}
-                className="inline-flex items-center rounded-sm border border-base-content/15 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/40 hover:text-base-content active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-200"
-              >
-                Bearbeiten
-              </button>
-            </div>
+            <Button type="button" variant="secondary" size="sm" onClick={onEdit}>
+              Bearbeiten
+            </Button>
           }
         />
 
-        <div className="px-4 py-4">
+        <div className="px-4 py-3">
           {summaryItems.length > 0 ? (
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
               {summaryItems.map((item) => (
                 <div key={item.label} className="min-w-0">
-                  <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300">
+                  <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-300">
                     {item.label}
                   </dt>
-                  <dd className="font-numeric text-[15px] font-semibold text-base-content">{item.value}</dd>
+                  <dd className="font-numeric text-[15px] font-bold text-base-content dark:text-white">{item.value}</dd>
                 </div>
               ))}
             </dl>
           ) : (
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-base-content/70">
-              Keine Daten · Wartungs- oder Tank-Einträge hinzufügen
+            <p className="text-sm text-base-content/70 dark:text-navy-300">
+              Noch keine Kennzahlen — sie erscheinen mit Kaufdatum und den ersten Wartungs- oder Tank-Einträgen.
             </p>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={onShowDetails}
+          className="block w-full border-t border-base-200 px-4 py-2.5 text-left font-mono text-[12px] font-semibold uppercase tracking-[0.1em] text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 dark:border-navy-700 dark:text-primary-light"
+        >
+          Alle Details →
+        </button>
       </Card>
     );
   }

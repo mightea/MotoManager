@@ -12,6 +12,7 @@ import type { DocumentSummary } from "~/components/document-card";
 import { requireUser } from "~/services/auth";
 import { DocumentCard } from "~/components/document-card";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
+import { buildMotorcycleHero } from "~/components/motorcycle-hero-stats";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { FileText } from "lucide-react";
 import { EmptyState } from "~/components/empty-state";
@@ -21,7 +22,7 @@ import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialo
 import { fetchFromBackend } from "~/utils/backend";
 import { getDocumentsPayload } from "~/services/documents";
 import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
-import type { MaintenanceRecord, Motorcycle } from "~/types/db";
+import type { Issue, MaintenanceRecord, Motorcycle } from "~/types/db";
 
 export type DocumentWithAssignment = DocumentSummary & {
   assignedMotorcycleNames: string[];
@@ -68,7 +69,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   }
 
   const [motoResponse, docsResponse, userMotosResponse] = await Promise.all([
-    fetchFromBackend<{ motorcycle: Motorcycle; maintenanceRecords?: MaintenanceRecord[] }>(
+    fetchFromBackend<{ motorcycle: Motorcycle; maintenanceRecords?: MaintenanceRecord[]; issues?: Pick<Issue, "odo">[]; previousOwners?: unknown[] }>(
       `/motorcycles/${motorcycleId}`,
       {},
       token,
@@ -122,10 +123,18 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   const assignedDocs = allDocs.filter((d) => assignedIds.has(d.id)).map(decorate);
 
   const headerStats = await headerStatsPromise;
+  const hero = buildMotorcycleHero({
+    motorcycle: motoResponse.motorcycle,
+    maintenanceRecords: motoResponse.maintenanceRecords,
+    issues: motoResponse.issues,
+    previousOwnerCount: motoResponse.previousOwners?.length ?? null,
+    nextInspection: headerStats.nextInspection,
+  });
 
   return data({
     ...motoResponse,
     ...headerStats,
+    hero,
     assignedDocs,
     docAssignments: assignments,
     allMotorcycles,
@@ -136,6 +145,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
 export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentProps) {
   const {
     motorcycle,
+    hero,
     nextInspection,
     currentLocationName,
     assignedDocs = [],
@@ -204,8 +214,10 @@ export default function MotorcycleDocumentsPage({ loaderData }: Route.ComponentP
         nextInspection={nextInspection}
         currentLocationName={currentLocationName}
         navLinks={navLinks}
-        backTo={basePath}
         overviewLink={overviewLink}
+        stats={hero.stats}
+        facts={hero.facts}
+        compact
       />
 
       <div className="space-y-6">

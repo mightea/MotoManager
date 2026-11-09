@@ -4,6 +4,8 @@ import clsx from "clsx";
 
 interface DashboardStatsProps {
   stats: DashboardStatsType;
+  /** This year's km of the busiest bike, derived from the fleet cards. */
+  busiestBikeKm?: number | null;
   className?: string;
 }
 
@@ -12,9 +14,10 @@ interface DashboardStatsProps {
  * carries a leading vertical accent rail (toned by status), tabular
  * numerics in the mono face, and a small uppercase mono caption.
  */
-export function DashboardStats({ stats, className }: DashboardStatsProps) {
+export function DashboardStats({ stats, busiestBikeKm, className }: DashboardStatsProps) {
   const {
     year,
+    totalMotorcycles,
     totalKmThisYear,
     totalKmOverall,
     totalActiveIssues,
@@ -39,7 +42,7 @@ export function DashboardStats({ stats, className }: DashboardStatsProps) {
         Flotte {year}
       </h2>
 
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
         <Gauge
           code="01"
           label={`Fahrstrecke ${year}`}
@@ -71,13 +74,14 @@ export function DashboardStats({ stats, className }: DashboardStatsProps) {
           code="05"
           label="Veteranen"
           value={String(veteranCount)}
-          unit={veteranCount === 1 ? "Fahrzeug" : "Fahrzeuge"}
+          unit={totalMotorcycles > 0 ? `von ${totalMotorcycles}` : undefined}
           tone="workshop"
         />
         <Gauge
           code="06"
-          label="Fleissigstes Motorrad"
+          label="Fleissigste"
           value={bikeLabel}
+          unit={bikeLabel !== "—" && busiestBikeKm ? `${formatNumber(busiestBikeKm)} km` : undefined}
           variant="text"
           tone="neutral"
         />
@@ -120,32 +124,23 @@ function Gauge({
   }[tone];
 
   return (
-    <div className="group relative flex gap-2.5 rounded-sm border border-base-300/70 bg-base-100 px-2.5 py-2 shadow-[0_1px_0_0_rgba(0,0,0,0.02)] transition-colors hover:border-base-content/20 dark:bg-navy-800">
-      <div className={clsx("w-[3px] shrink-0 rounded-full", railClass)} aria-hidden="true" />
-      <div className="min-w-0 flex-1">
-        <dt className="flex items-start gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-          <span className="text-base-content/30 tabular-nums">{code}</span>
-          <span className="mt-[0.55em] h-px w-1.5 shrink-0 bg-base-content/30" aria-hidden="true" />
-          <span className="leading-snug">{label}</span>
+    <div className="flex min-w-0 gap-2.5 rounded-sm border border-base-300/70 bg-base-100 px-3 py-2.5 dark:border-navy-700 dark:bg-navy-800">
+      <div className={clsx("w-[3px] shrink-0 rounded-sm", railClass)} aria-hidden="true" />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+          <span className="text-base-content/40 tabular-nums">{code} — </span>
+          {label}
         </dt>
         <dd
           className={clsx(
-            "mt-0.5 leading-tight",
-            variant === "number" ? "text-lg" : "text-sm",
+            "font-numeric font-bold leading-tight",
+            variant === "number" ? "text-[22px]" : "line-clamp-2 text-lg leading-tight",
           )}
           title={variant === "text" ? value : undefined}
         >
-          <span
-            className={clsx(
-              "font-semibold",
-              variant === "number" ? "font-numeric" : "font-subdisplay",
-              valueClass,
-            )}
-          >
-            {value}
-          </span>
+          <span className={valueClass}>{value}</span>
           {unit && (
-            <span className="ml-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+            <span className="ml-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
               {unit}
             </span>
           )}

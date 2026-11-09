@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
 import type { MaintenanceInsight, InsightCategory } from "~/utils/maintenance-intervals";
 import { formatNumber } from "~/utils/numberUtils";
 import { Card, CardHeading } from "~/components/card";
@@ -9,42 +8,12 @@ type MaintenanceInsightsCardProps = {
   className?: string;
 };
 
-const STATUS_PRIORITY: Record<MaintenanceInsight["status"], number> = {
-  overdue: 0,
-  due: 1,
-  ok: 2,
-  unknown: 3,
-};
-
-const CATEGORY_ORDER: InsightCategory[] = ["Reifen", "Batterie", "Flüssigkeiten", "Wartung"];
-
-const STATUS_ICON = {
-  ok:      { Icon: CheckCircle2,  className: "text-success" },
-  due:     { Icon: AlertTriangle, className: "text-[var(--color-workshop)]" },
-  overdue: { Icon: XCircle,       className: "text-error" },
-  unknown: { Icon: Info,          className: "text-base-content/40" },
-} as const;
+const DISPLAY_ORDER: InsightCategory[] = ["Flüssigkeiten", "Reifen", "Batterie", "Wartung"];
 
 const monthYearFormatter = new Intl.DateTimeFormat("de-CH", {
   month: "short",
   year: "numeric",
 });
-
-function formatRelativeDuration(dateStr: string): string {
-  const diffDays = Math.floor(
-    (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (diffDays < 0) return "in der Zukunft";
-  if (diffDays === 0) return "heute";
-
-  const years = Math.floor(diffDays / 365);
-  const months = Math.floor((diffDays % 365) / 30);
-
-  if (years > 0) return `vor ${years} Jahr${years > 1 ? "en" : ""}`;
-  if (months > 0) return `vor ${months} Monat${months > 1 ? "en" : ""}`;
-  return `vor ${diffDays} Tag${diffDays > 1 ? "en" : ""}`;
-}
 
 /**
  * Share of the service interval already used (0–1+), from time and — when a
@@ -65,23 +34,40 @@ function intervalUsed(insight: MaintenanceInsight): number | null {
   return shares.length > 0 ? Math.max(0, ...shares) : null;
 }
 
+/** Interval length in whole years, from the last date to the next due date. */
+function intervalYears(insight: MaintenanceInsight): number | null {
+  if (!insight.lastDate || !insight.nextDate) return null;
+  const last = new Date(insight.lastDate);
+  const next = new Date(insight.nextDate);
+  const years = next.getFullYear() - last.getFullYear();
+  return years > 0 ? years : null;
+}
+
+const STATUS_TAG: Record<MaintenanceInsight["status"], { label: string; text: string; bar: string; row: string }> = {
+  overdue: { label: "Überfällig", text: "text-error", bar: "bg-error", row: "bg-error/5 dark:bg-error/10" },
+  due: {
+    label: "Fällig",
+    text: "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]",
+    bar: "bg-[var(--color-workshop)]",
+    row: "bg-[var(--color-workshop)]/10",
+  },
+  ok: { label: "OK", text: "text-success", bar: "bg-success", row: "" },
+  unknown: { label: "—", text: "text-base-content/60", bar: "bg-base-content/30", row: "" },
+};
+
+/**
+ * Service intervals as one flat list: each item names its status, shows how
+ * much of the interval is used as a bar, and below it the last service and
+ * the interval with the share in percent.
+ */
 export function MaintenanceInsightsCard({
   insights,
   className,
 }: MaintenanceInsightsCardProps) {
-  const groupedInsights = insights.reduce<Record<InsightCategory, MaintenanceInsight[]>>(
-    (acc, insight) => {
-      (acc[insight.category] ??= []).push(insight);
-      return acc;
-    },
-    {} as Record<InsightCategory, MaintenanceInsight[]>,
+  // Board order: fluids first, then tires, battery, the rest — stable within.
+  const ordered = [...insights].sort(
+    (a, b) => DISPLAY_ORDER.indexOf(a.category) - DISPLAY_ORDER.indexOf(b.category),
   );
-
-  for (const cat in groupedInsights) {
-    groupedInsights[cat as InsightCategory].sort(
-      (a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status],
-    );
-  }
 
   const tally = insights.reduce(
     (acc, i) => {
@@ -92,136 +78,82 @@ export function MaintenanceInsightsCard({
   );
 
   const isEmpty = insights.length === 0;
-  const worstStatus = tally.overdue > 0 ? "overdue" : tally.due > 0 ? "due" : "ok";
-  const accent = worstStatus === "overdue" ? "error" : worstStatus === "due" ? "workshop" : undefined;
+  const summary = [
+    tally.overdue > 0 ? `${tally.overdue} überfällig` : null,
+    tally.due > 0 ? `${tally.due} fällig` : null,
+    tally.ok > 0 ? `${tally.ok} OK` : null,
+  ].filter(Boolean).join(" · ");
+  const summaryTone = tally.overdue > 0
+    ? "text-error"
+    : tally.due > 0
+      ? "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]"
+      : "text-success";
 
   return (
-    <Card className={className} accent={accent}>
+    <Card className={className}>
       <CardHeading
         title="Service-Intervalle"
         trailing={
-          !isEmpty && (
-            <div className="flex items-center gap-2 font-mono text-[11px] font-semibold tabular-nums">
-              {tally.overdue > 0 && (
-                <span className="inline-flex items-center gap-1 text-error" aria-label={`${tally.overdue} überfällig`}>
-                  <XCircle className="h-3 w-3" aria-hidden="true" />
-                  {tally.overdue}
-                </span>
-              )}
-              {tally.due > 0 && (
-                <span className="inline-flex items-center gap-1 text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]" aria-label={`${tally.due} fällig`}>
-                  <AlertTriangle className="h-3 w-3" aria-hidden="true" />
-                  {tally.due}
-                </span>
-              )}
-              {tally.ok > 0 && (
-                <span className="inline-flex items-center gap-1 text-success" aria-label={`${tally.ok} in Ordnung`}>
-                  <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                  {tally.ok}
-                </span>
-              )}
-            </div>
-          )
+          !isEmpty && summary ? (
+            <span className={clsx("font-mono text-[12px] font-bold uppercase", summaryTone)}>{summary}</span>
+          ) : undefined
         }
       />
 
-      <div className="px-4 py-4">
-        {isEmpty ? (
-          <div className="rounded-sm border border-dashed border-base-300 bg-base-100/40 px-4 py-5 text-center dark:border-navy-600 dark:bg-navy-900/30">
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-base-content/70">
-              Keine service-relevanten Daten
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {CATEGORY_ORDER.map((category) => {
-              const items = groupedInsights[category];
-              if (!items || items.length === 0) return null;
+      {isEmpty ? (
+        <p className="px-4 py-4 text-sm text-base-content/70 dark:text-navy-300">
+          Noch keine service-relevanten Einträge — Intervalle erscheinen nach dem ersten Öl-, Reifen- oder Batteriewechsel.
+        </p>
+      ) : (
+        <ul>
+          {ordered.map((insight) => {
+            const tag = STATUS_TAG[insight.status];
+            const used = intervalUsed(insight);
+            const pct = used === null ? null : Math.round(used * 100);
+            const years = intervalYears(insight);
+            const meta = [
+              insight.lastDate ? monthYearFormatter.format(new Date(insight.lastDate)) : null,
+              insight.kmsSinceLast !== undefined ? `seit ${formatNumber(insight.kmsSinceLast)} km` : null,
+            ].filter(Boolean).join(" · ");
+            const interval = [
+              years ? `alle ${years} J.` : null,
+              pct !== null ? `${pct} %` : null,
+            ].filter(Boolean).join(" · ");
 
-              return (
-                <div key={category}>
-                  <h3 className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                    {category}
-                  </h3>
-                  <ul className="space-y-2">
-                    {items.map((insight) => {
-                      const { Icon, className: iconClassName } = STATUS_ICON[insight.status];
-
-                      const dateLabel = insight.lastDate
-                        ? monthYearFormatter.format(new Date(insight.lastDate))
-                        : "";
-                      const relativeLabel = insight.lastDate
-                        ? formatRelativeDuration(insight.lastDate)
-                        : "";
-
-                      const datePart = [
-                        dateLabel,
-                        relativeLabel ? `(${relativeLabel})` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" ");
-
-                      const kmsSincePart =
-                        insight.kmsSinceLast !== undefined
-                          ? `seit ${formatNumber(insight.kmsSinceLast)} km`
-                          : "";
-
-                      const meta = [datePart, kmsSincePart].filter(Boolean).join(" · ");
-
-                      return (
-                        <li key={insight.key} className="flex items-start gap-2.5">
-                          <Icon
-                            className={clsx("mt-0.5 h-4 w-4 shrink-0", iconClassName)}
-                            aria-hidden="true"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold leading-tight text-base-content dark:text-white">
-                              {insight.label}
-                            </p>
-                            <p
-                              suppressHydrationWarning
-                              className="mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] leading-snug text-base-content/70 dark:text-navy-400"
-                            >
-                              {meta || "Keine Daten"}
-                            </p>
-                            {(() => {
-                              const used = intervalUsed(insight);
-                              if (used === null) return null;
-                              return (
-                                <>
-                                <span suppressHydrationWarning className="sr-only">
-                                  {`${Math.round(used * 100)} % des Intervalls verbraucht`}
-                                </span>
-                                <div
-                                  aria-hidden="true"
-                                  className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-base-200 dark:bg-navy-700"
-                                >
-                                  <div
-                                    className={clsx(
-                                      "h-full rounded-full",
-                                      insight.status === "overdue"
-                                        ? "bg-error"
-                                        : insight.status === "due"
-                                          ? "bg-[var(--color-workshop)]"
-                                          : "bg-success",
-                                    )}
-                                    style={{ width: `${Math.min(100, Math.round(used * 100))}%` }}
-                                  />
-                                </div>
-                                </>
-                              );
-                            })()}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+            return (
+              <li
+                key={insight.key}
+                className={clsx(
+                  "flex flex-col gap-1.5 border-t border-base-200/70 px-4 py-2.5 first:border-t-0 dark:border-navy-700",
+                  tag.row,
+                )}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm font-semibold text-base-content dark:text-white">{insight.label}</span>
+                  <span className={clsx("font-mono text-[11px] font-bold uppercase tracking-[0.1em]", tag.text)}>
+                    {tag.label}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                {pct !== null && (
+                  <>
+                    <span suppressHydrationWarning className="sr-only">{`${pct} % des Intervalls verbraucht`}</span>
+                    <div aria-hidden="true" className="h-1.5 overflow-hidden bg-base-200 dark:bg-navy-700">
+                      <div className={clsx("h-full", tag.bar)} style={{ width: `${Math.min(100, pct)}%` }} />
+                    </div>
+                  </>
+                )}
+                <div
+                  suppressHydrationWarning
+                  className="flex justify-between gap-3 font-mono text-[12px] text-base-content/70 dark:text-navy-300"
+                >
+                  <span>{meta || "Keine Daten"}</span>
+                  {interval && <span className="shrink-0 uppercase">{interval}</span>}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Card>
   );
 }

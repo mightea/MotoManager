@@ -1,5 +1,3 @@
-import { AlertTriangle, CircleAlert, Info, ChevronRight } from "lucide-react";
-import { FormattedText } from "~/components/formatted-text";
 import clsx from "clsx";
 import type { Issue } from "~/types/db";
 
@@ -11,76 +9,42 @@ type IssueItemProps = {
 
 type PriorityKey = "high" | "medium" | "low";
 
-const PRIORITY_CONFIG: Record<
-  PriorityKey,
-  { Icon: typeof CircleAlert; tone: string; railTone: string; label: string }
-> = {
-  high: {
-    Icon: CircleAlert,
-    tone: "text-error",
-    railTone: "bg-error",
-    label: "Hoch",
-  },
+const PRIORITY_CONFIG: Record<PriorityKey, { tone: string; border: string; label: string }> = {
+  high: { tone: "text-error", border: "border-l-error", label: "Hoch" },
   medium: {
-    Icon: AlertTriangle,
-    tone: "text-[var(--color-workshop)]",
-    railTone: "bg-[var(--color-workshop)]",
+    tone: "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]",
+    border: "border-l-[var(--color-workshop)]",
     label: "Mittel",
   },
-  low: {
-    Icon: Info,
-    tone: "text-info",
-    railTone: "bg-info/70",
-    label: "Niedrig",
-  },
+  low: { tone: "text-base-content/70 dark:text-navy-300", border: "border-l-base-content/30", label: "Niedrig" },
 };
 
 /**
- * IssueItem — a service-manual defect line.
- *
- *  █ [icon]  Description, up to two lines ................. HOCH    ›
- *           [Datum · 12'500 km]
+ * IssueItem — one defect line: a priority-coloured left edge, the title with
+ * its priority on the right, the date underneath. Opens the edit dialog.
  */
 export function IssueItem({ issue, dateFormatter, onSelect }: IssueItemProps) {
   const cfg = PRIORITY_CONFIG[issue.priority as PriorityKey] ?? PRIORITY_CONFIG.low;
-  const PriorityIcon = cfg.Icon;
 
   return (
     <button
       type="button"
       onClick={() => onSelect?.(issue)}
-      aria-label="Mangel bearbeiten"
-      className="group relative flex w-full items-center gap-3 rounded-sm border border-base-200 bg-base-100 px-3 py-2.5 text-left transition-colors hover:border-base-content/20 hover:bg-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:hover:bg-navy-700/40"
+      aria-label={`Mangel bearbeiten: ${issue.title}`}
+      className={clsx(
+        "flex w-full flex-col gap-0.5 rounded-sm border border-l-[3px] border-base-300 bg-base-100 px-3 py-2.5 text-left transition-colors hover:bg-base-200/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:hover:bg-navy-700/40",
+        cfg.border,
+      )}
     >
-      <span aria-hidden="true" className={clsx("absolute inset-y-2 left-0 w-[3px] rounded-r-sm", cfg.railTone)} />
-      <PriorityIcon className={clsx("h-4 w-4 shrink-0 ml-1", cfg.tone)} aria-hidden="true" />
-
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-sm font-medium leading-tight text-base-content dark:text-gray-100">
-          {issue.title}
-        </p>
-        <p
-          suppressHydrationWarning
-          className="mt-0.5 truncate font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 dark:text-navy-400"
-        >
-          {issue.date ? dateFormatter.format(new Date(issue.date)) : "Datum unbekannt"}
-          {issue.description && (
-            <span className="ml-1.5 normal-case tracking-normal text-base-content/45 dark:text-navy-500">
-              · <FormattedText description={issue.description} markup={issue.descriptionMarkup} />
-            </span>
-          )}
-        </p>
-      </div>
-
-      <span
-        className={clsx(
-          "shrink-0 font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
-          cfg.tone,
-        )}
-      >
-        {cfg.label}
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="min-w-0 font-semibold text-base-content line-clamp-2 dark:text-white">{issue.title}</span>
+        <span className={clsx("shrink-0 font-mono text-[11px] font-bold uppercase tracking-[0.1em]", cfg.tone)}>
+          {cfg.label}
+        </span>
       </span>
-      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-base-content/30 transition-transform group-hover:translate-x-0.5 dark:text-navy-500" aria-hidden="true" />
+      <span suppressHydrationWarning className="font-mono text-[12px] text-base-content/70 dark:text-navy-300">
+        {issue.date ? dateFormatter.format(new Date(issue.date)) : "Datum unbekannt"}
+      </span>
     </button>
   );
 }

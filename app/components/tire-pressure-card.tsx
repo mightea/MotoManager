@@ -1,4 +1,4 @@
-import { Card } from "./card";
+import clsx from "clsx";
 import type { TirePressure } from "~/types/db";
 import { formatPressure } from "~/utils/pressure";
 
@@ -7,11 +7,10 @@ interface TirePressureCardProps {
 }
 
 /**
- * Read-only display of one motorcycle's recommended tire pressures as a
- * matrix: one row per tire position (Vorne / Hinten / Beiwagen), one
- * column per riding configuration (Solo / Sozius / Offroad). Only
- * recorded configurations get a column; with a single configuration no
- * column headers render and the card stays a simple two-row list.
+ * Read-only matrix of one motorcycle's recommended tire pressures: one row
+ * per tire position (Vorne / Hinten / Beiwagen), one column per recorded
+ * riding configuration (Solo / Sozius / Offroad). Renders the bare table —
+ * the caller supplies the card and its heading.
  */
 export function TirePressureCard({ pressure }: TirePressureCardProps) {
   // Only recorded configurations become columns — every set is optional.
@@ -44,49 +43,47 @@ export function TirePressureCard({ pressure }: TirePressureCardProps) {
   const hasSidecar = variants.some((v) => v.sidecar != null);
 
   return (
-    <Card>
-      {/* overflow-x-auto: three value columns plus labels can exceed a
-          narrow phone viewport; the card must scroll, not the page. */}
-      <div className="overflow-x-auto px-4 py-4">
-        <table className="w-full">
-          {showHeader && (
-            <thead>
-              <tr>
-                <th aria-label="Reifenposition" />
-                {variants.map((v) => (
-                  <th
-                    key={v.key}
-                    scope="col"
-                    className="pb-2 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500"
-                  >
-                    {v.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+    // overflow-x-auto: three value columns plus labels can exceed a narrow
+    // phone viewport; the table scrolls, not the page.
+    <div className="overflow-x-auto">
+      <table className={clsx("w-full", variants.length > 1 && "min-w-[420px]")}>
+        {showHeader && (
+          <thead>
+            <tr>
+              <th aria-label="Reifenposition" className="border-b border-base-300 px-4 py-2.5 dark:border-navy-700" />
+              {variants.map((v) => (
+                <th
+                  key={v.key}
+                  scope="col"
+                  className="border-b border-base-300 px-4 py-2.5 text-right font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:border-navy-700 dark:text-navy-300"
+                >
+                  {v.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          <PositionRow
+            label="Vorne"
+            values={variants.map((v) => ({ key: v.key, bar: v.front }))}
+            preferred={pressure.preferredUnit}
+          />
+          <PositionRow
+            label="Hinten"
+            values={variants.map((v) => ({ key: v.key, bar: v.rear }))}
+            preferred={pressure.preferredUnit}
+          />
+          {hasSidecar && (
+            <PositionRow
+              label="Beiwagen"
+              values={variants.map((v) => ({ key: v.key, bar: v.sidecar }))}
+              preferred={pressure.preferredUnit}
+            />
           )}
-          <tbody>
-            <PositionRow
-              label="Vorne"
-              values={variants.map((v) => ({ key: v.key, bar: v.front }))}
-              preferred={pressure.preferredUnit}
-            />
-            <PositionRow
-              label="Hinten"
-              values={variants.map((v) => ({ key: v.key, bar: v.rear }))}
-              preferred={pressure.preferredUnit}
-            />
-            {hasSidecar && (
-              <PositionRow
-                label="Beiwagen"
-                values={variants.map((v) => ({ key: v.key, bar: v.sidecar }))}
-                preferred={pressure.preferredUnit}
-              />
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -100,15 +97,15 @@ function PositionRow({
   preferred: TirePressure["preferredUnit"];
 }) {
   return (
-    <tr className="border-b border-base-200/70 last:border-b-0 dark:border-navy-700/60">
+    <tr className="border-b border-base-200 last:border-b-0 dark:border-navy-700">
       <th
         scope="row"
-        className="py-2.5 pr-4 text-left align-baseline font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+        className="px-4 py-3 text-left align-top font-mono text-[12px] font-bold uppercase tracking-[0.1em] text-base-content dark:text-white"
       >
         {label}
       </th>
       {values.map(({ key, bar }) => (
-        <td key={key} className="py-2.5 pl-4 text-right align-baseline">
+        <td key={key} className="px-4 py-3 text-right align-top">
           {bar != null ? <PressureValue bar={bar} preferred={preferred} /> : (
             <span aria-hidden="true" className="text-base-content/30">—</span>
           )}
@@ -127,13 +124,13 @@ function PressureValue({
 }) {
   const formatted = formatPressure(bar, preferred);
   return (
-    <span className="inline-flex flex-col items-end gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
-      <span className="font-numeric text-base font-semibold tabular-nums text-base-content dark:text-white">
+    <>
+      <span className="block whitespace-nowrap font-numeric text-[17px] font-bold text-base-content dark:text-white">
         {formatted.primary}
       </span>
-      <span className="whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+      <span className="block whitespace-nowrap font-mono text-[11px] text-base-content/70 dark:text-navy-300">
         ≈ {formatted.secondary}
       </span>
-    </span>
+    </>
   );
 }

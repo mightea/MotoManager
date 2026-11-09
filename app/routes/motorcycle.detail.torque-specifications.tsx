@@ -7,6 +7,7 @@ import {
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail.torque-specifications";
 import {
+  type Issue,
   type MaintenanceRecord,
   type Motorcycle,
   type MotorcycleDetail,
@@ -16,9 +17,10 @@ import {
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
+import { buildMotorcycleHero } from "~/components/motorcycle-hero-stats";
 import { LinkifiedText } from "~/components/linkified-text";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
-import { Gauge, Wrench, Plus, Pencil, Import, Printer, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Import, Printer, AlertTriangle } from "lucide-react";
 import { FormattedText } from "~/components/formatted-text";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
@@ -30,7 +32,7 @@ import { TirePressureCard } from "~/components/tire-pressure-card";
 import { ImportTorqueSpecsDialog } from "~/components/import-torque-specs-dialog";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { Card } from "~/components/card";
-import { EmptyState } from "~/components/empty-state";
+import { Button } from "~/components/button";
 import {
   createMotorcycleDetail,
   createTorqueSpecification,
@@ -52,7 +54,16 @@ interface MotorcycleDetailResponse {
   motorcycle: Motorcycle;
   torqueSpecs?: TorqueSpecification[];
   maintenanceRecords?: MaintenanceRecord[];
+  issues?: Pick<Issue, "odo">[];
+  previousOwners?: unknown[];
 }
+
+const SECTION_TITLE =
+  "font-subdisplay text-[15px] uppercase tracking-[0.06em] text-base-content dark:text-white print:!text-black";
+const TH =
+  "border-b border-base-300 px-4 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:border-navy-700 dark:text-navy-300";
+const EDIT_ICON_BUTTON =
+  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-base-content/15 text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:text-navy-300 dark:hover:text-white print:hidden";
 
 /** `/motorcycles` list entry; older backends sent `modelYear` instead of `fabricationDate`. */
 type MotorcycleListItem = Motorcycle & { modelYear?: string | null };
@@ -109,10 +120,18 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     computeMotorcycleHeaderStats(response, token, user.id),
   ]);
   const otherSpecs = otherSpecsResponses.flatMap((r) => r.torqueSpecs ?? []);
+  const hero = buildMotorcycleHero({
+    motorcycle: response.motorcycle,
+    maintenanceRecords: response.maintenanceRecords,
+    issues: response.issues,
+    previousOwnerCount: response.previousOwners?.length ?? null,
+    nextInspection: headerStats.nextInspection,
+  });
 
   return data({
     ...response,
     ...headerStats,
+    hero,
     tirePressure,
     motorcycleDetails,
     allMotorcycles: otherMotorcycles,
@@ -321,6 +340,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route.ComponentProps) {
   const {
     motorcycle,
+    hero,
     nextInspection,
     currentLocationName,
     torqueSpecs: specsRaw = [],
@@ -498,23 +518,14 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           nextInspection={nextInspection}
           currentLocationName={currentLocationName}
           navLinks={navLinks}
-          backTo={basePath}
           overviewLink={overviewLink}
+          stats={hero.stats}
+          facts={hero.facts}
+          compact
         />
       </div>
 
-      <div className="space-y-6 print:space-y-2 print:bg-white">
-        <div className="flex flex-wrap items-center justify-end gap-2 print:hidden">
-          <button
-            onClick={() => window.print()}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-base-content/15 bg-base-100 text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-            title="Drucken"
-            aria-label="Drucken"
-          >
-            <Printer className="h-4 w-4" />
-          </button>
-        </div>
-
+      <div className="space-y-5 print:space-y-2 print:bg-white">
         {actionData && "error" in actionData && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10 print:hidden">
             <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
@@ -523,261 +534,303 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           </div>
         )}
 
-        {/* Details section */}
-        <section
-          className={clsx("space-y-3 print:space-y-1 print-section", details.length === 0 && "print:hidden")}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="label-tag print:!text-black">
-              <span>Details</span>
-            </h2>
-            <div className="flex items-center gap-2 print:hidden">
-              <button
-                onClick={() => setIsAddDetailOpen(true)}
-                className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                <span>Hinzufügen</span>
-              </button>
-            </div>
-          </div>
-
-          {details.length > 0 && (
+        {/* Details (1/3) beside Reifendruck (2/3); Anzugsmomente full width below. */}
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,1fr)_minmax(0,2fr)] print:block">
+          {/* Details */}
+          <section
+            aria-labelledby="details-heading"
+            className={clsx("min-w-0 print-section", details.length === 0 && "print:hidden")}
+          >
             <Card className="print:rounded-none print:border-0 print:shadow-none print:!bg-white">
-            <dl className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 print:grid-cols-2 print:gap-1">
-              {details.map((detail) => (
-                <div
-                  key={detail.id}
-                  className="group relative flex items-center justify-between gap-3 border-base-200 px-4 py-3 transition-colors hover:bg-base-200/50 dark:border-navy-700 dark:hover:bg-navy-700/30 [&:not(:first-child)]:border-t sm:[&:nth-child(-n+2)]:border-t-0 xl:[&:nth-child(-n+3)]:border-t-0 print:block print:border-0 print:break-inside-avoid print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
+              <div className="flex items-center justify-between gap-2 border-b border-base-200 px-4 py-3.5 dark:border-navy-700 print:border-0 print:px-0 print:py-1">
+                <h2 id="details-heading" className={SECTION_TITLE}>Details</h2>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddDetailOpen(true)}
+                  leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}
+                  className="print:hidden"
                 >
-                  <div className="min-w-0 flex-1">
-                    <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400 print:text-[8pt] print:!text-black">
-                      {detail.title}
-                    </dt>
-                    <dd className="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground dark:text-white print:text-[10pt] print:!text-black">
-                      <LinkifiedText text={detail.value} />
-                    </dd>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditingDetail(detail)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
-                    aria-label={`${detail.title} bearbeiten`}
-                  >
-                    <Pencil className="h-3 w-3" aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-            </dl>
-            </Card>
-          )}
-        </section>
-
-        {/* Reifendruck section */}
-        <section className="space-y-3 print:space-y-1 print-section">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="label-tag print:!text-black">
-              <span>Reifendruck</span>
-            </h2>
-            {pressure && (
-              <button
-                type="button"
-                onClick={() => setIsPressureModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
-              >
-                <Pencil className="h-3 w-3" aria-hidden="true" />
-                <span>Bearbeiten</span>
-              </button>
-            )}
-          </div>
-          {pressure ? (
-            <div className="print:hidden">
-              <TirePressureCard pressure={pressure} />
-            </div>
-          ) : (
-            <div className="print:hidden">
-              <EmptyState
-                size="sm"
-                icon={Gauge}
-                title="Noch nicht erfasst"
-                description="Hinterlege die empfohlenen Reifendrücke für vorne, hinten und ggf. Beiwagen."
-                action={
-                  <button
-                    type="button"
-                    onClick={() => setIsPressureModalOpen(true)}
-                    className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
-                  >
-                    <Plus className="h-4 w-4" aria-hidden="true" />
-                    Reifendruck erfassen
-                  </button>
-                }
-              />
-            </div>
-          )}
-          {/* Print-only inline list (the card renders only on-screen).
-              Borderless, tight rows. */}
-          {pressure && (
-            <div className="hidden print:block">
-              {[
-                { key: "Solo", front: pressure.frontBar, rear: pressure.rearBar, sidecar: pressure.sidecarBar },
-                { key: "Sozius", front: pressure.frontPassengerBar, rear: pressure.rearPassengerBar, sidecar: pressure.sidecarPassengerBar },
-                { key: "Offroad", front: pressure.frontOffroadBar, rear: pressure.rearOffroadBar, sidecar: pressure.sidecarOffroadBar },
-              ]
-                .filter((g) => g.front != null || g.rear != null)
-                .map((g) => (
-                  <div key={g.key}>
-                    {g.front != null && (
-                      <PressurePrintRow label={`Vorne (${g.key})`} bar={g.front} preferred={pressure.preferredUnit} />
-                    )}
-                    {g.rear != null && (
-                      <PressurePrintRow label={`Hinten (${g.key})`} bar={g.rear} preferred={pressure.preferredUnit} />
-                    )}
-                    {g.sidecar != null && (
-                      <PressurePrintRow label={`Beiwagen (${g.key})`} bar={g.sidecar} preferred={pressure.preferredUnit} />
-                    )}
-                  </div>
-                ))}
-            </div>
-          )}
-        </section>
-
-        {/* Anzugsmomente section */}
-        <section className="space-y-3 print:space-y-1">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="label-tag print:!text-black">
-              <span>Anzugsmomente</span>
-            </h2>
-            {specs.length > 0 && (
-              <div className="flex items-center gap-2 print:hidden">
-                {otherMotorcycles.length > 0 && (
-                  <button
-                    onClick={() => setIsImportModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-                  >
-                    <Import className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>Importieren</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  <span>Hinzufügen</span>
-                </button>
+                  Hinzufügen
+                </Button>
               </div>
-            )}
-          </div>
-
-          {specs.length === 0 ? (
-            <div className="print:hidden">
-              <EmptyState
-                icon={Wrench}
-                title="Keine Anzugsmomente"
-                description="Es wurden noch keine Drehmoment-Spezifikationen für dieses Fahrzeug hinterlegt."
-                action={
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    {otherMotorcycles.length > 0 && (
-                      <button
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-                      >
-                        <Import className="h-3.5 w-3.5" aria-hidden="true" />
-                        Importieren
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setIsAddModalOpen(true)}
-                      className="relative inline-flex items-center gap-2 rounded-sm bg-primary px-4 py-2.5 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98]"
+              {details.length === 0 ? (
+                <p className="px-4 py-4 text-sm text-base-content/70 dark:text-navy-300">
+                  Noch keine Details — z. B. Reifengrösse, Zündkerze, Batterie.
+                </p>
+              ) : (
+                <dl className="divide-y divide-base-200 dark:divide-navy-700 print:grid print:grid-cols-2 print:gap-1 print:divide-y-0">
+                  {details.map((detail) => (
+                    <div
+                      key={detail.id}
+                      className="flex items-center justify-between gap-3 px-4 py-3 print:block print:break-inside-avoid print:px-0 print:py-0 print:!bg-white print:!text-black print-row"
                     >
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                      Ersten Eintrag erstellen
-                    </button>
+                      <div className="min-w-0 flex-1">
+                        <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-300 print:text-[8pt] print:!text-black">
+                          {detail.title}
+                        </dt>
+                        <dd className="mt-0.5 break-words text-sm font-semibold leading-snug text-base-content dark:text-white print:text-[10pt] print:!text-black">
+                          <LinkifiedText text={detail.value} />
+                        </dd>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingDetail(detail)}
+                        className={EDIT_ICON_BUTTON}
+                        aria-label={`${detail.title} bearbeiten`}
+                      >
+                        <Pencil className="h-3 w-3" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </Card>
+          </section>
+
+          {/* Reifendruck */}
+          <section aria-labelledby="pressure-heading" className="min-w-0 print-section">
+            <Card className="print:rounded-none print:border-0 print:shadow-none print:!bg-white">
+              <div className="flex items-center justify-between gap-2 border-b border-base-200 px-4 py-3.5 dark:border-navy-700 print:border-0 print:px-0 print:py-1">
+                <h2 id="pressure-heading" className={SECTION_TITLE}>Reifendruck</h2>
+                {pressure && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsPressureModalOpen(true)}
+                    className="print:hidden"
+                  >
+                    Bearbeiten
+                  </Button>
+                )}
+              </div>
+              {pressure ? (
+                <>
+                  <div className="print:hidden">
+                    <TirePressureCard pressure={pressure} />
                   </div>
-                }
-              />
-            </div>
-          ) : (
-            <div className="grid gap-6 print:block print:gap-0 print:!bg-white">
-              {/* Group by category */}
-              {Array.from(new Set(specs.map((s) => s.category))).map((category) => (
-                <Card
-                  key={category as string}
-                  className="overflow-hidden print:block print:rounded-none print:border-0 print:break-inside-avoid print:print-force-white print:shadow-none"
-                >
-                  <div className="border-b border-base-200 px-4 py-3 font-subdisplay text-sm text-base-content dark:border-navy-700 dark:text-white print-no-blur print-category-head">
-                    {category as string}
-                  </div>
-                  <div className="divide-y divide-base-200 dark:divide-navy-700 print:divide-transparent">
-                    {specs.filter((s) => s.category === category).map((spec: TorqueSpecification) => (
-                      <div key={spec.id} className="group relative flex items-center justify-between gap-3 px-4 py-2.5 sm:px-5 sm:py-4 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30 print:flex print:items-center print:justify-between print:px-0 print:py-0 print:!bg-white print:!text-black print:border-0 print-row">
-                        <div className="flex-1 min-w-0 space-y-0.5">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <h3 className="text-sm font-semibold leading-tight text-foreground dark:text-white print:text-[10pt] print:font-semibold print:flex-1 print:mr-4 print:!text-black print:whitespace-normal print:overflow-visible">
-                              {spec.name}
-                            </h3>
-                            {spec.unverified && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] print:!bg-white print:!text-black print:border print:border-black">
-                                <AlertTriangle className="h-3 w-3" aria-hidden="true" />
-                                Unverifiziert
-                              </span>
-                            )}
-                          </div>
-                          {spec.description && (
-                            <p className="mt-0.5 text-xs leading-snug text-base-content/65 dark:text-navy-400 max-w-xl truncate sm:whitespace-normal print:text-[8.5pt] print:!text-gray-700 print:mt-0 print:block print:overflow-visible print:whitespace-normal print:leading-tight">
-                              <FormattedText description={spec.description} markup={spec.descriptionMarkup} />
-                            </p>
+                  {/* Print-only inline list — borderless, tight rows. */}
+                  <div className="hidden print:block">
+                    {[
+                      { key: "Solo", front: pressure.frontBar, rear: pressure.rearBar, sidecar: pressure.sidecarBar },
+                      { key: "Sozius", front: pressure.frontPassengerBar, rear: pressure.rearPassengerBar, sidecar: pressure.sidecarPassengerBar },
+                      { key: "Offroad", front: pressure.frontOffroadBar, rear: pressure.rearOffroadBar, sidecar: pressure.sidecarOffroadBar },
+                    ]
+                      .filter((g) => g.front != null || g.rear != null)
+                      .map((g) => (
+                        <div key={g.key}>
+                          {g.front != null && (
+                            <PressurePrintRow label={`Vorne (${g.key})`} bar={g.front} preferred={pressure.preferredUnit} />
+                          )}
+                          {g.rear != null && (
+                            <PressurePrintRow label={`Hinten (${g.key})`} bar={g.rear} preferred={pressure.preferredUnit} />
+                          )}
+                          {g.sidecar != null && (
+                            <PressurePrintRow label={`Beiwagen (${g.key})`} bar={g.sidecar} preferred={pressure.preferredUnit} />
                           )}
                         </div>
+                      ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-start gap-3 px-4 py-4 print:hidden">
+                  <p className="text-sm text-base-content/70 dark:text-navy-300">
+                    Noch nicht erfasst — hinterlege die empfohlenen Drücke für vorne, hinten und ggf. Beiwagen.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsPressureModalOpen(true)}
+                    leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}
+                  >
+                    Reifendruck erfassen
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </section>
+        </div>
 
-                        <div className="flex items-center justify-end gap-2 sm:gap-6 shrink-0 print:flex print:gap-4 print:items-baseline print:text-right print:border-0 print:pt-0">
-                          {spec.toolSize && (
-                            <div className="flex flex-col items-end sm:gap-0.5">
-                              <span className="hidden sm:block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500 print:hidden">Werkzeug</span>
-                              <div className="flex items-center gap-1.5 rounded-sm border border-base-300 bg-base-100 px-2.5 py-1 font-numeric text-[11px] sm:text-xs font-semibold text-foreground dark:border-navy-700 dark:bg-navy-900 dark:text-navy-100 print:!bg-white print:border-none print:shadow-none print:p-0 print:text-[10pt] print:!text-black">
-                                <Wrench className="h-3 w-3 text-base-content/55 dark:text-navy-400 print:hidden" aria-hidden="true" />
-                                <span>{spec.toolSize}</span>
-                              </div>
-                            </div>
-                          )}
+        {/* Anzugsmomente */}
+        <section aria-labelledby="torque-heading" className="print:space-y-1">
+          <Card className="print:rounded-none print:border-0 print:shadow-none print:!bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-base-200 px-4 py-3.5 dark:border-navy-700 print:border-0 print:px-0 print:py-1">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h2 id="torque-heading" className={SECTION_TITLE}>Anzugsmomente</h2>
+                <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.08em] text-base-content/70 print:hidden">
+                  {specs.length} {specs.length === 1 ? "Eintrag" : "Einträge"}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 print:hidden">
+                  {specs.length > 0 && otherMotorcycles.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsImportModalOpen(true)}
+                      leftIcon={<Import className="h-3.5 w-3.5" aria-hidden="true" />}
+                    >
+                      Importieren
+                    </Button>
+                  )}
+                  {specs.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddModalOpen(true)}
+                      leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}
+                    >
+                      Hinzufügen
+                    </Button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-base-content/15 text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:text-navy-300 dark:hover:text-white"
+                    title="Drucken"
+                    aria-label="Werkstattdaten drucken"
+                  >
+                    <Printer className="h-4 w-4" aria-hidden="true" />
+                  </button>
+              </div>
+            </div>
 
-                          <div className="flex flex-col items-end sm:min-w-[80px]">
-                            <span className="hidden sm:block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500 mb-0.5 print:hidden">Drehmoment</span>
-                            <div className="flex items-center gap-1.5 sm:gap-2">
-                              <div className="flex items-baseline gap-1">
-                                <span className={`font-numeric text-xl sm:text-2xl font-semibold tracking-tight leading-none print:text-[10pt] print:font-bold print:!text-black ${spec.unverified ? "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]" : "text-foreground dark:text-white"}`}>
-                                  {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ''}
+            {specs.length === 0 ? (
+              <div className="relative print:hidden">
+                {/* Ghost table hints at what will appear here. */}
+                <table aria-hidden="true" className="w-full opacity-35">
+                  <thead>
+                    <tr>
+                      <th className={clsx(TH, "text-left")}>Bauteil</th>
+                      <th className={clsx(TH, "text-right")}>Werkzeug</th>
+                      <th className={clsx(TH, "text-right")}>Nm</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {["w-[55%] sm:w-56", "w-[40%] sm:w-40", "w-[65%] sm:w-64", "w-[48%] sm:w-48"].map((w) => (
+                      <tr key={w} className="border-b border-base-200 dark:border-navy-700">
+                        <td className="px-4 py-3.5"><div className={clsx("h-2.5 bg-base-300 dark:bg-navy-600", w)} /></td>
+                        <td className="px-4 py-3.5"><div className="ml-auto h-2.5 w-12 bg-base-300 dark:bg-navy-600" /></td>
+                        <td className="px-4 py-3.5"><div className="ml-auto h-2.5 w-8 bg-base-300 dark:bg-navy-600" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  <div className="flex max-w-[440px] flex-col gap-3 rounded-sm border border-base-300 bg-base-100 px-5 py-5 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800">
+                    <span className="font-display text-[22px] uppercase tracking-[0.3px] text-base-content dark:text-white">
+                      Noch keine Anzugsmomente
+                    </span>
+                    <span className="text-sm text-base-content/70 dark:text-navy-300">
+                      {otherMotorcycles.length > 0
+                        ? "Werte von einem anderen Motorrad übernehmen oder selbst erfassen — mit Werkzeug und Drehmoment pro Bauteil."
+                        : "Erfasse Werkzeug und Drehmoment pro Bauteil."}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {otherMotorcycles.length > 0 && (
+                        <Button
+                          type="button"
+                          onClick={() => setIsImportModalOpen(true)}
+                          leftIcon={<Import className="h-4 w-4" aria-hidden="true" />}
+                        >
+                          Importieren
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant={otherMotorcycles.length > 0 ? "secondary" : "primary"}
+                        onClick={() => setIsAddModalOpen(true)}
+                        leftIcon={<Plus className="h-4 w-4" aria-hidden="true" />}
+                      >
+                        Erster Eintrag
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto print:overflow-visible">
+                <table className="w-full min-w-[480px] print:min-w-0">
+                  <thead className="print:hidden">
+                    <tr>
+                      <th scope="col" className={clsx(TH, "text-left")}>Bauteil</th>
+                      <th scope="col" className={clsx(TH, "text-right")}>Werkzeug</th>
+                      <th scope="col" className={clsx(TH, "text-right")}>Nm</th>
+                      <th scope="col" className={clsx(TH, "w-12")}><span className="sr-only">Aktionen</span></th>
+                    </tr>
+                  </thead>
+                  {Array.from(new Set(specs.map((s) => s.category))).map((category) => (
+                    <tbody key={category as string} className="print:break-inside-avoid">
+                      <tr>
+                        <th
+                          scope="colgroup"
+                          colSpan={4}
+                          className="border-b border-base-200 bg-base-200/50 px-4 py-2 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:border-navy-700 dark:bg-navy-900/40 dark:text-navy-300 print-category-head"
+                        >
+                          {category as string}
+                        </th>
+                      </tr>
+                      {specs.filter((s) => s.category === category).map((spec: TorqueSpecification) => (
+                        <tr key={spec.id} className="border-b border-base-200 hover:bg-base-200/40 dark:border-navy-700 dark:hover:bg-navy-700/30 print-row">
+                          <td className="px-4 py-3 align-top print:px-0 print:py-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold text-base-content dark:text-white print:text-[10pt] print:!text-black">
+                                {spec.name}
+                              </span>
+                              {spec.unverified && (
+                                <span className="inline-flex items-center gap-1 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] print:border-black print:!bg-white print:!text-black">
+                                  <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                                  Unverifiziert
                                 </span>
-                                {!spec.variation && (
-                                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400 print:!text-black print:text-[9pt]">Nm</span>
-                                )}
-                              </div>
-                              {spec.variation && (
-                                <div className="inline-flex items-baseline gap-0.5 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-1.5 py-0.5 sm:px-2 sm:py-1 font-numeric text-[11px] sm:text-[11px] font-semibold text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] whitespace-nowrap print:!bg-white print:!text-black print:border-none print:p-0">
-                                  <span className="print:text-[10pt] print:font-bold">± {spec.variation}</span>
-                                  <span className="font-mono text-[11px] uppercase opacity-70 print:text-[9pt] print:opacity-100">Nm</span>
-                                </div>
                               )}
                             </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setEditingSpec(spec)}
-                            className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 p-1.5 sm:px-2.5 sm:py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/65 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white print:hidden"
-                            aria-label={`${spec.name} bearbeiten`}
-                          >
-                            <Pencil className="h-3 w-3" aria-hidden="true" />
-                            <span className="hidden sm:inline">Bearbeiten</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+                            {spec.description && (
+                              <p className="mt-0.5 max-w-xl text-xs leading-snug text-base-content/70 dark:text-navy-300 print:text-[8.5pt] print:!text-gray-700">
+                                <FormattedText description={spec.description} markup={spec.descriptionMarkup} />
+                              </p>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right align-top font-numeric text-sm font-semibold text-base-content dark:text-white print:px-2 print:py-0 print:text-[10pt] print:!text-black">
+                            {spec.toolSize ?? <span className="text-base-content/40">—</span>}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right align-top print:px-0 print:py-0">
+                            <span
+                              className={clsx(
+                                "font-numeric text-[17px] font-bold print:text-[10pt] print:!text-black",
+                                spec.unverified
+                                  ? "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]"
+                                  : "text-base-content dark:text-white",
+                              )}
+                            >
+                              {spec.torque}{spec.torqueEnd ? `–${spec.torqueEnd}` : ""}
+                            </span>
+                            {spec.variation && (
+                              <span className="ml-1 font-numeric text-xs font-semibold text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)] print:!text-black">
+                                ± {spec.variation}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-2 py-3 text-right align-top print:hidden">
+                            <button
+                              type="button"
+                              onClick={() => setEditingSpec(spec)}
+                              className={EDIT_ICON_BUTTON}
+                              aria-label={`${spec.name} bearbeiten`}
+                            >
+                              <Pencil className="h-3 w-3" aria-hidden="true" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  ))}
+                </table>
+              </div>
+            )}
+          </Card>
         </section>
       </div>
 

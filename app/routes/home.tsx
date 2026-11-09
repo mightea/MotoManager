@@ -1,4 +1,4 @@
-import { data, useActionData, useNavigate, useNavigation, useSearchParams } from "react-router";
+import { data, Link, useActionData, useNavigate, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/home";
 import { createMotorcycle } from "~/services/motorcycles";
 import { fetchModelSeries } from "~/services/parts";
@@ -7,6 +7,7 @@ import { requireUser } from "~/services/auth";
 import { getUserPrefs, setUserPrefs } from "~/services/preferences";
 import { fetchFromBackend } from "~/utils/backend";
 import { type MotorcycleDashboardItem, normalizeDashboardStats } from "~/utils/home-stats";
+import type { Issue } from "~/types/db";
 
 import {
   CalendarDays,
@@ -19,14 +20,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Map as MapIcon,
-  AlertTriangle,
-  Eye,
-  EyeOff,
-  Wrench,
   X,
 } from "lucide-react";
 import clsx from "clsx";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DropdownMenu } from "~/components/dropdown-menu";
 import { Modal } from "~/components/modal";
 // Lazy-loaded: pulls in react-easy-crop, which only appears inside this modal.
@@ -38,11 +35,32 @@ const AddMotorcycleForm = lazy(() =>
 import { motorcycleSchema } from "~/validations";
 
 import { DashboardStats } from "~/components/dashboard-stats";
+import { Card } from "~/components/card";
+import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { MotorcycleCard } from "~/components/motorcycle-card";
 import { Button } from "~/components/button";
 import { MotorcycleCardSkeleton } from "~/components/skeleton";
 import { EmptyState } from "~/components/empty-state";
 import { toast } from "~/hooks/use-toast";
+
+/** An open issue as the garage lists it (card lines + attention details). */
+type FleetIssue = {
+  id: number;
+  motorcycleId: number;
+  title: string;
+  priority: Issue["priority"];
+  date: string | null;
+};
+
+const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const PRIORITY_LABEL: Record<string, string> = { high: "Hoch", medium: "Mittel", low: "Niedrig" };
+
+/** Most severe first, then newest. */
+function compareIssues(a: FleetIssue, b: FleetIssue): number {
+  const rank = (PRIORITY_RANK[a.priority] ?? 3) - (PRIORITY_RANK[b.priority] ?? 3);
+  if (rank !== 0) return rank;
+  return (b.date ? new Date(b.date).getTime() : 0) - (a.date ? new Date(a.date).getTime() : 0);
+}
 
 type SortKey = "updated" | "make" | "age" | "location" | "inspection";
 type FilterKey = "all" | "overdue-inspection" | "overdue-maintenance" | "issues" | "veteran";
@@ -89,10 +107,32 @@ export async function clientLoader({ request: _request }: Route.ClientLoaderArgs
 
   const cards: MotorcycleDashboardItem[] = dashboardData?.motorcycles ?? [];
   const stats = normalizeDashboardStats(dashboardData?.stats);
+
+  // /home only carries an open-issue count per bike. The cards and the
+  // "Aktion erforderlich" details name the issues, so fetch the lists of the
+  // (active) bikes that have any — in parallel, degrading to the bare count.
+  const issueLists = await Promise.all(
+    cards
+      .filter((c) => (c.status ?? "active") === "active" && c.numberOfIssues > 0)
+      .map((c) =>
+        fetchFromBackend<{ issues?: Issue[] }>(`/motorcycles/${c.id}/issues`, {}, token)
+          .then((r) => [c.id, r?.issues ?? []] as const)
+          .catch(() => null),
+      ),
+  );
+  const openIssuesByBike: Record<number, FleetIssue[]> = {};
+  for (const entry of issueLists) {
+    if (!entry) continue;
+    const [bikeId, issues] = entry;
+    openIssuesByBike[bikeId] = issues
+      .filter((i) => i.status !== "done")
+      .map((i) => ({ id: i.id, title: i.title, priority: i.priority, date: i.date, motorcycleId: bikeId }))
+      .sort(compareIssues);
+  }
   // Yearly-distance warning threshold for the overview cards (default 150 km/yr).
   const minKmPerYear = settings?.minKmPerYear ?? 150;
 
-  return data({ cards, stats, user, currencies, modelSeries, minKmPerYear });
+  return data({ cards, stats, user, currencies, modelSeries, minKmPerYear, openIssuesByBike });
 }
 
 export function shouldRevalidate({
@@ -221,10 +261,11 @@ function matchesFilter(card: MotorcycleDashboardItem, filter: FilterKey): boolea
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { cards, stats, currencies, modelSeries, minKmPerYear } = loaderData;
+  const { cards, stats, currencies, modelSeries, minKmPerYear, openIssuesByBike } = loaderData;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [attentionOpen, setAttentionOpen] = useState(false);
   const [currentYear] = useState(() => new Date().getFullYear());
   const actionData = useActionData<{ success?: boolean }>();
   const navigation = useNavigation();
@@ -264,19 +305,41 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     }
   }, [actionData]);
 
-  const counts = useMemo(() => ({
-    overdueInspection: cards.filter((c: MotorcycleDashboardItem) => c.nextInspection?.isOverdue).length,
-    overdueMaintenance: cards.filter((c: MotorcycleDashboardItem) => c.hasOverdueMaintenance).length,
-    openIssues: cards.reduce((sum: number, c: MotorcycleDashboardItem) => sum + (c.numberOfIssues || 0), 0),
-  }), [cards]);
-
-  const overdueInspectionNames = useMemo(
-    () =>
-      cards
-        .filter((c: MotorcycleDashboardItem) => c.nextInspection?.isOverdue)
-        .map((c: MotorcycleDashboardItem) => `${c.make} ${c.model}`),
+  // Attention items only concern active bikes (the backend already zeroes
+  // inspection/maintenance/issues for sold ones).
+  const activeCards = useMemo(
+    () => cards.filter((c: MotorcycleDashboardItem) => (c.status ?? "active") === "active"),
     [cards],
   );
+  const overdueInspectionCards = useMemo(
+    () => activeCards.filter((c: MotorcycleDashboardItem) => c.nextInspection?.isOverdue),
+    [activeCards],
+  );
+  const maintenanceCards = useMemo(
+    () => activeCards.filter((c: MotorcycleDashboardItem) => c.hasOverdueMaintenance),
+    [activeCards],
+  );
+  const fleetIssues = useMemo(
+    () => Object.values(openIssuesByBike).flat().sort(compareIssues),
+    [openIssuesByBike],
+  );
+  const counts = useMemo(() => ({
+    overdueInspection: overdueInspectionCards.length,
+    overdueMaintenance: maintenanceCards.length,
+    openIssues: activeCards.reduce((sum: number, c: MotorcycleDashboardItem) => sum + (c.numberOfIssues || 0), 0),
+    highIssues: fleetIssues.filter((i) => i.priority === "high").length,
+  }), [overdueInspectionCards, maintenanceCards, activeCards, fleetIssues]);
+
+  const bikeById = useMemo(
+    () => new Map(cards.map((c: MotorcycleDashboardItem) => [c.id, c])),
+    [cards],
+  );
+
+  // Busiest bike's km this year — the stats only name it.
+  const busiestBikeKm = useMemo(() => {
+    const busiest = [...activeCards].sort((a, b) => b.odometerThisYear - a.odometerThisYear)[0];
+    return busiest && busiest.odometerThisYear > 0 ? busiest.odometerThisYear : null;
+  }, [activeCards]);
 
   // Inactive = sold. Hidden by default; a toggle (?show=all) reveals them.
   const showInactive = searchParams.get("show") === "all";
@@ -371,103 +434,213 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     }
   };
 
+  const dateFmt = new Intl.DateTimeFormat("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const bikeName = (id: number) => {
+    const bike = bikeById.get(id);
+    return bike ? `${bike.make} ${bike.model}` : `#${id}`;
+  };
+  const bikeHref = (bike: MotorcycleDashboardItem) =>
+    `/motorcycle/${createMotorcycleSlug(bike.make, bike.model)}/${bike.id}`;
+  const hasAttention = (counts.overdueInspection + counts.overdueMaintenance + counts.openIssues) > 0;
+  const activeCount = cards.length - inactiveCount;
+  const VISIBLE_ISSUES = 5;
+
   return (
     <div className="container mx-auto p-4 flex flex-col gap-6 pb-28 sm:pb-12">
 
-      {/* Aktion erforderlich. Single row with horizontal scroll on small
-          screens so wrap behavior never reflows when something else (a
-          popover, a scrollbar) shifts the available width. */}
-      {(counts.overdueInspection + counts.overdueMaintenance + counts.openIssues) > 0 && (
-        <div className="order-1">
-          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <span className="label-tag mr-1 shrink-0">
-            <span>Aktion erforderlich</span>
-          </span>
-          {counts.overdueInspection > 0 && (
-            <AttentionChip
-              tone="critical"
-              icon={CalendarDays}
-              count={counts.overdueInspection}
-              label={
-                overdueInspectionNames.length === 1
-                  ? `überfällige MFK · ${overdueInspectionNames[0]}`
-                  : "überfällige MFK"
-              }
-              active={currentFilter === "overdue-inspection"}
-              onClick={() => toggleFilter("overdue-inspection")}
-            />
-          )}
-          {counts.overdueMaintenance > 0 && (
-            <AttentionChip
-              tone="alert"
-              icon={Wrench}
-              count={counts.overdueMaintenance}
-              label="Wartung fällig"
-              active={currentFilter === "overdue-maintenance"}
-              onClick={() => toggleFilter("overdue-maintenance")}
-            />
-          )}
-          {counts.openIssues > 0 && (
-            <AttentionChip
-              tone="warn"
-              icon={AlertTriangle}
-              count={counts.openIssues}
-              label="offene Mängel"
-              active={currentFilter === "issues"}
-              onClick={() => toggleFilter("issues")}
-            />
-          )}
-          {currentFilter !== "all" && (
+      {/* Aktion erforderlich — one bar of filter chips; "Details" unfolds
+          the per-bike lists behind each count. */}
+      {hasAttention && (
+        <section aria-labelledby="attention-heading" className="order-1 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 rounded-sm border border-base-300 bg-base-100 py-2 pl-3.5 pr-2.5 dark:border-navy-700 dark:bg-navy-800">
+            <h2
+              id="attention-heading"
+              className="mr-1.5 font-mono text-[12px] font-semibold uppercase tracking-[0.1em] text-base-content/70"
+            >
+              Aktion erforderlich
+            </h2>
+            {counts.overdueInspection > 0 && (
+              <AttentionChip
+                tone="critical"
+                count={counts.overdueInspection}
+                label={
+                  overdueInspectionCards.length === 1 ? (
+                    <>MFK überfällig · <strong>{overdueInspectionCards[0].model}</strong></>
+                  ) : (
+                    "MFK überfällig"
+                  )
+                }
+                active={currentFilter === "overdue-inspection"}
+                onClick={() => toggleFilter("overdue-inspection")}
+              />
+            )}
+            {counts.overdueMaintenance > 0 && (
+              <AttentionChip
+                tone="alert"
+                count={counts.overdueMaintenance}
+                label="Wartung fällig"
+                active={currentFilter === "overdue-maintenance"}
+                onClick={() => toggleFilter("overdue-maintenance")}
+              />
+            )}
+            {counts.openIssues > 0 && (
+              <AttentionChip
+                tone="warn"
+                count={counts.openIssues}
+                label={
+                  <>
+                    offene Mängel
+                    {counts.highIssues > 0 && (
+                      <span className="font-semibold text-error"> · {counts.highIssues} hoch</span>
+                    )}
+                  </>
+                }
+                active={currentFilter === "issues"}
+                onClick={() => toggleFilter("issues")}
+              />
+            )}
+            {currentFilter !== "all" && (
+              <button
+                type="button"
+                onClick={() => updateParam("filter", null)}
+                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-sm px-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                <X className="h-3 w-3" aria-hidden="true" />
+                Filter aufheben
+              </button>
+            )}
+            <span className="flex-1" aria-hidden="true" />
             <button
               type="button"
-              onClick={() => updateParam("filter", null)}
-              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium text-secondary underline-offset-2 hover:text-foreground hover:underline dark:text-navy-300 dark:hover:text-white"
+              onClick={() => setAttentionOpen((v) => !v)}
+              aria-expanded={attentionOpen}
+              aria-controls="attention-details"
+              className="inline-flex h-8 items-center gap-1 rounded-sm px-2 font-mono text-[12px] font-semibold uppercase tracking-[0.08em] text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
             >
-              <X className="h-3 w-3" aria-hidden="true" />
-              Filter aufheben
+              Details
+              <ChevronDown
+                className={clsx("h-3.5 w-3.5 motion-safe:transition-transform", attentionOpen && "rotate-180")}
+                aria-hidden="true"
+              />
             </button>
-          )}
           </div>
-        </div>
+
+          {attentionOpen && (
+            <div
+              id="attention-details"
+              className="grid items-start gap-3 sm:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]"
+            >
+              {overdueInspectionCards.length > 0 && (
+                <AttentionPanel title="MFK überfällig" count={overdueInspectionCards.length} accent="error" countClass="text-error">
+                  {overdueInspectionCards.map((bike) => (
+                    <AttentionRow key={bike.id} to={bikeHref(bike)}>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="font-semibold">{bike.make} {bike.model}</span>
+                        <span className="font-mono text-[12px] text-base-content/70">
+                          fällig {dateFmt.format(new Date(bike.nextInspection!.dueDateISO))}
+                          {bike.currentLocationName ? ` · ${bike.currentLocationName}` : ""}
+                        </span>
+                      </span>
+                      <span className="shrink-0 whitespace-nowrap font-mono text-[12px] font-bold uppercase tracking-[0.06em] text-error">
+                        {bike.nextInspection!.relativeLabel.replace(/\s*überfällig$/, "")}
+                      </span>
+                    </AttentionRow>
+                  ))}
+                </AttentionPanel>
+              )}
+              {maintenanceCards.length > 0 && (
+                <AttentionPanel
+                  title="Wartung fällig"
+                  count={maintenanceCards.length}
+                  accent="workshop"
+                  countClass="text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]"
+                >
+                  {maintenanceCards.map((bike) => (
+                    <AttentionRow key={bike.id} to={bikeHref(bike)}>
+                      <span className="text-sm font-semibold">{bike.make} {bike.model}</span>
+                      <span className="text-right text-[13px] text-base-content/70 dark:text-navy-300">
+                        {bike.overdueMaintenanceItems.join(", ")}
+                      </span>
+                    </AttentionRow>
+                  ))}
+                </AttentionPanel>
+              )}
+              {counts.openIssues > 0 && (
+                <AttentionPanel title="Offene Mängel" count={counts.openIssues} accent="secondary">
+                  {fleetIssues.slice(0, VISIBLE_ISSUES).map((issue) => {
+                    const bike = bikeById.get(issue.motorcycleId);
+                    return (
+                      <AttentionRow key={issue.id} to={bike ? bikeHref(bike) : "/"}>
+                        <span className="flex min-w-0 flex-col">
+                          <span className="text-sm font-semibold">{issue.title}</span>
+                          <span className="font-mono text-[12px] text-base-content/70">
+                            {bikeName(issue.motorcycleId)}
+                            {issue.date ? ` · ${dateFmt.format(new Date(issue.date))}` : ""}
+                          </span>
+                        </span>
+                        <span
+                          className={clsx(
+                            "shrink-0 font-mono text-[11px] font-bold uppercase tracking-[0.1em]",
+                            issue.priority === "high"
+                              ? "text-error"
+                              : issue.priority === "medium"
+                                ? "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]"
+                                : "text-base-content/70",
+                          )}
+                        >
+                          {PRIORITY_LABEL[issue.priority] ?? issue.priority}
+                        </span>
+                      </AttentionRow>
+                    );
+                  })}
+                  {counts.openIssues > Math.min(VISIBLE_ISSUES, fleetIssues.length) && (
+                    <button
+                      type="button"
+                      onClick={() => updateParam("filter", "issues")}
+                      className="block w-full border-t border-base-200 py-2.5 pl-[18px] pr-3.5 text-left font-mono text-[12px] font-semibold uppercase tracking-[0.08em] text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 dark:border-navy-700 dark:text-primary-light"
+                    >
+                      + {counts.openIssues - Math.min(VISIBLE_ISSUES, fleetIssues.length)} weitere →
+                    </button>
+                  )}
+                </AttentionPanel>
+              )}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Fleet telemetry — below the grid on mobile, above on desktop. */}
       {cards.length > 0 && stats && (
-        <div className="order-4 sm:order-2 flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <span className="label-tag">
-              <span>Flotten-Telemetrie · {currentYear}</span>
-            </span>
-          </div>
-          <DashboardStats stats={stats} />
+        <div className="order-4 sm:order-2 flex flex-col gap-3">
+          <span className="label-tag">
+            <span>Flotten-Telemetrie · {currentYear}</span>
+          </span>
+          <DashboardStats stats={stats} busiestBikeKm={busiestBikeKm} />
         </div>
       )}
 
-      {/* Fleet header. Section label sits on its own row above the
-          sort + add controls so the page has a clear hierarchy. */}
-      <div className="order-2 sm:order-3 flex flex-col gap-2">
-        <span className="label-tag">
-          <span>Flotte · {cards.length} {cards.length === 1 ? "Eintrag" : "Einträge"}</span>
-        </span>
+      {/* Fleet header — section label left, sort / sold toggle / add right. */}
+      <div className="order-2 sm:order-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="label-tag">
+          <span>
+            Flotte · {activeCount} aktiv
+            {inactiveCount > 0 && ` · ${inactiveCount} verkauft`}
+          </span>
+        </h2>
 
-        {/* Sort selector + "show sold" toggle on the left, Neues-Motorrad on
-            the right. items-stretch keeps them all the same height so they read
-            as a single control row. */}
-        <div className="flex items-stretch justify-between gap-3">
-          <div className="flex items-stretch gap-2">
+        <div className="flex flex-wrap items-stretch gap-2">
           <DropdownMenu
             align="start"
             trigger={
               <button
                 type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-sm border border-base-300 bg-base-100 px-3 py-2 text-sm font-medium text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-navy-800"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-base-300 bg-base-100 px-2.5 text-sm font-semibold text-base-content hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800"
               >
                 <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
                   Sort
                 </span>
-                <span className="h-3 w-px bg-base-300 dark:bg-navy-600" aria-hidden="true" />
                 {ActiveSortIcon && <ActiveSortIcon className="h-3.5 w-3.5 text-base-content/60" aria-hidden="true" />}
-                <span className="font-semibold">{activeSortOption?.label ?? "Letzte Aktivität"}</span>
+                <span>{activeSortOption?.label ?? "Letzte Aktivität"}</span>
                 <ChevronDown className="h-3.5 w-3.5 text-base-content/50" aria-hidden="true" />
               </button>
             }
@@ -495,48 +668,29 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </DropdownMenu>
 
           {inactiveCount > 0 && (
-            <button
-              type="button"
-              onClick={toggleShowInactive}
-              aria-pressed={showInactive}
-              title={showInactive ? "Verkaufte ausblenden" : "Verkaufte anzeigen"}
-              className={clsx(
-                "inline-flex items-center justify-center gap-2 rounded-sm border px-3 py-2 text-sm font-medium shadow-[0_1px_0_0_rgba(15,23,42,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                showInactive
-                  ? "border-primary/40 bg-primary/5 text-primary"
-                  : "border-base-300 bg-base-100 text-base-content hover:bg-base-200 dark:bg-navy-800",
-              )}
-            >
-              {showInactive ? (
-                <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
-              ) : (
-                <Eye className="h-3.5 w-3.5 text-base-content/60" aria-hidden="true" />
-              )}
-              <span className="hidden font-semibold sm:inline">Verkaufte</span>
-              <span
-                className={clsx(
-                  "font-mono text-[11px] font-semibold tabular-nums",
-                  showInactive ? "text-primary/70" : "text-base-content/50",
-                )}
-              >
-                {inactiveCount}
-              </span>
-            </button>
+            <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-sm border border-base-300 bg-base-100 px-3 font-mono text-[12px] font-semibold uppercase tracking-[0.08em] text-base-content/70 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-800">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={toggleShowInactive}
+                className="h-4 w-4 accent-[var(--color-primary)]"
+              />
+              Verkaufte ({inactiveCount})
+            </label>
           )}
-          </div>
 
           <Button
             type="button"
             onClick={() => setIsAddOpen(true)}
             leftIcon={<Plus className="h-4 w-4" />}
-            className="h-auto shrink-0"
+            className="h-10 shrink-0"
           >
             <span>Neu<span className="hidden sm:inline">es Motorrad</span></span>
           </Button>
         </div>
       </div>
 
-      <div className="order-3 sm:order-4 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="order-3 sm:order-4 grid grid-cols-1 gap-4 sm:grid-cols-[repeat(auto-fill,minmax(340px,1fr))]">
         {isLoading && cards.length > 0 ? (
           [...Array(Math.min(cards.length, 6))].map((_, i) => (
             // eslint-disable-next-line react/no-array-index-key
@@ -578,7 +732,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <MotorcycleCard
               key={moto.id}
               moto={moto}
-              minKmPerYear={minKmPerYear} />
+              minKmPerYear={minKmPerYear}
+              issues={openIssuesByBike[moto.id]} />
           ))
         )}
       </div>
@@ -686,49 +841,38 @@ function Pagination({
 type AttentionTone = "critical" | "alert" | "warn";
 
 /**
- * Attention chip — sharp-cornered tag used in the "§ 01 — Aktion erforderlich"
- * row on the home page. Three tones reflecting the Dakar palette's severity
- * gradient:
- *   critical → error red       (overdue MFK, must act)
- *   alert    → vermillion       (maintenance due, urgent)
- *   warn     → sand / workshop  (open issues, notable)
- *
- * Renders the count in font-numeric (JetBrains Mono tabular) and the label
- * in sans semibold so the number reads as data and the rest stays scannable.
+ * Attention chip — a tinted tag in the "Aktion erforderlich" bar: the count
+ * in the mono face (toned by severity), the label in body text. Toggles the
+ * matching grid filter.
  */
 function AttentionChip({
   tone,
-  icon: Icon,
   count,
   label,
   active,
   onClick,
 }: {
   tone: AttentionTone;
-  icon: typeof Clock;
   count: number;
-  label: string;
+  label: ReactNode;
   active: boolean;
   onClick: () => void;
 }) {
-  const tones: Record<AttentionTone, { idle: string; activeCls: string; iconColor: string; railColor: string }> = {
+  const tones: Record<AttentionTone, { chip: string; count: string; ring: string }> = {
     critical: {
-      idle: "border-error/30 bg-error/5 text-error hover:bg-error/10 dark:border-error/40 dark:bg-error/10 dark:text-error",
-      activeCls: "border-error bg-error/15 text-error ring-1 ring-error/30 dark:bg-error/25 dark:text-error",
-      iconColor: "text-error",
-      railColor: "bg-error",
+      chip: "border-error/30 bg-error/5 dark:border-error/40 dark:bg-error/10",
+      count: "text-error",
+      ring: "ring-error/50",
     },
     alert: {
-      idle: "border-[var(--color-brand-red)]/30 bg-[var(--color-brand-red)]/5 text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 dark:border-[var(--color-brand-red)]/40 dark:bg-[var(--color-brand-red)]/10",
-      activeCls: "border-[var(--color-brand-red)] bg-[var(--color-brand-red)]/15 text-[var(--color-brand-red)] ring-1 ring-[var(--color-brand-red)]/30 dark:bg-[var(--color-brand-red)]/25",
-      iconColor: "text-[var(--color-brand-red)]",
-      railColor: "bg-[var(--color-brand-red)]",
+      chip: "border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 dark:bg-[var(--color-workshop)]/15",
+      count: "text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]",
+      ring: "ring-[var(--color-workshop)]/60",
     },
     warn: {
-      idle: "border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 text-[var(--color-workshop-ink)] hover:bg-[var(--color-workshop)]/20 dark:border-[var(--color-workshop)]/50 dark:bg-[var(--color-workshop)]/15 dark:text-[var(--color-workshop-soft)]",
-      activeCls: "border-[var(--color-workshop)] bg-[var(--color-workshop)]/25 text-[var(--color-workshop-ink)] ring-1 ring-[var(--color-workshop)]/40 dark:bg-[var(--color-workshop)]/30 dark:text-[var(--color-workshop-soft)]",
-      iconColor: "text-[var(--color-workshop)]",
-      railColor: "bg-[var(--color-workshop)]",
+      chip: "border-secondary/25 bg-secondary/5 dark:border-navy-500 dark:bg-secondary/20",
+      count: "text-secondary dark:text-navy-200",
+      ring: "ring-secondary/40",
     },
   };
   const t = tones[tone];
@@ -738,21 +882,51 @@ function AttentionChip({
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        "group relative inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border pl-2.5 pr-3 py-1.5 motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-navy-950",
-        active ? t.activeCls : t.idle,
+        "inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-2.5 text-[13px] text-base-content motion-safe:transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-white",
+        t.chip,
+        active && clsx("ring-2", t.ring),
       )}
     >
-      <Icon className={clsx("h-3.5 w-3.5 shrink-0", t.iconColor)} aria-hidden="true" />
-      <span className="font-numeric text-sm font-semibold tabular-nums leading-none">
-        {count}
-      </span>
-      <span className="text-xs font-semibold leading-none">
-        {label}
-      </span>
-      {active && (
-        <span aria-hidden="true" className={clsx("absolute inset-y-1 left-0 w-[3px] rounded-r-sm", t.railColor)} />
-      )}
+      <span className={clsx("font-numeric font-bold tabular-nums", t.count)}>{count}</span>
+      <span>{label}</span>
     </button>
+  );
+}
+
+/** One of the "Aktion erforderlich" detail cards: rail, title, count, rows. */
+function AttentionPanel({
+  title,
+  count,
+  accent,
+  countClass,
+  children,
+}: {
+  title: string;
+  count: number;
+  accent: "error" | "workshop" | "secondary";
+  countClass?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card accent={accent}>
+      <div className="flex items-baseline justify-between gap-3 border-b border-base-200 py-3 pl-[18px] pr-3.5 dark:border-navy-700">
+        <h3 className="font-subdisplay text-sm uppercase tracking-[0.06em] text-base-content dark:text-white">{title}</h3>
+        <span className={clsx("font-numeric text-xl font-bold", countClass ?? "text-base-content dark:text-white")}>{count}</span>
+      </div>
+      <div className="divide-y divide-base-200/70 dark:divide-navy-700">{children}</div>
+    </Card>
+  );
+}
+
+function AttentionRow({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      prefetch="intent"
+      className="flex items-start justify-between gap-3 py-2 pl-[18px] pr-3.5 text-base-content hover:bg-base-200/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 dark:text-white dark:hover:bg-navy-700/40"
+    >
+      {children}
+    </Link>
   );
 }
 

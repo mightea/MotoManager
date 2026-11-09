@@ -29,7 +29,6 @@ import {
   type PreviousOwner
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
-import { Plus } from "lucide-react";
 import OpenIssuesCard from "~/components/open-issues-card";
 import { MaintenanceList } from "~/components/maintenance-list";
 import { MaintenanceDialog } from "~/components/maintenance-dialog";
@@ -48,8 +47,9 @@ import { getCurrencies, getLocations, getUserSettings } from "~/services/setting
 import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { getNextInspectionInfo } from "~/utils/inspection";
 import { listExpenses } from "~/services/expenses";
-import { formatCurrency, formatNumber } from "~/utils/numberUtils";
+import { formatCurrency } from "~/utils/numberUtils";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
+import { buildMotorcycleHero } from "~/components/motorcycle-hero-stats";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
 import { PreviousOwnersDialog } from "~/components/previous-owners-dialog";
@@ -221,8 +221,18 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   }, 0);
   const totalLifetimeCost = purchasePrice + maintenanceCost + sharedExpensesCost;
 
+  const hero = buildMotorcycleHero({
+    motorcycle,
+    maintenanceRecords,
+    issues,
+    previousOwnerCount: previousOwners.length,
+    nextInspection,
+    includeYearKm: true,
+  });
+
   return data({
     motorcycle,
+    hero,
     openIssues,
     maintenanceHistory,
     motorcycleExpenses,
@@ -891,6 +901,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const { trackEvent } = useUmami();
   const {
     motorcycle,
+    hero,
     openIssues,
     maintenanceHistory,
     motorcycleExpenses,
@@ -1069,11 +1080,13 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   };
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
-    dateStyle: "medium",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-0 pb-20 md:p-6 md:pb-12 md:space-y-6">
+    <div className="container mx-auto max-w-7xl space-y-4 px-4 pt-0 pb-20 md:space-y-5 md:p-6 md:pb-12">
       <MotorcycleDetailHeader
         motorcycle={motorcycle}
         nextInspection={nextInspection}
@@ -1081,28 +1094,15 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         navLinks={navLinks}
         overviewLink={overviewLink}
         ownerCount={ownerCount}
-        stats={[
-          ...(lastKnownOdo > 0
-            ? [{ label: "km · Tacho", value: formatNumber(lastKnownOdo) }]
-            : []),
-          ...(avgFuelConsumption
-            ? [{ label: "Ø L/100 km", value: avgFuelConsumption.toFixed(2) }]
-            : []),
-          ...(nextInspection
-            ? [{
-                label: nextInspection.isOverdue ? "MFK überfällig" : "Nächste MFK",
-                value: new Intl.DateTimeFormat("de-CH", { month: "2-digit", year: "numeric" })
-                  .format(new Date(nextInspection.dueDateISO))
-                  .replace(".", "/"),
-                tone: nextInspection.isOverdue ? ("alert" as const) : ("default" as const),
-              }]
-            : []),
-          ...(currentLocationName ? [{ label: "Standort", value: currentLocationName }] : []),
-        ]}
+        stats={hero.stats}
+        facts={hero.facts}
       />
 
-      <div className="grid gap-5 grid-cols-1 md:grid-cols-3 items-start">
-        <div className="min-w-0 space-y-5 sticky-tall">
+      {/* Wide: data + service intervals left, issues + history right.
+          Phones (board 3): issues, vehicle data, history, then intervals —
+          the side cards render once per breakpoint to get that order. */}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(320px,1fr)_minmax(0,2fr)] lg:gap-5">
+        <div className="hidden min-w-0 flex-col gap-4 lg:flex">
           <MotorcycleInfoCard
             motorcycle={motorcycle}
             formattedFirstRegistration={formattedFirstRegistration}
@@ -1125,7 +1125,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           <MaintenanceInsightsCard insights={insights} />
         </div>
 
-        <div className="min-w-0 space-y-5 md:col-span-2">
+        <div className="flex min-w-0 flex-col gap-4">
           <OpenIssuesCard
             issues={openIssues}
             dateFormatter={dateFormatter}
@@ -1133,46 +1133,51 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             onIssueSelect={(issue) => openIssueDialog(issue)}
           />
 
-          {/* Maintenance History Card */}
-          <Card>
-            <CardHeading
-              title="Historie"
-              meta={maintenanceHistory.length > 0 ? `${maintenanceHistory.length} ${maintenanceHistory.length === 1 ? "Eintrag" : "Einträge"}` : undefined}
-              trailing={
-                <CardAction
-                  onClick={() => {
-                    setSelectedMaintenance(null);
-                    setMaintenanceDialogOpen(true);
-                  }}
-                  aria-label="Neuen Eintrag hinzufügen"
-                >
-                  <Plus className="h-3 w-3" aria-hidden="true" />
-                  Neuer Eintrag
-                </CardAction>
-              }
+          <div className="lg:hidden">
+          <MotorcycleInfoCard
+            motorcycle={motorcycle}
+            formattedFirstRegistration={formattedFirstRegistration}
+            formattedPurchaseDate={formattedPurchaseDate}
+            ownershipLabel={ownershipLabel}
+            kmDriven={kmDriven}
+            avgKmPerYear={avgKmPerYear ?? 0}
+            yearsOwned={yearsOwned}
+            hasPurchaseDate={hasPurchaseDate}
+            avgFuelConsumption={avgFuelConsumption}
+            avgTripDistance={avgTripDistance}
+            estimatedRange={estimatedRange}
+            totalLifetimeCost={totalLifetimeCost}
+            onEdit={() => setEditMotorcycleDialogOpen(true)}
+            onShowDetails={() => setInfoSheetOpen(true)}
+            previousOwnersList={previousOwnersList}
+            hasUnknownOwners={motorcycle.hasUnknownOwners}
+            ownerCount={ownerCount}
+          />
+          </div>
+
+          <Card className="!overflow-visible">
+            <MaintenanceList
+              records={maintenanceHistory}
+              currencyCode={motorcycle.currencyCode}
+              userLocations={userLocations}
+              usedPartsByRecordId={usedPartsByRecordId}
+              onEdit={(record) => {
+                setSelectedMaintenance(record);
+                setMaintenanceDialogOpen(true);
+              }}
+              onAdd={() => {
+                setSelectedMaintenance(null);
+                setMaintenanceDialogOpen(true);
+              }}
+              onBulkDelete={(ids) => {
+                if (ids.length === 0) return;
+                setBulkDeleteIds(ids);
+                setBulkDeleteConfirmationOpen(true);
+              }}
             />
-            <div className="px-4 py-4">
-              <MaintenanceList
-                records={maintenanceHistory}
-                currencyCode={motorcycle.currencyCode}
-                userLocations={userLocations}
-                usedPartsByRecordId={usedPartsByRecordId}
-                onEdit={(record) => {
-                  setSelectedMaintenance(record);
-                  setMaintenanceDialogOpen(true);
-                }}
-                onAdd={() => {
-                  setSelectedMaintenance(null);
-                  setMaintenanceDialogOpen(true);
-                }}
-                onBulkDelete={(ids) => {
-                  if (ids.length === 0) return;
-                  setBulkDeleteIds(ids);
-                  setBulkDeleteConfirmationOpen(true);
-                }}
-              />
-            </div>
           </Card>
+
+          <MaintenanceInsightsCard insights={insights} className="lg:hidden" />
 
           {/* Shared Expenses Card */}
           {motorcycleExpenses.length > 0 && (

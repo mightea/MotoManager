@@ -10,10 +10,11 @@ import {
   fetchStorageLocations,
 } from "~/services/parts";
 import type { ModelSeries, Part, PartStock, StorageLocation } from "~/types/parts";
-import type { MaintenanceRecord, Motorcycle } from "~/types/db";
+import type { Issue, MaintenanceRecord, Motorcycle } from "~/types/db";
 import { seriesNames, storageLocationPath } from "~/utils/parts";
 import { seriesPath } from "~/utils/series";
 import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
+import { buildMotorcycleHero } from "~/components/motorcycle-hero-stats";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { computeMotorcycleHeaderStats } from "~/utils/motorcycle-header-stats";
 import { Card } from "~/components/card";
@@ -42,7 +43,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   }
 
   const [response, compatibleParts, modelSeries, stocks, storageLocations] = await Promise.all([
-    fetchFromBackend<{ motorcycle: Motorcycle; maintenanceRecords?: MaintenanceRecord[] }>(
+    fetchFromBackend<{ motorcycle: Motorcycle; maintenanceRecords?: MaintenanceRecord[]; issues?: Pick<Issue, "odo">[]; previousOwners?: unknown[] }>(
       `/motorcycles/${motorcycleId}`,
       {},
       token,
@@ -57,10 +58,18 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
   }
 
   const headerStats = await computeMotorcycleHeaderStats(response, token, user.id);
+  const hero = buildMotorcycleHero({
+    motorcycle: response.motorcycle,
+    maintenanceRecords: response.maintenanceRecords,
+    issues: response.issues,
+    previousOwnerCount: response.previousOwners?.length ?? null,
+    nextInspection: headerStats.nextInspection,
+  });
 
   return data({
     motorcycle: response.motorcycle,
     ...headerStats,
+    hero,
     compatibleParts,
     modelSeries,
     stocks,
@@ -71,6 +80,7 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
 export default function MotorcyclePartsPage({ loaderData }: Route.ComponentProps) {
   const {
     motorcycle,
+    hero,
     nextInspection,
     currentLocationName,
     compatibleParts,
@@ -119,8 +129,10 @@ export default function MotorcyclePartsPage({ loaderData }: Route.ComponentProps
         nextInspection={nextInspection}
         currentLocationName={currentLocationName}
         navLinks={navLinks}
-        backTo={basePath}
         overviewLink={overviewLink}
+        stats={hero.stats}
+        facts={hero.facts}
+        compact
       />
 
       <section className="space-y-3">

@@ -9,7 +9,6 @@ import {
   Layers,
   CircleDashed,
   ClipboardList,
-  ChevronDown,
   Edit2,
   MapPin,
   Tag,
@@ -55,6 +54,8 @@ interface MaintenanceListProps {
   usedPartsByRecordId?: Record<number, string>;
   onEdit: (record: MaintenanceRecord) => void;
   onAdd?: () => void;
+  /** Card title rendered in the list's own header row (filters sit beside it). */
+  title?: string;
   /**
    * When provided, enables the bulk-select UI. The parent receives every
    * underlying record id (parent + bundled children) for the selected groups
@@ -234,20 +235,41 @@ function getCollapsedMetric(group: GroupedMaintenanceRecord, currencyCode?: stri
   return null;
 }
 
+/** Rows shown before "ältere Einträge anzeigen"; each click adds a step. */
+const INITIAL_VISIBLE_GROUPS = 10;
 const VISIBLE_GROUPS_STEP = 30;
 
-export function MaintenanceList({ records, currencyCode, userLocations, usedPartsByRecordId, onEdit, onAdd, onBulkDelete }: MaintenanceListProps) {
+/**
+ * Odometer plausibility: a reading below the one of an earlier day usually
+ * means a typo. Keyed by group id; compares against the closest earlier-dated
+ * group with a reading.
+ */
+function findOdoRegressions(groups: GroupedMaintenanceRecord[]): Map<string, number> {
+  const flags = new Map<string, number>();
+  for (let i = 0; i < groups.length; i++) {
+    const group = groups[i];
+    if (!(group.odo > 0)) continue;
+    const day = new Date(group.date).setHours(0, 0, 0, 0);
+    const older = groups
+      .slice(i + 1)
+      .find((g) => g.odo > 0 && new Date(g.date).setHours(0, 0, 0, 0) < day);
+    if (older && older.odo > group.odo) flags.set(group.id, older.odo);
+  }
+  return flags;
+}
+
+export function MaintenanceList({ records, currencyCode, userLocations, usedPartsByRecordId, onEdit, onAdd, onBulkDelete, title = "Historie" }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "maintenance" | "fuel">("all");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
-  const [visibleCount, setVisibleCount] = useState(VISIBLE_GROUPS_STEP);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_GROUPS);
 
   const bulkSelectEnabled = typeof onBulkDelete === "function";
 
   const changeFilter = (next: "all" | "maintenance" | "fuel") => {
     setFilter(next);
-    setVisibleCount(VISIBLE_GROUPS_STEP);
+    setVisibleCount(INITIAL_VISIBLE_GROUPS);
   };
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
@@ -262,6 +284,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
   }
 
   const groupedRecords = groupMaintenanceRecords(filteredRecords, userLocations);
+  // Flags come from the unfiltered history so a fuel-only view still compares
+  // against the latest service reading (group ids are filter-independent).
+  const odoRegressions = findOdoRegressions(
+    filter === "all" ? groupedRecords : groupMaintenanceRecords(records, userLocations),
+  );
 
   // Render incrementally: long histories mount only the first chunk, the
   // rest is revealed via "Mehr anzeigen". Selection ("Alle auswählen") and
@@ -332,13 +359,13 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
   const selectedCount = selectedGroupIds.size;
 
   return (
-    <div className="space-y-6">
+    <div>
       <div
         className={clsx(
-          "sticky z-20 -mx-4 flex flex-wrap items-center justify-between gap-3 border-b px-4 pb-3 pt-3",
+          "z-20 flex flex-col gap-2.5 border-b px-4 py-3 md:sticky md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3",
           selectionMode
             ? "border-primary/30 bg-primary/10 dark:bg-primary/15"
-            : "border-gray-100 bg-white dark:border-navy-700 dark:bg-navy-800",
+            : "border-base-200 bg-base-100 dark:border-navy-700 dark:bg-navy-800",
         )}
         style={{ top: "var(--app-header-h, 4rem)" }}
       >
@@ -350,7 +377,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                 {selectedCount} ausgewählt
               </span>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <Button
                 type="button"
                 size="sm"
@@ -384,40 +411,54 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
           </>
         ) : (
           <>
-            <div className="flex min-w-fit flex-1 flex-wrap items-center gap-2">
-              <FilterChip
-                label="Alle"
-                icon={Layers}
-                active={filter === "all"}
-                onClick={() => changeFilter("all")}
-              />
-              <FilterChip
-                label="Wartung"
-                icon={Wrench}
-                active={filter === "maintenance"}
-                onClick={() => changeFilter("maintenance")}
-              />
-              <FilterChip
-                label="Tanken"
-                icon={Fuel}
-                active={filter === "fuel"}
-                onClick={() => changeFilter("fuel")}
-              />
-            </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-500">
-                {groupedRecords.length} {groupedRecords.length === 1 ? 'Eintrag' : 'Einträge'}
+            <div className="flex items-baseline justify-between gap-2 md:justify-start">
+              <h2 className="font-subdisplay text-[15px] uppercase tracking-[0.06em] text-base-content dark:text-white">
+                {title}
+              </h2>
+              <span className="flex items-center gap-2 font-mono text-[12px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+                <span>
+                  <span className="hidden md:inline">· </span>
+                  {groupedRecords.length} {groupedRecords.length === 1 ? "Eintrag" : "Einträge"}
+                </span>
+                {bulkSelectEnabled && groupedRecords.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={enterSelectionMode}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-base-300 text-base-content/70 hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:text-navy-300 md:hidden"
+                    aria-label="Mehrere Einträge auswählen"
+                  >
+                    <CheckSquare className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                )}
               </span>
+            </div>
+            <div className="flex flex-col gap-2.5 md:flex-row md:flex-wrap md:items-center md:gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5 md:flex">
+                <FilterChip label="Alle" active={filter === "all"} onClick={() => changeFilter("all")} />
+                <FilterChip label="Wartung" active={filter === "maintenance"} onClick={() => changeFilter("maintenance")} />
+                <FilterChip label="Tanken" active={filter === "fuel"} onClick={() => changeFilter("fuel")} />
+              </div>
               {bulkSelectEnabled && groupedRecords.length > 0 && (
                 <button
                   type="button"
                   onClick={enterSelectionMode}
-                  className="inline-flex items-center gap-1 rounded-sm border border-base-300 p-1 sm:px-2 sm:py-1 text-[11px] font-semibold text-base-content/70 transition-colors hover:bg-base-200 dark:border-navy-700 dark:text-navy-300 dark:hover:bg-navy-700"
+                  className="hidden h-8 items-center gap-1 rounded-sm border border-base-300 px-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-colors hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:text-navy-300 dark:hover:bg-navy-700 md:inline-flex"
                   aria-label="Mehrere Einträge auswählen"
                 >
                   <CheckSquare className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span className="hidden sm:inline">Auswählen</span>
+                  Auswählen
                 </button>
+              )}
+              {onAdd && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={onAdd}
+                  className="h-10 md:h-8"
+                  leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}
+                >
+                  Neuer Eintrag
+                </Button>
               )}
             </div>
           </>
@@ -425,7 +466,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
       </div>
 
       {groupedRecords.length === 0 ? (
-        records.length === 0 ? (
+        <div className="px-4 py-4">{records.length === 0 ? (
           <EmptyState
             size="sm"
             icon={Wrench}
@@ -461,23 +502,20 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
               </Button>
             }
           />
-        )
+        )}</div>
       ) : (
         <>
         {sortedYears.map((year) => (
-          <div key={year} className="space-y-2">
-            <div
-              className="sticky z-10 -mx-4 flex items-center gap-4 bg-white px-4 py-2 dark:bg-navy-800"
-              style={{ top: "calc(var(--app-header-h, 4rem) + 3.5rem)" }}
-            >
-              <div className="h-px flex-1 bg-base-300 dark:bg-navy-700"></div>
-              <span className="font-subdisplay text-sm text-secondary dark:text-navy-300 tabular-nums">
+          <div key={year}>
+            <div className="flex items-center gap-3 px-4 pb-1 pt-3.5">
+              <span className="h-px flex-1 bg-base-300 dark:bg-navy-700" aria-hidden="true" />
+              <span className="font-numeric text-[13px] font-bold text-secondary tabular-nums dark:text-navy-200">
                 {year}
               </span>
-              <div className="h-px flex-1 bg-base-300 dark:bg-navy-700"></div>
+              <span className="h-px flex-1 bg-base-300 dark:bg-navy-700" aria-hidden="true" />
             </div>
 
-            <ul className="space-y-2">
+            <ul>
               {recordsByYear.get(year)!.map((group) => {
                 const Icon = getIconForType(group.type);
                 const isExpanded = !selectionMode && expandedGroupId === group.id;
@@ -496,18 +534,19 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
 
                 const metric = getCollapsedMetric(group, currencyCode);
 
-                // Hide the trailing type tag when the left summary already
-                // names the type (the fallback path) — avoids the "MFK / MFK"
-                // visual stutter. Also drop the metric when it's "Tanken"
-                // and the summary already starts with the litres figure.
-                const summaryRepeatsType = group.summaries.length === 0;
-                const showTypeTag = !summaryRepeatsType;
+                // The meta line names the type unless the title already is
+                // the type (the fallback path) — avoids "MFK / MFK".
+                const metaParts = [
+                  group.summaries.length > 0 ? typeLabel : null,
+                  metric,
+                ].filter(Boolean);
+                const odoRegression = odoRegressions.get(group.id);
 
                 return (
                   <li
                     key={group.id}
                     className={clsx(
-                      "rounded-sm transition-colors",
+                      "border-t border-base-200 transition-colors dark:border-navy-700",
                       isSelected
                         ? "bg-primary/10 dark:bg-primary/15"
                         : "hover:bg-base-200/50 dark:hover:bg-navy-700/30",
@@ -519,12 +558,12 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                       aria-expanded={selectionMode ? undefined : isExpanded}
                       aria-pressed={selectionMode ? isSelected : undefined}
                       aria-controls={selectionMode ? undefined : `maintenance-details-${group.id}`}
-                      className="group flex w-full cursor-pointer items-start gap-3 py-2.5 pl-0 text-left"
+                      className="group flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 md:items-center md:gap-3.5"
                     >
                       {selectionMode && (
                         <div
                           className={clsx(
-                            "mt-1.5 grid h-5 w-5 shrink-0 place-items-center rounded-sm border transition-colors",
+                            "mt-2 grid h-5 w-5 shrink-0 place-items-center rounded-sm border transition-colors md:mt-0",
                             isSelected
                               ? "border-primary bg-primary text-primary-content"
                               : "border-base-300 bg-base-100 dark:border-navy-600 dark:bg-navy-900",
@@ -534,63 +573,48 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                           {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                         </div>
                       )}
-                      <div className={clsx(
-                        "mt-0.5 grid h-9 w-9 place-items-center rounded-sm shrink-0 transition-transform group-hover:scale-105 sm:h-10 sm:w-10",
-                        tone.bg,
-                        tone.fg,
-                      )}>
-                        <Icon className="h-4 w-4" />
+                      <div
+                        aria-hidden="true"
+                        className={clsx("grid h-[34px] w-[34px] shrink-0 place-items-center rounded-sm md:h-9 md:w-9", tone.bg, tone.fg)}
+                      >
+                        <Icon className="h-[17px] w-[17px] md:h-[18px] md:w-[18px]" />
                       </div>
 
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        {/* Row 1: date left, odo + chevron right */}
-                        <div className="flex items-center justify-between gap-3">
-                          <h3 suppressHydrationWarning className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        {/* Phone: date ↔ odo on one line, title below.
+                            Wide: date + title inline, odo in its own column. */}
+                        <div className="flex items-baseline justify-between gap-2 md:justify-start md:flex-wrap md:gap-x-2.5 md:gap-y-1">
+                          <span suppressHydrationWarning className="font-numeric text-sm font-bold text-base-content tabular-nums dark:text-white">
                             {dateFormatter.format(new Date(group.date))}
-                          </h3>
-                          <div className="flex items-baseline gap-1.5 shrink-0">
-                            <span className="font-numeric text-sm font-semibold text-foreground dark:text-white">
-                              {formatNumber(group.odo)}
-                            </span>
-                            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">km</span>
-                            {!selectionMode && (
-                              <ChevronDown className={clsx("h-4 w-4 self-center text-base-content/45 transition-transform dark:text-navy-400", isExpanded && "rotate-180")} aria-hidden="true" />
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Row 2: Summary (category color, medium weight) left,
-                            metric/cost · type tag right. The right column is
-                            stacked tightly so the metric line and the type
-                            tag share one mono-uppercase voice. */}
-                        <div className="mt-0.5 flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-                          <p className={clsx("min-w-0 break-words text-[13px] font-medium leading-tight", tone.fg)}>
-                            {group.count > 1 && (
-                              <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-base-content/8 px-1.5 py-[1px] font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/60 dark:bg-navy-700 dark:text-navy-300 align-middle">
-                                {group.count}×
-                              </span>
-                            )}
+                          </span>
+                          <span className="whitespace-nowrap font-numeric text-sm font-bold text-base-content dark:text-white md:hidden">
+                            {formatNumber(group.odo)} <span className="text-[11px] text-base-content/70">km</span>
+                          </span>
+                          <span className="hidden min-w-0 break-words text-[15px] font-semibold text-base-content dark:text-white md:inline">
+                            {group.count > 1 && <CountBadge count={group.count} />}
                             {summary}
-                          </p>
-                          {(metric || showTypeTag) && (
-                            <span className="shrink-0 inline-flex items-baseline gap-1.5">
-                              {metric && (
-                                <span className="font-numeric tabular-nums text-xs text-base-content/65 dark:text-navy-400">
-                                  {metric}
-                                </span>
-                              )}
-                              {metric && showTypeTag && (
-                                <span aria-hidden="true" className="h-2.5 w-px self-center bg-base-content/20" />
-                              )}
-                              {showTypeTag && (
-                                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                                  {typeLabel}
-                                </span>
-                              )}
-                            </span>
-                          )}
+                          </span>
                         </div>
+                        <span className="min-w-0 break-words text-sm font-semibold text-base-content dark:text-white md:hidden">
+                          {group.count > 1 && <CountBadge count={group.count} />}
+                          {summary}
+                        </span>
+                        {metaParts.length > 0 && (
+                          <span className="font-mono text-[12px] uppercase text-base-content/70 dark:text-navy-300">
+                            {metaParts.join(" · ")}
+                          </span>
+                        )}
+                        {odoRegression !== undefined && (
+                          <span className="mt-1 self-start bg-[var(--color-workshop)]/20 px-2 py-0.5 font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
+                            km-Stand {formatNumber(group.odo)} &lt; vorheriger {formatNumber(odoRegression)} — prüfen
+                          </span>
+                        )}
                       </div>
+
+                      <span className="hidden shrink-0 text-right md:inline">
+                        <span className="font-numeric text-base font-bold text-base-content dark:text-white">{formatNumber(group.odo)}</span>{" "}
+                        <span className="font-mono text-[11px] font-semibold uppercase text-base-content/70">km</span>
+                      </span>
                     </button>
 
                     {/* Expanded Details */}
@@ -602,7 +626,7 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                       )}
                     >
                       <div className="overflow-hidden">
-                        <div className="mx-2 mb-2 space-y-3 border-t border-gray-100 pt-3 dark:border-navy-600">
+                        <div className="mx-4 mb-3 space-y-3 border-t border-base-200 pt-3 dark:border-navy-600">
                           {group.originalRecords.filter(r => !r.parentId).map((record) => {
                             const isService = record.type === "service";
                             const isTechnical = ["tire", "battery", "fluid", "chain", "brakepad", "brakerotor"].includes(record.type);
@@ -810,14 +834,13 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
           </div>
         ))}
         {hiddenCount > 0 && (
-          <Button
+          <button
             type="button"
-            variant="secondary"
-            fullWidth
             onClick={() => setVisibleCount((count) => count + VISIBLE_GROUPS_STEP)}
+            className="block w-full border-t border-base-200 px-4 py-3 text-left font-mono text-[12px] font-semibold uppercase tracking-[0.1em] text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 dark:border-navy-700 dark:text-primary-light"
           >
-            Mehr anzeigen ({hiddenCount} weitere)
-          </Button>
+            {hiddenCount} ältere {hiddenCount === 1 ? "Eintrag" : "Einträge"} anzeigen →
+          </button>
         )}
         </>
       )}
@@ -825,14 +848,20 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
   );
 }
 
+function CountBadge({ count }: { count: number }) {
+  return (
+    <span className="mr-1.5 inline-flex items-center justify-center rounded-sm bg-base-content/10 px-1.5 py-[1px] align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:bg-navy-700 dark:text-navy-300">
+      {count}×
+    </span>
+  );
+}
+
 function FilterChip({
   label,
-  icon: Icon,
   active,
   onClick,
 }: {
   label: string;
-  icon: typeof Wrench;
   active: boolean;
   onClick: () => void;
 }) {
@@ -842,17 +871,13 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        "group relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm border pl-2.5 pr-3 py-1.5 text-xs font-semibold motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        "inline-flex h-10 items-center justify-center whitespace-nowrap rounded-sm border px-3 font-mono text-[12px] uppercase tracking-[0.08em] motion-safe:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 md:h-8",
         active
-          ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/30 dark:bg-primary/25 dark:text-primary-light"
-          : "border-base-300 bg-base-100 text-base-content/70 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-800",
+          ? "border-primary bg-primary/10 font-bold text-primary dark:bg-primary/20 dark:text-primary-light"
+          : "border-base-300 bg-base-100 font-semibold text-base-content/70 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700",
       )}
     >
-      <Icon className={clsx("h-3.5 w-3.5 shrink-0", active ? "text-primary" : "text-base-content/45")} aria-hidden="true" />
       {label}
-      {active && (
-        <span aria-hidden="true" className="absolute inset-y-1 left-0 w-[3px] rounded-r-sm bg-primary" />
-      )}
     </button>
   );
 }
