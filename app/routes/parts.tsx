@@ -20,13 +20,15 @@ import {
   createPartStock,
   createStorageLocation,
   fetchModelSeries,
+  fetchPartConsumptions,
   fetchParts,
   fetchPartStocks,
   fetchPublicParts,
   fetchStorageLocations,
   importPartImageFromUrl,
 } from "~/services/parts";
-import type { PublicPart, PublicStockEntry } from "~/types/parts";
+import type { PartConsumption, PublicPart, PublicStockEntry } from "~/types/parts";
+import { FREQUENT_REPAIR_USES, repairUsesByPart, restockTone } from "~/utils/restock";
 import { seriesNames, storageLocationRoot } from "~/utils/parts";
 import { seriesMatchesBike } from "~/utils/series";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
@@ -67,7 +69,7 @@ function publicStockKey(stock: PublicStockEntry): string {
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { token } = await requireUser(request);
 
-  const [parts, modelSeries, storageLocations, publicParts, stocks, motorcycles] = await Promise.all([
+  const [parts, modelSeries, storageLocations, publicParts, stocks, motorcycles, consumptions] = await Promise.all([
     fetchParts(token),
     fetchModelSeries(token),
     fetchStorageLocations(token),
@@ -77,9 +79,11 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
     fetchFromBackend<{ motorcycles: Motorcycle[] }>("/motorcycles", {}, token)
       .then((response) => response.motorcycles)
       .catch(() => [] as Motorcycle[]),
+    // Repair counts decide which parts count as "knapp".
+    fetchPartConsumptions(token).catch(() => [] as PartConsumption[]),
   ]);
 
-  return data({ parts, modelSeries, storageLocations, publicParts, stocks, motorcycles });
+  return data({ parts, modelSeries, storageLocations, publicParts, stocks, motorcycles, consumptions });
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -207,14 +211,10 @@ const toolbarFieldClass =
 const toolbarSelectClass =
   "min-w-0 flex-1 cursor-pointer border-none bg-transparent py-0 pl-0 pr-6 font-sans text-sm font-semibold normal-case tracking-normal text-base-content focus:outline-none focus:ring-0 dark:text-white";
 
-function stockTone(onHand: number): "empty" | "low" | "ok" {
-  if (onHand <= 0) return "empty";
-  if (onHand === 1) return "low";
-  return "ok";
-}
-
 export default function PartsPage({ loaderData }: Route.ComponentProps) {
-  const { parts, modelSeries, storageLocations, publicParts, stocks, motorcycles } = loaderData;
+  const { parts, modelSeries, storageLocations, publicParts, stocks, motorcycles, consumptions } = loaderData;
+  const repairUses = useMemo(() => repairUsesByPart(consumptions), [consumptions]);
+  const stockTone = (part: { id: number; onHand: number }) => restockTone(part.onHand, repairUses.get(part.id) ?? 0);
   const actionData = useActionData<typeof clientAction>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -324,7 +324,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
     if (selectedBikeId != null && !bikesByPart.get(part.id)?.some((bike) => bike.id === selectedBikeId)) {
       return false;
     }
-    if (onlyLow && part.onHand > 1) return false;
+    if (onlyLow && stockTone(part) === "ok") return false;
     return true;
   });
   const filteredPublicParts = publicParts.filter((part) => {
@@ -336,8 +336,8 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
   });
 
   const totalStock = parts.reduce((sum, part) => sum + Math.max(0, part.onHand), 0);
-  const emptyCount = parts.filter((part) => part.onHand <= 0).length;
-  const lowCount = parts.filter((part) => part.onHand === 1).length;
+  const emptyCount = parts.filter((part) => stockTone(part) === "empty").length;
+  const lowCount = parts.filter((part) => stockTone(part) === "low").length;
   const stockSummary = `${parts.length} ${parts.length === 1 ? "Teil" : "Teile"} · ${formatNumber(totalStock)} Stück auf Lager`;
   const lowSummary = [
     emptyCount > 0 ? `${emptyCount} leer` : null,
@@ -564,7 +564,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                 {filteredParts.map((part) => {
                   const bikes = bikesByPart.get(part.id);
                   const series = seriesNames(part.seriesIds, modelSeries);
-                  const tone = stockTone(part.onHand);
+                  const tone = stockTone(part);
                   return (
                     <tr
                       key={part.id}
@@ -660,7 +660,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
           </Card>
           <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
             {filteredParts.map((part) => {
-              const tone = stockTone(part.onHand);
+              const tone = stockTone(part);
               const bikes = bikesByPart.get(part.id);
               return (
                 <Link key={part.id} to={`/parts/${part.id}`} className="block text-left">
@@ -741,7 +741,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                 : `${filteredParts.length} von ${parts.length} Teilen`}
               {activeBikes.length > 0 && " · Für = eigene Motorräder laut Passform"}
             </p>
-            <p>Knapp = 1 Stück · Leer = 0</p>
+            <p>Knapp = 1 Stück · Leer = 0 · nur Teile aus mehr als {FREQUENT_REPAIR_USES} Reparaturen</p>
           </div>
           </>
         )
