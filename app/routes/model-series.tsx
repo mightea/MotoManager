@@ -7,7 +7,7 @@ import { fetchFromBackend, ApiError } from "~/utils/backend";
 import {
   createModelSeries,
   deleteModelSeries,
-  fetchModelSeries,
+  fetchModelSeriesWithTorqueCounts,
   fetchParts,
   updateModelSeries,
 } from "~/services/parts";
@@ -29,8 +29,8 @@ export function meta(_args: Route.MetaArgs) {
 
 export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const { token } = await requireUser(request);
-  const [modelSeries, parts, motorcyclesResponse] = await Promise.all([
-    fetchModelSeries(token),
+  const [{ modelSeries, torqueSpecCounts }, parts, motorcyclesResponse] = await Promise.all([
+    fetchModelSeriesWithTorqueCounts(token),
     fetchParts(token).catch(() => []),
     fetchFromBackend<{ motorcycles: { seriesId?: number | null }[] }>(
       "/motorcycles",
@@ -40,6 +40,7 @@ export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   ]);
   return data({
     modelSeries,
+    torqueSpecCounts,
     parts,
     motorcycles: motorcyclesResponse.motorcycles ?? [],
   });
@@ -269,7 +270,7 @@ function SeriesForm({ allSeries, initialValues, defaultParentId, onClose }: Seri
 }
 
 export default function ModelSeriesPage({ loaderData }: Route.ComponentProps) {
-  const { modelSeries, parts, motorcycles } = loaderData;
+  const { modelSeries, torqueSpecCounts, parts, motorcycles } = loaderData;
   const actionData = useActionData<typeof clientAction>();
   const submit = useSubmit();
 
@@ -363,6 +364,7 @@ export default function ModelSeriesPage({ loaderData }: Route.ComponentProps) {
           {flattened.map(({ node, depth }) => {
             const partCount = partCountByNode.get(node.id) ?? 0;
             const bikeCount = bikeCountByNode.get(node.id) ?? 0;
+            const torqueCount = torqueSpecCounts[String(node.id)] ?? 0;
             const isOwn = node.userId != null;
             return (
               <div
@@ -409,6 +411,14 @@ export default function ModelSeriesPage({ loaderData }: Route.ComponentProps) {
                   {partCount > 0 && (
                     <span className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
                       {partCount} {partCount === 1 ? "Teil" : "Teile"}
+                    </span>
+                  )}
+                  {torqueCount > 0 && (
+                    <span
+                      className="rounded-sm bg-base-200 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-base-content/60 dark:bg-navy-800 dark:text-navy-300"
+                      title="Im Modellkatalog geteilte Anzugsmomente"
+                    >
+                      {torqueCount} Nm-{torqueCount === 1 ? "Wert" : "Werte"}
                     </span>
                   )}
                   {bikeCount > 0 && (

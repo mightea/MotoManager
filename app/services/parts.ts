@@ -30,6 +30,18 @@ export async function fetchModelSeries(token: string): Promise<ModelSeries[]> {
   return response.modelSeries;
 }
 
+/** The catalog plus the per-node count of shared torque values (absent on
+ *  APIs before migration 064 → empty map). */
+export async function fetchModelSeriesWithTorqueCounts(
+  token: string,
+): Promise<{ modelSeries: ModelSeries[]; torqueSpecCounts: Record<string, number> }> {
+  const response = await fetchFromBackend<{
+    modelSeries: ModelSeries[];
+    torqueSpecCounts?: Record<string, number>;
+  }>("/model-series", {}, token);
+  return { modelSeries: response.modelSeries, torqueSpecCounts: response.torqueSpecCounts ?? {} };
+}
+
 /** Decode a BMW Motorrad VIN into a catalog match (type code, model year). */
 export async function decodeVin(token: string, vin: string): Promise<VinDecodeResult> {
   const encoded = encodeURIComponent(vin.trim());
