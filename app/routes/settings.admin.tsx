@@ -11,6 +11,7 @@ import {
   deleteCurrencySetting,
   getAppUpgradeSettings,
   getCurrencies,
+  refreshCurrencyRates,
   updateAppUpgradeSettings,
   updateCurrencySetting,
 } from "~/services/settings";
@@ -33,12 +34,14 @@ import { PageHeader } from "~/components/page-header";
 import { useConfirm } from "~/components/confirm-provider";
 import { useState, type ReactNode } from "react";
 import clsx from "clsx";
-import { Pencil, Trash2, Plus, UserPlus, UserCog, ArrowRight } from "lucide-react";
+import { Pencil, Trash2, Plus, UserPlus, UserCog, ArrowRight, RefreshCw } from "lucide-react";
 import { UserDialog } from "~/components/user-dialog";
 import type { PublicUser } from "~/types/auth";
 import { ApiError, fetchFromBackend } from "~/utils/backend";
 import { getVersion } from "~/config";
 import { formatNumber } from "~/utils/numberUtils";
+import { formatRatesStand, rateExample, ratesAsOf } from "~/utils/currency-rates";
+import { toast } from "~/hooks/use-toast";
 import {
   DATE_TIME,
   MICRO_LABEL,
@@ -215,6 +218,25 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     const id = Number(formData.get("id"));
     await deleteCurrencySetting(token, id);
     return { success: "Währung gelöscht." };
+  }
+
+  if (intent === "refreshCurrencyRates") {
+    try {
+      const { updated, failed } = await refreshCurrencyRates(token);
+      if (failed.length > 0) {
+        const failedCodes = failed.map((f) => f.code).join(", ");
+        const done = updated.length > 0 ? ` Aktualisiert: ${updated.join(", ")}.` : "";
+        return { error: `Kurse für ${failedCodes} konnten nicht abgerufen werden.${done}` };
+      }
+      toast.success("Kurse aktualisiert", updated.length > 0 ? updated.join(", ") : undefined);
+      return null;
+    } catch (e) {
+      // An API without the refresh route answers 404/405.
+      if (e instanceof ApiError && (e.status === 404 || e.status === 405)) {
+        return { error: "Diese API-Version kann die Kurse noch nicht aktualisieren." };
+      }
+      return { error: (e instanceof Error && e.message) || "Kurse konnten nicht aktualisiert werden." };
+    }
   }
 
   if (intent === "updateAppUpgrade") {
@@ -465,7 +487,10 @@ export default function AdminSettings() {
               isSubmitting={isSubmitting}
             />
             {/* 03 · Währungen */}
-            <CurrenciesCard currencies={currencies} />
+            <CurrenciesCard
+              currencies={currencies}
+              isRefreshing={isSubmitting && navigation.formData?.get("intent") === "refreshCurrencyRates"}
+            />
           </div>
 
           {/* 04 · Backups */}
@@ -730,7 +755,7 @@ function AppUpgradeCard({
   );
 }
 
-function CurrenciesCard({ currencies }: { currencies: CurrencySetting[] }) {
+function CurrenciesCard({ currencies, isRefreshing }: { currencies: CurrencySetting[]; isRefreshing: boolean }) {
   const submit = useSubmit();
   const confirmDialog = useConfirm();
   const [editingCurrencyId, setEditingCurrencyId] = useState<number | null>(null);
@@ -741,19 +766,29 @@ function CurrenciesCard({ currencies }: { currencies: CurrencySetting[] }) {
       <SectionHead
         id="waehrungen-h"
         title="Währungen"
-        // The server fetches every rate relative to CHF (frankfurter.app, from=CHF).
-        description="Basis CHF · Kurse automatisch"
+        // The server fetches every rate relative to CHF (frankfurter, from=CHF)
+        // and refreshes them daily; "Stand" is the stalest non-base rate.
+        description={`Basis CHF · Kurse automatisch · ${formatRatesStand(ratesAsOf(currencies))}`}
         actions={
-          <Button
-            variant="secondary"
-            size="sm"
-            aria-expanded={isAdding}
-            aria-controls="currency-add-form"
-            onClick={() => setIsAdding((open) => !open)}
-          >
-            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-            Währung
-          </Button>
+          <>
+            <Form method="post">
+              <input type="hidden" name="intent" value="refreshCurrencyRates" />
+              <Button type="submit" variant="ghost" size="sm" disabled={isRefreshing}>
+                <RefreshCw className={clsx("h-3.5 w-3.5", isRefreshing && "animate-spin")} aria-hidden="true" />
+                {isRefreshing ? "Aktualisiere…" : "Kurse aktualisieren"}
+              </Button>
+            </Form>
+            <Button
+              variant="secondary"
+              size="sm"
+              aria-expanded={isAdding}
+              aria-controls="currency-add-form"
+              onClick={() => setIsAdding((open) => !open)}
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              Währung
+            </Button>
+          </>
         }
       />
 
@@ -827,8 +862,15 @@ function CurrenciesCard({ currencies }: { currencies: CurrencySetting[] }) {
               >
                 <span className="font-mono font-bold text-base-content dark:text-white">{currency.code}</span>
                 <span className="font-mono text-base-content/70 dark:text-navy-400">{currency.symbol}</span>
-                <span className="truncate text-[13px] text-base-content/70 dark:text-navy-400">
-                  {currency.code === "CHF" ? "Basiswährung" : (currency.label ?? "")}
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate text-[13px] text-base-content/70 dark:text-navy-400">
+                    {currency.code === "CHF" ? "Basiswährung" : (currency.label ?? "")}
+                  </span>
+                  {rateExample(currency) && (
+                    <span className="truncate font-mono text-[12px] text-base-content/60 dark:text-navy-400">
+                      {rateExample(currency)}
+                    </span>
+                  )}
                 </span>
                 <span className="font-mono font-bold text-base-content dark:text-white">
                   {formatNumber(currency.conversionFactor, 2)}

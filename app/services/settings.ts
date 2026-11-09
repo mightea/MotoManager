@@ -180,6 +180,29 @@ export async function updateCurrencySetting(
   return response.currency;
 }
 
+export interface CurrencyRefreshResult {
+  currencies: CurrencySetting[];
+  /** Codes whose rate was refetched. */
+  updated: string[];
+  /** Codes whose rate could not be fetched; those rows are unchanged. */
+  failed: { code: string; error: string }[];
+}
+
+/** Refetch every non-base exchange rate now (admin only). */
+export async function refreshCurrencyRates(token: string) {
+  const result = await fetchFromBackend<Partial<CurrencyRefreshResult>>(
+    "/admin/currencies/refresh",
+    { method: "POST" },
+    token,
+  );
+  invalidate("currencies");
+  return {
+    currencies: result.currencies ?? [],
+    updated: result.updated ?? [],
+    failed: result.failed ?? [],
+  } satisfies CurrencyRefreshResult;
+}
+
 export async function deleteCurrencySetting(
   token: string,
   currencyId: number,

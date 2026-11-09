@@ -220,9 +220,11 @@ export interface CurrencySetting {
   label: string | null;
   conversionFactor: number;
   createdAt: string;
+  /** When the rate was last fetched or edited; absent from older APIs, null when unknown. */
+  rateUpdatedAt?: string | null;
 }
 
-export type NewCurrencySetting = Omit<CurrencySetting, "id" | "createdAt" | "label"> & {
+export type NewCurrencySetting = Omit<CurrencySetting, "id" | "createdAt" | "label" | "rateUpdatedAt"> & {
   label?: string | null;
 };
 
