@@ -179,9 +179,20 @@ export interface Issue {
   priority: "low" | "medium" | "high";
   status: "new" | "in_progress" | "done";
   date: string | null;
+  /** Spare parts linked to this defect (migration 063). Read-only, emitted by
+   *  the issue lists; absent on older backends. */
+  linkedParts?: IssueLinkedPart[];
 }
 
-export type NewIssue = Omit<Issue, "id">;
+/** A spare part linked to a defect, with its live on-hand count. */
+export interface IssueLinkedPart {
+  id: number;
+  name: string;
+  partNumber: string;
+  onHand: number;
+}
+
+export type NewIssue = Omit<Issue, "id" | "linkedParts">;
 export type EditorIssue = Partial<NewIssue>;
 
 export type LocationType =

@@ -6,6 +6,8 @@ import type { Part } from "~/types/parts";
 interface PartConsumptionFormProps {
   part: Part;
   onClose: () => void;
+  /** Prefilled note, e.g. "Mangel: …" when booking against a linked defect. */
+  defaultNotes?: string;
 }
 
 const inputClass =
@@ -17,7 +19,7 @@ const labelClass =
 /** Manual consumption ("Verbrauch erfassen") — a correction not tied to a
  *  repair. Quantity is capped at the current on-hand; the server enforces the
  *  same rule. Repair-linked consumption is recorded from the maintenance form. */
-export function PartConsumptionForm({ part, onClose }: PartConsumptionFormProps) {
+export function PartConsumptionForm({ part, onClose, defaultNotes }: PartConsumptionFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
   const isSubmitting =
@@ -74,6 +76,7 @@ export function PartConsumptionForm({ part, onClose }: PartConsumptionFormProps)
           type="text"
           name="notes"
           id="consumption-notes"
+          defaultValue={defaultNotes}
           placeholder="z.B. defekt / verloren"
           className={inputClass}
         />

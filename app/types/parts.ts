@@ -236,3 +236,16 @@ export interface ParsedInvoice {
   /** Stock entries referencing this document number already exist. */
   alreadyImported: boolean;
 }
+
+/** An issue (Mangel) a part is linked to — `GET /parts/:id/issues`. */
+export interface PartIssueLink {
+  id: number;
+  motorcycleId: number;
+  motorcycleMake: string;
+  motorcycleModel: string;
+  title: string;
+  priority: "low" | "medium" | "high";
+  status: "new" | "in_progress" | "done";
+  date: string | null;
+  isDone: boolean;
+}

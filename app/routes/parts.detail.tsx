@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import type { Route } from "./+types/parts.detail";
 import { requireUser } from "~/services/auth";
-import { ApiError } from "~/utils/backend";
+import { ApiError, fetchFromBackend } from "~/utils/backend";
 import {
   createPartConsumption,
   createPartStock,
@@ -28,10 +28,13 @@ import {
   deletePartStock,
   fetchModelSeries,
   fetchPartConsumptions,
+  fetchPartIssues,
   fetchParts,
   fetchPartStocks,
   fetchStorageLocations,
   importPartImageFromUrl,
+  linkPartToIssue,
+  unlinkPartFromIssue,
   updatePart,
   updatePartStock,
   uploadPartImage,
@@ -41,15 +44,16 @@ import { modelSeriesDisplayName } from "~/types/parts";
 import type {
   ModelSeries,
   PartConsumption,
+  PartIssueLink,
   PartStock,
   StorageLocation,
 } from "~/types/parts";
 import { storageLocationPath } from "~/utils/parts";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
 import { maintenanceTypeLabels } from "~/utils/maintenance";
-import type { MaintenanceType } from "~/types/db";
+import type { Issue, MaintenanceType, Motorcycle } from "~/types/db";
 import { DEFAULT_CURRENCY_CODE, findCurrencyPreset } from "~/constants";
-import { seriesPath } from "~/utils/series";
+import { seriesMatchesBike, seriesPath } from "~/utils/series";
 import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 import { Card, CardAction, CardBody, CardHeading } from "~/components/card";
 import { Modal } from "~/components/modal";
@@ -57,6 +61,7 @@ import { PartForm } from "~/components/part-form";
 import { PartStockForm } from "~/components/part-stock-form";
 import { PartConsumptionForm } from "~/components/part-consumption-form";
 import { PartLabel } from "~/components/part-label";
+import { PartIssueCallout, type IssueCandidate } from "~/components/part-issue-callout";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { toast } from "~/hooks/use-toast";
 
@@ -89,7 +94,70 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     throw new Response("Teil nicht gefunden.", { status: 404 });
   }
 
-  return data({ part, modelSeries, storageLocations, stocks, consumptions });
+  const { linkedIssues, issueCandidates } = await loadIssueLinks(token, part.id, part.seriesIds, modelSeries);
+
+  return data({ part, modelSeries, storageLocations, stocks, consumptions, linkedIssues, issueCandidates });
+}
+
+/**
+ * The part's linked defects plus the open issues it could be linked to.
+ * `linkedIssues` is null when the backend predates the feature — the callout
+ * is hidden then. Any other failure degrades to "nothing linked" rather than
+ * blocking the page. Issues are only fetched for active bikes that report
+ * open issues, so a typical fleet costs one or two extra requests.
+ */
+async function loadIssueLinks(
+  token: string,
+  partId: number,
+  partSeriesIds: number[],
+  modelSeries: ModelSeries[],
+): Promise<{ linkedIssues: PartIssueLink[] | null; issueCandidates: IssueCandidate[] }> {
+  let linkedIssues: PartIssueLink[] | null;
+  try {
+    linkedIssues = await fetchPartIssues(token, partId);
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    return { linkedIssues: null, issueCandidates: [] };
+  }
+  if (linkedIssues == null) return { linkedIssues: null, issueCandidates: [] };
+
+  const motorcycles = await fetchFromBackend<{ motorcycles: Motorcycle[] }>("/motorcycles", {}, token)
+    .then((response) => response.motorcycles ?? [])
+    .catch((error) => {
+      if (error instanceof Response) throw error;
+      return [] as Motorcycle[];
+    });
+  const withOpenIssues = motorcycles.filter(
+    (bike) => bike.status !== "sold" && (bike.openIssues ?? 1) > 0,
+  );
+  const perBike = await Promise.all(
+    withOpenIssues.map((bike) =>
+      fetchFromBackend<{ issues: Issue[] }>(`/motorcycles/${bike.id}/issues`, {}, token)
+        .then((response) => ({ bike, issues: response.issues ?? [] }))
+        .catch((error) => {
+          if (error instanceof Response) throw error;
+          return { bike, issues: [] as Issue[] };
+        }),
+    ),
+  );
+
+  const issueCandidates: IssueCandidate[] = perBike.flatMap(({ bike, issues }) => {
+    const fits =
+      bike.seriesId != null && seriesMatchesBike(partSeriesIds, bike.seriesId, modelSeries);
+    return issues
+      .filter((issue) => issue.status !== "done")
+      .map((issue) => ({
+        id: issue.id,
+        title: issue.title,
+        priority: issue.priority,
+        date: issue.date,
+        motorcycleId: bike.id,
+        motorcycleLabel: `${bike.make} ${bike.model}`,
+        fits,
+      }));
+  });
+
+  return { linkedIssues, issueCandidates };
 }
 
 export async function clientAction({ request, params }: Route.ClientActionArgs) {
@@ -212,6 +280,14 @@ export async function clientAction({ request, params }: Route.ClientActionArgs) 
       return data({ success: true, intent });
     }
 
+    if (intent === "linkIssue" || intent === "unlinkIssue") {
+      const issueId = Number(formData.get("issueId"));
+      if (!issueId) return data({ error: "Mangel-ID fehlt." }, { status: 400 });
+      if (intent === "linkIssue") await linkPartToIssue(token, issueId, partId);
+      else await unlinkPartFromIssue(token, issueId, partId);
+      return data({ success: true, intent });
+    }
+
     if (intent === "deleteConsumption") {
       const consumptionId = Number(formData.get("consumptionId"));
       if (!consumptionId) return data({ error: "Verbrauch-ID fehlt." }, { status: 400 });
@@ -264,6 +340,8 @@ const SUCCESS_TOASTS: Record<string, string> = {
   deleteConsumption: "Verbrauch gelöscht — Bestand zurückgebucht",
   uploadImage: "Bild gespeichert",
   deleteImage: "Bild entfernt",
+  linkIssue: "Mit Mangel verknüpft",
+  unlinkIssue: "Verknüpfung gelöst",
 };
 
 function formatDate(iso: string | null): string {
@@ -273,7 +351,8 @@ function formatDate(iso: string | null): string {
 }
 
 export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
-  const { part, modelSeries, storageLocations, stocks, consumptions } = loaderData;
+  const { part, modelSeries, storageLocations, stocks, consumptions, linkedIssues, issueCandidates } =
+    loaderData;
   const actionData = useActionData<{ success?: boolean; intent?: string; error?: string }>();
   const submit = useSubmit();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -281,6 +360,8 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
   const [editingStock, setEditingStock] = useState<PartStock | null>(null);
   const [isAddConsumptionOpen, setIsAddConsumptionOpen] = useState(false);
+  // Prefilled note when booking against a linked defect ("Beim Mangel verbuchen").
+  const [consumptionNote, setConsumptionNote] = useState<string | undefined>(undefined);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const partStocks = stocks.filter((stock) => stock.partId === part.id);
@@ -311,6 +392,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
       setIsAddStockOpen(false);
       setEditingStock(null);
       setIsAddConsumptionOpen(false);
+      setConsumptionNote(undefined);
       if (intent === "updatePart") setIsEditing(false);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
@@ -596,6 +678,20 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
           </Card>
         </section>
 
+        {linkedIssues != null && (
+          <PartIssueCallout
+            linkedIssues={linkedIssues}
+            candidates={issueCandidates}
+            onHand={part.onHand}
+            onBook={(issue) => {
+              setConsumptionNote(`Mangel: ${issue.title}`);
+              setIsAddConsumptionOpen(true);
+            }}
+            onLink={(issueId) => submitSimple({ intent: "linkIssue", issueId: String(issueId) })}
+            onUnlink={(issueId) => submitSimple({ intent: "unlinkIssue", issueId: String(issueId) })}
+          />
+        )}
+
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div className="min-w-0 space-y-4">
             {/* Bestand — the working list of purchases. */}
@@ -715,7 +811,10 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                 trailing={
                   <button
                     type="button"
-                    onClick={() => setIsAddConsumptionOpen(true)}
+                    onClick={() => {
+                      setConsumptionNote(undefined);
+                      setIsAddConsumptionOpen(true);
+                    }}
                     disabled={part.onHand < 1}
                     title={part.onHand < 1 ? "Kein Bestand zum Verbuchen" : undefined}
                     className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary/10 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
@@ -917,7 +1016,12 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
         title="Verbrauch erfassen"
         description={`${part.name} — ${part.onHand} auf Lager.`}
       >
-        <PartConsumptionForm part={part} onClose={() => setIsAddConsumptionOpen(false)} />
+        <PartConsumptionForm
+          key={consumptionNote ?? ""}
+          part={part}
+          defaultNotes={consumptionNote}
+          onClose={() => setIsAddConsumptionOpen(false)}
+        />
       </Modal>
 
       <DeleteConfirmationDialog

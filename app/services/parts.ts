@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { fetchFromBackend, rethrowRedirect } from "~/utils/backend";
+import { ApiError, fetchFromBackend, rethrowRedirect } from "~/utils/backend";
 import type { BoxxerpartsProduct } from "~/utils/boxxerparts";
 import type {
   ModelSeries,
@@ -9,6 +9,7 @@ import type {
   ParsedInvoice,
   Part,
   PartConsumption,
+  PartIssueLink,
   PartStock,
   PublicPart,
   StorageLocation,
@@ -401,4 +402,34 @@ export async function deletePartConsumption(token: string, id: number): Promise<
     rethrowRedirect(error);
     return false;
   }
+}
+
+// MARK: Part ↔ issue links
+
+/** Issues (Mängel) the part is linked to. `null` when the backend predates
+ *  the feature (404 on the route) — callers hide the UI then. */
+export async function fetchPartIssues(
+  token: string,
+  partId: number,
+): Promise<PartIssueLink[] | null> {
+  try {
+    const response = await fetchFromBackend<{ issues: PartIssueLink[] }>(
+      `/parts/${partId}/issues`,
+      {},
+      token,
+    );
+    return Array.isArray(response.issues) ? response.issues : [];
+  } catch (error) {
+    rethrowRedirect(error);
+    if (error instanceof ApiError && (error.status === 404 || error.status === 405)) return null;
+    throw error;
+  }
+}
+
+export async function linkPartToIssue(token: string, issueId: number, partId: number) {
+  await fetchFromBackend(`/issues/${issueId}/parts/${partId}`, { method: "PUT" }, token);
+}
+
+export async function unlinkPartFromIssue(token: string, issueId: number, partId: number) {
+  await fetchFromBackend(`/issues/${issueId}/parts/${partId}`, { method: "DELETE" }, token);
 }
