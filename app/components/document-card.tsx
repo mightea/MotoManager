@@ -4,6 +4,7 @@ import { Calendar, FileText, Globe, Lock, Pencil, User as UserIcon } from "lucid
 import { useAuthenticatedAssetUrl } from "~/hooks/use-authenticated-asset";
 import { pushToast } from "~/hooks/use-toast";
 import { openAuthenticatedAsset } from "~/utils/backend";
+import { DocumentTypeChip } from "~/components/document-type-chip";
 
 export type DocumentSummary = {
   id: number;
@@ -15,6 +16,8 @@ export type DocumentSummary = {
   ownerName: string | null;
   isPrivate: boolean;
   createdAt: string;
+  /** Document type key; absent on older APIs (treated as unset). */
+  docType?: string | null;
 };
 
 type DocumentCardProps = {
@@ -127,6 +130,12 @@ export function DocumentCard({
         </h3>
 
         <dl className="grid gap-2 text-xs text-base-content/65 dark:text-navy-400">
+          <div className="flex items-center justify-between gap-2">
+            <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">Typ</dt>
+            <dd className="min-w-0 truncate">
+              <DocumentTypeChip docType={document.docType} />
+            </dd>
+          </div>
           <div className="flex items-center justify-between gap-2">
             <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">Besitzer</dt>
             <dd className="inline-flex items-center gap-1 text-base-content dark:text-gray-200 truncate">

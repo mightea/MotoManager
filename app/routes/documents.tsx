@@ -17,6 +17,7 @@ import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialo
 import { fetchFromBackend } from "~/utils/backend";
 import { getDocumentsPayload, invalidateDocuments } from "~/services/documents";
 import clsx from "clsx";
+import { documentTypeFilterOptions, matchesDocumentTypeFilter } from "~/utils/document-types";
 import { toast } from "~/hooks/use-toast";
 import { EmptyState } from "~/components/empty-state";
 import { PageHeader } from "~/components/page-header";
@@ -119,6 +120,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
   const [editingDocument, setEditingDocument] = useState<typeof docs[0] | undefined>(undefined);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [bikeFilter, setBikeFilter] = useState<number | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
   // A file dropped on the page; `uploadKey` remounts the form for each drop.
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
@@ -255,10 +257,15 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
     (a, b) => Number(!myMotorcycleIds.has(a.id)) - Number(!myMotorcycleIds.has(b.id)) || a.name.localeCompare(b.name, "de-CH"),
   );
 
-  const visibleDocs =
-    bikeFilter === null
-      ? filteredAndSortedDocs
-      : filteredAndSortedDocs.filter((d) => documentBikes[d.id]?.some((b) => b.id === bikeFilter));
+  // Types present in the data; empty (filter hidden) when no document has one.
+  const typeOptions = useMemo(() => documentTypeFilterOptions(docs), [docs]);
+  const activeTypeFilter = typeOptions.some((o) => o.value === typeFilter) ? typeFilter : null;
+
+  const visibleDocs = filteredAndSortedDocs.filter(
+    (d) =>
+      (bikeFilter === null || documentBikes[d.id]?.some((b) => b.id === bikeFilter)) &&
+      matchesDocumentTypeFilter(d.docType, activeTypeFilter),
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (accepted) => {
@@ -350,7 +357,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
         }
       />
 
-      {/* Toolbar — ownership chips left, bike filter right */}
+      {/* Toolbar — ownership chips left, type and bike filters right */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <fieldset className="flex flex-wrap gap-1.5">
           <legend className="sr-only">Filter</legend>
@@ -375,23 +382,42 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
             );
           })}
         </fieldset>
-        {bikeOptions.length > 0 && (
-          <label className="flex h-10 items-center gap-2 rounded-sm border border-base-300 bg-base-100 px-2.5 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300">
-            Motorrad
-            <select
-              value={bikeFilter === null ? "all" : String(bikeFilter)}
-              onChange={(e) => setBikeFilter(e.target.value === "all" ? null : Number(e.target.value))}
-              className="max-w-[12rem] border-none bg-transparent py-0 pl-0 pr-7 font-sans text-sm font-semibold normal-case tracking-normal text-base-content focus:ring-0 dark:text-white"
-            >
-              <option value="all">Alle Motorräder</option>
-              {bikeOptions.map((bike) => (
-                <option key={bike.id} value={bike.id}>
-                  {bike.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {typeOptions.length > 0 && (
+            <label className="flex h-10 items-center gap-2 rounded-sm border border-base-300 bg-base-100 px-2.5 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300">
+              Typ
+              <select
+                value={activeTypeFilter ?? "all"}
+                onChange={(e) => setTypeFilter(e.target.value === "all" ? null : e.target.value)}
+                className="max-w-[12rem] border-none bg-transparent py-0 pl-0 pr-7 font-sans text-sm font-semibold normal-case tracking-normal text-base-content focus:ring-0 dark:text-white"
+              >
+                <option value="all">Alle Typen</option>
+                {typeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {bikeOptions.length > 0 && (
+            <label className="flex h-10 items-center gap-2 rounded-sm border border-base-300 bg-base-100 px-2.5 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300">
+              Motorrad
+              <select
+                value={bikeFilter === null ? "all" : String(bikeFilter)}
+                onChange={(e) => setBikeFilter(e.target.value === "all" ? null : Number(e.target.value))}
+                className="max-w-[12rem] border-none bg-transparent py-0 pl-0 pr-7 font-sans text-sm font-semibold normal-case tracking-normal text-base-content focus:ring-0 dark:text-white"
+              >
+                <option value="all">Alle Motorräder</option>
+                {bikeOptions.map((bike) => (
+                  <option key={bike.id} value={bike.id}>
+                    {bike.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -406,7 +432,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
               size="sm"
               title="Keine Dokumente gefunden"
               description={
-                filter === "all" && bikeFilter === null
+                filter === "all" && bikeFilter === null && activeTypeFilter === null
                   ? "Es sind momentan keine Dokumente verfügbar."
                   : "Keine Dokumente für den gewählten Filter gefunden."
               }
@@ -442,7 +468,7 @@ export default function Documents({ loaderData }: Route.ComponentProps) {
             "Datei loslassen, um sie hochzuladen."
           ) : (
             <>
-              PDF oder Bild hierher ziehen oder <span className="font-semibold text-primary underline-offset-2 hover:underline">Datei wählen</span> — danach Motorrad zuordnen.
+              PDF hierher ziehen oder <span className="font-semibold text-primary underline-offset-2 hover:underline">Datei wählen</span> — danach Typ und Motorrad zuordnen.
             </>
           )}
         </span>

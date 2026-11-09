@@ -5,6 +5,7 @@ import { useAuthenticatedAssetUrl } from "~/hooks/use-authenticated-asset";
 import { pushToast } from "~/hooks/use-toast";
 import { openAuthenticatedAsset } from "~/utils/backend";
 import type { DocumentSummary } from "~/components/document-card";
+import { DocumentTypeChip } from "~/components/document-type-chip";
 
 export interface DocumentBikeChip {
   id: number;
@@ -23,7 +24,7 @@ function fileKind(filePath: string): string {
 }
 
 /**
- * The archive table on the Dokumente page — preview thumbnail, title,
+ * The archive table on the Dokumente page — preview thumbnail, title, type,
  * assigned bikes, owner and date in one row per document.
  */
 export function DocumentTable({
@@ -46,6 +47,7 @@ export function DocumentTable({
           <tr>
             <th scope="col" className={clsx(TH, "hidden md:table-cell")}>Nr.</th>
             <th scope="col" className={TH}>Dokument</th>
+            <th scope="col" className={clsx(TH, "hidden sm:table-cell")}>Typ</th>
             <th scope="col" className={clsx(TH, "hidden sm:table-cell")}>Zugeordnet</th>
             <th scope="col" className={clsx(TH, "hidden lg:table-cell")}>Besitzer</th>
             <th scope="col" className={clsx(TH, "hidden text-right md:table-cell")}>Datum</th>
@@ -164,11 +166,15 @@ function DocumentRow({
             <span className={clsx(CAPTION, "tabular-nums text-base-content/70 md:hidden dark:text-navy-400")} suppressHydrationWarning>
               {formatDate(document.createdAt)} · {ownerLabel}
             </span>
-            <div className="mt-1.5 sm:hidden">
+            <div className="mt-1.5 flex flex-col items-start gap-1.5 sm:hidden">
+              <DocumentTypeChip docType={document.docType} hideWhenEmpty />
               <BikeChips bikes={bikes} />
             </div>
           </div>
         </div>
+      </td>
+      <td className={clsx(TD, "hidden sm:table-cell")}>
+        <DocumentTypeChip docType={document.docType} />
       </td>
       <td className={clsx(TD, "hidden sm:table-cell")}>
         <BikeChips bikes={bikes} />

@@ -383,6 +383,8 @@ export interface Document {
   isPrivate: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Document type key (see `~/utils/document-types`); absent on older APIs. */
+  docType?: string | null;
 }
 
 export type NewDocument = Omit<Document, "id" | "createdAt" | "updatedAt">;

@@ -6,11 +6,12 @@ import type { Document, Motorcycle } from "~/types/db";
 import { Trash2, Bike, Upload, X, FileText, AlertCircle } from "lucide-react";
 import { useDropzone, type FileRejection } from "react-dropzone";
 import { useAuthenticatedAssetUrl } from "~/hooks/use-authenticated-asset";
+import { DOCUMENT_TYPES, documentTypeKey } from "~/utils/document-types";
 
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024; // 20 MB
 
 interface AddDocumentFormProps {
-  document?: Pick<Document, "id" | "title" | "isPrivate" | "previewPath" | "filePath" | "ownerId">;
+  document?: Pick<Document, "id" | "title" | "isPrivate" | "previewPath" | "filePath" | "ownerId" | "docType">;
   motorcycles: (Motorcycle & { ownerName: string | null })[];
   assignedMotorcycleIds?: number[];
   onSubmit: () => void;
@@ -276,6 +277,31 @@ export function AddDocumentForm({
             placeholder="Dokumenten Titel"
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white sm:text-sm"
           />
+        </div>
+      </div>
+
+      <div className={clsx(!isOwner && "opacity-60 pointer-events-none")}>
+        <label
+          htmlFor="docType"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Typ {!isOwner && "(Nur Besitzer)"}
+        </label>
+        <div className="mt-1">
+          <select
+            name="docType"
+            id="docType"
+            defaultValue={documentTypeKey(document?.docType) ?? ""}
+            disabled={!isOwner}
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:border-navy-600 dark:bg-navy-900 dark:text-white sm:text-sm"
+          >
+            <option value="">Kein Typ</option>
+            {DOCUMENT_TYPES.map((type) => (
+              <option key={type.key} value={type.key}>
+                {type.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
