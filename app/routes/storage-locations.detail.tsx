@@ -1,6 +1,7 @@
 import { data, Link, redirect, useActionData, useSubmit } from "react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Archive, ChevronRight, MapPin, Package, Pencil, Printer, Trash2 } from "lucide-react";
+import clsx from "clsx";
+import { Box, ChevronRight, Pencil, Printer, Trash2 } from "lucide-react";
 import type { Route } from "./+types/storage-locations.detail";
 import { requireUser } from "~/services/auth";
 import {
@@ -13,10 +14,9 @@ import {
 import { getLocations } from "~/services/settings";
 import type { Location } from "~/types/db";
 import type { Part, PartStock, StorageLocation } from "~/types/parts";
-import { getBackendAssetUrl } from "~/utils/backend";
 import { storageLocationPath, storageLocationPlace } from "~/utils/parts";
-import { Card } from "~/components/card";
-import { EmptyState } from "~/components/empty-state";
+import { Card, CardAction, CardBody, CardHeading } from "~/components/card";
+import { StorageContents, type StorageContentsItem } from "~/components/parts/storage-contents";
 import { Modal } from "~/components/modal";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { StorageLocationForm } from "~/components/storage-location-form";
@@ -116,39 +116,8 @@ function partsAt(
     .sort((a, b) => a.part.name.localeCompare(b.part.name));
 }
 
-function PartRow({ part, quantity, note }: { part: Part; quantity: number; note?: string }) {
-  return (
-    <div className="flex items-center gap-3 border-b border-base-200 px-3 py-2.5 last:border-b-0 dark:border-navy-700">
-      {part.image ? (
-        <img
-          src={`${getBackendAssetUrl(part.image)}?width=96`}
-          alt=""
-          loading="lazy"
-          className="h-11 w-11 shrink-0 rounded-sm border border-base-300 object-cover dark:border-navy-700"
-        />
-      ) : (
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-sm bg-base-200 text-base-content/35 dark:bg-navy-800">
-          <Package className="h-4 w-4" aria-hidden="true" />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-base-content dark:text-white">
-          {part.name}
-        </p>
-        <p className="truncate font-mono text-[11px] text-base-content/70 dark:text-navy-400">
-          {part.partNumber}
-          {note ? ` · ${note}` : ""}
-        </p>
-      </div>
-      <div className="shrink-0 text-right">
-        <p className="font-numeric text-lg font-semibold leading-none text-primary">{quantity}</p>
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-          Stk. hier
-        </p>
-      </div>
-    </div>
-  );
-}
+const outlineButton =
+  "inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white";
 
 export default function StorageLocationDetailPage({ loaderData }: Route.ComponentProps) {
   const { location, storageLocations, parts, stocks, places } = loaderData;
@@ -182,7 +151,7 @@ export default function StorageLocationDetailPage({ loaderData }: Route.Componen
 
   const children = storageLocations
     .filter((candidate) => candidate.parentId === location.id)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name, "de"));
 
   // Every location in this subtree (excluding the location itself).
   const descendants = useMemo(() => {
@@ -196,86 +165,49 @@ export default function StorageLocationDetailPage({ loaderData }: Route.Componen
     return result;
   }, [children, storageLocations]);
 
-  const directParts = partsAt(location.id, parts, stocks);
-  const descendantSections = descendants
-    .map((descendant) => ({
-      location: descendant,
-      entries: partsAt(descendant.id, parts, stocks),
-    }))
-    .filter((section) => section.entries.length > 0);
+  // Direct contents first, then what sits in nested locations (with its path).
+  const items: StorageContentsItem[] = [
+    ...partsAt(location.id, parts, stocks),
+    ...descendants.flatMap((descendant) =>
+      partsAt(descendant.id, parts, stocks).map((entry) => ({
+        ...entry,
+        note: storageLocationPath(descendant, storageLocations),
+      })),
+    ),
+  ];
 
-  const isEmpty = directParts.length === 0 && descendantSections.length === 0;
+  const eyebrow = [place?.name, ...ancestors.map((ancestor) => ancestor.name), `Lagerort #${location.id}`]
+    .filter(Boolean)
+    .join(" › ");
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 px-4 pt-0 pb-20 md:p-6 md:pb-12 print:m-0 print:max-w-none print:p-0">
-      <div className="space-y-6 print:hidden">
-        {/* Breadcrumb + heading */}
-        <div>
-          <nav
-            aria-label="Lagerort-Pfad"
-            className="flex flex-wrap items-center gap-1 text-xs text-base-content/55"
-          >
-            <Link to="/storage-locations" className="hover:text-base-content hover:underline">
-              Lagerorte
-            </Link>
-            {ancestors.map((ancestor) => (
-              <span key={ancestor.id} className="flex items-center gap-1">
-                <ChevronRight className="h-3 w-3" aria-hidden="true" />
-                <Link
-                  to={`/storage-locations/${ancestor.id}`}
-                  className="hover:text-base-content hover:underline"
-                >
-                  {ancestor.name}
-                </Link>
-              </span>
-            ))}
-            <span className="flex items-center gap-1">
+    <div className="container mx-auto max-w-6xl space-y-5 px-4 pt-0 pb-20 md:p-6 md:pb-12 print:m-0 print:max-w-none print:p-0">
+      <div className="space-y-5 print:hidden">
+        <nav
+          aria-label="Lagerort-Pfad"
+          className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300"
+        >
+          <Link to="/parts" className="hover:text-base-content hover:underline dark:hover:text-white">
+            Teile
+          </Link>
+          <ChevronRight className="h-3 w-3" aria-hidden="true" />
+          <Link to="/storage-locations" className="hover:text-base-content hover:underline dark:hover:text-white">
+            Lagerorte
+          </Link>
+          {ancestors.map((ancestor) => (
+            <span key={ancestor.id} className="flex items-center gap-1.5">
               <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              <span className="text-base-content/80">{location.name}</span>
+              <Link
+                to={`/storage-locations/${ancestor.id}`}
+                className="hover:text-base-content hover:underline dark:hover:text-white"
+              >
+                {ancestor.name}
+              </Link>
             </span>
-          </nav>
-
-          <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-            <div className="min-w-0">
-              <h1 className="flex items-center gap-2 font-display text-2xl uppercase tracking-wide text-base-content dark:text-white">
-                <Archive className="h-6 w-6 text-base-content/50" aria-hidden="true" />
-                {location.name}
-              </h1>
-              {place && (
-                <p className="mt-1 inline-flex items-center gap-1 rounded-sm bg-base-200 px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/60 dark:bg-navy-800 dark:text-navy-300">
-                  <MapPin className="h-3 w-3" aria-hidden="true" />
-                  {place.name}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsEditOpen(true)}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-              >
-                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                Bearbeiten
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(true)}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-error/50 hover:text-error dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300"
-              >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                Löschen
-              </button>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-              >
-                <Printer className="h-3.5 w-3.5" aria-hidden="true" />
-                Etikett drucken
-              </button>
-            </div>
-          </div>
-        </div>
+          ))}
+          <ChevronRight className="h-3 w-3" aria-hidden="true" />
+          <span className="text-base-content dark:text-white">{location.name}</span>
+        </nav>
 
         {actionData && "error" in actionData && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
@@ -287,87 +219,75 @@ export default function StorageLocationDetailPage({ loaderData }: Route.Componen
           </div>
         )}
 
-        {/* On-screen label preview (QR points right here) */}
-        <div className="max-w-sm">
-          <StorageLocationLabel
-            location={location}
-            allLocations={storageLocations}
-            placeName={place?.name}
-          />
-        </div>
-
-        {/* Sub-locations */}
-        {children.length > 0 && (
-          <section className="space-y-2">
-            <h2 className="label-tag">
-              <span>Unterorte</span>
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {children.map((child) => (
-                <Link
-                  key={child.id}
-                  to={`/storage-locations/${child.id}`}
-                  className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2 text-sm font-semibold text-base-content/80 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200"
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <StorageContents
+            as="h1"
+            eyebrow={eyebrow}
+            title={location.name}
+            items={items}
+            emptyText="In diesem Lagerort ist aktuell kein Bestand erfasst."
+            actions={
+              <>
+                <button type="button" onClick={() => window.print()} className={outlineButton}>
+                  <Printer className="h-3.5 w-3.5" aria-hidden="true" />
+                  Etikett drucken
+                </button>
+                <button type="button" onClick={() => setIsEditOpen(true)} className={outlineButton}>
+                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                  Bearbeiten
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className={clsx(outlineButton, "hover:border-error/50 hover:text-error dark:hover:text-error")}
                 >
-                  <Archive className="h-3.5 w-3.5 text-base-content/45" aria-hidden="true" />
-                  {child.name}
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Contents */}
-        <section className="space-y-2">
-          <h2 className="label-tag">
-            <span>Inhalt</span>
-          </h2>
-          {isEmpty ? (
-            <EmptyState
-              size="sm"
-              icon={Package}
-              title="Leer"
-              description="In diesem Lagerort ist aktuell kein Bestand erfasst."
-            />
-          ) : (
-            <div className="space-y-4">
-              {directParts.length > 0 && (
-                <Card className="overflow-hidden">
-                  {directParts.map(({ part, quantity }) => (
-                    <PartRow key={part.id} part={part} quantity={quantity} />
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Löschen
+                </button>
+              </>
+            }
+          >
+            {children.length > 0 && (
+              <div className="space-y-2 border-b border-base-200 px-5 py-3 dark:border-navy-700">
+                <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-300">
+                  Unterorte
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {children.map((child) => (
+                    <Link
+                      key={child.id}
+                      to={`/storage-locations/${child.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-sm border border-base-content/15 px-3 py-1.5 text-sm font-semibold text-base-content/80 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:text-navy-200 dark:hover:text-white"
+                    >
+                      <Box className="h-3.5 w-3.5 text-base-content/60 dark:text-navy-400" aria-hidden="true" />
+                      {child.name}
+                    </Link>
                   ))}
-                </Card>
-              )}
-              {descendantSections.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                    In Unterorten
-                  </h3>
-                  <Card className="overflow-hidden">
-                    {descendantSections.flatMap(({ location: subLocation, entries }) =>
-                      entries.map(({ part, quantity }) => (
-                        <PartRow
-                          key={`${subLocation.id}-${part.id}`}
-                          part={part}
-                          quantity={quantity}
-                          note={storageLocationPath(subLocation, storageLocations)}
-                        />
-                      )),
-                    )}
-                  </Card>
                 </div>
-              )}
-            </div>
-          )}
-        </section>
+              </div>
+            )}
+          </StorageContents>
 
-        <p className="text-xs text-base-content/50">
-          Bestände verwaltest du pro Teil auf der{" "}
-          <Link to="/parts" className="underline">
-            Teile-Seite
-          </Link>
-          .
-        </p>
+          {/* On-screen label preview (the QR code points right here) */}
+          <Card>
+            <CardHeading
+              title="Etikett"
+              trailing={
+                <CardAction onClick={() => window.print()} aria-label="Etikett drucken">
+                  <Printer className="h-3 w-3" aria-hidden="true" />
+                  Drucken
+                </CardAction>
+              }
+            />
+            <CardBody>
+              <StorageLocationLabel
+                location={location}
+                allLocations={storageLocations}
+                placeName={place?.name}
+              />
+            </CardBody>
+          </Card>
+        </div>
       </div>
 
       {/* Print: just this location's label */}

@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Globe,
   Lock,
-  Minus,
   Package,
   Pencil,
   Plus,
@@ -38,6 +37,7 @@ import {
   uploadPartImage,
 } from "~/services/parts";
 import { getBackendAssetUrl } from "~/utils/backend";
+import { modelSeriesDisplayName } from "~/types/parts";
 import type {
   ModelSeries,
   PartConsumption,
@@ -50,6 +50,7 @@ import { maintenanceTypeLabels } from "~/utils/maintenance";
 import type { MaintenanceType } from "~/types/db";
 import { DEFAULT_CURRENCY_CODE, findCurrencyPreset } from "~/constants";
 import { seriesPath } from "~/utils/series";
+import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 import { Card, CardAction, CardBody, CardHeading } from "~/components/card";
 import { Modal } from "~/components/modal";
 import { PartForm } from "~/components/part-form";
@@ -323,46 +324,91 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
     submit(formData, { method: "post" });
   };
 
-  return (
-    <div className="container mx-auto max-w-4xl space-y-6 px-4 pt-0 pb-20 md:p-6 md:pb-12 print:m-0 print:max-w-none print:p-0">
-      <div className="space-y-6 print:hidden">
-        {/* Breadcrumb + page actions. The part's identity lives in the
-            Katalogblatt hero below, so this row stays a quiet toolbar. */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <nav
-            aria-label="Teile-Pfad"
-            className="flex flex-wrap items-center gap-1 text-xs text-base-content/55"
-          >
-            <Link to="/parts" className="hover:text-base-content hover:underline">
-              Teile
-            </Link>
-            <span className="flex items-center gap-1">
-              <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              <span className="text-base-content/80">{part.name}</span>
-            </span>
-          </nav>
+  // Inline "Kein Lagerort — zuordnen": re-saves the stock entry unchanged
+  // except for its location (the update action expects every field).
+  const assignLocation = (stock: PartStock, storageLocationId: string) => {
+    submitSimple({
+      intent: "updateStock",
+      stockId: String(stock.id),
+      quantity: String(stock.quantity),
+      price: stock.price != null ? String(stock.price) : "",
+      currency: stock.currency ?? "",
+      purchaseDate: stock.purchaseDate ?? "",
+      storageLocationId,
+      notes: stock.notes ?? "",
+      notesMarkup: stock.notesMarkup ?? "",
+      isUsed: stock.isUsed ? "true" : "false",
+    });
+  };
 
-          <div className="flex flex-wrap items-center gap-2">
-              {!isEditing && (
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
-                >
-                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                  Bearbeiten
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(true)}
-                className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-error/50 hover:text-error dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300"
-              >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                Löschen
-              </button>
-          </div>
-        </div>
+  const sortedLocations = [...storageLocations]
+    .map((location) => ({ id: location.id, path: storageLocationPath(location, storageLocations) }))
+    .sort((a, b) => a.path.localeCompare(b.path, "de"));
+
+  const compatibility = part.seriesIds
+    .map((seriesId) => modelSeries.find((candidate) => candidate.id === seriesId))
+    .filter((node): node is ModelSeries => node != null);
+  const COMPAT_VISIBLE = 5;
+
+  const stockTone = part.onHand <= 0 ? "empty" : part.onHand === 1 ? "low" : "ok";
+  const stats: {
+    label: string;
+    value: string;
+    rail: string;
+    valueClass: string;
+  }[] = [
+    {
+      label: "Auf Lager",
+      value: formatNumber(part.onHand),
+      rail:
+        stockTone === "empty"
+          ? "bg-accent"
+          : stockTone === "low"
+            ? "bg-[var(--color-workshop)]"
+            : "bg-primary",
+      valueClass:
+        stockTone === "empty"
+          ? "text-error"
+          : stockTone === "low"
+            ? "text-warning"
+            : "text-primary dark:text-primary-light",
+    },
+    {
+      label: "Zugekauft",
+      value: formatNumber(totalPurchased),
+      rail: "bg-base-300 dark:bg-navy-600",
+      valueClass: "text-base-content dark:text-white",
+    },
+    {
+      label: "Verbraucht",
+      value: formatNumber(totalConsumed),
+      rail: "bg-base-300 dark:bg-navy-600",
+      valueClass: "text-base-content dark:text-white",
+    },
+    {
+      label: "Einkaufswert",
+      value: totalStockValue > 0 ? formatCurrency(totalStockValue, "CHF") : "—",
+      rail: "bg-secondary",
+      valueClass: "text-secondary dark:text-white",
+    },
+  ];
+
+  const outlineButton =
+    "inline-flex h-10 items-center gap-2 rounded-sm border border-base-content/20 bg-base-100 px-3.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/80 transition-all hover:border-base-content/40 hover:text-base-content dark:border-navy-600 dark:bg-navy-800 dark:text-navy-200 dark:hover:text-white";
+
+  return (
+    <div className="container mx-auto max-w-7xl space-y-5 px-4 pt-0 pb-20 md:p-6 md:pb-12 print:m-0 print:max-w-none print:p-0">
+      <div className="space-y-5 print:hidden">
+        <nav
+          aria-label="Teile-Pfad"
+          className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300"
+        >
+          <Link to="/parts" className="hover:text-base-content hover:underline dark:hover:text-white">
+            Teile
+          </Link>
+          <ChevronRight className="h-3 w-3" aria-hidden="true" />
+          <span className="min-w-0 truncate text-base-content dark:text-white">{part.name}</span>
+        </nav>
 
         {actionData && "error" in actionData && actionData.error && (
           <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
@@ -392,8 +438,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
         ) : (
           /* ------------------------------- View mode ------------------------------ */
           <>
-        {/* Katalogblatt — image plate, identity, description and the stock
-            ledger on one sheet, like a figure in a parts catalog. */}
+        {/* Hero — figure, identity, actions, then the stock ledger tiles. */}
         <section aria-label="Teilübersicht">
           <input
             ref={imageInputRef}
@@ -412,35 +457,27 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
             }}
           />
           <Card>
-            <div className="flex flex-col md:flex-row">
-              {/* Abbildung — catalog plate on workshop paper */}
-              <figure
-                className={clsx(
-                  "flex flex-col border-b border-base-200 md:shrink-0 md:border-b-0 md:border-r dark:border-navy-700",
-                  // Without a photo the plate shrinks to a small upload slot
-                  // instead of taking a third of the sheet.
-                  part.image ? "md:w-[38%]" : "md:w-44",
-                )}
-              >
+            <div className="flex flex-wrap items-start gap-6 p-5">
+              <figure className="flex w-full flex-col gap-1.5 sm:w-[220px] sm:shrink-0">
                 {part.image ? (
                   <a
                     href={getBackendAssetUrl(part.image) ?? undefined}
                     target="_blank"
                     rel="noreferrer"
                     title="Bild in voller Grösse öffnen"
-                    className="paper corner-ticks group grid flex-1 place-items-center p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
+                    className="group grid h-40 place-items-center overflow-hidden rounded-sm border border-base-300 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700"
                   >
                     <img
-                      src={`${getBackendAssetUrl(part.image)}?width=800`}
+                      src={`${getBackendAssetUrl(part.image)}?width=480`}
                       alt={`Bild von ${part.name}`}
-                      className="max-h-60 w-full object-contain transition-transform duration-300 motion-safe:group-hover:scale-[1.02] md:max-h-72"
+                      className="h-full w-full object-contain transition-transform duration-300 motion-safe:group-hover:scale-[1.03]"
                     />
                   </a>
                 ) : (
-                  <div className="paper corner-ticks grid flex-1 place-items-center px-4 py-5">
+                  <div className="paper grid h-40 place-items-center rounded-sm border border-dashed border-base-300 px-4 dark:border-navy-700">
                     <div className="flex flex-col items-center gap-2 text-center">
                       <Package className="h-6 w-6 text-base-content/30" aria-hidden="true" />
-                      <p className="text-xs leading-snug text-base-content/70">Noch kein Bild</p>
+                      <p className="text-xs text-base-content/70">Noch kein Bild</p>
                       <button
                         type="button"
                         onClick={() => imageInputRef.current?.click()}
@@ -452,8 +489,8 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                     </div>
                   </div>
                 )}
-                <figcaption className="flex min-h-9 items-center justify-between gap-2 border-t border-base-200 py-1 pl-3 pr-1.5 dark:border-navy-700">
-                  <span className="truncate font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
+                <figcaption className="flex min-h-7 items-center justify-between gap-2">
+                  <span className="truncate font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-300">
                     Abb. · {part.partNumber}
                   </span>
                   {part.image && (
@@ -462,7 +499,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                         type="button"
                         onClick={() => imageInputRef.current?.click()}
                         aria-label="Bild ersetzen"
-                        className="grid h-7 w-7 place-items-center rounded-sm text-base-content/45 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700"
+                        className="grid h-7 w-7 place-items-center rounded-sm text-base-content/60 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-300 dark:hover:bg-navy-700"
                       >
                         <Camera className="h-3.5 w-3.5" aria-hidden="true" />
                       </button>
@@ -470,7 +507,7 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                         type="button"
                         onClick={() => submitSimple({ intent: "deleteImage" })}
                         aria-label="Bild entfernen"
-                        className="grid h-7 w-7 place-items-center rounded-sm text-base-content/45 transition-colors hover:bg-error/10 hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        className="grid h-7 w-7 place-items-center rounded-sm text-base-content/60 transition-colors hover:bg-error/10 hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-navy-300"
                       >
                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       </button>
@@ -479,333 +516,355 @@ export default function PartDetailPage({ loaderData }: Route.ComponentProps) {
                 </figcaption>
               </figure>
 
-              {/* Identität, Beschreibung, Lager-Bilanz */}
-              <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex-1 px-5 pb-5 pt-4">
-                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                    <span className="font-mono text-xs font-semibold tracking-[0.06em] text-base-content/75 dark:text-navy-200">
-                      {part.partNumber}
+              <div className="flex min-w-0 flex-[1_1_22rem] flex-col gap-1.5">
+                <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-xs font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-300">
+                  <span aria-hidden="true" className="h-px w-6 bg-base-content/40" />
+                  <span className="normal-case tracking-[0.06em]">{part.partNumber}</span>
+                  <span aria-hidden="true">·</span>
+                  {part.manufacturer}
+                  {part.oemPartNumber && (
+                    <span title="Originale BMW-Teilenummer" className="normal-case tracking-[0.06em]">
+                      · BMW-Nr. {part.oemPartNumber}
                     </span>
-                    <span aria-hidden="true" className="h-3 w-px bg-base-content/20" />
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                      {part.manufacturer}
-                    </span>
-                    {part.oemPartNumber && (
-                      <>
-                        <span aria-hidden="true" className="h-3 w-px bg-base-content/20" />
-                        <span
-                          className="font-mono text-[11px] font-semibold tracking-[0.06em] text-base-content/70"
-                          title="Originale BMW-Teilenummer"
-                        >
-                          <span className="uppercase tracking-[0.08em]">BMW-Nr.</span>{" "}
-                          {part.oemPartNumber}
-                        </span>
-                      </>
-                    )}
-                    <span
-                      className={clsx(
-                        "inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
-                        part.isPublic
-                          ? "bg-success/15 text-success"
-                          : "bg-base-200 text-base-content/55 dark:bg-navy-800 dark:text-navy-300",
-                      )}
-                    >
-                      {part.isPublic ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                      {part.isPublic ? "Öffentlich" : "Privat"}
-                    </span>
-                  </div>
-                  <h1 className="mt-2 font-display text-3xl uppercase leading-[1.05] tracking-wide text-base-content dark:text-white md:text-4xl">
-                    {part.name}
-                  </h1>
-                  {part.description ? (
-                    <p className="mt-3 max-w-prose text-sm leading-relaxed text-base-content/75">
-                      <FormattedText description={part.description} markup={part.descriptionMarkup} />
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-sm text-base-content/45">
-                      Keine Beschreibung — über Bearbeiten ergänzen.
-                    </p>
                   )}
-                </div>
+                  <span
+                    className={clsx(
+                      "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[11px]",
+                      part.isPublic
+                        ? "border-success/40 text-success"
+                        : "border-base-content/25 text-base-content/70 dark:border-navy-600 dark:text-navy-300",
+                    )}
+                  >
+                    {part.isPublic ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                    {part.isPublic ? "Öffentlich" : "Privat"}
+                  </span>
+                </span>
+                <h1 className="font-display text-3xl uppercase leading-[1.05] tracking-wide text-base-content dark:text-white md:text-[2.5rem]">
+                  {part.name}
+                </h1>
+                {part.description ? (
+                  <p className="max-w-prose text-sm leading-relaxed text-base-content/75 dark:text-navy-200">
+                    <FormattedText description={part.description} markup={part.descriptionMarkup} />
+                  </p>
+                ) : (
+                  <p className="text-sm text-base-content/60 dark:text-navy-400">
+                    Keine Beschreibung — über Bearbeiten ergänzen.
+                  </p>
+                )}
+              </div>
 
-                {/* Lager-Bilanz: Zugekauft − Verbraucht = Auf Lager, plus der
-                    Einkaufswert über alle Bestandseinträge. */}
-                <dl className="flex flex-wrap divide-x divide-base-200 border-t border-base-200 dark:divide-navy-700 dark:border-navy-700">
-                  <div className="flex-1 px-4 py-3">
-                    <dd className="font-numeric text-xl font-semibold leading-none text-base-content/70">
-                      {totalPurchased}
-                    </dd>
-                    <dt className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                      Zugekauft
-                    </dt>
-                  </div>
-                  <div className="flex-1 px-4 py-3">
-                    <dd className="font-numeric text-xl font-semibold leading-none text-base-content/70">
-                      {totalConsumed > 0 ? `−${totalConsumed}` : "0"}
-                    </dd>
-                    <dt className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                      Verbraucht
-                    </dt>
-                  </div>
-                  <div className="flex-1 px-4 py-3">
-                    <dd
-                      className={clsx(
-                        "font-numeric text-xl font-semibold leading-none",
-                        part.onHand > 0 ? "text-primary dark:text-primary-light" : "text-base-content/35",
-                      )}
-                    >
-                      {part.onHand}
-                    </dd>
-                    <dt className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                      Auf Lager
-                    </dt>
-                  </div>
-                  <div className="flex-1 px-4 py-3">
-                    <dd className="whitespace-nowrap font-numeric text-xl font-semibold leading-none text-base-content/70">
-                      {totalStockValue > 0 ? totalStockValue.toFixed(2) : "—"}
-                    </dd>
-                    <dt className="mt-1 whitespace-nowrap font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                      Einkaufswert CHF
-                    </dt>
-                  </div>
-                </dl>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setIsEditing(true)} className={outlineButton}>
+                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                  Bearbeiten
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className={clsx(outlineButton, "border-error/40 text-error hover:border-error hover:text-error dark:border-error/40 dark:text-error")}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Löschen
+                </button>
               </div>
             </div>
+
+            {/* Lager-Bilanz: Auf Lager = Zugekauft − Verbraucht, plus der
+                Einkaufswert über alle Bestandseinträge (CHF-normalisiert;
+                Einträge behalten ihren Preis nach dem Verbrauch). */}
+            <dl className="grid grid-cols-2 border-t border-base-200 sm:grid-cols-4 dark:border-navy-700">
+              {stats.map((stat, index) => (
+                <div
+                  key={stat.label}
+                  className={clsx(
+                    "relative flex flex-col-reverse px-5 py-3.5",
+                    index % 2 === 0 && "border-r border-base-200 dark:border-navy-700",
+                    index < 2 && "border-b border-base-200 sm:border-b-0 dark:border-navy-700",
+                    index === 1 && "sm:border-r",
+                  )}
+                >
+                  <span aria-hidden="true" className={clsx("absolute inset-y-2.5 left-0 w-[3px] rounded-r-sm", stat.rail)} />
+                  <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-300">
+                    {stat.label}
+                  </dt>
+                  <dd className={clsx("whitespace-nowrap font-numeric text-2xl font-bold leading-tight", stat.valueClass)}>
+                    {stat.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </Card>
         </section>
 
-        {/* Bestand — directly under the Katalogblatt; the working list. */}
-        <Card>
-          <CardHeading
-            code="01"
-            title="Bestand"
-            meta={
-              partStocks.length === 1 ? "1 Eintrag" : `${partStocks.length} Einträge`
-            }
-            trailing={
-              <CardAction onClick={() => setIsAddStockOpen(true)} aria-label="Bestand hinzufügen">
-                <Plus className="h-3 w-3" aria-hidden="true" />
-                Hinzufügen
-              </CardAction>
-            }
-          />
-          {partStocks.length === 0 ? (
-            <CardBody>
-              <p className="text-sm text-base-content/55">
-                Noch kein Bestand erfasst — über Hinzufügen den ersten Zukauf eintragen.
-              </p>
-            </CardBody>
-          ) : (
-            <div className="divide-y divide-base-200 dark:divide-navy-700">
-              {partStocks.map((stock) => {
-                const location = storageLocations.find(
-                  (candidate) => candidate.id === stock.storageLocationId,
-                );
-                return (
-                  <div
-                    key={stock.id}
-                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-base-200/40 dark:hover:bg-navy-700/30"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-primary/10 font-numeric text-sm font-semibold text-primary dark:bg-primary/15 dark:text-primary-light"
-                    >
-                      {stock.quantity}×
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-base-content dark:text-white">
-                        <span className="sr-only">{stock.quantity} Stück, </span>
-                        {stock.price != null
-                          ? `${stock.currency ?? "CHF"} ${(stock.price / stock.quantity).toFixed(2)} / Stück`
-                          : "ohne Preis"}
-                        {stock.price != null && stock.quantity > 1 && (
-                          <span className="text-base-content/50">
-                            {` · ${stock.currency ?? "CHF"} ${stock.price.toFixed(2)} gesamt`}
-                          </span>
-                        )}
-                        <span className="text-base-content/50"> · {formatDate(stock.purchaseDate)}</span>
-                        {stock.isUsed && (
-                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-warning/15 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-warning">
-                            <Recycle className="h-2.5 w-2.5" />
-                            Gebraucht
-                          </span>
-                        )}
-                      </p>
-                      <p className="truncate text-xs text-base-content/70">
-                        {location ? (
-                          storageLocationPath(location, storageLocations)
-                        ) : (
-                          <span className="font-semibold text-warning">Kein Lagerort — beim Bearbeiten zuordnen</span>
-                        )}
-                        {stock.notes && (
-                          <>
-                            {" · "}
-                            <FormattedText description={stock.notes} markup={stock.notesMarkup} />
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEditingStock(stock)}
-                      aria-label="Bestand bearbeiten"
-                      className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-base-content/50 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
-
-        {/* Verbrauch */}
-        <Card>
-          <CardHeading
-            code="02"
-            title="Verbrauch"
-            meta={
-              partConsumptions.length === 1
-                ? "1 Eintrag"
-                : `${partConsumptions.length} Einträge`
-            }
-            trailing={
-              <button
-                type="button"
-                onClick={() => setIsAddConsumptionOpen(true)}
-                disabled={part.onHand < 1}
-                className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary/10 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
-              >
-                <Minus className="h-3 w-3" aria-hidden="true" />
-                Erfassen
-              </button>
-            }
-          />
-          {partConsumptions.length === 0 ? (
-            <CardBody>
-              <p className="text-sm text-base-content/55">
-                Noch kein Verbrauch erfasst. Teile lassen sich auch direkt beim Erfassen einer
-                Wartung verbuchen.
-              </p>
-            </CardBody>
-          ) : (
-            <div className="divide-y divide-base-200 dark:divide-navy-700">
-              {partConsumptions.map((consumption) => (
-                <div
-                  key={consumption.id}
-                  className="flex items-center justify-between gap-3 px-4 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm text-base-content dark:text-white">
-                      <span className="font-numeric font-semibold text-error">
-                        −{consumption.quantity}
-                      </span>
-                      <span className="text-base-content/50"> · {formatDate(consumption.date)}</span>
-                      {/* Linked repairs jump straight to the bike's history.
-                          The badge stays inert when the entry was booked before
-                          the server started joining this context, or when the
-                          record has since been deleted. */}
-                      {consumption.maintenanceRecordId != null &&
-                        (consumption.motorcycleId != null ? (
-                          <Link
-                            to={`/motorcycle/${createMotorcycleSlug(
-                              consumption.motorcycleMake ?? "",
-                              consumption.motorcycleModel ?? "",
-                            )}/${consumption.motorcycleId}#maintenance`}
-                            className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:bg-base-300 hover:text-base-content dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700"
-                          >
-                            <Wrench className="h-2.5 w-2.5" />
-                            {[consumption.motorcycleMake, consumption.motorcycleModel]
-                              .filter(Boolean)
-                              .join(" ") || "Wartung"}
-                          </Link>
-                        ) : (
-                          <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 dark:bg-navy-800 dark:text-navy-300">
-                            <Wrench className="h-2.5 w-2.5" />
-                            Wartung
-                          </span>
-                        ))}
-                    </p>
-                    {consumption.maintenanceDate && (
-                      <p className="truncate text-[11px] text-base-content/50">
-                        {maintenanceTypeLabels[consumption.maintenanceType as MaintenanceType] ??
-                          "Eintrag"}{" "}
-                        vom {formatDate(consumption.maintenanceDate)}
-                      </p>
-                    )}
-                    {consumption.notes && (
-                      <p className="truncate text-[11px] text-base-content/50">{consumption.notes}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      submitSimple({
-                        intent: "deleteConsumption",
-                        consumptionId: String(consumption.id),
-                      })
-                    }
-                    className="shrink-0 rounded-sm border border-base-content/15 px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:text-navy-300"
-                  >
-                    Zurückbuchen
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        {/* Reference row: Kompatibilität + Etikett — quiet lookup info. */}
-        <div className="grid items-start gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeading code="03" title="Kompatibilität" />
-            <CardBody className="space-y-2">
-              {part.seriesIds.length === 0 ? (
-                <p className="text-sm text-base-content/55">
-                  Keine Baureihe zugeordnet — über Bearbeiten lassen sich Familie, Serie oder
-                  Modell verknüpfen.
-                </p>
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="min-w-0 space-y-4">
+            {/* Bestand — the working list of purchases. */}
+            <Card>
+              <CardHeading
+                code="01"
+                title="Bestand"
+                meta={partStocks.length === 1 ? "1 Eintrag" : `${partStocks.length} Einträge`}
+                trailing={
+                  <CardAction onClick={() => setIsAddStockOpen(true)} aria-label="Zukauf erfassen">
+                    <Plus className="h-3 w-3" aria-hidden="true" />
+                    Zukauf
+                  </CardAction>
+                }
+              />
+              {partStocks.length === 0 ? (
+                <CardBody>
+                  <p className="text-sm text-base-content/70 dark:text-navy-300">
+                    Noch kein Bestand erfasst — über Zukauf den ersten Eintrag erfassen.
+                  </p>
+                </CardBody>
               ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {part.seriesIds.map((seriesId) => {
-                    const node = modelSeries.find((candidate) => candidate.id === seriesId);
-                    if (!node) return null;
+                <div className="divide-y divide-base-200 dark:divide-navy-700">
+                  {partStocks.map((stock) => {
+                    const location = storageLocations.find(
+                      (candidate) => candidate.id === stock.storageLocationId,
+                    );
+                    const currency = stock.currency ?? "CHF";
                     return (
-                      <span
-                        key={seriesId}
-                        title={seriesPath(node, modelSeries)}
-                        className="rounded-sm bg-base-200 px-2 py-1 text-[11px] font-semibold text-base-content/70 dark:bg-navy-800 dark:text-navy-200"
-                      >
-                        {node.name}
-                      </span>
+                      <div key={stock.id} className="space-y-3 px-4 py-3.5">
+                        <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3.5">
+                          <span
+                            aria-hidden="true"
+                            className="grid h-10 place-items-center rounded-sm bg-primary/10 font-numeric text-[15px] font-bold text-primary dark:bg-primary/15 dark:text-primary-light"
+                          >
+                            {stock.quantity}×
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-base-content dark:text-white">
+                              <span className="sr-only">{stock.quantity} Stück, </span>
+                              {stock.price != null
+                                ? `${formatCurrency(stock.price / stock.quantity, currency)} / Stück`
+                                : "ohne Preis"}
+                              {stock.price != null && stock.quantity > 1 && (
+                                <span className="font-normal text-base-content/70 dark:text-navy-300">
+                                  {` · ${formatCurrency(stock.price, currency)} gesamt`}
+                                </span>
+                              )}
+                              {stock.isUsed && (
+                                <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-warning/15 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-warning">
+                                  <Recycle className="h-2.5 w-2.5" />
+                                  Gebraucht
+                                </span>
+                              )}
+                            </p>
+                            <p className="font-mono text-xs text-base-content/70 dark:text-navy-300">
+                              {formatDate(stock.purchaseDate)}
+                              {location && ` · ${storageLocationPath(location, storageLocations)}`}
+                            </p>
+                            {stock.notes && (
+                              <p className="truncate text-xs text-base-content/70 dark:text-navy-300">
+                                <FormattedText description={stock.notes} markup={stock.notesMarkup} />
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditingStock(stock)}
+                            aria-label="Zukauf bearbeiten"
+                            className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-base-300 text-base-content/70 transition-colors hover:border-base-content/40 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:text-navy-300 dark:hover:text-white"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        </div>
+                        {!location && stock.quantity > 0 && (
+                          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-sm border border-warning/30 border-l-[3px] border-l-[var(--color-workshop)] bg-warning/5 px-3 py-2.5 dark:bg-warning/10">
+                            <span className="text-sm font-semibold text-warning">Kein Lagerort — zuordnen</span>
+                            <label className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
+                              Lagerort
+                              <select
+                                value=""
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  if (value === "__new") setEditingStock(stock);
+                                  else if (value) assignLocation(stock, value);
+                                }}
+                                className="h-8 max-w-[14rem] rounded-sm border border-warning/30 bg-base-100 py-0 pl-2 pr-7 font-sans text-sm normal-case tracking-normal text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:bg-navy-900 dark:text-white"
+                              >
+                                <option value="">Wählen …</option>
+                                {sortedLocations.map((option) => (
+                                  <option key={option.id} value={option.id}>
+                                    {option.path}
+                                  </option>
+                                ))}
+                                <option value="__new">+ Neuer Lagerort …</option>
+                              </select>
+                            </label>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
               )}
-              <p className="text-xs text-base-content/50">
-                Gilt jeweils inklusive aller Untereinträge des Modellkatalogs.
-              </p>
-            </CardBody>
-          </Card>
+            </Card>
 
-          <Card>
-            <CardHeading
-              code="04"
-              title="Etikett"
-              trailing={
-                <CardAction onClick={() => window.print()} aria-label="Etikett drucken">
-                  <Printer className="h-3 w-3" aria-hidden="true" />
-                  Drucken
-                </CardAction>
-              }
-            />
-            <CardBody>
-              <div className="max-w-sm">
+            {/* Verbrauch */}
+            <Card>
+              <CardHeading
+                code="02"
+                title="Verbrauch"
+                meta={
+                  partConsumptions.length === 1
+                    ? "1 Eintrag"
+                    : `${partConsumptions.length} Einträge`
+                }
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setIsAddConsumptionOpen(true)}
+                    disabled={part.onHand < 1}
+                    title={part.onHand < 1 ? "Kein Bestand zum Verbuchen" : undefined}
+                    className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary transition-all hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary/10 dark:bg-primary/15 dark:text-primary-light dark:hover:bg-primary/25"
+                  >
+                    <Plus className="h-3 w-3" aria-hidden="true" />
+                    Erfassen
+                  </button>
+                }
+              />
+              {partConsumptions.length === 0 ? (
+                <CardBody>
+                  <p className="text-sm text-base-content/70 dark:text-navy-300">
+                    Noch kein Verbrauch erfasst. Teile lassen sich auch direkt beim Erfassen einer
+                    Wartung verbuchen.
+                  </p>
+                </CardBody>
+              ) : (
+                <div className="divide-y divide-base-200 dark:divide-navy-700">
+                  {partConsumptions.map((consumption) => (
+                    <div
+                      key={consumption.id}
+                      className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3.5 px-4 py-3.5"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="grid h-10 place-items-center rounded-sm bg-error/10 font-numeric text-[15px] font-bold text-error"
+                      >
+                        −{consumption.quantity}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-base-content dark:text-white">
+                          <span className="sr-only">{consumption.quantity} Stück verbraucht, </span>
+                          {consumption.maintenanceDate
+                            ? `${maintenanceTypeLabels[consumption.maintenanceType as MaintenanceType] ?? "Eintrag"} vom ${formatDate(consumption.maintenanceDate)}`
+                            : "Manuell verbucht"}
+                          {/* Linked repairs jump straight to the bike's history.
+                              The badge stays inert when the entry was booked before
+                              the server started joining this context, or when the
+                              record has since been deleted. */}
+                          {consumption.maintenanceRecordId != null &&
+                            (consumption.motorcycleId != null ? (
+                              <Link
+                                to={`/motorcycle/${createMotorcycleSlug(
+                                  consumption.motorcycleMake ?? "",
+                                  consumption.motorcycleModel ?? "",
+                                )}/${consumption.motorcycleId}#maintenance`}
+                                className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:bg-base-300 hover:text-base-content dark:bg-navy-900 dark:text-navy-300 dark:hover:bg-navy-700"
+                              >
+                                <Wrench className="h-2.5 w-2.5" />
+                                {[consumption.motorcycleMake, consumption.motorcycleModel]
+                                  .filter(Boolean)
+                                  .join(" ") || "Wartung"}
+                              </Link>
+                            ) : (
+                              <span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-base-200 px-1.5 py-0.5 align-middle font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 dark:bg-navy-900 dark:text-navy-300">
+                                <Wrench className="h-2.5 w-2.5" />
+                                Wartung
+                              </span>
+                            ))}
+                        </p>
+                        <p className="font-mono text-xs text-base-content/70 dark:text-navy-300">
+                          {formatDate(consumption.date)}
+                        </p>
+                        {consumption.notes && (
+                          <p className="truncate text-xs text-base-content/70 dark:text-navy-300">
+                            {consumption.notes}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          submitSimple({
+                            intent: "deleteConsumption",
+                            consumptionId: String(consumption.id),
+                          })
+                        }
+                        className="shrink-0 rounded-sm border border-base-content/15 px-2 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:text-navy-300 dark:hover:text-white"
+                      >
+                        Zurückbuchen
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+
+          <div className="min-w-0 space-y-4">
+            <Card>
+              <CardHeading
+                code="03"
+                title="Kompatibilität"
+                meta={compatibility.length > 0 ? String(compatibility.length) : undefined}
+              />
+              <CardBody className="flex flex-col gap-1.5 py-3">
+                {compatibility.length === 0 ? (
+                  <p className="text-sm text-base-content/70 dark:text-navy-300">
+                    Keine Baureihe zugeordnet — über Bearbeiten lassen sich Familie, Serie oder
+                    Modell verknüpfen.
+                  </p>
+                ) : (
+                  <>
+                    {compatibility.slice(0, COMPAT_VISIBLE).map((node) => (
+                      <span
+                        key={node.id}
+                        title={seriesPath(node, modelSeries)}
+                        className="rounded-sm border border-base-300 px-2.5 py-1 font-mono text-xs font-semibold text-base-content dark:border-navy-700 dark:text-navy-100"
+                      >
+                        {modelSeriesDisplayName(node)}
+                      </span>
+                    ))}
+                    {compatibility.length > COMPAT_VISIBLE && (
+                      <details className="text-[13px]">
+                        <summary className="cursor-pointer py-1 font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary dark:text-primary-light">
+                          + {compatibility.length - COMPAT_VISIBLE} weitere
+                        </summary>
+                        <p className="pt-1.5 font-mono text-xs leading-relaxed text-base-content/70 dark:text-navy-300">
+                          {compatibility
+                            .slice(COMPAT_VISIBLE)
+                            .map((node) => modelSeriesDisplayName(node))
+                            .join(" · ")}
+                        </p>
+                      </details>
+                    )}
+                  </>
+                )}
+                <p className="text-[13px] text-base-content/70 dark:text-navy-300">
+                  Gilt jeweils inklusive aller Untereinträge des Modellkatalogs.
+                </p>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeading
+                code="04"
+                title="Etikett"
+                trailing={
+                  <CardAction onClick={() => window.print()} aria-label="Etikett drucken">
+                    <Printer className="h-3 w-3" aria-hidden="true" />
+                    Drucken
+                  </CardAction>
+                }
+              />
+              <CardBody>
                 <PartLabel part={part} modelSeries={modelSeries} />
-              </div>
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+          </div>
         </div>
           </>
         )}

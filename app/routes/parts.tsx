@@ -1,4 +1,4 @@
-import { data, Link, useActionData, useNavigate } from "react-router";
+import { data, Link, useActionData, useNavigate, useSearchParams } from "react-router";
 import { FormattedText } from "~/components/formatted-text";
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
@@ -29,6 +29,7 @@ import {
 import type { PublicPart, PublicStockEntry } from "~/types/parts";
 import { seriesNames, storageLocationRoot } from "~/utils/parts";
 import { seriesMatchesBike } from "~/utils/series";
+import { formatCurrency, formatNumber } from "~/utils/numberUtils";
 import type { Motorcycle } from "~/types/db";
 import { Card } from "~/components/card";
 import { PageHeader } from "~/components/page-header";
@@ -197,20 +198,38 @@ const SUCCESS_TOASTS: Record<string, string> = {
   createPart: "Teil erstellt",
 };
 
+/** "Ohne Lagerort" in the Lagerort filter — stock on hand that has no place yet. */
+const NO_LOCATION = "none";
+
+const toolbarFieldClass =
+  "flex h-9 items-center gap-2 rounded-sm border border-base-300 px-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:border-navy-700 dark:text-navy-300";
+
+const toolbarSelectClass =
+  "min-w-0 flex-1 cursor-pointer border-none bg-transparent py-0 pl-0 pr-6 font-sans text-sm font-semibold normal-case tracking-normal text-base-content focus:outline-none focus:ring-0 dark:text-white";
+
+function stockTone(onHand: number): "empty" | "low" | "ok" {
+  if (onHand <= 0) return "empty";
+  if (onHand === 1) return "low";
+  return "ok";
+}
+
 export default function PartsPage({ loaderData }: Route.ComponentProps) {
   const { parts, modelSeries, storageLocations, publicParts, stocks, motorcycles } = loaderData;
   const actionData = useActionData<typeof clientAction>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [tab, setTab] = useState<"mine" | "public">("mine");
   const [search, setSearch] = useState("");
-  // Top-level Lagerort filter for the own-parts tab ("" = all).
-  const [locationFilter, setLocationFilter] = useState("");
+  // Top-level Lagerort filter for the own-parts tab ("" = all, "none" =
+  // stock without a Lagerort). Deep-linkable via ?lagerort= from Lagerorte.
+  const [locationFilter, setLocationFilter] = useState(() => searchParams.get("lagerort") ?? "");
+  // "Für" filter: one of the user's own bikes ("" = all).
+  const [bikeFilter, setBikeFilter] = useState("");
+  const [onlyLow, setOnlyLow] = useState(false);
   const [isAddPartOpen, setIsAddPartOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isInvoiceImportOpen, setIsInvoiceImportOpen] = useState(false);
-
-  // The detail view derives from loader data so it refreshes after actions.
 
   useEffect(() => {
     if (actionData && "success" in actionData && actionData.success) {
@@ -224,7 +243,6 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
     }
   }, [actionData]);
 
-  // Which top-level Lagerort each part has stock in: partId -> set of root ids.
   const rootLocations = useMemo(
     () =>
       storageLocations
@@ -232,6 +250,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
         .sort((a, b) => a.name.localeCompare(b.name, "de")),
     [storageLocations],
   );
+  // Which top-level Lagerort each part has stock in: partId -> set of root ids.
   const rootsByPart = useMemo(() => {
     const map = new Map<number, Set<number>>();
     for (const stock of stocks) {
@@ -247,69 +266,104 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
     }
     return map;
   }, [stocks, storageLocations]);
-
-  // "Für": the user's own active bikes a part fits, via the model catalog.
-  const bikesByPart = useMemo(() => {
-    const activeBikes = motorcycles.filter(
-      (bike) => bike.status !== "sold" && bike.seriesId != null,
-    );
-    const map = new Map<number, string[]>();
-    for (const part of parts) {
-      if (part.seriesIds.length === 0) continue;
-      const names = activeBikes
-        .filter((bike) => seriesMatchesBike(part.seriesIds, bike.seriesId!, modelSeries))
-        .map((bike) => bike.model || bike.make);
-      if (names.length > 0) map.set(part.id, names);
-    }
-    return map;
-  }, [parts, motorcycles, modelSeries]);
-  const rootName = useMemo(
-    () => new Map(rootLocations.map((location) => [location.id, location.name])),
-    [rootLocations],
+  // Parts with stock entries that still lack a Lagerort (same rule as the
+  // "Ohne Lagerort" row on the Lagerorte page).
+  const unplacedPartIds = useMemo(
+    () =>
+      new Set(
+        stocks
+          .filter((stock) => stock.storageLocationId == null && stock.quantity > 0)
+          .map((stock) => stock.partId),
+      ),
+    [stocks],
   );
 
+  // "Für": the user's own active bikes, matched to a part via the model catalog.
+  const activeBikes = useMemo(
+    () => motorcycles.filter((bike) => bike.status !== "sold" && bike.seriesId != null),
+    [motorcycles],
+  );
+  const bikeLabel = (bike: Motorcycle) => bike.model || bike.make;
+  const bikesFor = (seriesIds: number[]) =>
+    seriesIds.length === 0
+      ? []
+      : activeBikes.filter((bike) => seriesMatchesBike(seriesIds, bike.seriesId!, modelSeries));
+  const bikesByPart = useMemo(() => {
+    const map = new Map<number, Motorcycle[]>();
+    for (const part of parts) {
+      if (part.seriesIds.length === 0) continue;
+      const fits = activeBikes.filter((bike) =>
+        seriesMatchesBike(part.seriesIds, bike.seriesId!, modelSeries),
+      );
+      if (fits.length > 0) map.set(part.id, fits);
+    }
+    return map;
+  }, [parts, activeBikes, modelSeries]);
+
   const query = search.trim().toLowerCase();
-  const selectedRootId = locationFilter ? Number(locationFilter) : null;
+  const matchesQuery = (part: {
+    name: string;
+    partNumber: string;
+    manufacturer: string;
+    oemPartNumber: string | null;
+  }) =>
+    !query ||
+    part.name.toLowerCase().includes(query) ||
+    part.partNumber.toLowerCase().includes(query) ||
+    part.manufacturer.toLowerCase().includes(query) ||
+    (part.oemPartNumber?.toLowerCase().includes(query) ?? false);
+  const selectedBikeId = bikeFilter ? Number(bikeFilter) : null;
+
   const filteredParts = parts.filter((part) => {
-    if (
-      query &&
-      !part.name.toLowerCase().includes(query) &&
-      !part.partNumber.toLowerCase().includes(query) &&
-      !part.oemPartNumber?.toLowerCase().includes(query)
-    ) {
+    if (!matchesQuery(part)) return false;
+    if (locationFilter === NO_LOCATION) {
+      if (!unplacedPartIds.has(part.id)) return false;
+    } else if (locationFilter && !rootsByPart.get(part.id)?.has(Number(locationFilter))) {
       return false;
     }
-    if (selectedRootId != null && !rootsByPart.get(part.id)?.has(selectedRootId)) {
+    if (selectedBikeId != null && !bikesByPart.get(part.id)?.some((bike) => bike.id === selectedBikeId)) {
+      return false;
+    }
+    if (onlyLow && part.onHand > 1) return false;
+    return true;
+  });
+  const filteredPublicParts = publicParts.filter((part) => {
+    if (!matchesQuery(part)) return false;
+    if (selectedBikeId != null && !bikesFor(part.seriesIds).some((bike) => bike.id === selectedBikeId)) {
       return false;
     }
     return true;
   });
-  const filteredPublicParts = query
-    ? publicParts.filter(
-        (part) =>
-          part.name.toLowerCase().includes(query) ||
-          part.partNumber.toLowerCase().includes(query) ||
-          part.oemPartNumber?.toLowerCase().includes(query),
-      )
-    : publicParts;
 
   const totalStock = parts.reduce((sum, part) => sum + Math.max(0, part.onHand), 0);
   const emptyCount = parts.filter((part) => part.onHand <= 0).length;
   const lowCount = parts.filter((part) => part.onHand === 1).length;
-  const stockSummary = [
-    `${parts.length} ${parts.length === 1 ? "Teil" : "Teile"} · ${totalStock} Stück auf Lager`,
+  const stockSummary = `${parts.length} ${parts.length === 1 ? "Teil" : "Teile"} · ${formatNumber(totalStock)} Stück auf Lager`;
+  const lowSummary = [
     emptyCount > 0 ? `${emptyCount} leer` : null,
     lowCount > 0 ? `${lowCount} knapp` : null,
   ]
     .filter(Boolean)
     .join(" · ");
 
+  const filtersActive = query !== "" || locationFilter !== "" || bikeFilter !== "" || onlyLow;
+
   return (
     <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-20 md:p-6 md:pb-12">
       <PageHeader
         eyebrow="Lager"
         title="Teile"
-        description={stockSummary}
+        description={
+          <>
+            {stockSummary}
+            {lowSummary && (
+              <>
+                {" · "}
+                <span className="font-semibold text-error">{lowSummary}</span>
+              </>
+            )}
+          </>
+        }
         actions={
         <>
           <Link
@@ -372,37 +426,51 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-sm border border-base-content/15 bg-base-100 p-0.5 dark:border-navy-700 dark:bg-navy-800">
+      {/* Toolbar — catalog switch, search and the filters in one strip. */}
+      <Card className="flex flex-wrap items-center gap-2.5 p-2.5">
+        <fieldset className="flex gap-1.5">
+          <legend className="sr-only">Katalog</legend>
           {(
             [
-              { value: "mine", label: `Meine Teile (${parts.length})` },
-              { value: "public", label: `Andere Nutzer (${publicParts.length})` },
+              { value: "mine", label: "Meine Teile", count: parts.length },
+              { value: "public", label: "Andere Nutzer", count: publicParts.length },
             ] as const
           ).map((segment) => (
             <button
               key={segment.value}
               type="button"
+              aria-pressed={tab === segment.value}
               onClick={() => setTab(segment.value)}
               className={clsx(
-                "rounded-sm px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
+                "h-9 whitespace-nowrap rounded-sm border px-3 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors",
                 tab === segment.value
-                  ? "bg-primary text-primary-content"
-                  : "text-base-content/60 hover:text-base-content dark:text-navy-300",
+                  ? "border-primary bg-primary/10 font-bold text-primary dark:bg-primary/15 dark:text-primary-light"
+                  : "border-base-300 font-semibold text-base-content/70 hover:text-base-content dark:border-navy-700 dark:text-navy-300 dark:hover:text-white",
               )}
             >
-              {segment.label}
+              {segment.label} · {segment.count}
             </button>
           ))}
-        </div>
-
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          {tab === "mine" && rootLocations.length > 0 && (
+        </fieldset>
+        <span aria-hidden="true" className="hidden h-6 w-px bg-base-300 sm:block dark:bg-navy-700" />
+        <label className="flex h-9 min-w-0 flex-[1_1_16rem] items-center gap-2 rounded-sm border border-base-300 px-2.5 text-base-content/60 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30 dark:border-navy-700 dark:text-navy-400">
+          <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="sr-only">Teile suchen</span>
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Name, Teilenummer oder Hersteller"
+            className="min-w-0 flex-1 border-none bg-transparent p-0 text-sm text-base-content placeholder:text-base-content/45 focus:outline-none focus:ring-0 dark:text-white dark:placeholder:text-navy-500"
+          />
+        </label>
+        {tab === "mine" && (rootLocations.length > 0 || unplacedPartIds.size > 0) && (
+          <label className={clsx(toolbarFieldClass, "flex-[1_1_12rem] sm:flex-none")}>
+            Lagerort
             <select
               value={locationFilter}
               onChange={(event) => setLocationFilter(event.target.value)}
-              aria-label="Nach Lagerort filtern"
-              className="block w-full rounded-sm border border-base-300 bg-base-100 py-2.5 pl-3 pr-8 text-sm text-base-content transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white sm:w-48"
+              className={toolbarSelectClass}
             >
               <option value="">Alle Lagerorte</option>
               {rootLocations.map((location) => (
@@ -410,24 +478,39 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                   {location.name}
                 </option>
               ))}
+              <option value={NO_LOCATION}>Ohne Lagerort</option>
             </select>
-          )}
-          <label className="relative block w-full sm:w-72">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40"
-              aria-hidden="true"
-            />
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Name oder Teilenummer …"
-              className="block w-full rounded-sm border border-base-300 bg-base-100 py-2.5 pl-9 pr-3 text-sm text-base-content transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-              aria-label="Teile durchsuchen"
-            />
           </label>
-        </div>
-      </div>
+        )}
+        {activeBikes.length > 0 && (
+          <label className={clsx(toolbarFieldClass, "flex-[1_1_12rem] sm:flex-none")}>
+            Für
+            <select
+              value={bikeFilter}
+              onChange={(event) => setBikeFilter(event.target.value)}
+              className={toolbarSelectClass}
+            >
+              <option value="">Alle Motorräder</option>
+              {activeBikes.map((bike) => (
+                <option key={bike.id} value={bike.id}>
+                  {bikeLabel(bike)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {tab === "mine" && (
+          <label className={clsx(toolbarFieldClass, "cursor-pointer")}>
+            <input
+              type="checkbox"
+              checked={onlyLow}
+              onChange={(event) => setOnlyLow(event.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            Nur knapp / leer
+          </label>
+        )}
+      </Card>
 
       {tab === "mine" ? (
         filteredParts.length === 0 ? (
@@ -437,7 +520,7 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
             description={
               parts.length === 0
                 ? "Lege dein erstes Ersatzteil an — Bestand und Verbrauch werden automatisch geführt."
-                : "Kein Teil passt zur Suche oder zum gewählten Lagerort."
+                : "Kein Teil passt zur Suche oder zu den gewählten Filtern."
             }
             action={
               parts.length === 0 ? (
@@ -448,111 +531,124 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                   <Plus className="h-4 w-4" aria-hidden="true" />
                   Erstes Teil erstellen
                 </button>
+              ) : filtersActive ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setLocationFilter("");
+                    setBikeFilter("");
+                    setOnlyLow(false);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-3 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:text-white"
+                >
+                  Filter zurücksetzen
+                </button>
               ) : undefined
             }
           />
         ) : (
           <>
-          <Card className="hidden overflow-hidden md:block">
+          <Card className="hidden overflow-x-auto lg:block">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-base-200 bg-base-200/40 dark:border-navy-700 dark:bg-navy-900/40">
-                <tr className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                  <th scope="col" className="px-4 py-2.5">Teil</th>
-                  <th scope="col" className="px-4 py-2.5">Für</th>
-                  <th scope="col" className="px-4 py-2.5">Lagerort</th>
-                  <th scope="col" className="px-4 py-2.5 text-right">Bestand</th>
+              <thead className="border-b border-base-200 dark:border-navy-700">
+                <tr className="font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-300">
+                  <th scope="col" className="px-4 py-3">Teil</th>
+                  <th scope="col" className="px-4 py-3">Teilenummer</th>
+                  <th scope="col" className="px-4 py-3">Hersteller · Passform</th>
+                  <th scope="col" className="px-4 py-3 text-primary dark:text-primary-light">Für</th>
+                  <th scope="col" className="px-4 py-3 text-right">Bestand</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-base-200 dark:divide-navy-700">
+              <tbody className="divide-y divide-base-200/70 dark:divide-navy-700">
                 {filteredParts.map((part) => {
                   const bikes = bikesByPart.get(part.id);
                   const series = seriesNames(part.seriesIds, modelSeries);
-                  const roots = [...(rootsByPart.get(part.id) ?? [])]
-                    .map((id) => rootName.get(id))
-                    .filter(Boolean);
+                  const tone = stockTone(part.onHand);
                   return (
                     <tr
                       key={part.id}
                       onClick={() => navigate(`/parts/${part.id}`)}
                       className="cursor-pointer transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30"
                     >
-                      <td className="px-4 py-2.5">
+                      <td className="relative px-4 py-2.5">
+                        {tone !== "ok" && (
+                          <span
+                            aria-hidden="true"
+                            className={clsx(
+                              "absolute inset-y-2 left-0 w-[3px] rounded-r-sm",
+                              tone === "empty" ? "bg-accent" : "bg-[var(--color-workshop)]",
+                            )}
+                          />
+                        )}
                         <div className="flex items-center gap-3">
                           {part.image ? (
                             <img
-                              src={`${getBackendAssetUrl(part.image)}?width=80`}
+                              src={`${getBackendAssetUrl(part.image)}?width=112`}
                               alt=""
                               loading="lazy"
-                              className="h-10 w-10 shrink-0 rounded-sm border border-base-300 object-cover dark:border-navy-700"
+                              className="h-[42px] w-14 shrink-0 rounded-sm border border-base-300 bg-white object-contain dark:border-navy-700"
                             />
                           ) : (
                             <span
                               aria-hidden="true"
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-dashed border-base-300 text-base-content/30 dark:border-navy-700"
+                              className="flex h-[42px] w-14 shrink-0 items-center justify-center rounded-sm border border-dashed border-base-300 text-base-content/30 dark:border-navy-700"
                             >
                               <Package className="h-4 w-4" />
                             </span>
                           )}
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <Link
-                                to={`/parts/${part.id}`}
-                                onClick={(event) => event.stopPropagation()}
-                                className="line-clamp-2 font-semibold text-base-content hover:underline dark:text-white"
-                              >
-                                {part.name}
-                              </Link>
-                              {part.isPublic ? (
-                                <Globe className="h-3 w-3 shrink-0 text-success" aria-label="Öffentlich" />
-                              ) : (
-                                <Lock className="h-3 w-3 shrink-0 text-base-content/35" aria-label="Privat" />
-                              )}
-                            </div>
-                            <p className="font-mono text-[11px] text-base-content/60 dark:text-navy-400">
-                              {part.partNumber}
-                              {part.manufacturer && part.manufacturer !== "BMW" && ` · ${part.manufacturer}`}
-                            </p>
-                          </div>
+                          <Link
+                            to={`/parts/${part.id}`}
+                            onClick={(event) => event.stopPropagation()}
+                            className="line-clamp-2 font-semibold text-base-content hover:underline dark:text-white"
+                          >
+                            {part.name}
+                          </Link>
+                          {part.isPublic ? (
+                            <Globe className="h-3 w-3 shrink-0 text-success" aria-label="Öffentlich" />
+                          ) : (
+                            <Lock className="h-3 w-3 shrink-0 text-base-content/35" aria-label="Privat" />
+                          )}
                         </div>
                       </td>
-                      <td className="px-4 py-2.5 text-base-content/80 dark:text-navy-200">
+                      <td className="whitespace-nowrap px-4 py-2.5 font-mono text-[13px] text-base-content/70 dark:text-navy-300">
+                        {part.partNumber}
+                      </td>
+                      <td className="px-4 py-2.5 text-[13px] text-base-content/70 dark:text-navy-300">
+                        {part.manufacturer}
+                        {series.length > 0 && ` · ${series.slice(0, 2).join(", ")}`}
+                        {series.length > 2 && ` +${series.length - 2}`}
+                      </td>
+                      <td className="px-4 py-2.5">
                         {bikes ? (
-                          bikes.join(", ")
-                        ) : series.length > 0 ? (
-                          <span className="text-base-content/60 dark:text-navy-400">
-                            {series.slice(0, 2).join(", ")}
-                            {series.length > 2 && ` +${series.length - 2}`}
+                          <span className="whitespace-nowrap font-mono text-xs font-bold tracking-[0.04em] text-primary dark:text-primary-light">
+                            {bikes.map(bikeLabel).join(" · ")}
                           </span>
                         ) : (
-                          <span className="text-base-content/40">–</span>
+                          <span className="font-mono text-xs text-base-content/40 dark:text-navy-500">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-base-content/80 dark:text-navy-200">
-                        {roots.length > 0 ? (
-                          roots.join(", ")
-                        ) : part.onHand > 0 ? (
-                          <span className="text-warning">ohne Lagerort</span>
-                        ) : (
-                          <span className="text-base-content/40">–</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 text-right">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-right">
                         <span
                           className={clsx(
-                            "font-numeric text-lg font-semibold",
-                            part.onHand > 0 ? "text-primary" : "text-base-content/35 dark:text-navy-500",
+                            "font-numeric text-base font-bold",
+                            tone === "empty"
+                              ? "text-error"
+                              : tone === "low"
+                                ? "text-warning"
+                                : "text-base-content dark:text-white",
                           )}
                         >
-                          {part.onHand}
+                          {part.onHand} Stk.
                         </span>
-                        {part.onHand <= 1 && (
+                        {tone !== "ok" && (
                           <span
                             className={clsx(
-                              "ml-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
-                              part.onHand <= 0 ? "text-error" : "text-warning",
+                              "ml-2 font-mono text-[11px] font-bold uppercase tracking-[0.08em]",
+                              tone === "empty" ? "text-error" : "text-warning",
                             )}
                           >
-                            {part.onHand <= 0 ? "Leer" : "Knapp"}
+                            {tone === "empty" ? "Leer" : "Knapp"}
                           </span>
                         )}
                       </td>
@@ -562,73 +658,90 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
               </tbody>
             </table>
           </Card>
-          <div className="grid gap-3 sm:grid-cols-2 md:hidden">
-            {filteredParts.map((part) => (
-              <Link key={part.id} to={`/parts/${part.id}`} className="block text-left">
-                <Card
-                  accent={part.onHand <= 0 ? "error" : part.onHand === 1 ? "warning" : undefined}
-                  className="h-full px-4 py-3.5 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    {part.image && (
-                      <img
-                        src={`${getBackendAssetUrl(part.image)}?width=96`}
-                        alt=""
-                        loading="lazy"
-                        className="h-12 w-12 shrink-0 rounded-sm border border-base-300 object-cover dark:border-navy-700"
-                      />
-                    )}
-                    <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="line-clamp-2 text-sm font-semibold text-base-content dark:text-white">
-                          {part.name}
-                        </h3>
-                        {part.isPublic ? (
-                          <Globe className="h-3 w-3 shrink-0 text-success" aria-label="Öffentlich" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:hidden">
+            {filteredParts.map((part) => {
+              const tone = stockTone(part.onHand);
+              const bikes = bikesByPart.get(part.id);
+              return (
+                <Link key={part.id} to={`/parts/${part.id}`} className="block text-left">
+                  <Card
+                    accent={tone === "empty" ? "accent" : tone === "low" ? "workshop" : undefined}
+                    className="h-full px-4 py-3.5 transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/30"
+                  >
+                    <div className="flex items-start gap-3">
+                      {part.image && (
+                        <img
+                          src={`${getBackendAssetUrl(part.image)}?width=112`}
+                          alt=""
+                          loading="lazy"
+                          className="h-[42px] w-14 shrink-0 rounded-sm border border-base-300 bg-white object-contain dark:border-navy-700"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="line-clamp-2 text-sm font-semibold text-base-content dark:text-white">
+                            {part.name}
+                          </h3>
+                          {part.isPublic ? (
+                            <Globe className="h-3 w-3 shrink-0 text-success" aria-label="Öffentlich" />
+                          ) : (
+                            <Lock className="h-3 w-3 shrink-0 text-base-content/35" aria-label="Privat" />
+                          )}
+                        </div>
+                        <p className="truncate font-mono text-[11px] text-base-content/70 dark:text-navy-400">
+                          {part.partNumber} · {part.manufacturer}
+                        </p>
+                        {bikes ? (
+                          <p className="truncate font-mono text-[11px] font-bold tracking-[0.04em] text-primary dark:text-primary-light">
+                            Für {bikes.map(bikeLabel).join(" · ")}
+                          </p>
                         ) : (
-                          <Lock className="h-3 w-3 shrink-0 text-base-content/35" aria-label="Privat" />
+                          part.seriesIds.length > 0 && (
+                            <p className="truncate text-[11px] text-base-content/60 dark:text-navy-400">
+                              {seriesNames(part.seriesIds, modelSeries).slice(0, 2).join(", ")}
+                              {part.seriesIds.length > 2 && ` +${part.seriesIds.length - 2}`}
+                            </p>
+                          )
                         )}
                       </div>
-                      <p className="truncate font-mono text-[11px] text-base-content/60 dark:text-navy-400">
-                        {part.partNumber}
-                      </p>
-                      <p className="truncate text-[11px] text-base-content/50">
-                        {bikesByPart.has(part.id) ? (
-                          <>Für {bikesByPart.get(part.id)!.join(", ")}</>
-                        ) : (
-                          <>
-                            {[part.manufacturer, ...seriesNames(part.seriesIds, modelSeries).slice(0, 2)].join(
-                              " · ",
+                      <div className="shrink-0 text-right">
+                        <p
+                          className={clsx(
+                            "font-numeric text-base font-bold leading-none",
+                            tone === "empty"
+                              ? "text-error"
+                              : tone === "low"
+                                ? "text-warning"
+                                : "text-base-content dark:text-white",
+                          )}
+                        >
+                          {part.onHand} Stk.
+                        </p>
+                        {tone !== "ok" && (
+                          <p
+                            className={clsx(
+                              "mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.08em]",
+                              tone === "empty" ? "text-error" : "text-warning",
                             )}
-                            {part.seriesIds.length > 2 && ` +${part.seriesIds.length - 2}`}
-                          </>
+                          >
+                            {tone === "empty" ? "Leer" : "Knapp"}
+                          </p>
                         )}
-                      </p>
+                      </div>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <p
-                        className={clsx(
-                          "font-numeric text-2xl font-semibold leading-none",
-                          part.onHand > 0
-                            ? "text-primary"
-                            : "text-base-content/35 dark:text-navy-500",
-                        )}
-                      >
-                        {part.onHand}
-                      </p>
-                      <p
-                        className={clsx(
-                          "mt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em]",
-                          part.onHand <= 0 ? "text-error" : part.onHand === 1 ? "text-warning" : "text-base-content/70",
-                        )}
-                      >
-                        {part.onHand <= 0 ? "Leer" : part.onHand === 1 ? "Knapp" : "Bestand"}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 font-mono text-[11px] uppercase tracking-[0.06em] text-base-content/60 dark:text-navy-400">
+            <p>
+              {filteredParts.length === parts.length
+                ? `${parts.length} ${parts.length === 1 ? "Teil" : "Teile"}`
+                : `${filteredParts.length} von ${parts.length} Teilen`}
+              {activeBikes.length > 0 && " · Für = eigene Motorräder laut Passform"}
+            </p>
+            <p>Knapp = 1 Stück · Leer = 0</p>
           </div>
           </>
         )
@@ -640,32 +753,39 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredPublicParts.map((part) => (
+          {filteredPublicParts.map((part) => {
+            const bikes = bikesFor(part.seriesIds);
+            return (
             <Card key={part.id} className="px-4 py-3.5">
               <div className="flex items-start justify-between gap-3">
                 {part.image && (
                   <img
-                    src={`${getBackendAssetUrl(part.image)}?width=96`}
+                    src={`${getBackendAssetUrl(part.image)}?width=112`}
                     alt=""
                     loading="lazy"
-                    className="h-12 w-12 shrink-0 rounded-sm border border-base-300 object-cover dark:border-navy-700"
+                    className="h-[42px] w-14 shrink-0 rounded-sm border border-base-300 bg-white object-contain dark:border-navy-700"
                   />
                 )}
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <h3 className="truncate text-sm font-semibold text-base-content dark:text-white">
                     {part.name}
                   </h3>
-                  <p className="truncate font-mono text-[11px] text-base-content/60 dark:text-navy-400">
+                  <p className="truncate font-mono text-[11px] text-base-content/70 dark:text-navy-400">
                     {part.partNumber}
                     {part.oemPartNumber && ` · BMW ${part.oemPartNumber}`}
                   </p>
-                  <p className="truncate text-[11px] text-base-content/50">
+                  <p className="truncate text-[11px] text-base-content/60 dark:text-navy-400">
                     von {part.ownerName}
                     {part.seriesIds.length > 0 &&
                       ` · ${seriesNames(part.seriesIds, modelSeries).slice(0, 2).join(", ")}`}
                   </p>
+                  {bikes.length > 0 && (
+                    <p className="truncate font-mono text-[11px] font-bold tracking-[0.04em] text-primary dark:text-primary-light">
+                      Für {bikes.map(bikeLabel).join(" · ")}
+                    </p>
+                  )}
                   {part.description && (
-                    <p className="truncate text-[11px] text-base-content/50">
+                    <p className="truncate text-[11px] text-base-content/60 dark:text-navy-400">
                       <FormattedText description={part.description} markup={part.descriptionMarkup} />
                     </p>
                   )}
@@ -674,10 +794,10 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                   className={clsx(
                     "shrink-0 rounded-sm px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em]",
                     !part.isPublic
-                      ? "bg-base-200 text-base-content/50 dark:bg-navy-800 dark:text-navy-400"
+                      ? "bg-base-200 text-base-content/60 dark:bg-navy-900 dark:text-navy-400"
                       : part.hasStock
                         ? "bg-success/15 text-success"
-                        : "bg-base-200 text-base-content/50 dark:bg-navy-800 dark:text-navy-400",
+                        : "bg-base-200 text-base-content/60 dark:bg-navy-900 dark:text-navy-400",
                   )}
                 >
                   {!part.isPublic
@@ -688,11 +808,11 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                 </span>
               </div>
               {part.isPublic && (part.stocks?.length ?? 0) > 0 && (
-                <ul className="mt-2 space-y-0.5 border-t border-base-200 pt-2 text-[11px] text-base-content/60 dark:border-navy-700">
+                <ul className="mt-2 space-y-0.5 border-t border-base-200 pt-2 text-[11px] text-base-content/60 dark:border-navy-700 dark:text-navy-400">
                   {part.stocks!.map((stock) => (
                     <li key={publicStockKey(stock)} className="truncate">
                       {stock.quantity} Stk.
-                      {stock.price != null && ` · ${stock.price.toFixed(2)} ${stock.currency ?? ""}`}
+                      {stock.price != null && ` · ${formatCurrency(stock.price, stock.currency ?? "CHF")}`}
                       {stock.purchaseDate && ` · ${new Date(stock.purchaseDate).toLocaleDateString("de-CH")}`}
                       {stock.storageLocation && ` · ${stock.storageLocation}`}
                     </li>
@@ -700,7 +820,8 @@ export default function PartsPage({ loaderData }: Route.ComponentProps) {
                 </ul>
               )}
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 

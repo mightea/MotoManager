@@ -64,12 +64,14 @@ export function StorageLocationForm({
 
   return (
     <Form method="post" className="space-y-5">
-      {/* Edit posts to the location's own route, so no id field is needed. */}
+      {/* The location's own route reads the id from its URL; the Lagerorte
+          overview (which edits in place) reads it from this field. */}
       <input
         type="hidden"
         name="intent"
         value={initialValues ? "updateLocation" : "createLocation"}
       />
+      {initialValues && <input type="hidden" name="locationId" value={initialValues.id} />}
 
       <div className="space-y-1.5">
         <label htmlFor="location-name" className={labelClass}>
