@@ -96,7 +96,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ) : (
         leftIcon && <span className="shrink-0">{leftIcon}</span>
       )}
-      <span className="truncate">{children}</span>
+      <span className="flex min-w-0 items-center gap-1.5 truncate whitespace-nowrap">{children}</span>
       {!isLoading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
       {stripe && (
         <span

@@ -3,7 +3,7 @@ import clsx from "clsx";
 
 interface PageHeaderProps {
   /** Area the page belongs to, e.g. "Lager", "Flotte", "Archiv". */
-  eyebrow: string;
+  eyebrow: ReactNode;
   /** Page title — rendered in the display face, upper-cased. */
   title: string;
   /** One line of context, e.g. "23 Teile · 34 Stück auf Lager". */
