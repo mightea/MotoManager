@@ -1,11 +1,4 @@
-import {
-  Form,
-  Link,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-  useSubmit,
-} from "react-router";
+import { Link, useActionData, useLoaderData, useNavigation } from "react-router";
 import {
   createLocation,
   deleteLocation,
@@ -15,40 +8,18 @@ import {
   updateLocation,
   updateUserSettings,
 } from "~/services/settings";
-import { haversineMeters, normalizeLocationName } from "~/utils/geo";
 import { resolveCountryCode } from "~/services/map";
-import { fluidTypeLabels } from "~/utils/maintenance";
-import {
-  requireUser,
-} from "~/services/auth";
+import { requireUser } from "~/services/auth";
 import { fetchFromBackend } from "~/utils/backend";
 import type { Route } from "./+types/settings";
-import { Button } from "~/components/button";
-import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
-import { useConfirm } from "~/components/confirm-provider";
-import { LocationEditDialog } from "~/components/location-edit-dialog";
-import { Modal } from "~/components/modal";
-import { useEffect, useMemo, useState } from "react";
-import {
-  Bot,
-  ChevronRight,
-  Trash2,
-  Plus,
-  Fingerprint,
-  Key,
-  Activity,
-  Lock,
-  MapPin,
-  Warehouse,
-  Wrench,
-  Fuel,
-  ClipboardCheck,
-  CheckSquare,
-  Combine,
-} from "lucide-react";
-import { registerPasskey } from "~/utils/webauthn";
+import { PageHeader } from "~/components/page-header";
+import { Card } from "~/components/card";
 import { AppConnectCard } from "~/components/app-connect-card";
-import type { Authenticator, FluidType, Location, LocationType, UserSettings } from "~/types/db";
+import { AccountSecuritySection } from "~/components/settings/account-security-section";
+import { IntervalsSection } from "~/components/settings/intervals-section";
+import { LocationsSection } from "~/components/settings/locations-section";
+import { SettingsNav, type SettingsNavItem } from "~/components/settings/settings-nav";
+import type { Authenticator, Location, LocationType } from "~/types/db";
 
 export function meta() {
   return [
@@ -298,275 +269,34 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   return null;
 }
 
-/** One survivor plus the same-named entries that fold into it. */
-type DuplicateGroup = {
-  canonical: Location;
-  duplicates: Location[];
-};
-
-/**
- * Pick the entry that survives a merge: prefer one that carries coordinates (so
- * the merge keeps them), then the oldest (lowest id) for a stable choice.
- */
-function chooseCanonical(items: Location[]): Location {
-  const withCoords = items.filter(
-    (l) => l.latitude !== null && l.longitude !== null,
-  );
-  const pool = withCoords.length > 0 ? withCoords : items;
-  return pool.reduce((best, l) => (l.id < best.id ? l : best));
-}
-
-/** Two coordinate-bearing locations closer than this count as the same place. */
-const PROXIMITY_MERGE_RADIUS_M = 50;
-
-/** "47.3769, 8.5417" for a coordinate-bearing location, else null. */
-function formatCoords(l: Location): string | null {
-  if (l.latitude === null || l.longitude === null) return null;
-  return `${l.latitude.toFixed(4)}, ${l.longitude.toFixed(4)}`;
-}
-
-/**
- * Cluster a section's locations into duplicate groups. Two entries are linked
- * when they share a normalized name OR sit within PROXIMITY_MERGE_RADIUS_M of
- * each other; links are transitive (union-find), so a chain A~B~C collapses
- * into one group. Only clusters with 2+ members are returned. O(n²) is fine —
- * per-user, per-section location counts are small.
- */
-function findDuplicateGroups(items: Location[]): DuplicateGroup[] {
-  const n = items.length;
-  if (n < 2) return [];
-
-  const names = items.map((l) => normalizeLocationName(l.name));
-  const parent = items.map((_, i) => i);
-  const find = (i: number): number => {
-    while (parent[i] !== i) {
-      parent[i] = parent[parent[i]];
-      i = parent[i];
-    }
-    return i;
-  };
-  const union = (a: number, b: number) => {
-    const ra = find(a);
-    const rb = find(b);
-    if (ra !== rb) parent[ra] = rb;
-  };
-
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      const a = items[i];
-      const b = items[j];
-      const sameName = names[i] !== "" && names[i] === names[j];
-      const nearby =
-        a.latitude !== null &&
-        a.longitude !== null &&
-        b.latitude !== null &&
-        b.longitude !== null &&
-        haversineMeters(a.latitude, a.longitude, b.latitude, b.longitude) <=
-          PROXIMITY_MERGE_RADIUS_M;
-      if (sameName || nearby) union(i, j);
-    }
-  }
-
-  const clusters = new Map<number, Location[]>();
-  for (let i = 0; i < n; i++) {
-    const root = find(i);
-    const arr = clusters.get(root);
-    if (arr) arr.push(items[i]);
-    else clusters.set(root, [items[i]]);
-  }
-
-  const groups: DuplicateGroup[] = [];
-  for (const arr of clusters.values()) {
-    if (arr.length < 2) continue;
-    const canonical = chooseCanonical(arr);
-    groups.push({
-      canonical,
-      duplicates: arr.filter((l) => l.id !== canonical.id),
-    });
-  }
-  return groups;
-}
-
-/**
- * Fluid service-interval fields, rendered as a loop in the settings form.
- * Labels come from the single fluidTypeLabels map; each entry maps to its
- * UserSettings year + km columns. Adding a fluid type here is all it takes to
- * expose its configurable interval.
- */
-const FLUID_INTERVAL_FIELDS: {
-  type: FluidType;
-  yearsName: keyof UserSettings;
-  kmName: keyof UserSettings;
-}[] = [
-  { type: "engineoil", yearsName: "engineOilInterval", kmName: "engineOilKmInterval" },
-  { type: "gearboxoil", yearsName: "gearboxOilInterval", kmName: "gearboxOilKmInterval" },
-  { type: "finaldriveoil", yearsName: "finalDriveOilInterval", kmName: "finalDriveOilKmInterval" },
-  { type: "finaldrivegearboxoil", yearsName: "finalDriveGearboxOilInterval", kmName: "finalDriveGearboxOilKmInterval" },
-  { type: "forkoil", yearsName: "forkOilInterval", kmName: "forkOilKmInterval" },
-  { type: "brakefluid", yearsName: "brakeFluidInterval", kmName: "brakeFluidKmInterval" },
-  { type: "coolant", yearsName: "coolantInterval", kmName: "coolantKmInterval" },
+const SECTIONS: SettingsNavItem[] = [
+  { id: "app", label: "iPhone-App" },
+  { id: "konto", label: "Konto & Sicherheit" },
+  { id: "ki", label: "KI-Zugriff (MCP)" },
+  { id: "standorte", label: "Standorte" },
+  { id: "intervalle", label: "Service-Intervalle" },
+  { id: "ueber", label: "Über" },
 ];
-
-type LocationSection = {
-  type: LocationType;
-  label: string;
-  description: string;
-  placeholder: string;
-  icon: typeof MapPin;
-  iconBg: string;
-  iconFg: string;
-};
-
-const LOCATION_SECTIONS: LocationSection[] = [
-  {
-    type: "storage",
-    label: "Garagen & Lager",
-    description: "Wo deine Fahrzeuge untergebracht sind.",
-    placeholder: "Neuer Lagerort (z.B. Garage)",
-    icon: Warehouse,
-    iconBg: "bg-rose-100 dark:bg-rose-900/30",
-    iconFg: "text-rose-600 dark:text-rose-400",
-  },
-  {
-    type: "maintenanceShop",
-    label: "Werkstätten",
-    description: "Betriebe, bei denen du Wartung durchführen lässt.",
-    placeholder: "Neue Werkstatt (z.B. Werkstatt Müller)",
-    icon: Wrench,
-    iconBg: "bg-amber-100 dark:bg-amber-900/30",
-    iconFg: "text-amber-600 dark:text-amber-400",
-  },
-  {
-    type: "fuelStation",
-    label: "Tankstellen",
-    description: "Tankstellen, die du regelmässig anfährst.",
-    placeholder: "Neue Tankstelle (z.B. Shell Zürich)",
-    icon: Fuel,
-    iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
-    iconFg: "text-emerald-600 dark:text-emerald-400",
-  },
-  {
-    type: "inspection",
-    label: "Prüfstellen",
-    description: "MFK- und Inspektionsstellen.",
-    placeholder: "Neue Prüfstelle (z.B. STVA Zürich)",
-    icon: ClipboardCheck,
-    iconBg: "bg-sky-100 dark:bg-sky-900/30",
-    iconFg: "text-sky-600 dark:text-sky-400",
-  },
-  {
-    type: "other",
-    label: "Sonstige",
-    description: "Alles, was sonst nicht passt.",
-    placeholder: "Neuer Standort",
-    icon: MapPin,
-    iconBg: "bg-slate-100 dark:bg-slate-800",
-    iconFg: "text-slate-600 dark:text-slate-300",
-  },
-];
-
-/** Location groups longer than this start collapsed (fuel stations can run into the hundreds). */
-const COLLAPSED_LOCATIONS = 8;
 
 export default function Settings() {
   const { locations, user, userAuthenticators, settings } = useLoaderData<typeof clientLoader>();
   const actionData = useActionData<typeof clientAction>();
   const navigation = useNavigation();
-  type DialogState =
-    | { mode: "edit"; location: Location }
-    | { mode: "create"; type: LocationType }
-    | null;
-  const [dialogState, setDialogState] = useState<DialogState>(null);
-  const [selectionSection, setSelectionSection] = useState<LocationType | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [bulkType, setBulkType] = useState<LocationType>("fuelStation");
-  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<LocationType>>(new Set());
-  const [mergePreview, setMergePreview] = useState<
-    { section: LocationSection; groups: DuplicateGroup[] } | null
-  >(null);
-  const submit = useSubmit();
-  const confirmDialog = useConfirm();
-
   const isSubmitting = navigation.state === "submitting";
 
-  const groupedLocations = useMemo(() => {
-    const groups: Record<LocationType, Location[]> = {
-      storage: [],
-      maintenanceShop: [],
-      fuelStation: [],
-      inspection: [],
-      other: [],
-    };
-    for (const loc of locations as Location[]) {
-      (groups[loc.type] ?? groups.other).push(loc);
-    }
-    return groups;
-  }, [locations]);
-
-  const exitSelectionMode = () => {
-    setSelectionSection(null);
-    setSelectedIds(new Set());
-  };
-
-  const enterSelectionMode = (type: LocationType) => {
-    setSelectionSection(type);
-    setSelectedIds(new Set());
-    // Default bulk-target to a different type so the action isn't a no-op.
-    setBulkType(type === "fuelStation" ? "maintenanceShop" : "fuelStation");
-  };
-
-  const toggleSelected = (id: number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const confirmMerge = () => {
-    if (!mergePreview) return;
-    const groups = mergePreview.groups.map((g) => ({
-      canonicalId: g.canonical.id,
-      duplicateIds: g.duplicates.map((d) => d.id),
-    }));
-    const fd = new FormData();
-    fd.set("intent", "mergeDuplicateLocations");
-    fd.set("groups", JSON.stringify(groups));
-    submit(fd, { method: "post" });
-    setMergePreview(null);
-  };
-
-  // Exit selection mode and close the create/edit dialog on a successful action.
-  useEffect(() => {
-    if (actionData && "success" in actionData) {
-      setDialogState(null);
-      exitSelectionMode();
-    }
-    // exitSelectionMode is stable enough for this case; intentionally not in deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionData]);
-
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4 pt-4 sm:pt-10 pb-20">
-      <div className="space-y-3">
-        <span className="label-tag">
-          <span>Konfiguration</span>
-        </span>
-        <h1 className="font-display text-4xl uppercase leading-none tracking-wide text-base-content dark:text-white">
-          Einstellungen
-        </h1>
-        <p className="text-base-content/65 dark:text-navy-300">
-          Konto, Service-Intervalle, Lagerorte.
-        </p>
-      </div>
+    <div className="container mx-auto max-w-7xl space-y-7 px-4 pt-4 pb-20 md:p-6 md:pb-16">
+      <PageHeader
+        eyebrow="Konfiguration"
+        title="Einstellungen"
+        description="Konto, iPhone-App, Standorte und Service-Intervalle."
+      />
 
       {actionData && "error" in actionData && (
-        <div className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
+        <div
+          role="alert"
+          className="relative flex items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10"
+        >
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
           <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] pt-0.5 opacity-70">ERR</span>
           <span>{actionData.error}</span>
@@ -574,712 +304,61 @@ export default function Settings() {
       )}
 
       {actionData && "success" in actionData && (
-        <div className="relative flex items-start gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3 text-sm text-success dark:border-success/40 dark:bg-success/10">
+        <output className="relative flex items-start gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3 text-sm text-success dark:border-success/40 dark:bg-success/10">
           <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-success" />
           <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] pt-0.5 opacity-70">OK</span>
           <span>{actionData.success}</span>
-        </div>
+        </output>
       )}
 
-      <nav aria-label="Bereiche" className="flex flex-wrap gap-2">
-        {[
-          { href: "#app", label: "iPhone-App" },
-          { href: "#konto", label: "Passwort" },
-          { href: "#passkeys", label: "Passkeys" },
-          { href: "#ki", label: "KI-Zugriff" },
-          { href: "#standorte", label: "Standorte" },
-          { href: "#intervalle", label: "Service-Intervalle" },
-        ].map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            className="rounded-sm border border-base-content/15 bg-base-100 px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 transition-colors hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300"
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <SettingsNav items={SECTIONS} />
 
-      <div id="app" className="scroll-mt-24">
-        <AppConnectCard username={user.username} />
-      </div>
+        <div className="flex min-w-0 flex-col gap-4">
+          <AppConnectCard username={user.username} />
 
-      {/* Password Change Section */}
-      <section id="konto" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-lg bg-orange-100 p-2 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
-            <Lock className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
-              Passwort ändern
-            </h2>
-            <p className="text-sm text-secondary dark:text-navy-300">
-              Aktualisiere dein Passwort für mehr Sicherheit.
-            </p>
-          </div>
-        </div>
-        <Form method="post" className="space-y-4">
-          <input type="hidden" name="intent" value="changePassword" />
-          <div className="space-y-1.5">
-            <label
-              htmlFor="currentPassword"
-              className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
-            >
-              Aktuelles Passwort
-            </label>
-            <input
-              type="password"
-              name="currentPassword"
-              id="currentPassword"
-              required
-              className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="newPassword"
-                className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
+          <AccountSecuritySection authenticators={userAuthenticators} isSubmitting={isSubmitting} />
+
+          <section id="ki" aria-labelledby="ki-h" className="scroll-mt-24">
+            <Card className="transition-colors hover:border-base-content/30 dark:hover:border-navy-500">
+              <Link
+                to="/settings/api-tokens"
+                className="flex items-center gap-3 px-4 py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
               >
-                Neues Passwort
-              </label>
-              <input
-                type="password"
-                name="newPassword"
-                id="newPassword"
-                required
-                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="confirmPassword"
-                className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
-              >
-                Passwort bestätigen
-              </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                id="confirmPassword"
-                required
-                className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={isSubmitting}>
-              Passwort speichern
-            </Button>
-          </div>
-        </Form>
-      </section>
-
-      {/* Passkeys Section */}
-      <section id="passkeys" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
-              <Fingerprint className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">Passkeys</h2>
-              <p className="text-sm text-secondary dark:text-navy-300">
-                Logge dich schneller und sicherer mit Biometrie ein.
-              </p>
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={async () => {
-              try {
-                await registerPasskey();
-                window.location.reload();
-              } catch (err) {
-                alert("Fehler beim Erstellen des Passkeys: " + (err instanceof Error ? err.message : "Unbekannt"));
-              }
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Hinzufügen
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {userAuthenticators.map((auth) => (
-            <div
-              key={auth.id}
-              className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-navy-700 dark:bg-navy-900"
-            >
-              <div className="flex items-center gap-3">
-                <Key className="h-4 w-4 text-secondary dark:text-navy-400" />
-                <div>
-                  <p className="text-sm font-medium text-foreground dark:text-white">
-                    {auth.deviceType === "single_device" ? "Sicherheitsschlüssel / Gerät" : "Multi-Device Passkey"}
-                  </p>
-                  <p className="text-[11px] text-secondary/60 dark:text-navy-500 uppercase tracking-wider font-bold">
-                    ID: {auth.id?.slice(0, 8) ?? "N/A"}... • Registriert am {auth.createdAt ? new Date(auth.createdAt).toLocaleDateString("de-CH") : "Unbekannt"}
-                  </p>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                aria-label="Passkey löschen"
-                onClick={async () => {
-                  const ok = await confirmDialog({
-                    title: "Passkey löschen?",
-                    description: "Passkey wirklich löschen?",
-                  });
-                  if (!ok) return;
-                  submit(
-                    { intent: "deleteAuthenticator", id: auth.id ?? "" },
-                    { method: "post" },
-                  );
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          {userAuthenticators.length === 0 && (
-            <p className="py-4 text-center text-sm text-secondary dark:text-navy-400">
-              Keine Passkeys registriert.
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* AI access (MCP) link */}
-      <div id="ki" className="scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03)] transition-all hover:border-base-content/30 hover:shadow-[0_12px_24px_-14px_rgba(15,23,42,0.18)] dark:border-navy-700 dark:bg-navy-800 dark:hover:border-navy-500">
-        <Link to="/settings/api-tokens" className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-violet-100 p-2 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
-              <Bot className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
-                KI-Zugriff (MCP)
-              </h2>
-              <p className="text-sm text-secondary dark:text-navy-300">
-                API-Tokens für KI-Assistenten wie Claude verwalten und Zugriffe einsehen.
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-secondary dark:text-navy-400" />
-        </Link>
-      </div>
-
-      {/* Locations Section */}
-      <section id="standorte" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex items-start gap-3 mb-6">
-          <div className="rounded-lg bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
-            <MapPin className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">
-              Standorte verwalten
-            </h2>
-            <p className="text-sm text-secondary dark:text-navy-300">
-              Garagen, Werkstätten, Tankstellen und Prüfstellen — gruppiert nach Typ.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-8">
-          {LOCATION_SECTIONS.map((section) => {
-            const SectionIcon = section.icon;
-            const items = groupedLocations[section.type];
-            const isSelecting = selectionSection === section.type;
-            const allSelectedInSection = items.length > 0 && selectedIds.size === items.length;
-            const duplicateGroups = findDuplicateGroups(items);
-            const duplicateCount = duplicateGroups.reduce(
-              (n, g) => n + g.duplicates.length,
-              0,
-            );
-            return (
-              <div key={section.type} className="space-y-3">
-                <div className="flex items-center gap-3 border-b border-gray-100 pb-2 dark:border-navy-700">
-                  <div className={`rounded-md ${section.iconBg} p-1.5 ${section.iconFg}`}>
-                    <SectionIcon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-display text-sm uppercase tracking-wider text-base-content dark:text-white">
-                      {section.label}
-                    </h3>
-                    <p className="text-xs text-secondary dark:text-navy-400">
-                      {section.description}
-                    </p>
-                  </div>
-                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums text-base-content/70">
-                    {items.length}
-                  </span>
-                  {!isSelecting && duplicateGroups.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setMergePreview({ section, groups: duplicateGroups })}
-                      title={`${duplicateCount} Duplikat${duplicateCount === 1 ? "" : "e"} zusammenführen`}
-                    >
-                      <Combine className="h-4 w-4" />
-                      <span className="ml-1 font-mono text-[11px] tabular-nums">
-                        {duplicateCount}
-                      </span>
-                    </Button>
-                  )}
-                  {!isSelecting && items.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => enterSelectionMode(section.type)}
-                      title="Mehrfachauswahl"
-                    >
-                      <CheckSquare className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {!isSelecting && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setDialogState({ mode: "create", type: section.type })}
-                      title={`${section.label}: Eintrag hinzufügen`}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                {isSelecting && (
-                  <Form
-                    method="post"
-                    className="flex flex-wrap items-center gap-3 rounded-sm border border-primary/40 bg-primary/5 p-3"
-                    onSubmit={(e) => {
-                      if (selectedIds.size === 0) {
-                        e.preventDefault();
-                        return;
-                      }
-                    }}
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <h2
+                    id="ki-h"
+                    className="font-subdisplay text-[15px] leading-tight tracking-[0.06em] text-base-content dark:text-white"
                   >
-                    <input type="hidden" name="intent" value="bulkUpdateLocationType" />
-                    <input type="hidden" name="type" value={bulkType} />
-                    {[...selectedIds].map((id) => (
-                      <input key={id} type="hidden" name="ids" value={id} />
-                    ))}
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] tabular-nums text-base-content">
-                      {selectedIds.size} / {items.length} ausgewählt
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setSelectedIds(
-                          allSelectedInSection ? new Set() : new Set(items.map((l) => l.id)),
-                        )
-                      }
-                      disabled={items.length === 0}
-                    >
-                      {allSelectedInSection ? "Auswahl aufheben" : "Alle auswählen"}
-                    </Button>
-                    <span className="text-sm text-secondary dark:text-navy-300">→ neuer Typ:</span>
-                    <select
-                      value={bulkType}
-                      onChange={(e) => setBulkType(e.target.value as LocationType)}
-                      className="rounded-sm border border-base-300 bg-base-100 p-2 text-sm text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                    >
-                      {LOCATION_SECTIONS.filter((s) => s.type !== section.type).map((s) => (
-                        <option key={s.type} value={s.type}>{s.label}</option>
-                      ))}
-                    </select>
-                    <div className="ml-auto flex gap-2">
-                      <Button type="button" variant="ghost" size="sm" onClick={exitSelectionMode}>
-                        Abbrechen
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        disabled={selectedIds.size === 0 || isSubmitting}
-                        onClick={() => setBulkDeleteConfirmOpen(true)}
-                      >
-                        <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-                        Löschen
-                      </Button>
-                      <Button type="submit" size="sm" disabled={selectedIds.size === 0 || isSubmitting}>
-                        Typ zuweisen
-                      </Button>
-                    </div>
-                  </Form>
-                )}
+                    KI-Zugriff (MCP)
+                  </h2>
+                  <span className="text-sm text-base-content/70 dark:text-navy-300">
+                    API-Tokens für KI-Assistenten wie Claude verwalten und Zugriffe einsehen.
+                  </span>
+                </div>
+                <span className="shrink-0 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-primary dark:text-primary-light">
+                  Tokens →
+                </span>
+              </Link>
+            </Card>
+          </section>
 
-                {items.length === 0 ? (
-                  <p className="py-3 text-center text-xs text-secondary/70 dark:text-navy-500">
-                    Noch keine Einträge.
-                  </p>
-                ) : (
-                  <div className="divide-y divide-base-200 rounded-sm border border-base-200 dark:divide-navy-700 dark:border-navy-700">
-                    {(isSelecting || expandedSections.has(section.type) ? items : items.slice(0, COLLAPSED_LOCATIONS)).map((location) => {
-                      const isSelected = selectedIds.has(location.id);
-                      const cardClass = `flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-left w-full ${
-                        isSelected
-                          ? "bg-primary/5"
-                          : "hover:bg-base-200/60 dark:hover:bg-navy-900"
-                      }`;
-                      const body = (
-                        <>
-                          {isSelecting && (
-                            <span
-                              aria-hidden="true"
-                              className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${
-                                isSelected ? "border-primary bg-primary" : "border-gray-400 bg-base-100"
-                              }`}
-                            >
-                              {isSelected && (
-                                <span className="block h-2 w-2 rounded-[1px] bg-white" />
-                              )}
-                            </span>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-foreground dark:text-white">
-                              {location.name}
-                            </p>
-                          </div>
-                          {(location.latitude === null || location.longitude === null) && (
-                            <span className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-warning">
-                              Ohne Koordinaten
-                            </span>
-                          )}
-                        </>
-                      );
-                      return (
-                        <button
-                          key={location.id}
-                          type="button"
-                          onClick={
-                            isSelecting
-                              ? () => toggleSelected(location.id)
-                              : () => setDialogState({ mode: "edit", location })
-                          }
-                          aria-pressed={isSelecting ? isSelected : undefined}
-                          aria-label={
-                            isSelecting
-                              ? `${location.name} auswählen`
-                              : `${location.name} bearbeiten`
-                          }
-                          className={cardClass}
-                        >
-                          {body}
-                        </button>
-                      );
-                    })}
-                    {!isSelecting && items.length > COLLAPSED_LOCATIONS && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedSections((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(section.type)) next.delete(section.type);
-                            else next.add(section.type);
-                            return next;
-                          })
-                        }
-                        className="w-full px-3 py-2.5 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:bg-base-200/60 dark:text-primary-light dark:hover:bg-navy-900"
-                      >
-                        {expandedSections.has(section.type)
-                          ? "Weniger anzeigen"
-                          : `Alle ${items.length} anzeigen`}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <LocationsSection
+            locations={locations as Location[]}
+            isSubmitting={isSubmitting}
+            lastActionSucceeded={actionData && "success" in actionData ? actionData : null}
+          />
+
+          <IntervalsSection settings={settings} isSubmitting={isSubmitting} />
+
+          <section
+            id="ueber"
+            aria-label="Über"
+            className="scroll-mt-24 px-1 py-2 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
+          >
+            MotoManager v{process.env.APP_VERSION}
+          </section>
         </div>
-      </section>
-
-      <LocationEditDialog
-        isOpen={dialogState !== null}
-        onClose={() => setDialogState(null)}
-        location={dialogState?.mode === "edit" ? dialogState.location : null}
-        defaultType={dialogState?.mode === "create" ? dialogState.type : undefined}
-      />
-
-      <DeleteConfirmationDialog
-        isOpen={bulkDeleteConfirmOpen}
-        onCancel={() => setBulkDeleteConfirmOpen(false)}
-        onConfirm={() => {
-          if (selectedIds.size === 0) {
-            setBulkDeleteConfirmOpen(false);
-            return;
-          }
-          const fd = new FormData();
-          fd.set("intent", "deleteLocationsBulk");
-          for (const id of selectedIds) {
-            fd.append("ids", String(id));
-          }
-          submit(fd, { method: "post" });
-          setBulkDeleteConfirmOpen(false);
-        }}
-        title={`${selectedIds.size} ${selectedIds.size === 1 ? "Standort" : "Standorte"} löschen`}
-        description="Möchtest du die ausgewählten Standorte wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
-        confirmLabel="Löschen"
-        confirmDisabled={selectedIds.size === 0}
-      />
-
-      <Modal
-        isOpen={mergePreview !== null}
-        onClose={() => setMergePreview(null)}
-        title="Duplikate zusammenführen"
-        code="MERGE"
-        description={
-          mergePreview
-            ? `${mergePreview.section.label}: ${mergePreview.groups.reduce(
-                (n, g) => n + g.duplicates.length,
-                0,
-              )} Eintrag/Einträge werden zusammengeführt. Verknüpfte Wartungs- und Standort-Einträge bleiben erhalten.`
-            : undefined
-        }
-      >
-        {mergePreview && (
-          <div className="space-y-4">
-            <ul className="space-y-3">
-              {mergePreview.groups.map((g) => (
-                <li
-                  key={g.canonical.id}
-                  className="rounded-sm border border-base-300/70 bg-base-100 p-3 dark:border-navy-700 dark:bg-navy-900"
-                >
-                  <p className="flex items-center gap-2 text-sm font-medium text-base-content dark:text-white">
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-success">
-                      Behalten
-                    </span>
-                    <span className="truncate">{g.canonical.name}</span>
-                    {formatCoords(g.canonical) && (
-                      <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-base-content/70">
-                        {formatCoords(g.canonical)}
-                      </span>
-                    )}
-                  </p>
-                  <ul className="mt-1.5 space-y-1">
-                    {g.duplicates.map((d) => (
-                      <li
-                        key={d.id}
-                        className="flex items-center gap-2 text-xs text-secondary dark:text-navy-400"
-                      >
-                        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                          Zusammenführen
-                        </span>
-                        <span className="truncate">{d.name}</span>
-                        {formatCoords(d) && (
-                          <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-base-content/70">
-                            {formatCoords(d)}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setMergePreview(null)}>
-                Abbrechen
-              </Button>
-              <Button onClick={confirmMerge} disabled={isSubmitting}>
-                <Combine className="mr-1 h-4 w-4" aria-hidden="true" />
-                Zusammenführen
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Maintenance Intervals Section */}
-      <section id="intervalle" className="relative scroll-mt-24 rounded-sm border border-base-300/70 bg-base-100 p-6 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-lg bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-            <Activity className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-display text-xl uppercase tracking-wide text-base-content dark:text-white">Service-Intervalle</h2>
-            <p className="text-sm text-secondary dark:text-navy-300">
-              Konfiguriere die Zeitabstände (in Jahren) für deine Service-Erinnerungen.
-            </p>
-          </div>
-        </div>
-
-        <Form method="post" className="space-y-6">
-          <input type="hidden" name="intent" value="updateUserSettings" />
-          
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Allgemein</h3>
-              
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label htmlFor="tireInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Reifen (Jahre)</label>
-                  <input
-                    type="number"
-                    name="tireInterval"
-                    id="tireInterval"
-                    defaultValue={settings?.tireInterval}
-                    min="1"
-                    max="20"
-                    required
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="tireKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Reifen (km)</label>
-                  <input
-                    type="number"
-                    name="tireKmInterval"
-                    id="tireKmInterval"
-                    defaultValue={settings?.tireKmInterval ?? ""}
-                    min="1000"
-                    step="1000"
-                    placeholder="Optional"
-                    className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="batteryDefaultInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Standard (Jahre)</label>
-                <input
-                  type="number"
-                  name="batteryDefaultInterval"
-                  id="batteryDefaultInterval"
-                  defaultValue={settings?.batteryDefaultInterval}
-                  min="1"
-                  max="20"
-                  required
-                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="batteryLithiumInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Batterie Lithium (Jahre)</label>
-                <input
-                  type="number"
-                  name="batteryLithiumInterval"
-                  id="batteryLithiumInterval"
-                  defaultValue={settings?.batteryLithiumInterval}
-                  min="1"
-                  max="20"
-                  required
-                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="minKmPerYear" className="text-xs font-semibold text-secondary dark:text-navy-300">Mindest-km / Jahr</label>
-                <input
-                  type="number"
-                  name="minKmPerYear"
-                  id="minKmPerYear"
-                  defaultValue={settings?.minKmPerYear ?? 150}
-                  min="0"
-                  step="50"
-                  className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                />
-                <p className="text-[11px] text-secondary/70 dark:text-navy-400">
-                  Jahresfahrleistung unter diesem Wert wird auf der Übersicht als Warnung markiert. 0 deaktiviert die Warnung.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Öle & Flüssigkeiten</h3>
-              
-              {FLUID_INTERVAL_FIELDS.map((f) => (
-                <div key={f.type} className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label htmlFor={f.yearsName} className="text-xs font-semibold text-secondary dark:text-navy-300">{fluidTypeLabels[f.type]} (Jahre)</label>
-                    <input
-                      type="number"
-                      name={f.yearsName}
-                      id={f.yearsName}
-                      defaultValue={settings?.[f.yearsName] ?? undefined}
-                      min="1"
-                      max="10"
-                      required
-                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label htmlFor={f.kmName} className="text-xs font-semibold text-secondary dark:text-navy-300">{fluidTypeLabels[f.type]} (km)</label>
-                    <input
-                      type="number"
-                      name={f.kmName}
-                      id={f.kmName}
-                      defaultValue={settings?.[f.kmName] ?? ""}
-                      min="1000"
-                      step="1000"
-                      placeholder="Optional"
-                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-4 sm:col-span-2">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary/70 dark:text-navy-400 border-b border-gray-100 dark:border-navy-700 pb-2">Weitere Wartungen</h3>
-              
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label htmlFor="chainInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kette (Jahre)</label>
-                    <input
-                      type="number"
-                      name="chainInterval"
-                      id="chainInterval"
-                      defaultValue={settings?.chainInterval}
-                      min="1"
-                      max="10"
-                      required
-                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label htmlFor="chainKmInterval" className="text-xs font-semibold text-secondary dark:text-navy-300">Kette (km)</label>
-                    <input
-                      type="number"
-                      name="chainKmInterval"
-                      id="chainKmInterval"
-                      defaultValue={settings?.chainKmInterval ?? ""}
-                      min="500"
-                      step="500"
-                      placeholder="Optional"
-                      className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={isSubmitting}>
-              Intervalle speichern
-            </Button>
-          </div>
-        </Form>
-      </section>
-
-      {/* Version Info */}
-      <div className="pt-4 text-center">
-        <p className="text-xs text-secondary/50 dark:text-navy-500">
-          MotoManager v{process.env.APP_VERSION}
-        </p>
       </div>
     </div>
   );

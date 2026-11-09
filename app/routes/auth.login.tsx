@@ -1,4 +1,4 @@
-import { Mail, User, Lock, ArrowRight, Fingerprint, Eye, EyeOff } from "lucide-react";
+import { Fingerprint, Eye, EyeOff } from "lucide-react";
 import {
   Form,
   data,
@@ -8,7 +8,7 @@ import {
   useNavigation,
   useNavigate,
 } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/auth.login";
 import {
@@ -19,9 +19,17 @@ import {
   verifyLogin,
 } from "~/services/auth";
 import { authenticateWithPasskey } from "~/utils/webauthn";
-import { getVersion } from "~/config";
+import { getBackendUrl, getVersion } from "~/config";
 import { useUmami } from "~/components/umami-provider";
 import { safeRedirectPath } from "~/utils/navigation";
+
+const LABEL =
+  "mb-1.5 block font-mono text-xs font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400";
+const INPUT =
+  "block h-11 w-full rounded-sm border border-base-300 bg-base-100 px-3 text-base text-base-content transition-colors placeholder:text-base-content/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-500 dark:focus:border-primary-light dark:focus:ring-primary-light/30";
+const INPUT_ERROR = "border-error focus:border-error focus:ring-error/30 dark:border-error";
+const PRIMARY_BUTTON =
+  "flex h-12 w-full items-center justify-center rounded-sm bg-primary font-display text-[15px] uppercase tracking-[0.14em] text-primary-content shadow-[0_6px_18px_-10px_rgba(30,91,255,0.7)] transition-[filter,transform] hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 active:scale-[0.98] disabled:opacity-60";
 
 const EMAIL_REGEX = /.+@.+\..+/i;
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,32}$/;
@@ -199,6 +207,16 @@ export default function Login() {
   const [identifier, setIdentifier] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [currentYear] = useState(() => new Date().getFullYear());
+  // The API this web app talks to, shown so it's clear which garage you sign
+  // in to. The SPA's backend is fixed by runtime config (no "change server").
+  const serverUrl = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return new URL(getBackendUrl(), window.location.origin).toString().replace(/\/+$/, "");
+    } catch {
+      return null;
+    }
+  }, []);
 
   const loginError =
     actionData && !actionData.success && actionData.form === "login" && "message" in actionData
@@ -254,376 +272,278 @@ export default function Login() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isLoginSubmitting, isRegisterSubmitting]);
 
+  const fieldError = (message: string | undefined) =>
+    message ? (
+      <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-error">
+        {message}
+      </p>
+    ) : null;
+
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-base-200 p-4 dark:bg-navy-950">
-      {/* Plain backdrop with a subtle paper grain. The motorsport flag at the
-          top is the structural anchor, drawn from the design system. */}
-      <div aria-hidden="true" className="absolute inset-0 z-0 pointer-events-none">
-        {/* Subtle paper grain */}
-        <div
-          className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(45deg, transparent 0, transparent 2px, currentColor 2px, currentColor 3px)",
-          }}
-        />
-      </div>
-
+    <div className="flex min-h-screen flex-col bg-base-200 dark:bg-navy-950">
       {/* Motorsport flag — structural top edge */}
-      <div className="motorsport-stripe fixed inset-x-0 top-0 z-50 h-[3px] shadow-sm" aria-hidden="true" />
+      <div className="motorsport-stripe h-[3px] shrink-0" aria-hidden="true" />
 
-      <div className="z-10 w-full max-w-[460px] animate-fade-in px-4">
-        <div className="overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_30px_60px_-30px_rgba(15,23,42,0.35)] dark:border-navy-700 dark:bg-navy-900">
-          {/* Service-manual cover — monogram + service code */}
-          <div className="relative border-b border-base-300 px-8 pb-6 pt-8 dark:border-navy-700">
-            <span aria-hidden="true" className="motorsport-stripe absolute inset-x-0 top-0 h-[3px]" />
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70">
-                  Login · Garage
-                </p>
-                <h1 className="mt-2 font-display text-4xl uppercase leading-[0.95] tracking-wide text-base-content dark:text-white">
-                  Moto<span className="text-primary">Manager</span>
-                </h1>
-                <p className="mt-2 font-sans text-sm text-base-content/65 dark:text-navy-300">
-                  Werkstattbuch &amp; Flottenmanagement
-                </p>
-              </div>
-              <div className="relative grid h-14 w-14 shrink-0 place-items-center rounded-sm border border-base-content/15 bg-base-100 dark:bg-navy-800">
-                <span className="font-display text-3xl leading-none">MM</span>
-                <span aria-hidden="true" className="absolute -bottom-px -right-px h-1.5 w-1.5 bg-primary" />
-              </div>
+      <main className="flex flex-1 items-center justify-center px-4 py-16">
+        <div className="w-full max-w-[440px] animate-fade-in overflow-hidden rounded-sm border border-base-300 bg-base-100 shadow-[0_1px_0_rgba(15,23,42,0.03),0_16px_40px_-20px_rgba(15,23,42,0.2)] dark:border-navy-700 dark:bg-navy-900">
+          <div className="motorsport-stripe h-[3px]" aria-hidden="true" />
+
+          {/* Cover — service code, wordmark, monogram */}
+          <div className="flex justify-between gap-4 border-b border-base-300 px-7 pb-5 pt-6 dark:border-navy-700">
+            <div className="flex flex-col gap-0.5">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-400">
+                {isFirstUser ? "Setup · Garage" : "Login · Garage"}
+              </p>
+              <h1 className="font-display text-[34px] uppercase leading-[1.1] tracking-wide text-base-content dark:text-white">
+                Moto<span className="text-primary">Manager</span>
+              </h1>
+              <p className="text-sm text-base-content/70 dark:text-navy-300">
+                Werkstattbuch &amp; Flottenmanagement
+              </p>
+            </div>
+            <div
+              aria-hidden="true"
+              className="relative grid h-11 w-11 shrink-0 place-items-center rounded-sm border border-base-content/20 bg-base-100 dark:bg-navy-800"
+            >
+              <span className="font-display text-xl leading-none">MM</span>
+              <span className="absolute -bottom-px -right-px h-[7px] w-[7px] bg-primary" />
             </div>
           </div>
 
-          <div className="p-8 pt-6">
+          <div className="px-7 pb-6 pt-5">
             {!backendAvailable && (
-              <output
-                className="mb-5 block rounded-sm border border-warning/35 bg-warning/10 px-4 py-3 text-sm text-base-content dark:text-gray-100"
-              >
+              <output className="mb-4 block rounded-sm border border-warning/35 bg-warning/10 px-4 py-3 text-sm text-base-content dark:text-gray-100">
                 <p className="font-semibold">Server momentan nicht erreichbar</p>
-                <p className="mt-1 text-xs text-base-content/65 dark:text-navy-300">
+                <p className="mt-1 text-xs text-base-content/70 dark:text-navy-300">
                   Deine bestehende Sitzung bleibt gespeichert. Du kannst die Anmeldung erneut versuchen, sobald die Verbindung wiederhergestellt ist.
                 </p>
               </output>
             )}
             {isFirstUser ? (
-              <div className="space-y-6">
-                <div className="relative rounded-sm border border-dashed border-primary/40 bg-primary/5 p-4 dark:border-primary/40 dark:bg-primary/10">
+              <Form method="post" className="flex flex-col gap-4" noValidate>
+                <input type="hidden" name="intent" value="register" />
+                <input type="hidden" name="redirectTo" value={redirectTo} />
+
+                <div className="relative rounded-sm border border-dashed border-primary/40 bg-primary/5 p-4 dark:bg-primary/10">
                   <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
                     Administrator-Setup
                   </p>
                   <h2 className="mt-1 font-subdisplay text-lg text-base-content dark:text-gray-100">
                     Erstes Konto
                   </h2>
-                  <p className="mt-1.5 text-xs leading-relaxed text-base-content/65 dark:text-navy-300">
+                  <p className="mt-1.5 text-xs leading-relaxed text-base-content/70 dark:text-navy-300">
                     Erstelle das Administrationskonto, um deine Garage zu eröffnen.
                   </p>
                 </div>
 
-                <Form method="post" className="space-y-4" noValidate>
-                  <input type="hidden" name="intent" value="register" />
-                  <input type="hidden" name="redirectTo" value={redirectTo} />
+                <div>
+                  <label htmlFor="name" className={LABEL}>
+                    Vollständiger Name
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    autoComplete="name"
+                    placeholder="Max Mustermann"
+                    aria-invalid={fieldErrors?.name ? true : undefined}
+                    className={clsx(INPUT, fieldErrors?.name && INPUT_ERROR)}
+                  />
+                  {fieldError(fieldErrors?.name)}
+                </div>
 
-                  <div className="space-y-4">
-                    <div className="group relative">
-                      <label
-                        htmlFor="name"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
-                      >
-                        Vollständiger Name
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary/40 transition-colors group-focus-within:text-primary" />
-                        <input
-                          id="name"
-                          name="name"
-                          autoComplete="name"
-                          placeholder="Max Mustermann"
-                          className={clsx(
-                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
-                            fieldErrors?.name &&
-                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
-                          )}
-                        />
-                      </div>
-                      {fieldErrors?.name && (
-                        <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
-                          {fieldErrors.name}
-                        </p>
-                      )}
-                    </div>
+                <div>
+                  <label htmlFor="email" className={LABEL}>
+                    E-Mail-Adresse
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="email@beispiel.ch"
+                    aria-invalid={fieldErrors?.email ? true : undefined}
+                    className={clsx(INPUT, fieldErrors?.email && INPUT_ERROR)}
+                  />
+                  {fieldError(fieldErrors?.email)}
+                </div>
 
-                    <div className="group relative">
-                      <label
-                        htmlFor="email"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
-                      >
-                        E-Mail Adresse
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary/40 transition-colors group-focus-within:text-primary" />
-                        <input
-                          id="email"
-                          name="email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="email@beispiel.ch"
-                          className={clsx(
-                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
-                            fieldErrors?.email &&
-                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
-                          )}
-                        />
-                      </div>
-                      {fieldErrors?.email && (
-                        <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
-                          {fieldErrors.email}
-                        </p>
-                      )}
-                    </div>
+                <div>
+                  <label htmlFor="username" className={LABEL}>
+                    Benutzername
+                  </label>
+                  <input
+                    id="username"
+                    name="username"
+                    autoComplete="username"
+                    placeholder="benutzername"
+                    aria-invalid={fieldErrors?.username ? true : undefined}
+                    className={clsx(INPUT, fieldErrors?.username && INPUT_ERROR)}
+                  />
+                  {fieldError(fieldErrors?.username)}
+                </div>
 
-                    <div className="group relative">
-                      <label
-                        htmlFor="username"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
-                      >
-                        Benutzername
-                      </label>
-                      <div className="relative">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-secondary/40 transition-colors group-focus-within:text-primary">
-                          @
-                        </div>
-                        <input
-                          id="username"
-                          name="username"
-                          autoComplete="username"
-                          placeholder="benutzername"
-                          className={clsx(
-                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
-                            fieldErrors?.username &&
-                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
-                          )}
-                        />
-                      </div>
-                      {fieldErrors?.username && (
-                        <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
-                          {fieldErrors.username}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="group relative">
-                        <label
-                          htmlFor="new-password"
-                          className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
-                        >
-                          Passwort
-                        </label>
-                        <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary/40 transition-colors group-focus-within:text-primary" />
-                          <input
-                            id="new-password"
-                            name="password"
-                            type="password"
-                            autoComplete="new-password"
-                            className={clsx(
-                              "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
-                              fieldErrors?.password &&
-                                "border-error focus:border-error focus:ring-error/30 dark:border-error",
-                            )}
-                          />
-                        </div>
-                        {fieldErrors?.password && (
-                          <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
-                            {fieldErrors.password}
-                          </p>
-                        )}
-                      </div>
-                      <div className="group relative">
-                        <label
-                          htmlFor="confirm-password"
-                          className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
-                        >
-                          Bestätigen
-                        </label>
-                        <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary/40 transition-colors group-focus-within:text-primary" />
-                          <input
-                            id="confirm-password"
-                            name="confirmPassword"
-                            type="password"
-                            autoComplete="new-password"
-                            className={clsx(
-                              "block w-full rounded-sm border border-base-300 bg-base-100 py-3 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
-                              fieldErrors?.confirmPassword &&
-                                "border-error focus:border-error focus:ring-error/30 dark:border-error",
-                            )}
-                          />
-                        </div>
-                        {fieldErrors?.confirmPassword && (
-                          <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
-                            {fieldErrors.confirmPassword}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="new-password" className={LABEL}>
+                      Passwort
+                    </label>
+                    <input
+                      id="new-password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      aria-invalid={fieldErrors?.password ? true : undefined}
+                      className={clsx(INPUT, fieldErrors?.password && INPUT_ERROR)}
+                    />
+                    {fieldError(fieldErrors?.password)}
                   </div>
+                  <div>
+                    <label htmlFor="confirm-password" className={LABEL}>
+                      Bestätigen
+                    </label>
+                    <input
+                      id="confirm-password"
+                      name="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      aria-invalid={fieldErrors?.confirmPassword ? true : undefined}
+                      className={clsx(INPUT, fieldErrors?.confirmPassword && INPUT_ERROR)}
+                    />
+                    {fieldError(fieldErrors?.confirmPassword)}
+                  </div>
+                </div>
 
-                  {registerError && (
-                    <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
-                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-                      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-error/70 pt-0.5">ERR</span>
-                      {registerError}
-                    </div>
-                  )}
+                {registerError && <Notice tone="error">{registerError}</Notice>}
 
-                  <button
-                    type="submit"
-                    onClick={() => trackEvent("register_submit")}
-                    disabled={isRegisterSubmitting}
-                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
-                  >
-                    <span className="relative z-10">
-                      {isRegisterSubmitting ? "Wird erstellt..." : "System initialisieren"}
-                    </span>
-                    {!isRegisterSubmitting && (
-                      <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    )}
-                    <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                  </button>
-                </Form>
-              </div>
+                <button
+                  type="submit"
+                  onClick={() => trackEvent("register_submit")}
+                  disabled={isRegisterSubmitting}
+                  className={PRIMARY_BUTTON}
+                >
+                  {isRegisterSubmitting ? "Wird erstellt …" : "System initialisieren →"}
+                </button>
+              </Form>
             ) : (
-              <div className="space-y-6">
-                <Form method="post" className="space-y-5" noValidate>
-                  <input type="hidden" name="intent" value="login" />
-                  <input type="hidden" name="redirectTo" value={redirectTo} />
+              <Form method="post" className="flex flex-col gap-4" noValidate>
+                <input type="hidden" name="intent" value="login" />
+                <input type="hidden" name="redirectTo" value={redirectTo} />
 
-                  <div className="space-y-4">
-                    <div className="group relative">
-                      <label
-                        htmlFor="identifier"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
-                      >
-                        E-Mail oder Benutzername
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary/40 transition-colors group-focus-within:text-primary" />
-                        <input
-                          id="identifier"
-                          name="identifier"
-                          autoComplete="username"
-                          value={identifier}
-                          onChange={(e) => setIdentifier(e.target.value)}
-                          placeholder="E-Mail / @username"
-                          className={clsx(
-                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3.5 pl-11 pr-4 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
-                            fieldErrors?.identifier &&
-                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
-                          )}
-                        />
-                      </div>
-                      {fieldErrors?.identifier && (
-                        <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
-                          {fieldErrors.identifier}
-                        </p>
-                      )}
-                    </div>
+                <div>
+                  <label htmlFor="identifier" className={LABEL}>
+                    E-Mail oder Benutzername
+                  </label>
+                  <input
+                    id="identifier"
+                    name="identifier"
+                    autoComplete="username"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="E-Mail / @username"
+                    aria-invalid={fieldErrors?.identifier ? true : undefined}
+                    className={clsx(INPUT, fieldErrors?.identifier && INPUT_ERROR)}
+                  />
+                  {fieldError(fieldErrors?.identifier)}
+                </div>
 
-                    <div className="group relative">
-                      <label
-                        htmlFor="password"
-                        className="mb-1.5 block font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400"
-                      >
-                        Passwort
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary/40 transition-colors group-focus-within:text-primary" />
-                        <input
-                          id="password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="current-password"
-                          placeholder="••••••••"
-                          className={clsx(
-                            "block w-full rounded-sm border border-base-300 bg-base-100 py-3.5 pl-11 pr-12 text-sm shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:text-gray-50 dark:placeholder:text-navy-600 dark:focus:border-primary-light dark:focus:ring-primary-light/30",
-                            fieldErrors?.password &&
-                              "border-error focus:border-error focus:ring-error/30 dark:border-error",
-                          )}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
-                          aria-pressed={showPassword}
-                          className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-sm text-base-content/55 transition-colors hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
-                        </button>
-                      </div>
-                      {fieldErrors?.password && (
-                        <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-error">
-                          {fieldErrors.password}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {loginError && (
-                    <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-error/30 bg-error/5 px-4 py-3 text-sm text-error dark:border-error/40 dark:bg-error/10">
-                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-error" />
-                      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-error/70 pt-0.5">ERR</span>
-                      {loginError}
-                    </div>
-                  )}
-
-                  {passkeyError && (
-                    <div className="relative flex animate-fade-in items-start gap-3 rounded-sm border border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 px-4 py-3 text-sm text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]">
-                      <span aria-hidden="true" className="absolute inset-y-2 left-0 w-[3px] rounded-r-sm bg-[var(--color-workshop)]" />
-                      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-workshop)] pt-0.5">WARN</span>
-                      {passkeyError}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="submit"
-                      onClick={() => trackEvent("login_submit")}
-                      disabled={isLoginSubmitting}
-                      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-sm bg-primary px-4 py-4 font-subdisplay text-sm text-primary-content shadow-[0_12px_30px_-12px_rgba(30,91,255,0.7)] transition-all hover:shadow-[0_18px_42px_-14px_rgba(30,91,255,0.85)] hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
-                    >
-                      <span className="relative z-10">
-                        {isLoginSubmitting ? "Authentifizierung..." : "Login"}
-                      </span>
-                      {!isLoginSubmitting && (
-                        <ArrowRight className="relative z-10 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      )}
-                      <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                    </button>
-
+                <div>
+                  <label htmlFor="password" className={LABEL}>
+                    Passwort
+                  </label>
+                  <div
+                    className={clsx(
+                      "flex rounded-sm border border-base-300 bg-base-100 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30 dark:border-navy-700 dark:bg-navy-800 dark:focus-within:border-primary-light",
+                      fieldErrors?.password && "border-error focus-within:border-error focus-within:ring-error/30 dark:border-error",
+                    )}
+                  >
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      aria-invalid={fieldErrors?.password ? true : undefined}
+                      className="h-[42px] min-w-0 flex-1 rounded-sm bg-transparent px-3 text-base text-base-content focus:outline-none dark:text-gray-50"
+                    />
                     <button
                       type="button"
-                      onClick={handlePasskeyLogin}
-                      className="flex w-full items-center justify-center gap-2 rounded-sm border border-base-content/15 bg-base-100 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/75 transition-all hover:border-base-content/35 hover:text-base-content dark:border-navy-700 dark:bg-navy-800/60 dark:text-navy-300 dark:hover:border-navy-500 dark:hover:text-white"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                      aria-pressed={showPassword}
+                      className="grid h-[42px] w-11 shrink-0 place-items-center border-l border-base-200 text-base-content/70 transition-colors hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 dark:border-navy-700 dark:text-navy-300 dark:hover:text-white"
                     >
-                      <Fingerprint className="h-4 w-4" />
-                      <span>Passkey-Login</span>
+                      {showPassword ? <EyeOff className="h-[18px] w-[18px]" aria-hidden="true" /> : <Eye className="h-[18px] w-[18px]" aria-hidden="true" />}
                     </button>
                   </div>
-                </Form>
-              </div>
+                  {fieldError(fieldErrors?.password)}
+                </div>
+
+                {loginError && <Notice tone="error">{loginError}</Notice>}
+                {passkeyError && <Notice tone="warn">{passkeyError}</Notice>}
+
+                <button
+                  type="submit"
+                  onClick={() => trackEvent("login_submit")}
+                  disabled={isLoginSubmitting}
+                  className={PRIMARY_BUTTON}
+                >
+                  {isLoginSubmitting ? "Authentifizierung …" : "Login →"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePasskeyLogin}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-sm border border-base-300 bg-base-100 font-display text-sm uppercase tracking-[0.14em] text-base-content transition-colors hover:border-base-content/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-navy-700 dark:bg-navy-800 dark:text-white dark:hover:border-navy-500"
+                >
+                  <Fingerprint className="h-4 w-4" aria-hidden="true" />
+                  Passkey-Login
+                </button>
+
+                {serverUrl && (
+                  <p className="flex flex-wrap items-center gap-x-1.5 pt-1 text-[13px] text-base-content/70 dark:text-navy-300">
+                    Server:
+                    <span className="break-all font-mono text-xs text-base-content dark:text-white">
+                      {serverUrl}
+                    </span>
+                  </p>
+                )}
+              </Form>
             )}
           </div>
 
-          <div className="border-t border-base-300 bg-base-200/50 px-6 py-4 text-center dark:border-navy-700 dark:bg-navy-950/40">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">
+          <div className="border-t border-base-300 bg-base-200 px-7 py-3 text-center dark:border-navy-700 dark:bg-navy-950/40">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-400">
               © {currentYear} · MotoManager · v{version}
             </p>
           </div>
         </div>
-      </div>
+      </main>
+    </div>
+  );
+}
+
+function Notice({ tone, children }: { tone: "error" | "warn"; children: ReactNode }) {
+  const isError = tone === "error";
+  return (
+    <div
+      role={isError ? "alert" : "status"}
+      className={clsx(
+        "relative flex animate-fade-in items-start gap-3 rounded-sm border px-4 py-3 text-sm",
+        isError
+          ? "border-error/30 bg-error/5 text-error dark:border-error/40 dark:bg-error/10"
+          : "border-[var(--color-workshop)]/40 bg-[var(--color-workshop)]/10 text-[var(--color-workshop-ink)] dark:text-[var(--color-workshop-soft)]",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={clsx(
+          "absolute inset-y-2 left-0 w-[3px] rounded-r-sm",
+          isError ? "bg-error" : "bg-[var(--color-workshop)]",
+        )}
+      />
+      <span className="pt-0.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] opacity-70">
+        {isError ? "ERR" : "WARN"}
+      </span>
+      <span>{children}</span>
     </div>
   );
 }
