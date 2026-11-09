@@ -449,7 +449,7 @@ function MapDashboard({
                           )}
                         </Td>
                         <Td hide>
-                          <span className="inline-flex flex-wrap gap-1">
+                          <span className="inline-flex min-w-[6.5rem] flex-wrap gap-1">
                             {y.countries.map((c) => (
                               <span
                                 key={c}
@@ -464,7 +464,7 @@ function MapDashboard({
                         </Td>
                         <Td hide>
                           {farthest ? (
-                            <span className="flex flex-col">
+                            <span className="flex min-w-[9rem] flex-col">
                               <span className="font-sans text-base-content dark:text-white">{farthest.name}</span>
                               <span className="font-mono text-xs text-base-content/60 dark:text-navy-400">
                                 {formatNumber(round1(y.farthest?.distanceKm ?? 0), 1)} km
@@ -475,9 +475,11 @@ function MapDashboard({
                           )}
                         </Td>
                         <Td hide>
-                          {y.seasonStart && y.seasonEnd
-                            ? `${formatDateShort(y.seasonStart)} – ${formatDateShort(y.seasonEnd)}`
-                            : "–"}
+                          <span className="whitespace-nowrap">
+                            {y.seasonStart && y.seasonEnd
+                              ? `${formatDateShort(y.seasonStart)} – ${formatDateShort(y.seasonEnd)}`
+                              : "–"}
+                          </span>
                         </Td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
                           <Link
