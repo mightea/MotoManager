@@ -46,15 +46,46 @@ export function getVersion(): string {
   return getEnv("APP_VERSION") ?? "0.0.0";
 }
 
+const SERVER_OVERRIDE_KEY = "moto_backend_url";
+
+function trimSlash(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
 /**
- * Returns the backend URL the SPA calls directly.
+ * The backend this deployment is configured for (runtime config), ignoring
+ * any server the user picked on the login screen.
+ */
+export function getConfiguredBackendUrl(): string {
+  const url = getEnv("BACKEND_URL");
+  return url ? trimSlash(url) : "http://localhost:3001";
+}
+
+/** Server the user picked on the login screen, if any. */
+export function getServerOverride(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const value = localStorage.getItem(SERVER_OVERRIDE_KEY);
+    return value ? trimSlash(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Stores (or with `null` clears) the server picked on the login screen. */
+export function setServerOverride(url: string | null): void {
+  try {
+    if (url) localStorage.setItem(SERVER_OVERRIDE_KEY, trimSlash(url));
+    else localStorage.removeItem(SERVER_OVERRIDE_KEY);
+  } catch {
+    // Storage blocked (private mode): the configured server stays in use.
+  }
+}
+
+/**
+ * Returns the backend URL the SPA calls directly: the server picked on the
+ * login screen, otherwise the configured one.
  */
 export function getBackendUrl(): string {
-  const url = getEnv("BACKEND_URL");
-
-  if (url) {
-    return url.endsWith("/") ? url.slice(0, -1) : url;
-  }
-
-  return "http://localhost:3001";
+  return getServerOverride() ?? getConfiguredBackendUrl();
 }

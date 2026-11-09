@@ -8,7 +8,7 @@ import {
   useNavigation,
   useNavigate,
 } from "react-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import clsx from "clsx";
 import type { Route } from "./+types/auth.login";
 import {
@@ -19,7 +19,8 @@ import {
   verifyLogin,
 } from "~/services/auth";
 import { authenticateWithPasskey } from "~/utils/webauthn";
-import { getBackendUrl, getVersion } from "~/config";
+import { getVersion } from "~/config";
+import { ServerPicker } from "~/components/server-picker";
 import { useUmami } from "~/components/umami-provider";
 import { safeRedirectPath } from "~/utils/navigation";
 
@@ -207,16 +208,6 @@ export default function Login() {
   const [identifier, setIdentifier] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [currentYear] = useState(() => new Date().getFullYear());
-  // The API this web app talks to, shown so it's clear which garage you sign
-  // in to. The SPA's backend is fixed by runtime config (no "change server").
-  const serverUrl = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return new URL(getBackendUrl(), window.location.origin).toString().replace(/\/+$/, "");
-    } catch {
-      return null;
-    }
-  }, []);
 
   const loginError =
     actionData && !actionData.success && actionData.form === "login" && "message" in actionData
@@ -498,14 +489,7 @@ export default function Login() {
                   Passkey-Login
                 </button>
 
-                {serverUrl && (
-                  <p className="flex flex-wrap items-center gap-x-1.5 pt-1 text-[13px] text-base-content/70 dark:text-navy-300">
-                    Server:
-                    <span className="break-all font-mono text-xs text-base-content dark:text-white">
-                      {serverUrl}
-                    </span>
-                  </p>
-                )}
+                <ServerPicker />
               </Form>
             )}
           </div>
