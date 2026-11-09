@@ -67,6 +67,22 @@ const TYPE_STYLE: Record<LocationType, { color: string; glyph: string; label: st
   fuelStation: { color: "#FF4124", glyph: "fuel", label: LOCATION_TYPE_LABELS.fuelStation },
 };
 
+const HEAT_SWATCH = "linear-gradient(90deg,#F2C277,#E8A341,#FF4124,#8A1A0E)";
+
+/**
+ * CSS `background` of each layer's key swatch — the same colours the map
+ * draws, so the layer toggles double as a legend. Legs are coloured per bike;
+ * their swatch is a neutral line colour.
+ */
+export const LAYER_SWATCHES: Record<keyof MapLayerVisibility, string> = {
+  fuelHeat: HEAT_SWATCH,
+  legs: "#2a78d6",
+  workshops: TYPE_STYLE.maintenanceShop.color,
+  inspections: TYPE_STYLE.inspection.color,
+  storage: TYPE_STYLE.storage.color,
+  other: TYPE_STYLE.other.color,
+};
+
 const GLYPH_PATHS: Record<string, string> = {
   wrench:
     "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
@@ -290,10 +306,10 @@ export function FleetMap({
         className="fleet-map h-full w-full"
       />
       {!compact && (
-        <div className="pointer-events-none absolute bottom-7 left-2 z-[400] flex flex-wrap gap-x-3 gap-y-1 rounded-sm bg-base-100/90 px-2.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] backdrop-blur dark:bg-navy-900/85 dark:text-navy-300">
+        <div className="pointer-events-none absolute bottom-7 left-3 z-[400] flex max-w-[calc(100%-1.5rem)] flex-wrap gap-x-4 gap-y-1.5 rounded-sm border border-base-300 bg-base-100/95 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] backdrop-blur dark:border-navy-700 dark:bg-navy-900/90 dark:text-navy-200">
           {layers.fuelHeat && (
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2.5 w-6 rounded-sm" style={{ background: "linear-gradient(90deg,#F2C277,#E8A341,#FF4124,#8A1A0E)" }} />
+              <span className="h-2.5 w-6 rounded-sm" style={{ background: HEAT_SWATCH }} />
               Tankstopps
             </span>
           )}

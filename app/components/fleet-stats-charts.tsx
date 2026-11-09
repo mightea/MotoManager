@@ -55,7 +55,7 @@ function formatAxis(value: number): string {
 }
 
 const CARD =
-  "relative rounded-sm border border-base-300/70 bg-base-100 p-4 sm:p-5 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800";
+  "relative rounded-sm border border-base-300/70 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800";
 
 const CAPTION = "font-mono text-[11px] font-semibold uppercase tracking-[0.08em]";
 
@@ -66,25 +66,32 @@ export function ChartCard({
   children,
   legend,
   className,
+  bodyClassName,
 }: {
   title: string;
   subtitle?: string;
-  icon: LucideIcon;
+  /** Optional; the boards show plain titles. */
+  icon?: LucideIcon;
   children: ReactNode;
+  /** Rendered on the trailing side of the header (e.g. a category key). */
   legend?: ReactNode;
   className?: string;
+  /** Replaces the default body padding (`space-y-4 p-4`), e.g. "p-0" for a bleeding table. */
+  bodyClassName?: string;
 }) {
   return (
-    <section className={clsx(CARD, "space-y-4", className)}>
-      <header className="space-y-1">
-        <div className="flex items-center gap-2.5">
-          <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-          <h2 className="font-subdisplay text-sm text-base-content dark:text-white">{title}</h2>
+    <section className={clsx(CARD, "flex flex-col", className)}>
+      <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-base-200 px-4 py-3.5 dark:border-navy-700">
+        <div className="min-w-0 space-y-0.5">
+          <h2 className="flex items-center gap-2 text-[15px] font-bold uppercase leading-snug tracking-[0.06em] text-base-content dark:text-white">
+            {Icon && <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />}
+            {title}
+          </h2>
+          {subtitle && <p className="text-[13px] text-base-content/70 dark:text-navy-300">{subtitle}</p>}
         </div>
-        {subtitle && <p className="text-xs text-base-content/60 dark:text-navy-300">{subtitle}</p>}
+        {legend && <div className="shrink-0">{legend}</div>}
       </header>
-      {legend}
-      {children}
+      <div className={clsx("flex-1", bodyClassName ?? "space-y-4 p-4")}>{children}</div>
     </section>
   );
 }
@@ -151,46 +158,58 @@ function axisProps(mode: ChartMode) {
 // MARK: - KPI tiles
 
 export function KpiTile({
+  code,
   label,
   value,
   sub,
   change,
   upIsGood = true,
   changeLabel,
+  railClassName = "bg-primary",
 }: {
+  /** Tile number, e.g. "01". */
+  code?: string;
   label: string;
   value: string;
   sub?: string;
   change?: number | null;
   upIsGood?: boolean;
   changeLabel?: string;
+  /** Background class of the 3px leading rail. */
+  railClassName?: string;
 }) {
   const hasChange = change !== null && change !== undefined && Number.isFinite(change);
   const up = hasChange && change > 0;
   const good = hasChange && (up === upIsGood || Math.abs(change) < 0.5);
   const Arrow = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <div className={clsx(CARD, "flex flex-col gap-1.5")}>
-      <span className={clsx(CAPTION, "text-base-content/60 dark:text-navy-300")}>{label}</span>
-      <span className="font-numeric text-2xl font-semibold leading-none tabular-nums text-base-content sm:text-[28px] dark:text-white">
-        {value}
-      </span>
-      {sub && <span className="text-xs text-base-content/60 dark:text-navy-300">{sub}</span>}
-      {hasChange && (
-        <span className="flex items-center gap-1 text-xs">
-          <span
-            className={clsx(
-              "inline-flex items-center gap-0.5 font-numeric font-semibold tabular-nums",
-              good ? "text-success" : "text-error",
-            )}
-          >
-            <Arrow className="h-3.5 w-3.5" aria-hidden="true" />
-            {change > 0 ? "+" : ""}
-            {formatNumber(change)}%
+    <div className="flex gap-2.5 rounded-sm border border-base-300/70 bg-base-100 px-3.5 py-3 dark:border-navy-700 dark:bg-navy-800">
+      <span aria-hidden="true" className={clsx("w-[3px] shrink-0 rounded-sm", railClassName)} />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <dt className={clsx(CAPTION, "text-base-content/70 dark:text-navy-300")}>
+          {code && <span className="text-base-content/45 dark:text-navy-500">{code} — </span>}
+          {label}
+        </dt>
+        <dd className="font-mono text-2xl font-bold leading-tight tabular-nums text-base-content sm:text-[26px] dark:text-white">
+          {value}
+        </dd>
+        {sub && <span className="font-mono text-xs text-base-content/70 dark:text-navy-400">{sub}</span>}
+        {hasChange && (
+          <span className="flex flex-wrap items-center gap-1 text-xs">
+            <span
+              className={clsx(
+                "inline-flex items-center gap-0.5 font-numeric font-semibold tabular-nums",
+                good ? "text-success" : "text-error",
+              )}
+            >
+              <Arrow className="h-3.5 w-3.5" aria-hidden="true" />
+              {change > 0 ? "+" : ""}
+              {formatNumber(change)}%
+            </span>
+            <span className="text-base-content/60 dark:text-navy-400">{changeLabel}</span>
           </span>
-          <span className="text-base-content/55 dark:text-navy-400">{changeLabel}</span>
-        </span>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -204,11 +223,14 @@ export function DistanceByYearChart({
   mode,
   highlight,
   onSelectYear,
+  showLegend = true,
 }: {
   years: FleetYear[];
   bikes: FleetMotorcycle[];
   colors: Map<number, string>;
   mode: ChartMode;
+  /** Off when the page shows one shared bike colour key. */
+  showLegend?: boolean;
   /** Years inside the selected period stay solid; the rest fade. */
   highlight: (year: number) => boolean;
   onSelectYear: (year: number) => void;
@@ -223,7 +245,9 @@ export function DistanceByYearChart({
 
   return (
     <>
-      <Legend items={shownBikes.map((b) => ({ key: b.id, label: bikeName(b), color: colors.get(b.id) ?? "#999" }))} />
+      {showLegend && (
+        <Legend items={shownBikes.map((b) => ({ key: b.id, label: bikeName(b), color: colors.get(b.id) ?? "#999" }))} />
+      )}
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: -8 }}>
@@ -355,16 +379,33 @@ export function SeasonChart({
 
 // MARK: - Costs per year, stacked by category
 
+/** Colour key of the cost categories that occur in `years`. */
+export function CostCategoryLegend({ years, mode }: { years: FleetYear[]; mode: ChartMode }) {
+  const used = COST_CATEGORIES.filter((k) => years.some((y) => y.costs[k] > 0));
+  return (
+    <Legend
+      items={used.map((k) => ({
+        key: k,
+        label: COST_CATEGORY_LABELS[k],
+        color: costCategoryColor(COST_CATEGORIES.indexOf(k), mode),
+      }))}
+    />
+  );
+}
+
 export function CostByYearChart({
   years,
   mode,
   highlight,
   onSelectYear,
+  showLegend = true,
 }: {
   years: FleetYear[];
   mode: ChartMode;
   highlight: (year: number) => boolean;
   onSelectYear: (year: number) => void;
+  /** Off when the caller places `CostCategoryLegend` itself. */
+  showLegend?: boolean;
 }) {
   const used = COST_CATEGORIES.filter((k) => years.some((y) => y.costs[k] > 0));
   const rows = years.map((y) => ({ year: y.year, ...y.costs }));
@@ -372,13 +413,7 @@ export function CostByYearChart({
 
   return (
     <>
-      <Legend
-        items={used.map((k) => ({
-          key: k,
-          label: COST_CATEGORY_LABELS[k],
-          color: costCategoryColor(COST_CATEGORIES.indexOf(k), mode),
-        }))}
-      />
+      {showLegend && <CostCategoryLegend years={years} mode={mode} />}
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={rows} margin={{ top: 4, right: 4, bottom: 0, left: -8 }}>
@@ -529,14 +564,16 @@ export function OwnershipCostChart({ bikes, mode }: { bikes: FleetMotorcycle[]; 
   if (rows.length === 0) {
     return <p className="text-sm text-base-content/60 dark:text-navy-300">Für keine Maschine ist ein Kaufpreis erfasst.</p>;
   }
+  const legend = (
+    <Legend
+      items={[
+        { key: "capital", label: "Kaufpreis − Verkaufserlös", color: c.capital },
+        { key: "running", label: "Betriebskosten", color: c.running },
+      ]}
+    />
+  );
   return (
     <>
-      <Legend
-        items={[
-          { key: "capital", label: "Kaufpreis − Verkaufserlös", color: c.capital },
-          { key: "running", label: "Betriebskosten", color: c.running },
-        ]}
-      />
       <div style={{ height: Math.max(120, rows.length * 40 + 30) }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 8, bottom: 0, left: 0 }} barCategoryGap={10}>
@@ -565,6 +602,7 @@ export function OwnershipCostChart({ bikes, mode }: { bikes: FleetMotorcycle[]; 
           </BarChart>
         </ResponsiveContainer>
       </div>
+      {legend}
     </>
   );
 }
@@ -578,11 +616,11 @@ export function OwnershipCostTable({ bikes, colors }: { bikes: FleetMotorcycle[]
   const td = "px-3 py-2.5 text-right font-numeric tabular-nums";
   const money = (v: number | null) => (v === null ? "–" : formatCurrency(v));
   return (
-    <div className="-mx-4 overflow-x-auto sm:-mx-5">
+    <div className="-mx-4 overflow-x-auto border-t border-base-200 dark:border-navy-700">
       <table className="w-full min-w-[720px] text-sm">
         <thead className="border-b border-base-200 dark:border-navy-700">
           <tr>
-            <th className={clsx(th, "pl-4 text-left sm:pl-5")}>Motorrad</th>
+            <th className={clsx(th, "pl-4 text-left")}>Motorrad</th>
             <th className={clsx(th, "text-right")}>Besitz</th>
             <th className={clsx(th, "text-right")}>Distanz</th>
             <th className={clsx(th, "text-right")}>Kauf</th>
@@ -590,13 +628,13 @@ export function OwnershipCostTable({ bikes, colors }: { bikes: FleetMotorcycle[]
             <th className={clsx(th, "text-right")}>Betrieb</th>
             <th className={clsx(th, "text-right")}>Netto</th>
             <th className={clsx(th, "text-right")}>pro km</th>
-            <th className={clsx(th, "pr-4 text-right sm:pr-5")}>pro Jahr</th>
+            <th className={clsx(th, "pr-4 text-right")}>pro Jahr</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-base-200 dark:divide-navy-700">
           {rows.map((b) => (
             <tr key={b.id}>
-              <td className="py-2.5 pl-4 pr-3 sm:pl-5">
+              <td className="py-2.5 pl-4 pr-3">
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: colors.get(b.id) }} aria-hidden="true" />
                   <span className="truncate text-base-content dark:text-white">{bikeName(b)}</span>
@@ -616,7 +654,7 @@ export function OwnershipCostTable({ bikes, colors }: { bikes: FleetMotorcycle[]
               <td className={clsx(td, "text-base-content/70 dark:text-navy-300")}>{money(b.runningCost)}</td>
               <td className={clsx(td, "font-semibold text-base-content dark:text-white")}>{money(b.netCost)}</td>
               <td className={clsx(td, "text-base-content/70 dark:text-navy-300")}>{money(b.netCostPerKm)}</td>
-              <td className={clsx(td, "pr-4 text-base-content/70 sm:pr-5 dark:text-navy-300")}>{money(b.netCostPerYear)}</td>
+              <td className={clsx(td, "pr-4 text-base-content/70 dark:text-navy-300")}>{money(b.netCostPerYear)}</td>
             </tr>
           ))}
         </tbody>
@@ -634,6 +672,7 @@ export function ConsumptionChart({
   bikes,
   colors,
   mode,
+  showLegend = true,
 }: {
   rows: Array<Record<string, number | string>>;
   bikeIds: number[];
@@ -641,6 +680,8 @@ export function ConsumptionChart({
   bikes: FleetMotorcycle[];
   colors: Map<number, string>;
   mode: ChartMode;
+  /** Off when the page shows one shared bike colour key. */
+  showLegend?: boolean;
 }) {
   const byId = new Map(bikes.map((b) => [b.id, b]));
   if (rows.length === 0) {
@@ -656,9 +697,11 @@ export function ConsumptionChart({
   const sparse = rows.length <= 24;
   return (
     <>
-      <Legend
-        items={bikeIds.map((id) => ({ key: id, label: byId.get(id) ? bikeName(byId.get(id)!) : `#${id}`, color: colors.get(id) ?? "#999", line: true }))}
-      />
+      {showLegend && (
+        <Legend
+          items={bikeIds.map((id) => ({ key: id, label: byId.get(id) ? bikeName(byId.get(id)!) : `#${id}`, color: colors.get(id) ?? "#999", line: true }))}
+        />
+      )}
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>

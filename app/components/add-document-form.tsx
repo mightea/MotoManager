@@ -18,6 +18,8 @@ interface AddDocumentFormProps {
   onSubmitFormData?: (formData: FormData, options: SubmitOptions) => void;
   isSubmittingOverride?: boolean;
   currentUserId: number;
+  /** A file picked before the form opened (e.g. dropped on the page). */
+  initialFile?: File | null;
 }
 
 const EMPTY_MOTORCYCLE_IDS: number[] = [];
@@ -31,6 +33,7 @@ export function AddDocumentForm({
   onSubmitFormData,
   isSubmittingOverride,
   currentUserId,
+  initialFile = null,
 }: AddDocumentFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -38,10 +41,12 @@ export function AddDocumentForm({
   
   const [isPrivate, setIsPrivate] = useState(document?.isPrivate ?? false);
   const [selectedMotorcycles, setSelectedMotorcycles] = useState<number[]>(assignedMotorcycleIds);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(initialFile);
   const { url: previewUrl } = useAuthenticatedAssetUrl(document?.previewPath);
   const [error, setError] = useState<string | null>(null);
-  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(() =>
+    initialFile?.type.startsWith("image/") ? URL.createObjectURL(initialFile) : null,
+  );
 
   const stripExtension = (name: string) => name.replace(/\.[^/.]+$/, "");
 

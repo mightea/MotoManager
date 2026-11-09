@@ -1,14 +1,6 @@
 import { useMemo, useState } from "react";
 import { data, Link, useActionData, useLoaderData, useRevalidator } from "react-router";
-import {
-  Bike,
-  CalendarDays,
-  Download,
-  Globe2,
-  Map as MapIcon,
-  MapPinOff,
-  Wrench,
-} from "lucide-react";
+import { Download, Globe2, Map as MapIcon, MapPinOff } from "lucide-react";
 import clsx from "clsx";
 import type { Route } from "./+types/map";
 import { getSessionToken, requireUser } from "~/services/auth";
@@ -38,7 +30,8 @@ import {
   type HeatWeight,
   type MapFilter,
 } from "~/utils/map-analysis";
-import { FleetMap, DEFAULT_LAYERS, type MapLayerVisibility } from "~/components/fleet-map";
+import { FleetMap, DEFAULT_LAYERS, LAYER_SWATCHES, type MapLayerVisibility } from "~/components/fleet-map";
+import { Card, CardHeading } from "~/components/card";
 import { TourCard } from "~/components/tour-card";
 import { RidingCalendar } from "~/components/riding-calendar";
 import { LocationEditDialog } from "~/components/location-edit-dialog";
@@ -270,13 +263,39 @@ function MapDashboard({
   };
 
   const years = payload.years.map((y) => y.year);
+  const allCountries = new Set(payload.years.flatMap((y) => y.countries).filter((c) => c !== "??"));
+  const headerLine = [
+    "Tankstopps, Etappen und Orte aller Motorräder",
+    years.length > 0 ? (years[0] === years[years.length - 1] ? String(years[0]) : `${years[0]}–${years[years.length - 1]}`) : null,
+    allCountries.size > 0 ? `${allCountries.size} ${allCountries.size === 1 ? "Land" : "Länder"}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 px-4 pt-4 pb-24 animate-fade-in md:p-6 md:space-y-8">
+    <div className="container mx-auto max-w-7xl space-y-5 px-4 pt-4 pb-24 animate-fade-in md:p-6 md:space-y-6">
       <PageHeader
         eyebrow="Flotte"
         title="Karte"
-        description={`${payload.locations.length} Orte mit Koordinaten`}
+        description={headerLine}
+        actions={
+          <>
+            <Button type="button" variant="secondary" onClick={exportGeoJson} leftIcon={<Download className="h-4 w-4" />}>
+              GeoJSON
+            </Button>
+            {needingCountry.length > 0 && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={runCountryBackfill}
+                disabled={backfill !== null}
+                leftIcon={<Globe2 className="h-4 w-4" />}
+              >
+                {backfill ? `Länder ${backfill.done}/${backfill.total}` : `Länder ermitteln (${needingCountry.length})`}
+              </Button>
+            )}
+          </>
+        }
       />
       {actionData?.error && (
         <div role="alert" className="rounded-sm border border-error/40 bg-error/10 px-4 py-3 text-sm text-error">
@@ -284,8 +303,11 @@ function MapDashboard({
         </div>
       )}
 
-      {/* Controls */}
-      <section className="flex flex-wrap items-end gap-3">
+      {/* Toolbar — filters, heat weighting and layer toggles in one strip */}
+      <section
+        aria-label="Kartenfilter"
+        className="flex flex-wrap items-end gap-x-4 gap-y-2.5 rounded-sm border border-base-300/70 bg-base-100 px-3.5 py-3 dark:border-navy-700 dark:bg-navy-800"
+      >
         <FilterSelect
           label="Motorrad"
           value={filter.motorcycleId === null ? "all" : String(filter.motorcycleId)}
@@ -301,53 +323,66 @@ function MapDashboard({
           onChange={(v) => setFilter((f) => ({ ...f, year: v === "all" ? null : Number(v) }))}
           options={[{ value: "all", label: "Alle Jahre" }, ...years.slice().reverse().map((y) => ({ value: String(y), label: String(y) }))]}
         />
-        <FilterSelect
-          label="Gewichtung"
-          value={heatWeight}
-          onChange={(v) => setHeatWeight(v as HeatWeight)}
-          options={(Object.keys(HEAT_WEIGHT_LABELS) as HeatWeight[]).map((k) => ({ value: k, label: HEAT_WEIGHT_LABELS[k] }))}
-        />
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Button type="button" variant="secondary" size="sm" onClick={exportGeoJson} leftIcon={<Download className="h-4 w-4" />}>
-            GeoJSON
-          </Button>
-          {needingCountry.length > 0 && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={runCountryBackfill}
-              disabled={backfill !== null}
-              leftIcon={<Globe2 className="h-4 w-4" />}
-            >
-              {backfill ? `Länder ${backfill.done}/${backfill.total}` : `Länder ermitteln (${needingCountry.length})`}
-            </Button>
-          )}
-        </div>
+        <fieldset className="flex flex-col gap-1">
+          <legend className="sr-only">Gewichtung</legend>
+          <span aria-hidden="true" className={TOOLBAR_LABEL}>
+            Gewichtung
+          </span>
+          <span className="flex overflow-hidden rounded-sm border border-base-300 dark:border-navy-700">
+            {(Object.keys(HEAT_WEIGHT_LABELS) as HeatWeight[]).map((k) => {
+              const active = heatWeight === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setHeatWeight(k)}
+                  className={clsx(
+                    "h-[34px] border-l border-base-300 px-3 font-mono text-xs uppercase tracking-[0.08em] transition-colors first:border-l-0 dark:border-navy-700",
+                    active
+                      ? "bg-primary/10 font-bold text-primary shadow-[inset_0_-2px_0_var(--color-primary)] dark:bg-primary/20 dark:text-primary-light"
+                      : "bg-base-100 font-semibold text-base-content/70 hover:bg-base-200 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700",
+                  )}
+                >
+                  {HEAT_WEIGHT_LABELS[k]}
+                </button>
+              );
+            })}
+          </span>
+        </fieldset>
+        <fieldset className="flex min-w-0 flex-[1_1_22rem] flex-col gap-1">
+          <legend className="sr-only">Ebenen</legend>
+          <span aria-hidden="true" className={TOOLBAR_LABEL}>
+            Ebenen
+          </span>
+          <span className="flex flex-wrap gap-1.5">
+            {LAYER_LABELS.map(({ key, label }) => {
+              const active = layers[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setLayers((l) => ({ ...l, [key]: !l[key] }))}
+                  className={clsx(
+                    "inline-flex h-[34px] items-center gap-1.5 rounded-sm border px-2.5 font-mono text-xs font-bold uppercase tracking-[0.06em] transition-colors",
+                    active
+                      ? "border-primary bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light"
+                      : "border-base-300 bg-base-100 text-base-content/70 hover:bg-base-200 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-300 dark:hover:bg-navy-700",
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={clsx("h-2 w-2 shrink-0 rounded-full", !active && "opacity-50")}
+                    style={{ background: LAYER_SWATCHES[key] }}
+                  />
+                  {label}
+                </button>
+              );
+            })}
+          </span>
+        </fieldset>
       </section>
-
-      <fieldset className="flex flex-wrap gap-2">
-        <legend className="sr-only">Ebenen</legend>
-        {LAYER_LABELS.map(({ key, label }) => (
-          <label
-            key={key}
-            className={clsx(
-              "inline-flex cursor-pointer select-none items-center gap-2 rounded-sm border px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
-              layers[key]
-                ? "border-primary/50 bg-primary/10 text-primary dark:text-primary"
-                : "border-base-300 text-base-content/55 hover:border-base-content/30 dark:border-navy-700 dark:text-navy-400",
-            )}
-          >
-            <input
-              type="checkbox"
-              className="sr-only"
-              checked={layers[key]}
-              onChange={(e) => setLayers((l) => ({ ...l, [key]: e.target.checked }))}
-            />
-            {label}
-          </label>
-        ))}
-      </fieldset>
 
       {/* Map */}
       {payload.locations.length > 0 ? (
@@ -362,7 +397,7 @@ function MapDashboard({
           fuelOf={fuelOf}
           onEditLocation={openEditor}
           fitKey={fitKey}
-          className="h-[420px] overflow-hidden rounded-sm border border-base-300/70 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 sm:h-[560px]"
+          className="h-[420px] overflow-hidden rounded-sm border border-base-300/70 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 sm:h-[480px]"
         />
       ) : (
         <EmptyState
@@ -375,99 +410,102 @@ function MapDashboard({
 
       {/* Years */}
       {yearRows.length > 0 && (
-        <section className="space-y-3">
-          <SectionTitle icon={CalendarDays} title="Jahre" />
-          <div className="overflow-hidden rounded-sm border border-base-300/70 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-base-200 bg-base-200/50 dark:border-navy-700 dark:bg-navy-900/50">
-                  <tr>
-                    <Th>Jahr</Th>
-                    <Th align="right">Distanz</Th>
-                    <Th align="right">Getankt</Th>
-                    <Th align="right" hide>Sprit</Th>
-                    <Th align="right" hide>Stopps</Th>
-                    <Th align="right">Fahrtage</Th>
-                    <Th align="right">Touren</Th>
-                    <Th hide>Länder</Th>
-                    <Th hide>Weitester Punkt</Th>
-                    <Th hide>Saison</Th>
-                    <th className="w-10" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-base-200 dark:divide-navy-700">
-                  {yearRows
-                    .filter((y) => filter.year === null || y.year === filter.year)
-                    .map((y) => {
-                      const farthest = y.farthest ? locationsById.get(y.farthest.locationId) : undefined;
-                      return (
-                        <tr key={y.year} className="transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/40">
-                          <Td strong>{y.year}</Td>
-                          <Td align="right" strong>{formatNumber(y.distanceKm)} km</Td>
-                          <Td align="right">{formatNumber(y.liters, 1)} l</Td>
-                          <Td align="right" hide>{y.fuelCost === null ? "–" : formatCurrency(y.fuelCost)}</Td>
-                          <Td align="right" hide>{y.fuelStops}</Td>
-                          <Td align="right">{y.ridingDays}</Td>
-                          <Td align="right">
-                            {y.tours}
-                            {y.dayTrips > 0 && (
-                              <span className="ml-1 text-xs text-base-content/50 dark:text-navy-400">+{y.dayTrips} Tages</span>
-                            )}
-                          </Td>
-                          <Td hide>
-                            <span className="inline-flex flex-wrap gap-1">
-                              {y.countries.map((c) => (
-                                <span key={c} title={countryName(c)} className="font-mono text-xs">
-                                  {countryFlag(c)} {c}
-                                </span>
-                              ))}
-                            </span>
-                          </Td>
-                          <Td hide>
-                            {farthest ? (
-                              <span>
-                                {farthest.name}{" "}
-                                <span className="font-numeric tabular-nums text-base-content/55 dark:text-navy-400">
-                                  {formatNumber(round1(y.farthest?.distanceKm ?? 0), 1)} km
-                                </span>
+        <Card>
+          <CardHeading title="Jahre" meta="aus Tankstopps mit Standort" />
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-base-300 dark:border-navy-700">
+                <tr>
+                  <Th>Jahr</Th>
+                  <Th align="right">Distanz</Th>
+                  <Th align="right">Getankt</Th>
+                  <Th align="right" hide>Sprit</Th>
+                  <Th align="right" hide>Stopps</Th>
+                  <Th align="right">Fahrtage</Th>
+                  <Th align="right" hide>Touren</Th>
+                  <Th hide>Länder</Th>
+                  <Th hide>Weitester Punkt</Th>
+                  <Th hide>Saison</Th>
+                  <th className="w-10" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-base-200 dark:divide-navy-700">
+                {yearRows
+                  .filter((y) => filter.year === null || y.year === filter.year)
+                  .map((y) => {
+                    const farthest = y.farthest ? locationsById.get(y.farthest.locationId) : undefined;
+                    return (
+                      <tr key={y.year} className="align-top transition-colors hover:bg-base-200/50 dark:hover:bg-navy-700/40">
+                        <Td strong>{y.year}</Td>
+                        <Td align="right" strong>{formatNumber(y.distanceKm)} km</Td>
+                        <Td align="right">{formatNumber(y.liters, 1)} l</Td>
+                        <Td align="right" hide>{y.fuelCost === null ? "–" : formatCurrency(y.fuelCost)}</Td>
+                        <Td align="right" hide>{y.fuelStops}</Td>
+                        <Td align="right">{y.ridingDays}</Td>
+                        <Td align="right" hide>
+                          {y.tours}
+                          {y.dayTrips > 0 && (
+                            <span className="ml-1 text-xs text-base-content/60 dark:text-navy-400">+ {y.dayTrips} Tages</span>
+                          )}
+                        </Td>
+                        <Td hide>
+                          <span className="inline-flex flex-wrap gap-1">
+                            {y.countries.map((c) => (
+                              <span
+                                key={c}
+                                title={countryName(c)}
+                                className="rounded-sm border border-base-300 px-1.5 py-px font-mono text-[11px] font-bold tracking-[0.06em] text-base-content dark:border-navy-700 dark:text-white"
+                              >
+                                <span aria-hidden="true">{countryFlag(c)} </span>
+                                {c}
                               </span>
-                            ) : (
-                              "–"
-                            )}
-                          </Td>
-                          <Td hide>
-                            {y.seasonStart && y.seasonEnd
-                              ? `${formatDateShort(y.seasonStart)} – ${formatDateShort(y.seasonEnd)}`
-                              : "–"}
-                          </Td>
-                          <td className="px-2 py-3 text-right">
-                            <Link
-                              to={`/map/${y.year}`}
-                              className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:underline"
-                            >
-                              Rückblick
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-            {filter.motorcycleId !== null && (
-              <p className="border-t border-base-200 px-4 py-2 text-xs text-base-content/55 dark:border-navy-700 dark:text-navy-400">
-                Fahrtage, Länder, weitester Punkt und Saison gelten für die ganze Flotte.
-              </p>
-            )}
+                            ))}
+                          </span>
+                        </Td>
+                        <Td hide>
+                          {farthest ? (
+                            <span className="flex flex-col">
+                              <span className="font-sans text-base-content dark:text-white">{farthest.name}</span>
+                              <span className="font-mono text-xs text-base-content/60 dark:text-navy-400">
+                                {formatNumber(round1(y.farthest?.distanceKm ?? 0), 1)} km
+                              </span>
+                            </span>
+                          ) : (
+                            "–"
+                          )}
+                        </Td>
+                        <Td hide>
+                          {y.seasonStart && y.seasonEnd
+                            ? `${formatDateShort(y.seasonStart)} – ${formatDateShort(y.seasonEnd)}`
+                            : "–"}
+                        </Td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right">
+                          <Link
+                            to={`/map/${y.year}`}
+                            className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-primary hover:underline dark:text-primary-light"
+                          >
+                            Rückblick →
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
           </div>
-        </section>
+          {filter.motorcycleId !== null && (
+            <p className="border-t border-base-200 px-4 py-2.5 text-[13px] text-base-content/70 dark:border-navy-700 dark:text-navy-400">
+              Fahrtage, Länder, weitester Punkt und Saison gelten für die ganze Flotte.
+            </p>
+          )}
+        </Card>
       )}
 
       {/* Tours */}
       <section className="space-y-3">
-        <SectionTitle icon={Bike} title={`Touren${filteredTours.length > 0 ? ` (${filteredTours.length})` : ""}`} />
+        <SectionTitle title="Touren" meta={filteredTours.length > 0 ? `${filteredTours.length} mehrtägig` : undefined} />
         {filteredTours.length === 0 ? (
-          <p className="text-sm text-base-content/60 dark:text-navy-400">
+          <p className="text-sm text-base-content/70 dark:text-navy-400">
             Keine mehrtägigen Touren im gewählten Zeitraum. Eine Tour sind mehrere Tankstopps an aufeinanderfolgenden Tagen, mehr als 80 km von Zuhause entfernt.
           </p>
         ) : (
@@ -492,9 +530,9 @@ function MapDashboard({
 
       {/* Calendar */}
       {calendarYears.length > 0 && (
-        <section className="space-y-3">
-          <SectionTitle icon={CalendarDays} title="Fahrkalender" />
-          <div className="space-y-6 rounded-sm border border-base-300/70 bg-base-100 p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800 sm:p-6">
+        <Card>
+          <CardHeading title="Fahrkalender" meta={calendarYears.length > 1 ? `letzte ${calendarYears.length} Jahre` : String(calendarYears[0])} />
+          <div className="space-y-6 p-4 sm:p-6">
             {calendarYears.map((year) => {
               const y = payload.years.find((e) => e.year === year);
               return (
@@ -508,17 +546,17 @@ function MapDashboard({
               );
             })}
           </div>
-        </section>
+        </Card>
       )}
 
       {/* Workshops */}
       {workshops.length > 0 && (
-        <section className="space-y-3">
-          <SectionTitle icon={Wrench} title="Werkstätten & Prüfstellen" />
-          <div className="overflow-hidden rounded-sm border border-base-300/70 bg-base-100 shadow-[0_1px_0_0_rgba(15,23,42,0.03),0_8px_24px_-12px_rgba(15,23,42,0.08)] dark:border-navy-700 dark:bg-navy-800">
+        <Card>
+          <CardHeading title="Werkstätten & Prüfstellen" meta={`${workshops.length} ${workshops.length === 1 ? "Ort" : "Orte"}`} />
+          <div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-base-200 bg-base-200/50 dark:border-navy-700 dark:bg-navy-900/50">
+                <thead className="border-b border-base-300 dark:border-navy-700">
                   <tr>
                     <Th>Name</Th>
                     <Th hide>Typ</Th>
@@ -555,13 +593,13 @@ function MapDashboard({
               </table>
             </div>
           </div>
-        </section>
+        </Card>
       )}
 
       {/* Ungeocoded */}
       {(payload.ungeocoded.length > 0 || payload.unlocatedFuelCount > 0) && (
         <section className="space-y-3">
-          <SectionTitle icon={MapPinOff} title="Orte ohne Koordinaten" />
+          <SectionTitle title="Orte ohne Koordinaten" />
           <div className="rounded-sm border border-dashed border-base-content/20 bg-base-100 p-4 dark:border-navy-600 dark:bg-navy-800">
             {payload.ungeocoded.length > 0 && (
               <ul className="divide-y divide-base-200 dark:divide-navy-700">
@@ -594,12 +632,17 @@ function MapDashboard({
   );
 }
 
-function SectionTitle({ icon: Icon, title }: { icon: typeof Bike; title: string }) {
+const TOOLBAR_LABEL = "font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-base-content/70 dark:text-navy-300";
+
+/** Heading for sections that hold their own cards (tours, loose lists). */
+function SectionTitle({ title, meta }: { title: string; meta?: string }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-      <h2 className="font-subdisplay text-sm text-base-content dark:text-white">{title}</h2>
-    </div>
+    <h2 className="flex flex-wrap items-baseline gap-x-2 text-[15px] font-bold uppercase tracking-[0.06em] text-base-content dark:text-white">
+      {title}
+      {meta && (
+        <span className="font-mono text-xs font-semibold tracking-[0.08em] text-base-content/70 dark:text-navy-400">· {meta}</span>
+      )}
+    </h2>
   );
 }
 
@@ -615,12 +658,12 @@ function FilterSelect({
   options: { value: string; label: string }[];
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/70 dark:text-navy-400">{label}</span>
+    <label className="flex min-w-0 flex-col gap-1">
+      <span className={TOOLBAR_LABEL}>{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-sm border border-base-300 bg-base-100 px-3 py-2 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+        className="h-9 max-w-[16rem] rounded-sm border border-base-300 bg-base-100 py-0 pl-2 pr-8 text-sm font-semibold text-base-content focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
