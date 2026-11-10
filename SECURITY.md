@@ -10,7 +10,7 @@ The API issues an **opaque Bearer session token**. The webapp stores it in
 An `HttpOnly` cookie is the textbook way to keep a session token out of reach of
 JavaScript (and thus XSS). It is **not used here** because the API is deployed on a
 **separate origin** from the webapp (e.g. app at `moto.example.com`, API at
-`moto-api.herrmann.ltd`). A cookie set by the API origin is therefore a
+`moto-api.example.com`). A cookie set by the API origin is therefore a
 **third-party cookie**, which is blocked by Safari (ITP) and being phased out by
 Chrome — it would silently break login and log users out.
 
