@@ -17,6 +17,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: No private host names
+        run: |
+          # Real deployment hosts are injected from env/secrets, never committed.
+          if git grep -nIE '[A-Za-z0-9-]+\.herrmann\.ltd' -- .; then
+            echo "::error::Private host name committed. Use an example.com placeholder and inject the real value."
+            exit 1
+          fi
+
       - name: Set up pnpm
         # Version comes from package.json `packageManager` — do not
         # also set `version:` here, pnpm/action-setup@v6 refuses both.
