@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026.11.5](https://github.com/mightea/MotoManager/compare/2026.11.4...2026.11.5) (2026-11-10)
+
+
+### 📝 Documentation
+
+* replace the production api hostname with a placeholder ([e4c41c1](https://github.com/mightea/MotoManager/commit/e4c41c1f4444f9e166200ecdd9a7d705172e7a77))
+
+
+### 👷 Continuous Integration
+
+* fail the build when a private host name is committed ([eea8116](https://github.com/mightea/MotoManager/commit/eea81163673dec20d01fc52fc0327c715ef78324))
+
 ## [2026.11.4](https://github.com/mightea/MotoManager/compare/2026.11.3...2026.11.4) (2026-11-09)
 
 
