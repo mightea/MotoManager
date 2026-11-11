@@ -9,6 +9,8 @@ describe("safeRedirectPath", () => {
   it.each([
     "https://example.com",
     "//example.com",
+    "/.//example.com",
+    "/..//example.com",
     "/\\example.com",
     "javascript:alert(1)",
     "/parts\nLocation: https://example.com",
