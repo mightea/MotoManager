@@ -12,6 +12,8 @@ import {
   type NewMaintenanceRecord,
   type MotorcycleDetail,
   type NewMotorcycleDetail,
+  type NewOdometerChange,
+  type OdometerChange,
   type NewTirePressure,
   type NewTorqueSpecification,
   type NewPreviousOwner,
@@ -379,6 +381,42 @@ export async function deleteMotorcycleCascade(
   motorcycleId: number,
 ) {
   await fetchFromBackend(`/motorcycles/${motorcycleId}`, {
+    method: "DELETE",
+  }, token);
+}
+
+interface OdometerChangesResponse {
+  odometerChanges: OdometerChange[];
+  odometerOffset: number;
+  /** Maintenance records and issues re-based by this request. */
+  shiftedRecords?: number;
+}
+
+/**
+ * Record a replaced / rolled-over odometer. The backend re-bases every record
+ * dated on or after the change, so the caller must revalidate afterwards.
+ */
+export async function createOdometerChange(token: string, motorcycleId: number, values: NewOdometerChange) {
+  return fetchFromBackend<OdometerChangesResponse>(`/motorcycles/${motorcycleId}/odometer-changes`, {
+    method: "POST",
+    body: JSON.stringify(values),
+  }, token);
+}
+
+export async function updateOdometerChange(
+  token: string,
+  motorcycleId: number,
+  changeId: number,
+  values: Partial<NewOdometerChange>,
+) {
+  return fetchFromBackend<OdometerChangesResponse>(`/motorcycles/${motorcycleId}/odometer-changes/${changeId}`, {
+    method: "PUT",
+    body: JSON.stringify(values),
+  }, token);
+}
+
+export async function deleteOdometerChange(token: string, motorcycleId: number, changeId: number) {
+  return fetchFromBackend<OdometerChangesResponse>(`/motorcycles/${motorcycleId}/odometer-changes/${changeId}`, {
     method: "DELETE",
   }, token);
 }

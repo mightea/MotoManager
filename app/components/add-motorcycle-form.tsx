@@ -1,5 +1,5 @@
 import { Form, useSubmit, useActionData, useNavigation } from "react-router";
-import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord, MotorcycleStatus } from "~/types/db";
+import type { EditorMotorcycle, CurrencySetting, MaintenanceRecord, MotorcycleStatus, OdometerChange } from "~/types/db";
 import { modelSeriesDisplayName, type ModelSeries } from "~/types/parts";
 import { seriesPath, seriesTree } from "~/utils/series";
 import { decodeVin } from "~/services/parts";
@@ -12,7 +12,7 @@ import { toast } from "~/hooks/use-toast";
 import { Modal } from "./modal";
 import { ImportRoadTripDialog } from "./import-roadtrip-dialog";
 import type { RoadTripFuelEntry } from "~/utils/roadtrip-import";
-import { Fuel, Users } from "lucide-react";
+import { Fuel, Gauge, Users } from "lucide-react";
 import { Button } from "./button";
 import { FormField } from "./form-field";
 import { getBackendAssetUrl } from "~/utils/backend";
@@ -33,6 +33,8 @@ interface AddMotorcycleFormProps {
   onManagePreviousOwners?: () => void;
   /** Recorded previous-owner count, shown on the manage button. */
   previousOwnersCount?: number;
+  /** Opens the odometer-change dialog (null = record a new one). Edit only. */
+  onEditOdometerChange?: (change: OdometerChange | null) => void;
 }
 
 const formatDateInput = (value?: string | null) => {
@@ -57,6 +59,7 @@ export function AddMotorcycleForm({
   existingMaintenance = EMPTY_MAINTENANCE,
   onManagePreviousOwners,
   previousOwnersCount = 0,
+  onEditOdometerChange,
 }: AddMotorcycleFormProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -669,6 +672,47 @@ export function AddMotorcycleForm({
               ))}
             </div>
           </div>
+
+          {initialValues?.id && onEditOdometerChange && (
+            <div className="space-y-2 border-t border-gray-100 pt-2 dark:border-navy-700">
+              <p className="text-xs font-medium text-secondary dark:text-navy-300">Tachowechsel</p>
+              {(initialValues.odometerChanges ?? []).length > 0 && (
+                <ul className="divide-y divide-base-200 border border-base-300 dark:divide-navy-700 dark:border-navy-700">
+                  {(initialValues.odometerChanges ?? []).map((change) => (
+                    <li key={change.id}>
+                      <button
+                        type="button"
+                        onClick={() => onEditOdometerChange(change)}
+                        className="flex min-h-11 w-full flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 text-left hover:bg-base-200/50 dark:hover:bg-navy-700/30"
+                      >
+                        <span className="font-mono text-[13px] text-base-content dark:text-white">
+                          <span className="font-bold">{formatDateInput(change.date)}</span> ·{" "}
+                          {formatNumber(change.readingBefore)} → {formatNumber(change.readingAfter)} ·{" "}
+                          {change.offset >= 0 ? "+" : "−"} {formatNumber(Math.abs(change.offset))} km
+                        </span>
+                        <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.1em] text-primary">
+                          Bearbeiten →
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onEditOdometerChange(null)}
+                leftIcon={<Gauge className="h-4 w-4" />}
+              >
+                Tachowechsel oder Überlauf erfassen
+              </Button>
+              <p className="text-[11px] text-secondary/70 dark:text-navy-400">
+                Für ersetzte Tachos und Zähler, die nach 99’999 km wieder bei 0 beginnen.
+                {(initialValues.odometerOffset ?? 0) !== 0 &&
+                  " Anfangs-KM und Kilometerstand beim Verkauf sind Gesamtstände."}
+              </p>
+            </div>
+          )}
 
           {initialValues?.id && onManagePreviousOwners && (
             <div className="pt-2 border-t border-gray-100 dark:border-navy-700">

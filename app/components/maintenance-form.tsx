@@ -3,7 +3,8 @@ import { Form, useNavigation } from "react-router";
 import clsx from "clsx";
 import { Button } from "./button";
 import { FormattedTextEditor } from "./formatted-text-editor";
-import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting, BrakeType, TirePosition, FluidType, DriveType } from "~/types/db";
+import type { MaintenanceRecord, MaintenanceType, Location, LocationType, CurrencySetting, BrakeType, TirePosition, FluidType, DriveType, OdometerChange } from "~/types/db";
+import { OdometerField } from "./odometer-field";
 import { fluidTypeLabels, tirePositionLabels } from "~/utils/maintenance";
 import type { Part, PartConsumption } from "~/types/parts";
 import {
@@ -38,6 +39,8 @@ interface MaintenanceFormProps {
     initialData?: MaintenanceRecord | null;
     currencyCode?: string | null;
     defaultOdo?: number | null;
+    /** Instrument replacements of this bike; the odo field converts with them. */
+    odometerChanges?: OdometerChange[];
     userLocations?: Location[];
     currencies?: CurrencySetting[];
     /** Parts with positive on-hand, offered as "Verwendete Teile". */
@@ -308,6 +311,7 @@ export function MaintenanceForm({
     initialData,
     currencyCode,
     defaultOdo,
+    odometerChanges,
     userLocations = EMPTY_LOCATIONS,
     currencies = EMPTY_CURRENCIES,
     availableParts = EMPTY_PARTS,
@@ -493,17 +497,12 @@ export function MaintenanceForm({
                         className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]"
                     />
                 </div>
-                <div className="space-y-1.5">
-                    <label htmlFor="odo" className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400">Kilometerstand</label>
-                    <input
-                        type="number"
-                        name="odo"
-                        id="odo"
-                        required
-                        defaultValue={initialData?.odo ?? defaultOdo ?? ""}
-                        className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-                    />
-                </div>
+                <OdometerField
+                    storedOdo={initialData?.odo}
+                    storedDate={initialData?.date}
+                    defaultOdo={defaultOdo}
+                    odometerChanges={odometerChanges}
+                />
 
                 {type !== "location" && type !== "fuel" && (
                     <div className="space-y-1.5">

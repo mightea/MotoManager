@@ -26,6 +26,7 @@ import {
   type NewIssue,
   type Issue,
   type NewPreviousOwner,
+  type OdometerChange,
   type PreviousOwner
 } from "~/types/db";
 import { requireUser } from "~/services/auth";
@@ -52,6 +53,7 @@ import { MotorcycleDetailHeader } from "~/components/motorcycle-detail-header";
 import { buildMotorcycleHero } from "~/components/motorcycle-hero-stats";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 import { PreviousOwnerDialog } from "~/components/previous-owner-dialog";
+import { OdometerChangeDialog } from "~/components/odometer-change-dialog";
 import { PreviousOwnersDialog } from "~/components/previous-owners-dialog";
 import { MotorcycleInfoCard } from "~/components/motorcycle-info-card";
 import { Card, CardAction, CardHeading } from "~/components/card";
@@ -71,6 +73,8 @@ import { useUmami } from "~/components/umami-provider";
 import { toast } from "~/hooks/use-toast";
 import { getCurrentLocationName } from "~/utils/motorcycle-header-stats";
 import { roadTripNormalizedCost } from "~/utils/roadtrip-import";
+
+const EMPTY_ODOMETER_CHANGES: OdometerChange[] = [];
 
 /** Slice of the `/motorcycles/:id` payload this route consumes. */
 interface MotorcycleDetailResponse {
@@ -361,6 +365,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     createPreviousOwner,
     updatePreviousOwner,
     deletePreviousOwner,
+    createOdometerChange,
+    updateOdometerChange,
+    deleteOdometerChange,
     reorderPreviousOwners,
     updateMotorcycleUnknownOwners,
   } = await import("~/services/motorcycles");
@@ -455,7 +462,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     const issueData: NewIssue = {
       motorcycleId,
+      // The form holds the instrument reading; the backend adds the offset
+      // of any odometer change in force on the issue's date.
       odo,
+      odoOffset: 0,
       title,
       description,
       descriptionMarkup: parseMarkup(formData.get("descriptionMarkup")),
@@ -487,6 +497,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
     await updateIssue(token, issueId, motorcycleId, {
       odo,
+      odoOffset: 0,
       title,
       description,
       descriptionMarkup: parseMarkup(formData.get("descriptionMarkup")),
@@ -555,7 +566,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
       motorcycleId,
       type,
       date: String(formData.get("date")),
+      // Instrument reading; the backend lifts it to the total (see createIssue).
       odo: Number(formData.get("odo")),
+      odoOffset: 0,
       cost: parseNumber(formData.get("cost")),
       currency: parseString(formData.get("currency")),
       description: parseString(formData.get("description")),
@@ -704,6 +717,59 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     }
 
     return data({ success: true, intent: intent === "createPreviousOwner" ? "createPreviousOwner" : "updatePreviousOwner" });
+  }
+
+  if (intent === "createOdometerChange" || intent === "updateOdometerChange") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const date = parseString(formData.get("date"));
+    const readingBefore = Number(formData.get("readingBefore"));
+    const readingAfter = Number(formData.get("readingAfter"));
+    const kind = formData.get("kind") === "rollover" ? "rollover" : "replacement";
+
+    if (
+      !Number.isFinite(motorcycleId) ||
+      !date ||
+      !Number.isInteger(readingBefore) ||
+      !Number.isInteger(readingAfter) ||
+      readingBefore < 0 ||
+      readingAfter < 0
+    ) {
+      return data(
+        { success: false, intent, error: "Bitte Datum und beide Tachostände angeben." },
+        { status: 400 },
+      );
+    }
+
+    try {
+      if (intent === "createOdometerChange") {
+        await createOdometerChange(token, motorcycleId, { date, readingBefore, readingAfter, kind });
+      } else {
+        const changeId = Number(formData.get("changeId"));
+        if (!Number.isFinite(changeId)) {
+          throw new Response("Ungültige Tachowechsel-ID", { status: 400 });
+        }
+        await updateOdometerChange(token, motorcycleId, changeId, { date, readingBefore, readingAfter, kind });
+      }
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      // The backend refuses a change that would push a reading below zero.
+      return data(
+        { success: false, intent, error: "Der Tachowechsel konnte nicht gespeichert werden. Prüfe die Tachostände." },
+        { status: 400 },
+      );
+    }
+
+    return data({ success: true, intent });
+  }
+
+  if (intent === "deleteOdometerChange") {
+    const motorcycleId = Number(formData.get("motorcycleId"));
+    const changeId = Number(formData.get("changeId"));
+    if (!Number.isFinite(motorcycleId) || !Number.isFinite(changeId)) {
+      throw new Response("Ungültige Tachowechsel-ID", { status: 400 });
+    }
+    await deleteOdometerChange(token, motorcycleId, changeId);
+    return data({ success: true, intent });
   }
 
   if (intent === "reorderPreviousOwners") {
@@ -868,7 +934,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
             motorcycleId,
             type: "fuel" as const,
             date: record.date.split("T")[0],
+            // Imported logs carry what the instrument showed that day.
             odo: record.odo,
+            odoOffset: 0,
             cost: record.cost,
             currency,
             fuelType: record.fuelType,
@@ -982,6 +1050,9 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const [previousOwnerDialogOpen, setPreviousOwnerDialogOpen] = useState(false);
   const [selectedPreviousOwner, setSelectedPreviousOwner] = useState<(typeof previousOwnersList)[number] | null>(null);
   const [deletePreviousOwnerConfirmationOpen, setDeletePreviousOwnerConfirmationOpen] = useState(false);
+  const [odometerChangeDialogOpen, setOdometerChangeDialogOpen] = useState(false);
+  const [selectedOdometerChange, setSelectedOdometerChange] = useState<OdometerChange | null>(null);
+  const [deleteOdometerChangeConfirmationOpen, setDeleteOdometerChangeConfirmationOpen] = useState(false);
   const revalidator = useRevalidator();
   const actionData = useActionData<{ success?: boolean; error?: string; errors?: Record<string, string>; intent?: string; count?: number; failed?: number }>();
   const submit = useSubmit();
@@ -1054,6 +1125,15 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
           case "deletePreviousOwner":
             toast.success("Vorbesitzer gelöscht");
             break;
+          case "createOdometerChange":
+            toast.success("Tachowechsel erfasst", "Die Einträge seit dem Wechsel zeigen jetzt den Gesamtstand.");
+            break;
+          case "updateOdometerChange":
+            toast.success("Tachowechsel aktualisiert");
+            break;
+          case "deleteOdometerChange":
+            toast.success("Tachowechsel gelöscht");
+            break;
         }
       }
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -1077,6 +1157,12 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
   const closeIssueDialog = () => {
     setIssueDialogOpen(false);
     setSelectedIssue(null);
+  };
+
+  const odometerChanges = motorcycle.odometerChanges ?? EMPTY_ODOMETER_CHANGES;
+  const openOdometerChangeDialog = (change: OdometerChange | null) => {
+    setSelectedOdometerChange(change);
+    setOdometerChangeDialogOpen(true);
   };
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
@@ -1161,6 +1247,8 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
               currencyCode={motorcycle.currencyCode}
               userLocations={userLocations}
               usedPartsByRecordId={usedPartsByRecordId}
+              odometerChanges={odometerChanges}
+              onEditOdometerChange={openOdometerChangeDialog}
               onEdit={(record) => {
                 setSelectedMaintenance(record);
                 setMaintenanceDialogOpen(true);
@@ -1284,6 +1372,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
             existingMaintenance={maintenanceHistory}
             previousOwnersCount={previousOwnersList.length}
             onManagePreviousOwners={() => setPreviousOwnersManageOpen(true)}
+            onEditOdometerChange={openOdometerChangeDialog}
           />
         </Suspense>
       </Modal>
@@ -1329,6 +1418,7 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         allRecords={maintenanceHistory}
         currencyCode={motorcycle.currencyCode}
         defaultOdo={lastKnownOdo}
+        odometerChanges={odometerChanges}
         onDelete={() => {
           setMaintenanceDialogOpen(false);
           setDeleteMaintenanceConfirmationOpen(true);
@@ -1404,11 +1494,48 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
         onClose={closeIssueDialog}
         motorcycleId={motorcycle.id}
         defaultOdo={lastKnownOdo}
+        odometerChanges={odometerChanges}
         initialIssue={selectedIssue}
         onIssueSaved={() => {
           revalidator.revalidate();
           setSelectedIssue(null);
         }}
+      />
+
+      <OdometerChangeDialog
+        isOpen={odometerChangeDialogOpen}
+        onClose={() => setOdometerChangeDialogOpen(false)}
+        motorcycleId={motorcycle.id}
+        initialData={selectedOdometerChange}
+        records={maintenanceHistory}
+        onDelete={() => {
+          setOdometerChangeDialogOpen(false);
+          setDeleteOdometerChangeConfirmationOpen(true);
+        }}
+        onSubmit={() => setOdometerChangeDialogOpen(false)}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={deleteOdometerChangeConfirmationOpen}
+        onCancel={() => {
+          setDeleteOdometerChangeConfirmationOpen(false);
+          setOdometerChangeDialogOpen(true);
+        }}
+        onConfirm={() => {
+          if (selectedOdometerChange) {
+            const formData = new FormData();
+            formData.append("intent", "deleteOdometerChange");
+            formData.append("motorcycleId", motorcycle.id.toString());
+            formData.append("changeId", selectedOdometerChange.id.toString());
+            submit(formData, { method: "post" });
+          }
+          setDeleteOdometerChangeConfirmationOpen(false);
+          setSelectedOdometerChange(null);
+        }}
+        title="Tachowechsel löschen"
+        description="Die Einträge seit dem Wechsel werden wieder auf den reinen Tachostand zurückgesetzt."
+        confirmLabel="Löschen"
+        confirmDisabled={!selectedOdometerChange}
       />
 
       <PreviousOwnerDialog

@@ -6,7 +6,13 @@ import { formatNumber } from "~/utils/numberUtils";
 type HeroInput = {
   motorcycle: Pick<
     Motorcycle,
-    "initialOdo" | "manualOdo" | "fabricationDate" | "purchaseDate" | "hasUnknownOwners" | "status"
+    | "initialOdo"
+    | "manualOdo"
+    | "fabricationDate"
+    | "purchaseDate"
+    | "hasUnknownOwners"
+    | "status"
+    | "odometerOffset"
   >;
   maintenanceRecords?: MaintenanceRecord[] | null;
   issues?: Pick<Issue, "odo">[] | null;
@@ -52,7 +58,17 @@ export function buildMotorcycleHero({
   );
 
   const stats: HeroStat[] = [];
-  if (odo > 0) stats.push({ label: "km · Tacho", value: formatNumber(odo) });
+  // After a replaced odometer the total and the number on the bike differ;
+  // show both so the figure can be checked against the instrument.
+  const offset = motorcycle.odometerOffset ?? 0;
+  if (odo > 0 && offset !== 0) {
+    stats.push({ label: "km · Gesamt", value: formatNumber(odo) });
+    if (odo - offset >= 0) {
+      stats.push({ label: "km · Tacho zeigt", value: formatNumber(odo - offset), hideOnMobile: true });
+    }
+  } else if (odo > 0) {
+    stats.push({ label: "km · Tacho", value: formatNumber(odo) });
+  }
 
   if (includeYearKm) {
     // Same rule as the garage card (/home): distance since the highest

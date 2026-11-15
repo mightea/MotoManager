@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/button";
 import { FormattedTextEditor } from "~/components/formatted-text-editor";
-import type { Issue } from "~/types/db";
+import type { Issue, OdometerChange } from "~/types/db";
+import { OdometerField } from "~/components/odometer-field";
 import { DeleteConfirmationDialog } from "~/components/delete-confirmation-dialog";
 
 interface IssueFormProps {
   motorcycleId: number;
   defaultOdo?: number | null;
+  odometerChanges?: OdometerChange[];
   initialIssue?: Issue | null;
   onSuccess: () => void;
   onCancel: () => void;
@@ -24,7 +26,7 @@ const statusOptions: { value: Issue["status"]; label: string }[] = [
   { value: "done", label: "Erledigt" },
 ];
 
-export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, onCancel }: IssueFormProps) {
+export function IssueForm({ motorcycleId, defaultOdo, odometerChanges, initialIssue, onSuccess, onCancel }: IssueFormProps) {
   const fetcher = useFetcher<{ success?: boolean }>();
   const [today] = useState(() => new Date().toISOString().split("T")[0]);
   const isSubmitting = fetcher.state !== "idle";
@@ -85,22 +87,12 @@ export function IssueForm({ motorcycleId, defaultOdo, initialIssue, onSuccess, o
             className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500 dark:[color-scheme:dark]"
           />
         </div>
-        <div className="space-y-1.5">
-          <label
-            htmlFor="odo"
-            className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-base-content/60 dark:text-navy-400"
-          >
-            Kilometerstand
-          </label>
-          <input
-            type="number"
-            name="odo"
-            id="odo"
-            required
-            defaultValue={initialIssue?.odo ?? defaultOdo ?? ""}
-            className="block w-full rounded-sm border border-base-300 bg-base-100 p-3 text-sm text-base-content shadow-[0_1px_0_0_rgba(15,23,42,0.04)] transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-navy-700 dark:bg-navy-900 dark:text-white dark:placeholder-navy-500"
-          />
-        </div>
+        <OdometerField
+          storedOdo={initialIssue?.odo}
+          storedDate={initialIssue?.date}
+          defaultOdo={defaultOdo}
+          odometerChanges={odometerChanges}
+        />
       </div>
 
       <div className="space-y-1.5">

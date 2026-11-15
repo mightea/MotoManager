@@ -27,6 +27,29 @@ export interface Authenticator {
   createdAt: string;
 }
 
+/**
+ * The odometer was replaced (or a five-digit counter rolled over). Readings are
+ * raw instrument values; every stored `odo` is the TOTAL distance, i.e. the
+ * instrument reading plus the offsets of all changes dated on or before it.
+ */
+export interface OdometerChange {
+  id: number;
+  motorcycleId: number;
+  /** YYYY-MM-DD */
+  date: string;
+  /** What the old instrument showed when it came off. */
+  readingBefore: number;
+  /** What the new instrument showed when it went on. */
+  readingAfter: number;
+  kind: OdometerChangeKind;
+  /** readingBefore - readingAfter */
+  offset: number;
+}
+
+export type OdometerChangeKind = "replacement" | "rollover";
+
+export type NewOdometerChange = Pick<OdometerChange, "date" | "readingBefore" | "readingAfter" | "kind">;
+
 export interface Motorcycle {
   id: number;
   make: string;
@@ -52,6 +75,10 @@ export interface Motorcycle {
   firstRegistration: string | null;
   initialOdo: number;
   manualOdo: number | null;
+  /** Instrument replacements / rollovers, oldest first. Absent on older backends. */
+  odometerChanges?: OdometerChange[];
+  /** Sum of all change offsets: stored total = instrument reading + this. */
+  odometerOffset?: number;
   purchaseDate: string | null;
   purchasePrice: number | null;
   normalizedPurchasePrice: number | null;
@@ -164,6 +191,9 @@ export interface MaintenanceRecord {
 
 export type NewMaintenanceRecord = Omit<MaintenanceRecord, "id"> & {
   bundledItems?: string[];
+  /** Offset already contained in `odo`. 0 = `odo` is the raw instrument
+   *  reading and the server adds the offset for the record's date. */
+  odoOffset?: number;
 };
 export type EditMaintenanceRecord = Partial<NewMaintenanceRecord>;
 
@@ -192,7 +222,10 @@ export interface IssueLinkedPart {
   onHand: number;
 }
 
-export type NewIssue = Omit<Issue, "id" | "linkedParts">;
+export type NewIssue = Omit<Issue, "id" | "linkedParts"> & {
+  /** See `NewMaintenanceRecord.odoOffset`. */
+  odoOffset?: number;
+};
 export type EditorIssue = Partial<NewIssue>;
 
 export type LocationType =

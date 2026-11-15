@@ -1,6 +1,6 @@
 import { Modal } from "~/components/modal";
 import { MaintenanceForm, type BrakeConfig } from "~/components/maintenance-form";
-import type { MaintenanceRecord, Location, CurrencySetting, DriveType } from "~/types/db";
+import type { MaintenanceRecord, Location, CurrencySetting, DriveType, OdometerChange } from "~/types/db";
 import type { Part, PartConsumption } from "~/types/parts";
 import { useUmami } from "./umami-provider";
 import { useEffect } from "react";
@@ -13,6 +13,7 @@ interface MaintenanceDialogProps {
   allRecords?: MaintenanceRecord[];
   currencyCode?: string | null;
   defaultOdo?: number | null;
+  odometerChanges?: OdometerChange[];
   userLocations?: Location[];
   currencies?: CurrencySetting[];
   /** Parts with positive on-hand, offered as "Verwendete Teile" on create. */
@@ -31,7 +32,7 @@ interface MaintenanceDialogProps {
 
 const EMPTY_RECORDS: MaintenanceRecord[] = [];
 
-export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, userLocations, currencies, availableParts, existingConsumptions, partsOnRecord, brakeConfig, driveType, onDelete }: MaintenanceDialogProps) {
+export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, allRecords = EMPTY_RECORDS, currencyCode, defaultOdo, odometerChanges, userLocations, currencies, availableParts, existingConsumptions, partsOnRecord, brakeConfig, driveType, onDelete }: MaintenanceDialogProps) {
   const { trackEvent } = useUmami();
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export function MaintenanceDialog({ isOpen, onClose, motorcycleId, initialData, 
         initialData={initialData}
         currencyCode={currencyCode}
         defaultOdo={defaultOdo}
+        odometerChanges={odometerChanges}
         userLocations={userLocations}
         currencies={currencies}
         availableParts={availableParts}

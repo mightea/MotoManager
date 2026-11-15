@@ -26,10 +26,12 @@ import {
   CheckSquare,
   Trash2,
   FlaskConical,
+  Gauge,
 } from "lucide-react";
 import { FormattedText } from "~/components/formatted-text";
-import { useState } from "react";
-import type { MaintenanceRecord, MaintenanceType, Location, FluidType, BatteryType } from "~/types/db";
+import { Fragment, useState } from "react";
+import type { MaintenanceRecord, MaintenanceType, Location, FluidType, BatteryType, OdometerChange } from "~/types/db";
+import { odometerOffsetAt } from "~/utils/odometer";
 import clsx from "clsx";
 import { formatNumber, formatCurrency } from "~/utils/numberUtils";
 import { parseDotCode } from "~/utils/maintenance-intervals";
@@ -62,6 +64,61 @@ interface MaintenanceListProps {
    * and is responsible for confirming and performing the deletion.
    */
   onBulkDelete?: (recordIds: number[]) => void;
+  /** Instrument replacements; shown as markers in the timeline. */
+  odometerChanges?: OdometerChange[];
+  onEditOdometerChange?: (change: OdometerChange) => void;
+}
+
+const EMPTY_CHANGES: OdometerChange[] = [];
+
+const dayOf = (date: string) => date.slice(0, 10);
+
+/**
+ * Timeline row for a replaced / rolled-over odometer. Records above it (the
+ * list runs newest first) were read off the new instrument.
+ */
+function OdometerChangeMarker({
+  change,
+  dateLabel,
+  onEdit,
+}: {
+  change: OdometerChange;
+  dateLabel: string;
+  onEdit?: (change: OdometerChange) => void;
+}) {
+  const offset = change.readingBefore - change.readingAfter;
+  return (
+    <li className="border-t border-base-200 dark:border-navy-700">
+      <div className="mx-3 my-2 flex flex-wrap items-center gap-x-4 gap-y-2 border border-primary/30 bg-primary/10 px-3 py-2.5 md:mx-4">
+        <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-sm bg-primary text-primary-content md:h-9 md:w-9">
+          <Gauge className="h-[17px] w-[17px] md:h-[18px] md:w-[18px]" aria-hidden="true" />
+        </div>
+        <div className="flex min-w-0 flex-1 basis-56 flex-col">
+          <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <span suppressHydrationWarning className="font-numeric text-sm font-bold text-base-content tabular-nums dark:text-white">
+              {dateLabel}
+            </span>
+            <span className="text-[15px] font-bold text-base-content dark:text-white">
+              {change.kind === "rollover" ? "Tacho übergelaufen" : "Tacho ersetzt"}
+            </span>
+          </span>
+          <span className="font-mono text-[12px] uppercase text-base-content/80 dark:text-navy-200">
+            Alter Tacho {formatNumber(change.readingBefore)} → neuer Tacho {formatNumber(change.readingAfter)} · seither Tachostand{" "}
+            {offset >= 0 ? "+" : "−"} {formatNumber(Math.abs(offset))} km
+          </span>
+        </div>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(change)}
+            className="min-h-11 font-mono text-[12px] font-semibold uppercase tracking-[0.1em] text-primary hover:underline"
+          >
+            Bearbeiten →
+          </button>
+        )}
+      </div>
+    </li>
+  );
 }
 
 interface GroupedMaintenanceRecord {
@@ -258,7 +315,7 @@ function findOdoRegressions(groups: GroupedMaintenanceRecord[]): Map<string, num
   return flags;
 }
 
-export function MaintenanceList({ records, currencyCode, userLocations, usedPartsByRecordId, onEdit, onAdd, onBulkDelete, title = "Historie" }: MaintenanceListProps) {
+export function MaintenanceList({ records, currencyCode, userLocations, usedPartsByRecordId, onEdit, onAdd, onBulkDelete, title = "Historie", odometerChanges = EMPTY_CHANGES, onEditOdometerChange }: MaintenanceListProps) {
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "maintenance" | "fuel">("all");
   const [selectionMode, setSelectionMode] = useState(false);
@@ -305,6 +362,20 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
     }
     recordsByYear.get(year)!.push(group);
   });
+
+  // Odometer-change markers sit in the timeline at their date. While older
+  // entries are still collapsed, only markers inside the visible range show.
+  const oldestVisibleDay =
+    hiddenCount > 0 && visibleGroups.length > 0 ? dayOf(visibleGroups[visibleGroups.length - 1].date) : null;
+  const changesByYear = new Map<number, OdometerChange[]>();
+  for (const change of odometerChanges) {
+    if (oldestVisibleDay && dayOf(change.date) < oldestVisibleDay) continue;
+    const year = new Date(change.date).getFullYear();
+    changesByYear.set(year, [...(changesByYear.get(year) ?? []), change]);
+  }
+  for (const year of changesByYear.keys()) {
+    if (!recordsByYear.has(year)) recordsByYear.set(year, []);
+  }
 
   const sortedYears = Array.from(recordsByYear.keys()).sort((a, b) => b - a);
 
@@ -516,7 +587,18 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
             </div>
 
             <ul>
-              {recordsByYear.get(year)!.map((group) => {
+              {recordsByYear.get(year)!.map((group, groupIndex, yearGroups) => {
+                // Changes dated after this entry but not after the one above
+                // it belong between the two (same-day entries stay above).
+                const newerDay = groupIndex > 0 ? dayOf(yearGroups[groupIndex - 1].date) : null;
+                const markersAbove = (changesByYear.get(year) ?? [])
+                  .filter(
+                    (change) =>
+                      dayOf(change.date) > dayOf(group.date) &&
+                      (newerDay === null || dayOf(change.date) <= newerDay),
+                  )
+                  .sort((a, b) => b.date.localeCompare(a.date));
+                const instrumentOffset = odometerOffsetAt(odometerChanges, group.date);
                 const Icon = getIconForType(group.type);
                 const isExpanded = !selectionMode && expandedGroupId === group.id;
                 const isSelected = selectedGroupIds.has(group.id);
@@ -543,8 +625,16 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                 const odoRegression = odoRegressions.get(group.id);
 
                 return (
+                  <Fragment key={group.id}>
+                  {markersAbove.map((change) => (
+                    <OdometerChangeMarker
+                      key={`odometer-change-${change.id}`}
+                      change={change}
+                      dateLabel={dateFormatter.format(new Date(change.date))}
+                      onEdit={onEditOdometerChange}
+                    />
+                  ))}
                   <li
-                    key={group.id}
                     className={clsx(
                       "border-t border-base-200 transition-colors dark:border-navy-700",
                       isSelected
@@ -614,6 +704,11 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                       <span className="hidden shrink-0 text-right md:inline">
                         <span className="font-numeric text-base font-bold text-base-content dark:text-white">{formatNumber(group.odo)}</span>{" "}
                         <span className="font-mono text-[11px] font-semibold uppercase text-base-content/70">km</span>
+                        {instrumentOffset !== 0 && group.odo - instrumentOffset >= 0 && (
+                          <span className="block font-mono text-[11px] font-semibold uppercase tracking-[0.06em] text-base-content/70 dark:text-navy-300">
+                            Tacho {formatNumber(group.odo - instrumentOffset)}
+                          </span>
+                        )}
                       </span>
                     </button>
 
@@ -828,8 +923,26 @@ export function MaintenanceList({ records, currencyCode, userLocations, usedPart
                       </div>
                     </div>
                   </li>
+                  </Fragment>
                 );
               })}
+              {(() => {
+                // Changes on or before the oldest entry of the year (or in a
+                // year without entries) close the year's list.
+                const yearGroups = recordsByYear.get(year)!;
+                const oldestDay = yearGroups.length > 0 ? dayOf(yearGroups[yearGroups.length - 1].date) : null;
+                return (changesByYear.get(year) ?? [])
+                  .filter((change) => oldestDay === null || dayOf(change.date) <= oldestDay)
+                  .sort((a, b) => b.date.localeCompare(a.date))
+                  .map((change) => (
+                    <OdometerChangeMarker
+                      key={`odometer-change-${change.id}`}
+                      change={change}
+                      dateLabel={dateFormatter.format(new Date(change.date))}
+                      onEdit={onEditOdometerChange}
+                    />
+                  ));
+              })()}
             </ul>
           </div>
         ))}
