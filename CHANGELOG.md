@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.11.6](https://github.com/mightea/MotoManager/compare/2026.11.5...2026.11.6) (2026-11-18)
+
+
+### 🐛 Bug Fixes
+
+* reject protocol-relative paths after URL normalization in safeRedirectPath ([9f1858e](https://github.com/mightea/MotoManager/commit/9f1858e104fab71cda40e322d738bdb20a1cd1b4))
+
 ## [2026.11.5](https://github.com/mightea/MotoManager/compare/2026.11.4...2026.11.5) (2026-11-15)
 
 
