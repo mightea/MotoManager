@@ -1,5 +1,18 @@
 # Changelog
 
+## [2026.11.7](https://github.com/mightea/MotoManager/compare/2026.11.6...2026.11.7) (2026-11-23)
+
+
+### ✨ Features
+
+* add garage name filter and jump-to command bar ([e7794e8](https://github.com/mightea/MotoManager/commit/e7794e85d9226d79e128942e6274261dd8fbcc64))
+* remove server selector from login ([ed63af9](https://github.com/mightea/MotoManager/commit/ed63af9fb23a5f76cd1628e1c8abd08bf708bd3d))
+
+
+### 🐛 Bug Fixes
+
+* reload the garage after adding a bike ([fe137ce](https://github.com/mightea/MotoManager/commit/fe137cef0f593bc95054a139cd2dd1a8ef9b3c67))
+
 ## [2026.11.6](https://github.com/mightea/MotoManager/compare/2026.11.5...2026.11.6) (2026-11-18)
 
 
