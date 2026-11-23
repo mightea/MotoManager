@@ -8,6 +8,7 @@ import {
   useSubmit,
   useLocation,
   useParams,
+  useSearchParams,
 } from "react-router";
 import type { Route } from "./+types/motorcycle.detail";
 import {
@@ -44,6 +45,7 @@ const AddMotorcycleForm = lazy(() =>
 );
 import { motorcycleSchema, previousOwnerSchema } from "~/validations";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
+import { parseBikeOpenAction } from "~/utils/motorcycle-destinations";
 import { getCurrencies, getLocations, getUserSettings } from "~/services/settings";
 import { getMaintenanceInsights } from "~/utils/maintenance-intervals";
 import { getNextInspectionInfo } from "~/utils/inspection";
@@ -263,6 +265,29 @@ export async function clientLoader({ request, params }: Route.ClientLoaderArgs) 
     formattedFirstRegistration,
     hasPurchaseDate
   });
+}
+
+export function shouldRevalidate({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}: {
+  currentUrl: URL;
+  nextUrl: URL;
+  defaultShouldRevalidate: boolean;
+}) {
+  // Same URL means an action or an explicit revalidation: keep the default.
+  if (currentUrl.pathname !== nextUrl.pathname || currentUrl.search === nextUrl.search) {
+    return defaultShouldRevalidate;
+  }
+  // Consuming the one-shot `?open=` dialog link changes no data.
+  const withoutOpen = (url: URL) => {
+    const params = new URLSearchParams(url.searchParams);
+    params.delete("open");
+    return params.toString();
+  };
+  if (withoutOpen(currentUrl) === withoutOpen(nextUrl)) return false;
+  return defaultShouldRevalidate;
 }
 
 /** Stable identity so the form's `useMemo`/state seed doesn't churn per render. */
@@ -1164,6 +1189,41 @@ export default function MotorcycleDetail({ loaderData }: Route.ComponentProps) {
     setSelectedOdometerChange(change);
     setOdometerChangeDialogOpen(true);
   };
+
+  // Command bar deep link: open the dialog once, then drop the param so a
+  // reload or back navigation doesn't reopen it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openParam = searchParams.get("open");
+  useEffect(() => {
+    if (!openParam) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
+    switch (parseBikeOpenAction(openParam)) {
+      case "edit":
+        setEditMotorcycleDialogOpen(true);
+        break;
+      case "maintenance":
+        setSelectedMaintenance(null);
+        setMaintenanceDialogOpen(true);
+        break;
+      case "issue":
+        setSelectedIssue(null);
+        setIssueDialogOpen(true);
+        break;
+      case "owners":
+        setPreviousOwnersManageOpen(true);
+        break;
+      case "odometer":
+        setSelectedOdometerChange(null);
+        setOdometerChangeDialogOpen(true);
+        break;
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete("open");
+      return next;
+    }, { replace: true, preventScrollReset: true });
+  }, [openParam, setSearchParams]);
 
   const dateFormatter = new Intl.DateTimeFormat("de-CH", {
     day: "2-digit",

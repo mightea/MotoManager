@@ -38,4 +38,12 @@ describe("home shouldRevalidate", () => {
     expect(loader).toHaveBeenCalledTimes(1);
     router.dispose();
   });
+
+  it("does not reload when only client-side view params change", async () => {
+    const { router, loader } = await startRouter("/?page=2");
+    await router.navigate("/?q=bmw");
+    await router.navigate("/?q=bmw&sort=make&filter=issues&show=all");
+    expect(loader).not.toHaveBeenCalled();
+    router.dispose();
+  });
 });

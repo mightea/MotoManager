@@ -684,7 +684,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           <section aria-labelledby="pressure-heading" className="min-w-0 print-section">
             <Card className="print:rounded-none print:border-0 print:shadow-none print:!bg-white">
               <div className="flex items-center justify-between gap-2 border-b border-base-200 px-4 py-3.5 dark:border-navy-700 print:border-0 print:px-0 print:py-1">
-                <h2 id="pressure-heading" className={SECTION_TITLE}>Reifendruck</h2>
+                <h2 id="pressure-heading" className={clsx(SECTION_TITLE, "scroll-mt-28")}>Reifendruck</h2>
                 {pressure && (
                   <Button
                     type="button"
@@ -749,7 +749,7 @@ export default function MotorcycleTorqueSpecificationsPage({ loaderData }: Route
           <Card className="print:rounded-none print:border-0 print:shadow-none print:!bg-white">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-base-200 px-4 py-3.5 dark:border-navy-700 print:border-0 print:px-0 print:py-1">
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 id="torque-heading" className={SECTION_TITLE}>Anzugsmomente</h2>
+                <h2 id="torque-heading" className={clsx(SECTION_TITLE, "scroll-mt-28")}>Anzugsmomente</h2>
                 <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.08em] text-base-content/70 print:hidden">
                   {specs.length} {specs.length === 1 ? "Eintrag" : "Einträge"}
                 </span>

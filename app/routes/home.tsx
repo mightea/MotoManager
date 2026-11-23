@@ -1,4 +1,4 @@
-import { data, Link, useActionData, useNavigate, useNavigation, useSearchParams } from "react-router";
+import { data, Link, useActionData, useLocation, useNavigate, useNavigation, useSearchParams } from "react-router";
 import type { Route } from "./+types/home";
 import { createMotorcycle } from "~/services/motorcycles";
 import { fetchModelSeries } from "~/services/parts";
@@ -20,10 +20,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Map as MapIcon,
+  Search,
   X,
 } from "lucide-react";
 import clsx from "clsx";
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DropdownMenu } from "~/components/dropdown-menu";
 import { Modal } from "~/components/modal";
 // Lazy-loaded: pulls in react-easy-crop, which only appears inside this modal.
@@ -37,7 +38,9 @@ import { motorcycleSchema } from "~/validations";
 import { DashboardStats } from "~/components/dashboard-stats";
 import { Card } from "~/components/card";
 import { createMotorcycleSlug } from "~/utils/motorcycle";
+import { matchesBikeName } from "~/utils/motorcycle-search";
 import { MotorcycleCard } from "~/components/motorcycle-card";
+import { MotorcycleCommandBar } from "~/components/motorcycle-command-bar";
 import { Button } from "~/components/button";
 import { MotorcycleCardSkeleton } from "~/components/skeleton";
 import { EmptyState } from "~/components/empty-state";
@@ -155,6 +158,8 @@ export function shouldRevalidate({
     p.delete("sort");
     p.delete("filter");
     p.delete("show");
+    p.delete("page");
+    p.delete("q");
     return p.toString();
   };
 
@@ -272,10 +277,51 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const actionData = useActionData<{ success?: boolean }>();
   const navigation = useNavigation();
 
-  const isLoading = navigation.state === "loading" && !navigation.formData;
+  const location = useLocation();
+
+  // Param-only navigations (search, sort, filter) keep the cards on screen.
+  const isLoading =
+    navigation.state === "loading" &&
+    !navigation.formData &&
+    navigation.location.pathname !== location.pathname;
 
   const sortParam = searchParams.get("sort") as SortKey | null;
   const filterParam = searchParams.get("filter") as FilterKey | null;
+
+  // The input filters instantly; the URL follows debounced. `pendingQuery` is
+  // the value on its way to the URL, so only outside changes (back/forward)
+  // are copied back into the input and typing is never overwritten.
+  const urlQuery = searchParams.get("q") ?? "";
+  const [searchInput, setSearchInput] = useState(urlQuery);
+  const pendingQuery = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (pendingQuery.current === urlQuery) {
+      pendingQuery.current = null;
+    } else if (pendingQuery.current === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchInput(urlQuery);
+    }
+  }, [urlQuery]);
+
+  useEffect(() => {
+    const trimmed = searchInput.trim();
+    if (trimmed === urlQuery) {
+      pendingQuery.current = null;
+      return;
+    }
+    const timer = setTimeout(() => {
+      pendingQuery.current = trimmed;
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        if (trimmed) next.set("q", trimmed);
+        else next.delete("q");
+        next.delete("page");
+        return next;
+      }, { replace: true, preventScrollReset: true });
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchInput, urlQuery, setSearchParams]);
 
   const currentSort: SortKey = useMemo(() => {
     if (sortParam && SORT_KEYS.includes(sortParam)) return sortParam;
@@ -350,13 +396,37 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     [cards],
   );
 
-  const visibleCards = useMemo(() => {
+  // Everything the name search narrows down, so the count can read "3 von 12".
+  const searchableCards = useMemo(() => {
     const base = showInactive
       ? cards
       : cards.filter((c: MotorcycleDashboardItem) => (c.status ?? "active") === "active");
-    const filtered = base.filter((c: MotorcycleDashboardItem) => matchesFilter(c, currentFilter));
+    return base.filter((c: MotorcycleDashboardItem) => matchesFilter(c, currentFilter));
+  }, [cards, currentFilter, showInactive]);
+
+  const visibleCards = useMemo(() => {
+    const filtered = searchableCards.filter((c: MotorcycleDashboardItem) => matchesBikeName(c, searchInput));
     return [...filtered].sort(compareCards(currentSort));
-  }, [cards, currentSort, currentFilter, showInactive]);
+  }, [searchableCards, searchInput, currentSort]);
+
+  const isSearching = searchInput.trim().length > 0;
+  const onlySoldMatch =
+    isSearching &&
+    !showInactive &&
+    visibleCards.length === 0 &&
+    cards.some(
+      (c: MotorcycleDashboardItem) =>
+        (c.status ?? "active") !== "active" &&
+        matchesFilter(c, currentFilter) &&
+        matchesBikeName(c, searchInput),
+    );
+
+  // Command bar: active bikes in the current sort order, sold ones last.
+  const commandBarBikes = useMemo(() => {
+    const sorted = [...cards].sort(compareCards(currentSort));
+    const isActive = (c: MotorcycleDashboardItem) => (c.status ?? "active") === "active";
+    return [...sorted.filter(isActive), ...sorted.filter((c) => !isActive(c))];
+  }, [cards, currentSort]);
 
   // Pagination — server-side contract (page/pageSize/total/totalPages) applied
   // client-side over the /home payload so cards/filters/attention chips still
@@ -416,6 +486,18 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   const toggleFilter = (next: FilterKey) => {
     updateParam("filter", currentFilter === next ? null : next);
+  };
+
+  const clearSearchAndFilter = () => {
+    setSearchInput("");
+    if (urlQuery) pendingQuery.current = "";
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete("q");
+      next.delete("filter");
+      next.delete("page");
+      return next;
+    }, { replace: true, preventScrollReset: true });
   };
 
   const toggleShowInactive = () => {
@@ -630,6 +712,49 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </span>
         </h2>
 
+        {cards.length > 0 && (
+          <div className="flex w-full items-stretch gap-2 sm:w-auto sm:min-w-[320px] sm:flex-1 lg:max-w-xl">
+            <div className="relative min-w-0 flex-1">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/60"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setSearchInput("");
+                }}
+                placeholder="Motorrad suchen…"
+                aria-label="Motorrad nach Name suchen"
+                autoComplete="off"
+                spellCheck={false}
+                className={clsx(
+                  "h-10 w-full rounded-sm border border-base-300 bg-base-100 pl-8 text-base text-base-content placeholder:text-base-content/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:text-sm dark:border-navy-700 dark:bg-navy-800 [&::-webkit-search-cancel-button]:hidden",
+                  searchInput ? "pr-24" : "pr-2",
+                )}
+              />
+              <span className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                <span aria-live="polite" className="whitespace-nowrap font-mono text-[11px] font-semibold tabular-nums text-base-content/70">
+                  {isSearching ? `${visibleCards.length} von ${searchableCards.length}` : ""}
+                </span>
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchInput("")}
+                    aria-label="Suche löschen"
+                    className="grid h-8 w-8 place-items-center rounded-sm text-base-content/60 hover:bg-base-200 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:hover:bg-navy-700"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                )}
+              </span>
+            </div>
+            <MotorcycleCommandBar bikes={commandBarBikes} />
+          </div>
+        )}
+
         <div className="flex flex-wrap items-stretch gap-2">
           <DropdownMenu
             align="start"
@@ -716,16 +841,27 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           <div className="col-span-full">
             <EmptyState
               size="sm"
-              title="Keine Motorräder im aktuellen Filter"
+              title={isSearching ? `Keine Treffer für „${searchInput.trim()}“` : "Keine Motorräder im aktuellen Filter"}
               action={
-                <button
-                  type="button"
-                  onClick={() => updateParam("filter", null)}
-                  className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
-                >
-                  <X className="h-3.5 w-3.5" aria-hidden="true" />
-                  Filter aufheben
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-1">
+                  {onlySoldMatch && (
+                    <button
+                      type="button"
+                      onClick={toggleShowInactive}
+                      className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
+                    >
+                      Verkaufte anzeigen
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={clearSearchAndFilter}
+                    className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:text-primary-light"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                    Filter aufheben
+                  </button>
+                </div>
               }
             />
           </div>
