@@ -147,6 +147,8 @@ export function shouldRevalidate({
   // Sort and filter live in the URL but are applied client-side.
   // Skip revalidation when only those params change on the same path.
   if (currentUrl.pathname !== nextUrl.pathname) return defaultShouldRevalidate;
+  // Same URL means an action or an explicit revalidation: the data did change.
+  if (currentUrl.search === nextUrl.search) return defaultShouldRevalidate;
 
   const stripVolatile = (u: URL) => {
     const p = new URLSearchParams(u.searchParams);
