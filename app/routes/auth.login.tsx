@@ -20,7 +20,6 @@ import {
 } from "~/services/auth";
 import { authenticateWithPasskey } from "~/utils/webauthn";
 import { getVersion } from "~/config";
-import { ServerPicker } from "~/components/server-picker";
 import { useUmami } from "~/components/umami-provider";
 import { safeRedirectPath } from "~/utils/navigation";
 
@@ -488,8 +487,6 @@ export default function Login() {
                   <Fingerprint className="h-4 w-4" aria-hidden="true" />
                   Passkey-Login
                 </button>
-
-                <ServerPicker />
               </Form>
             )}
           </div>
